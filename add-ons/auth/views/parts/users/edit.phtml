@@ -1,0 +1,119 @@
+<?php use app\Controllers\{FormController, PageController, UserController}; ?>
+
+<?php if (isset($this->getObj()->user)) : ?>
+
+  <?php if ($this->getObj()->user['id'] != $_SESSION['user']['id']) : ?>
+
+    <section class="users">
+      <div class="row center-x">
+        <form class="col edit-user" method="POST" action="">
+          <div class="row">
+            <div class="col center-x">
+              <h3>Edit user</h3>
+            </div>
+          </div>
+
+          <?= FormController::$alert ?>
+
+          <div class="row form-row">
+            <div class="col form-group" inert>
+              <div class="row">
+                <label class="col" for="id">Id:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
+                <input class="col" id="id" type="number" name="id" value="<?= $this->getObj()->user['id'] ?>">
+              </div>
+            </div>
+
+            <div class="col form-group" inert>
+              <div class="row">
+                <label class="col" for="last_update">Last update:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
+                <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->getObj()->user['last_update'] ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row form-row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="name">Name:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+                <input class="col" id="name" type="text" name="name" placeholder="Enter name:" maxlength="100" value="<?= $_POST['name'] ?? $this->getObj()->user['name'] ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="email">Email:</label>
+              </div>
+              <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
+                <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+                <input class="col edit-email" id="email" type="email" name="email" placeholder="Enter email:" maxlength="100" value="<?= !empty($_POST['email']) ? $_POST['email'] : $this->getObj()->user['email'] ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row form-row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="role">User role:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
+                <select class="col edit-user-role" id="role" name="role">
+                  <option value="1" <?= ($_POST['role'] ?? $this->getObj()->user['role']) == 1 ? 'selected' : '' ?>>Admin</option>
+                  <option value="2" <?= ($_POST['role'] ?? $this->getObj()->user['role']) == 2 ? 'selected' : '' ?>>User</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col form-group" inert>
+              <div class="row">
+                <label class="col" for="verified">Verified:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
+                <input class="col" id="verified" type="text" name="verified" value="<?= UserController::isVerified($this->getObj()->user['id']) ? 'True' : 'False' ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row button-row center-x">
+            <a class="col center-y f-0" href="<?= PageController::url('users') ?>"><i class="fas fa-arrow-left"></i>Back</a>
+            <button class="col edit-user center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-pen"></i>Edit user</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  <?php else : ?>
+
+    <section class="users h-100-content center-x">
+      <div class="row">
+        <div class="col center-x">
+          <h5>Cannot edit your own user.</h5>
+        </div>
+      </div>
+    </section>
+
+  <?php endif ?>
+
+<?php else : ?>
+
+  <section class="users h-100-content center-x">
+    <div class="row">
+      <div class="col center-x">
+        <h5>Could not find user.</h5>
+      </div>
+    </div>
+  </section>
+
+<?php endif ?>

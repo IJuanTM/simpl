@@ -1,0 +1,6 @@
+# IDE files
+.idea
+
+# EditorConfigs
+.editorconfig
+add-ons/.editorconfig

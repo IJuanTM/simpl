@@ -1,0 +1,98 @@
+<?php use app\Controllers\UserController; ?>
+
+<?php if (isset($this->getUrl()['subpages'][0]) && in_array($this->getUrl()['subpages'][0], ['edit', 'delete', 'restore'])) : ?>
+
+  <?php $this->part('users/' . $this->getUrl()['subpages'][0]) ?>
+
+<?php else : ?>
+
+  <section class="users">
+    <div class="row">
+      <div class="col center-x">
+        <h3>Registered users</h3>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col users-table">
+
+        <?php if (count($this->getObj()->users) > $this->getObj()->page * 10) : ?>
+
+          <div class="row table-container">
+            <div class="col">
+              <table>
+                <thead>
+                <tr>
+                  <th>Id</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Verified</th>
+                  <th>Created at</th>
+                  <th>Last updated</th>
+                  <th>Is active</th>
+                  <th>Deleted at</th>
+                  <th>Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+
+                <?php foreach (array_slice($this->getObj()->users, $this->getObj()->page * 10, 10) as $user) : ?>
+
+                  <tr class="<?= !$user['is_active'] ? 'deleted' : '' ?>">
+                    <td><?= $user['id'] ?></td>
+                    <td><?= $user['name'] ?: '-' ?></td>
+                    <td><?= $user['email'] ?></td>
+                    <td><?= $user['role'] == 1 ? 'Admin' : 'User' ?></td>
+                    <td><?= UserController::isVerified($user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
+                    <td><?= $user['created_at'] ?></td>
+                    <td><?= $user['last_update'] ?></td>
+                    <td><?= !$user['is_active'] ? '<i class="fas fa-times"></i>' : '<i class="fas fa-check"></i>' ?></td>
+                    <td><?= $user['deleted_at'] ?: '-' ?></td>
+                    <?php if ($user['id'] != $_SESSION['user']['id']) : ?>
+                      <td class="row action-row">
+                        <?php if ($user['is_active']) : ?>
+                          <a class="col table-action f-0" href="<?= $this->url('users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
+                          <a class="col table-action f-0" href="<?= $this->url('users/delete?id=' . $user['id']) ?>"><i class="fas fa-trash"></i></a>
+                        <?php else : ?>
+                          <a class="col table-action f-0" href="<?= $this->url('users/restore?id=' . $user['id']) ?>"><i class="fas fa-wrench"></i></a>
+                        <?php endif ?>
+                      </td>
+                    <?php else : ?>
+                      <td>-</td>
+                    <?php endif ?>
+                  </tr>
+
+                <?php endforeach; ?>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="row action-row">
+            <div class="col f-0">
+              <p><?= ($this->getObj()->page * 10) + 1 ?> - <?= min((($this->getObj()->page + 1) * 10), count($this->getObj()->users)) ?> of <?= count($this->getObj()->users) ?> users</p>
+            </div>
+            <div class="col users-pagination end-x">
+              <a class="users-action" href="<?= $this->url('users?page=' . ($this->getObj()->page - 1)) ?>" <?= $this->getObj()->page > 0 ?: 'inert' ?>><i class="fas fa-chevron-left"></i> Previous</a>
+              <a class="users-action" href="<?= $this->url('users?page=' . ($this->getObj()->page + 1)) ?>" <?= $this->getObj()->page < ceil(count($this->getObj()->users) / 10) - 1 ?: 'inert' ?>>Next <i class="fas fa-chevron-right"></i></a>
+            </div>
+          </div>
+
+        <?php else : ?>
+
+          <div class="row">
+            <div class="col">
+              <p>No users found.</p>
+            </div>
+          </div>
+
+        <?php endif ?>
+
+      </div>
+    </div>
+  </section>
+
+<?php endif ?>

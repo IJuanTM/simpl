@@ -1,0 +1,85 @@
+<?php use app\Controllers\{FormController, UserController}; ?>
+
+<section class="profile">
+  <div class="row">
+    <div class="col center-x">
+      <h3>Profile</h3>
+    </div>
+  </div>
+
+  <div class="row center-x">
+    <div class="col card">
+      <div class="row center-y">
+        <div class="col profile-image center f-0">
+          <i class="fas fa-circle-user"></i>
+        </div>
+
+        <form class="col edit-profile center-x" method="POST" action="">
+          <div class="row">
+            <div class="col center-x">
+              <h5>Account details</h5>
+            </div>
+          </div>
+
+          <?= FormController::$alert ?>
+
+          <div class="row form-row">
+            <div class="col form-group" inert>
+              <div class="row">
+                <label class="col" for="created_at">Created at:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
+                <input class="col" id="created_at" type="text" name="created_at" value="<?= $_SESSION['user']['created_at'] ?>">
+              </div>
+            </div>
+
+            <div class="col form-group" inert>
+              <div class="row">
+                <label class="col" for="verified">Verified:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
+                <input class="col" id="verified" type="text" name="verified" value="<?= UserController::isVerified($_SESSION['user']['id']) ? 'True' : 'False' ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="name">Name:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+                <input class="col" id="name" type="text" name="name" placeholder="Enter name:" maxlength="100" value="<?= $_POST['name'] ?? $_SESSION['user']['name'] ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="email">Email: <span class="required">*</span></label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+                <input class="col" id="email" type="email" name="email" value="<?= $_POST['email'] ?? $_SESSION['user']['email'] ?>">
+              </div>
+              <div class="row">
+                <div class="col">
+                  <p class="form-details">After changing your email, you will have to verify it again! You will receive an email with a verification link. You will be logged out after changing your email.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row button-row center-x">
+            <a class="col change-password center-y f-0" href="<?= $this->url('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
+            <button class="col edit-profile center-y f-0" type="submit" name="submit" inert><i class="fas fa-save"></i>Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

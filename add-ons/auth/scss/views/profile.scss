@@ -1,0 +1,56 @@
+section.profile, div.profile-list {
+  display: flex;
+  flex-direction: column;
+}
+
+section.profile {
+  row-gap: 2rem;
+
+  div.card {
+    padding: 2rem;
+    border-radius: .5rem;
+    box-shadow: 0 0 .25rem rgba(#000, .25);
+
+    @include breakpoint-up(md) {
+      flex: 0 0 auto;
+    }
+
+    > div.row {
+      gap: 2rem;
+
+      @include breakpoint-down(md) {
+        flex-direction: column;
+      }
+
+      div.profile-image {
+        height: 12rem;
+
+        @include breakpoint-up(md) {
+          width: 12rem;
+        }
+
+        @include breakpoint-up(lg) {
+          width: 16rem;
+        }
+
+        > i {
+          font-size: 10rem;
+
+          @include breakpoint-up(md) {
+            font-size: 8rem;
+          }
+
+          @include breakpoint-up(lg) {
+            font-size: 10rem;
+          }
+        }
+      }
+
+      form {
+        @include breakpoint-down(md) {
+          min-width: 100% !important;
+        }
+      }
+    }
+  }
+}

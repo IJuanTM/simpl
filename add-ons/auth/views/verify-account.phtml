@@ -1,0 +1,49 @@
+<?php use app\Controllers\FormController; ?>
+
+<section class="verify-account">
+  <div class="row center-x">
+    <form class="col" method="POST" action="">
+      <div class="row">
+        <div class="col center-x">
+          <h3>Verify account</h3>
+        </div>
+      </div>
+
+      <?= FormController::$alert ?>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">A verification code has been sent to your email address. Please enter the code below to verify your account.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group">
+          <div class="row">
+            <label class="col" for="code">Code: <span class="required">*</span></label>
+          </div>
+          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['code'])) ? 'error' : '' ?>">
+            <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
+            <input class="col" id="code" type="text" name="code" placeholder="Enter code:" maxlength="8" value="<?= $_POST['code'] ?? '' ?>">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">It may take a few minutes for the email to arrive. If you don't see it in your inbox, check your spam folder.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">Didn't receive an email? <a href="<?= $this->url('resend-verification/' . ($this->getUrl()['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here</a> to resend.</p>
+        </div>
+      </div>
+
+      <div class="row button-row center-x">
+        <button class="col center-y f-0" type="submit" name="submit" aria-label="Button to submit the email verification form"><i class="fas fa-right-to-bracket"></i>Verify</button>
+      </div>
+    </form>
+  </div>
+</section>

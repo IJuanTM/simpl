@@ -1,0 +1,71 @@
+<?php use app\Controllers\FormController; ?>
+
+<section class="register">
+  <div class="row center-x">
+    <form class="col" method="POST" action="">
+      <div class="row">
+        <div class="col center-x">
+          <h3>Register</h3>
+        </div>
+      </div>
+
+      <?= FormController::$alert ?>
+
+      <div class="row">
+        <div class="col form-group">
+          <div class="row">
+            <label class="col" for="email">Email: <span class="required">*</span></label>
+          </div>
+          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
+            <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+            <input class="col" id="email" type="email" name="email" placeholder="Enter email:" maxlength="100" value="<?= $_POST['email'] ?? '' ?>">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group">
+          <div class="row form-row">
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="password">Password: <span class="required">*</span></label>
+                <div class="col password-warning end-x hidden">Caps lock is on!</div>
+              </div>
+              <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
+                <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+                <input class="col input-password" id="password" type="password" name="password" placeholder="Enter password:" maxlength="50" value="<?= $_POST['password'] ?? '' ?>">
+                <div class="col input-append center f-0"><i class="fas fa-eye password-toggle"></i></div>
+              </div>
+            </div>
+
+            <div class="col form-group">
+              <div class="row">
+                <label class="col" for="password-check">Repeat password: <span class="required">*</span></label>
+              </div>
+              <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password-check'])) ? 'error' : '' ?>">
+                <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+                <input class="col" id="password-check" type="password" name="password-check" maxlength="50" placeholder="Repeat password:">
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col">
+              <p class="form-details">Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter and one number.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">Already have an account? <a href="<?= $this->url('login') ?>" aria-label="Link to login page">Click here</a> to login.</p>
+        </div>
+      </div>
+
+      <div class="row button-row center-x">
+        <button class="col center-y f-0" type="submit" name="submit" aria-label="Button to submit register form"><i class="fas fa-user-plus"></i>Register</button>
+      </div>
+    </form>
+  </div>
+</section>

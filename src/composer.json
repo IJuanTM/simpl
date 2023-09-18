@@ -1,0 +1,29 @@
+{
+  "name": "simpl/simpl",
+  "description": "An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!",
+  "require": {
+    "php": "^8.2",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "vlucas/phpdotenv": "^v5.5.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": "app/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true
+  },
+  "keywords": [
+    "php",
+    "html",
+    "css",
+    "javascript",
+    "sass",
+    "scss",
+    "framework",
+    "mvc"
+  ],
+  "license": "GPL-3.0-only"
+}

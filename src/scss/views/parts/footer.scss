@@ -1,0 +1,16 @@
+footer {
+  z-index: 2;
+  position: relative;
+  box-shadow: 0 0 .25rem rgba(#000, .25);
+
+  > div.row {
+    padding: 0 1rem;
+    font-size: .75rem;
+    line-height: 2rem;
+    background-color: $light-3;
+
+    a {
+      text-decoration: none;
+    }
+  }
+}

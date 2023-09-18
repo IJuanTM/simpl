@@ -1,0 +1,30 @@
+<?php use app\Controllers\AppController; ?>
+
+<header>
+  <div class="row navbar">
+    <div class="col nav-brand h-100 f-0">
+      <div class="row h-100">
+        <a class="col nav-logo h-100 center f-0" href="<?= $this->url(REDIRECT) ?>" tabindex="-1" aria-hidden="true"><?= AppController::svg('simpl') ?></a>
+        <div class="col nav-title center f-0">
+          <h6><?= APP_NAME ?></h6>
+        </div>
+      </div>
+    </div>
+
+    <nav class="col menu between-x">
+      <div class="row nav-list w-auto f-0">
+        <a class="col nav-item nav-button center f-0" href="<?= $this->url(REDIRECT) ?>" aria-label="Link to home page">Home</a>
+      </div>
+    </nav>
+
+    <div class="col nav-options">
+      <div class="row end-x h-100">
+        <button class="col hamburger hamburger--squeeze f-0" type="button" aria-label="Expand navigation menu" aria-controls="navigation" aria-expanded="false" tabindex="1">
+          <span class="hamburger-box center">
+            <span class="hamburger-inner"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

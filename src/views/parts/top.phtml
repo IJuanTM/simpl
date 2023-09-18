@@ -1,0 +1,30 @@
+<!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl -->
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+  <!-- Title -->
+  <title><?= APP_NAME . ' - ' . ucfirst(str_replace('-', ' ', $this->getUrl()['page'])); ?></title>
+
+  <!-- Base -->
+  <base href="<?= BASE_URL ?>">
+
+  <!-- Meta and links -->
+  <?php
+  $this->part('index/meta');
+  $this->part('index/preload');
+  $this->part('index/css');
+  $this->part('index/favicon');
+  ?>
+</head>
+
+<body class="h-100">
+<!-- Noscript -->
+<noscript class="center h-100 w-100">
+  <p class="text-center">This website requires JavaScript to work properly. Please enable JavaScript!</p>
+</noscript>
+
+<!-- Header -->
+<?php $this->part('header') ?>
+
+<!-- Content -->
+<main class="content">
