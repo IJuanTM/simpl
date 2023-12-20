@@ -138,6 +138,21 @@ class LoginPage
         $db->bind(':email', $email);
         $user = $db->single();
 
+        // Check if the user has the remember me checkbox checked
+        if (isset($_POST['remember'])) {
+            // Generate a remember token
+            $token = UserController::generateToken(16);
+
+            // Timestamp for the cookie (30 days)
+            $timestamp = time() + (86400 * 30);
+
+            // Set the cookie
+            setcookie('remember', $token, $timestamp, '/');
+
+            // Set the token in the database
+            $this->setRememberToken($user['id'], $token, $timestamp);
+        }
+
         // Get the user role from the database
         $db->query('SELECT role_id FROM user_roles WHERE user_id = :id');
         $db->bind(':id', $user['id']);
@@ -167,5 +182,33 @@ class LoginPage
 
         // Set the success message
         AppController::alert('Login successful! Welcome!', ['success', 'global'], 4);
+    }
+
+    /**
+     * Method for setting the remember token in the database.
+     *
+     * @param int $id
+     * @param string $token
+     * @param int $timestamp
+     *
+     * @return void
+     */
+    private function setRememberToken(int $id, string $token, int $timestamp): void
+    {
+        $db = new Database();
+
+        // Delete the old token(s) from the database
+        $db->query('DELETE FROM tokens WHERE user_id = :id AND type = :type');
+        $db->bind(':id', $id);
+        $db->bind(':type', 'remember');
+        $db->execute();
+
+        // Set the token in the database
+        $db->query('INSERT INTO tokens (user_id, token, type, expires) VALUES(:id, :token, :type, :expires)');
+        $db->bind(':id', $id);
+        $db->bind(':token', $token);
+        $db->bind(':type', 'remember');
+        $db->bind(':expires', date('Y-m-d H:i:s', $timestamp));
+        $db->execute();
     }
 }

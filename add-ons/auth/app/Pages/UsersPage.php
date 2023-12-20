@@ -178,7 +178,7 @@ class UsersPage
         $db = new Database();
 
         // Delete the user in the database
-        $db->query('UPDATE users SET is_active = 0, deleted_at = now() WHERE id = :id');
+        $db->query('UPDATE users SET is_active = 0, deleted_at = NOW() WHERE id = :id');
         $db->bind(':id', $id);
         $db->execute();
 

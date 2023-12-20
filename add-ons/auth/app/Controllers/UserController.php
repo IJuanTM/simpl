@@ -130,4 +130,50 @@ class UserController
         // Check if the token is valid
         return strcasecmp($db->single()['token'], $token) == 0;
     }
+
+    /**
+     * Method for logging in a user automatically when the remember me cookie is set.
+     *
+     * @param string $token
+     *
+     * @return void
+     */
+    public static function rememberLogin(string $token): void
+    {
+        $db = new Database();
+
+        // Get the remember token from the database
+        $db->query('SELECT * FROM tokens WHERE token = :token AND type = :type');
+        $db->bind(':token', $token);
+        $db->bind(':type', 'remember');
+        $token = $db->single();
+
+        // Check if the token exists
+        if (!$token) {
+            // Delete the cookie
+            setcookie('remember', '', time() - 3600);
+
+            return;
+        }
+
+        // Check if the token is expired
+        if ($token['expires'] < time()) {
+            // Delete the token from the database
+            $db->query('DELETE FROM tokens WHERE token = :token');
+            $db->bind(':token', $token['token']);
+            $db->execute();
+
+            // Delete the cookie
+            setcookie('remember', '', time() - 3600);
+
+            return;
+        }
+
+        // Get the user from the database
+        $db->query('SELECT * FROM users WHERE id = :id');
+        $db->bind(':id', $token['user_id']);
+
+        // Set the session variables
+        $_SESSION['user'] = $db->single();
+    }
 }

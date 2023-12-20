@@ -18,6 +18,8 @@ It also includes code for changing the navigation bar based on if the user is lo
 
 In the `UserController.php` file you can find the code for the user system. The functions here are used in mutiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
 
+In the `AppController.php` file is a line of code you will need to add in the exising `AppController.php` of your project. Add this above the call to create a new `PageController` object. This line is for checking if the user has a remember me cookie set and if this one is not expired yet. If so, the user will be logged in automatically.
+
 #### Pages
 
 In the `pages` folder you can find the code that goes along with the views for logging in, registering, verifying your account, the contact form, the user profile page, the change password page, the forgot password page, the reset password page and the admin system.
@@ -58,7 +60,7 @@ Alternatively, you can follow these steps:
 
 1. Copy the contents of the `.env` file to your project's `.env` file
 2. Copy the contents of the `app/Config` folder to your Simpl projects's `app/Config` folder
-3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder
+3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
 4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
 5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
 6. Copy the `js/input.js` file to the `js` folder of your Simpl project's folder
