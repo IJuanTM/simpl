@@ -15,6 +15,9 @@ class LogoutPage
         // Unset the user session
         unset($_SESSION['user']);
 
+        // Unset the remember cookie
+        setcookie('remember', '', time() - 3600, '/');
+
         // Redirect the user back to the homepage
         PageController::redirect(REDIRECT, 2);
     }
