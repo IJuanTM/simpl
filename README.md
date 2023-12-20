@@ -4,13 +4,13 @@
 
 # Simpl
 
-#### Version 1.1.0
+#### Version 1.1.1
 
 <br>
 
 #### An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.0-777BB3?logo=php)](https://www.php.net)
+[![PHP logo](https://img.shields.io/badge/php-8.3.1-777BB3?logo=php)](https://www.php.net)
 [![Composer logo](https://img.shields.io/badge/composer-2.6.6-89552C?logo=composer)](https://getcomposer.org)
 [![Node.js logo](https://img.shields.io/badge/node.js-21.5.0-5FA04E?logo=node.js)](https://nodejs.org)
 [![npm logo](https://img.shields.io/badge/npm-10.2.5-CB0000?logo=npm)](https://www.npmjs.com)
@@ -46,7 +46,7 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (at least version **8.3.0**)
+* [PHP](https://www.php.net) (at least version **8.3.1**)
 * [Composer](https://getcomposer.org) (at least version **2.6.6**)
 * [Node.js](https://nodejs.org) (at least version **21.5.0**)
 * [npm](https://www.npmjs.com) (at least version **10.2.5**)
@@ -167,6 +167,10 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * Fixed a small issue with the manifest file
 * Updated the-new-css-reset
 * Updated Font Awesome icons
+
+#### Version 1.1.1 (2023-12-20)
+
+* Quick update to PHP 8.3.1
 
 <br>
 
