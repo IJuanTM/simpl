@@ -4,17 +4,17 @@
 
 # Simpl
 
-#### Version 1.0.0
+#### Version 1.1.0
 
 <br>
 
 #### An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!
 
-[![PHP logo](https://img.shields.io/badge/php-8.2.10-777BB3?logo=php)](https://www.php.net)
-[![Composer logo](https://img.shields.io/badge/composer-2.6.3-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-20.6.1-5FA04E?logo=node.js)](https://nodejs.org)
-[![npm logo](https://img.shields.io/badge/npm-10.1.0-CB0000?logo=npm)](https://www.npmjs.com)
-[![Sass logo](https://img.shields.io/badge/sass-1.67.0-CF649A?logo=sass)](https://sass-lang.com)
+[![PHP logo](https://img.shields.io/badge/php-8.3.0-777BB3?logo=php)](https://www.php.net)
+[![Composer logo](https://img.shields.io/badge/composer-2.6.6-89552C?logo=composer)](https://getcomposer.org)
+[![Node.js logo](https://img.shields.io/badge/node.js-21.5.0-5FA04E?logo=node.js)](https://nodejs.org)
+[![npm logo](https://img.shields.io/badge/npm-10.2.5-CB0000?logo=npm)](https://www.npmjs.com)
+[![Sass logo](https://img.shields.io/badge/sass-1.69.5-CF649A?logo=sass)](https://sass-lang.com)
 
 <br>
 
@@ -46,10 +46,10 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (at least version **8.2.10**)
-* [Composer](https://getcomposer.org) (at least version **2.6.3**)
-* [Node.js](https://nodejs.org) (at least version **20.6.1**)
-* [npm](https://www.npmjs.com) (at least version **10.1.0**)
+* [PHP](https://www.php.net) (at least version **8.3.0**)
+* [Composer](https://getcomposer.org) (at least version **2.6.6**)
+* [Node.js](https://nodejs.org) (at least version **21.5.0**)
+* [npm](https://www.npmjs.com) (at least version **10.2.5**)
 
 ### Step 1: Download Simpl
 
@@ -144,7 +144,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 
 ## Roadmap
 
-- [ ] Make Simpl website
+- [x] Make Simpl website
 - [ ] Write documentation
 - [ ] Add more add-ons
 - [ ] Improve the form validation system
@@ -159,13 +159,22 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 
 * Initial release
 
+#### Version 1.1.0 (2023-12-20)
+
+* Ready for use with PHP 8.3.0
+* Updated composer and npm packages
+* Added remember me functionality to the auth system
+* Fixed a small issue with the manifest file
+* Updated the-new-css-reset
+* Updated Font Awesome icons
+
 <br>
 
 ## Credits
 
 ### Composer packages
 
-* [PHP dotenv (5.5.0)](https://github.com/vlucas/phpdotenv)
+* [PHP dotenv (5.6.0)](https://github.com/vlucas/phpdotenv)
 
 ### Node packages
 
@@ -185,8 +194,8 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 ### Extra
 
 * [Hamburgers (1.2.0)](https://github.com/jonsuh/hamburgers)
-* [The New CCS Reset (1.9.0)](https://github.com/elad2412/the-new-css-reset)
-* [Font Awesome _Free_ (6.4.2)](https://fontawesome.com)
+* [The New CCS Reset (1.11.2)](https://github.com/elad2412/the-new-css-reset)
+* [Font Awesome _Free_ (6.5.1)](https://fontawesome.com)
 
 <br>
 
