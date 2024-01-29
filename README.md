@@ -4,17 +4,17 @@
 
 # Simpl
 
-#### Version 1.1.1
+#### Version 1.2.0
 
 <br>
 
 #### An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.1-777BB3?logo=php)](https://www.php.net)
+[![PHP logo](https://img.shields.io/badge/php-8.3.2-777BB3?logo=php)](https://www.php.net)
 [![Composer logo](https://img.shields.io/badge/composer-2.6.6-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-21.5.0-5FA04E?logo=node.js)](https://nodejs.org)
-[![npm logo](https://img.shields.io/badge/npm-10.2.5-CB0000?logo=npm)](https://www.npmjs.com)
-[![Sass logo](https://img.shields.io/badge/sass-1.69.5-CF649A?logo=sass)](https://sass-lang.com)
+[![Node.js logo](https://img.shields.io/badge/node.js-21.6.1-5FA04E?logo=node.js)](https://nodejs.org)
+[![npm logo](https://img.shields.io/badge/npm-10.4.0-CB0000?logo=npm)](https://www.npmjs.com)
+[![Sass logo](https://img.shields.io/badge/sass-1.70.0-CF649A?logo=sass)](https://sass-lang.com)
 
 <br>
 
@@ -46,16 +46,16 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (at least version **8.3.1**)
-* [Composer](https://getcomposer.org) (at least version **2.6.6**)
-* [Node.js](https://nodejs.org) (at least version **21.5.0**)
-* [npm](https://www.npmjs.com) (at least version **10.2.5**)
+* [PHP](https://www.php.net) (tested with version **8.3.2**)
+* [Composer](https://getcomposer.org) (tested with version **2.6.6**)
+* [Node.js](https://nodejs.org) (tested with version **21.6.1**)
+* [npm](https://www.npmjs.com) (tested with version **10.4.0**)
 
 ### Step 1: Download Simpl
 
 Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com) or [XAMPP](https://www.apachefriends.org) if you're on Windows, or plain [Apache](https://httpd.apache.org) if you're on Linux.
 
-Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PHPStorm](https://www.jetbrains.com/phpstorm) or [Microsoft Visual Studio Code](https://code.visualstudio.com).
+Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm) or [Microsoft Visual Studio Code](https://code.visualstudio.com).
 
 ### Step 2: Run composer install
 
@@ -171,6 +171,14 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 #### Version 1.1.1 (2023-12-20)
 
 * Quick update to PHP 8.3.1
+
+#### Version 1.2.0 (2024-01-29)
+
+* Changed some constants to environment variables
+* Updated .htaccess file and fixed an issue with the URL builder
+* Updated npm packages
+* Tested with PHP 8.3.2
+* Fix for error when the `Logs` directory doesn't exist
 
 <br>
 
