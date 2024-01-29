@@ -50,7 +50,7 @@ Lastly, this add-on also adds functionality to the visibility toggle icon of the
 
 * Icons add-on
 
-_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.1.0**) or MariaDB (tested with version **11.1.2**)._
+_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.3.0**) or MariaDB (tested with version **11.2.2**)._
 
 ### Installation
 

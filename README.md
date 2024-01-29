@@ -46,10 +46,10 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (version **8.3.2**)
-* [Composer](https://getcomposer.org) (version **2.6.6**)
-* [Node.js](https://nodejs.org) (version **21.6.1**)
-* [npm](https://www.npmjs.com) (version **10.4.0**)
+* [PHP](https://www.php.net) (tested with version **8.3.2**)
+* [Composer](https://getcomposer.org) (tested with version **2.6.6**)
+* [Node.js](https://nodejs.org) (tested with version **21.6.1**)
+* [npm](https://www.npmjs.com) (tested with version **10.4.0**)
 
 ### Step 1: Download Simpl
 
