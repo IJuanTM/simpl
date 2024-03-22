@@ -6,8 +6,8 @@ footer {
   > div.row {
     padding: 0 1rem;
     font-size: .75rem;
-    line-height: 2rem;
     background-color: $light-3;
+    line-height: $footer-height;
 
     a {
       text-decoration: none;
