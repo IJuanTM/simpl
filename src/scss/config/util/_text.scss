@@ -32,9 +32,9 @@ a {
   &[target=_blank]::after {
     content: "🡵";
     font-size: .5rem;
+    vertical-align: top;
     color: rgba(#000, .5);
     display: inline-block;
-    vertical-align: text-top;
   }
 
   &:hover, &:focus {
