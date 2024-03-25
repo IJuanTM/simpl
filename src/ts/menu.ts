@@ -1,17 +1,17 @@
 export const
-  navMenu = document.querySelector('nav.menu'),
-  navItems = navMenu.querySelectorAll('*.nav-item'),
-  menuHamburger = document.querySelector('button.hamburger');
+  navMenu = document.querySelector('nav.menu') as HTMLElement,
+  navItems = navMenu.querySelectorAll('*.nav-item') as NodeListOf<HTMLElement>,
+  menuHamburger = document.querySelector('button.hamburger') as HTMLElement;
 
 /**
  * Function to toggle the navigation menu.
  *
  * @returns {void}
  */
-export const toggleMenu = () => {
+export const toggleMenu = (): void => {
   let menuHeight = 0;
 
-  navItems.forEach(item => {
+  navItems.forEach((item: HTMLElement) => {
     // Get the height of the menu items.
     menuHeight += item.offsetHeight;
 
@@ -21,7 +21,7 @@ export const toggleMenu = () => {
   });
 
   // Set the height of the navigation menu.
-  navMenu.style.maxHeight = navMenu.style.maxHeight ? null : `${menuHeight}px`;
+  navMenu.style.maxHeight = navMenu.style.maxHeight ? '' : `${menuHeight}px`;
 
   // Toggle the hamburger menu.
   menuHamburger.classList.toggle('is-active');
@@ -33,9 +33,9 @@ export const toggleMenu = () => {
  *
  * @returns {void}
  */
-export const setActiveLink = () => navItems.forEach(item => {
+export const setActiveLink = (): void => navItems.forEach(item => {
   const
-    itemHref = item.getAttribute('href').replace(/\/+$/, ''),
+    itemHref = (item.getAttribute('href') || '').replace(/\/+$/, ''),
     windowHref = window.location.href.replace(/\/+$/, '');
 
   // Add the active class to the link if the href matches the current page.
@@ -47,7 +47,7 @@ export const setActiveLink = () => navItems.forEach(item => {
  *
  * @returns {void}
  */
-export const setNavItems = () => {
+export const setNavItems = (): void => {
   // Set the tabindex of the menu items.
   if (window.innerWidth > 768) navItems.forEach(item => item.setAttribute('tabindex', '0'));
   else navItems.forEach(item => item.setAttribute('tabindex', '-1'));

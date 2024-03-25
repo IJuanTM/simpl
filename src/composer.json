@@ -1,6 +1,6 @@
 {
   "name": "simpl/simpl",
-  "description": "An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!",
+  "description": "An easy-to-use PHP, HTML, Sass and TypeScript framework!",
   "require": {
     "php": "^8.3",
     "ext-pdo": "*",
@@ -18,10 +18,8 @@
   "keywords": [
     "php",
     "html",
-    "css",
-    "javascript",
     "sass",
-    "scss",
+    "typescript",
     "framework",
     "mvc"
   ],
