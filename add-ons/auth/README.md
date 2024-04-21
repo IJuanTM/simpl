@@ -63,8 +63,8 @@ Alternatively, you can follow these steps:
 3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
 4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
 5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
-6. Copy the `js/input.js` file to the `js` folder of your Simpl project's folder
-7. Copy the code from the `js/main.js` file to the `js/main.js` file of your project
+6. Copy the `ts/input.ts` file to the `ts` folder of your Simpl project's folder
+7. Copy the code from the `ts/main.ts` file to the `ts/main.ts` file of your project
 8. Copy the `scss/components` folder to the `scss` folder in your project folder
 9. Copy the contents of the `scss/views` folder to your project's `scss/views` folder
 10. Copy the imports from the `scss/main.scss` file to your project's `scss/main.scss` file

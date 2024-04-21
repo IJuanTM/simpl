@@ -2,7 +2,7 @@
 
 ### Description
 
-This add-on adds functionality to be able to switch between different themes for your website. By default it comes with a dark theme for the default Simpl theme. You can add your own themes by adding new styling and adding it to the `themes` array in the `theme.js` file.
+This add-on adds functionality to be able to switch between different themes for your website. By default it comes with a dark theme for the default Simpl theme. You can add your own themes by adding new styling and adding it to the `themes` array in the `main.ts` file.
 
 The default dark theme that is included also supports the `cookies` add-on and the `auth` add-on.
 
@@ -13,7 +13,7 @@ The default dark theme that is included also supports the `cookies` add-on and t
 ### Installation
 
 1. Copy the `public` folder to your Simpl project's folder
-2. Copy the contents of the `js/main.js` file to the `js/main.js` file of your project
+2. Copy the contents of the `ts/main.ts` file to the `ts/main.ts` file of your project
 3. Copy the `scss/themes` folder to the `scss` folder of your project
 4. Copy the dark theme colors from the `scss/config/vars/_colors.scss` file to the `scss/config/vars/_colors.scss` file of your project
 5. Copy the contents of the `scss/views/parts/header.scss` file to the `scss/views/parts/header.scss` file of your project and paste it within the `div.nav-options` selector, **underneath** the breakpoint include
