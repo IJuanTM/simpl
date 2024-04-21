@@ -1,4 +1,9 @@
-const themeSwitch = document.querySelector('div.theme-switch');
+const
+  themeSwitch = document.querySelector('div.theme-switch'),
+  themes = [
+    'light',
+    'dark'
+  ];
 
 themeSwitch.addEventListener('click', () => {
   // Set the theme in localStorage

@@ -7,7 +7,7 @@ export const
  *
  * @returns {void}
  */
-export const togglePassword = () => {
+export const togglePassword = (): void => {
   // Toggle the password visibility.
   inputPassword.setAttribute('type', inputPassword.getAttribute('type') === 'password' ? 'text' : 'password');
 
@@ -23,7 +23,7 @@ const passwordWarning = document.querySelector('div.password-warning');
  *
  * @param event
  */
-export const capsLockWarning = event => {
+export const capsLockWarning = (event: KeyboardEvent) => {
   if (event.getModifierState('CapsLock')) passwordWarning.classList.remove('hidden');
   else passwordWarning.classList.add('hidden');
 }
@@ -37,9 +37,9 @@ const messageWarning = document.querySelector('p.message-warning');
  *
  * @param event
  */
-export const checkMessageLength = event => {
+export const checkMessageLength = (event: { target: HTMLTextAreaElement }): void => {
   // Set the message length.
-  document.querySelector('span.message-length').textContent = event.target.value.length;
+  document.querySelector('span.message-length').textContent = String(event.target.value.length);
 
   // Show a warning if the message is less than 50 characters from the maximum length.
   if (event.target.value.length >= event.target.maxLength - 50) messageWarning.classList.add('warning');

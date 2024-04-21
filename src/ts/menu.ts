@@ -35,11 +35,11 @@ export const toggleMenu = (): void => {
  */
 export const setActiveLink = (): void => navItems.forEach(item => {
   const
-    itemHref = (item.getAttribute('href') || '').replace(/\/+$/, ''),
-    windowHref = window.location.href.replace(/\/+$/, '');
+    itemHost = (item.getAttribute('href') || '').replace(/(^\w+:|^)\/\//, ''),
+    windowHost = window.location.host;
 
   // Add the active class to the link if the href matches the current page.
-  if (itemHref === windowHref || itemHref === windowHref + '/home') item.classList.add('active');
+  if (itemHost === windowHost || itemHost === windowHost + '/home') item.classList.add('active');
 });
 
 /**

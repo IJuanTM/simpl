@@ -5,7 +5,7 @@ export const cookies = document.querySelector('section.cookies');
  *
  * @returns {void}
  */
-export const acceptCookies = () => {
+export const acceptCookies = (): void => {
   // Add the invisible class to the cookies section
   cookies.classList.add('invisible');
 

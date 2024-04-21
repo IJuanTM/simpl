@@ -1,4 +1,4 @@
-import {acceptCookies, cookies} from './cookies.js'
+import {acceptCookies, cookies} from './cookies'
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
