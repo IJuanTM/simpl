@@ -1,2 +1,4 @@
 <!-- Theme -->
-<script src="<?= $this->url('js/theme.js') ?>"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => document.documentElement.dataset['theme'] = localStorage.getItem('theme') || 'light');
+</script>
