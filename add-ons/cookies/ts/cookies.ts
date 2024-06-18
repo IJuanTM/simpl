@@ -1,4 +1,4 @@
-export const cookies = document.querySelector('section.cookies');
+export const cookies = document.querySelector('section.cookies') as HTMLElement;
 
 /**
  * Function to accept the cookies

@@ -3,7 +3,7 @@ import {acceptCookies, cookies} from './cookies'
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 // On click, accept the cookies
-cookies.querySelector('button').addEventListener('click', acceptCookies);
+cookies.querySelector('button')!.addEventListener('click', acceptCookies);
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
