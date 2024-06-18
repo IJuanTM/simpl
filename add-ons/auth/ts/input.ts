@@ -1,6 +1,6 @@
 export const
-  inputPassword = document.querySelector('input.input-password'),
-  passwordToggleIcon = document.querySelector('i.password-toggle');
+  inputPassword = document.querySelector('input.input-password') as HTMLInputElement,
+  passwordToggleIcon = document.querySelector('i.password-toggle') as HTMLElement;
 
 /**
  * Function to toggle the password visibility
@@ -16,7 +16,7 @@ export const togglePassword = (): void => {
   passwordToggleIcon.classList.toggle('fa-eye-slash');
 }
 
-const passwordWarning = document.querySelector('div.password-warning');
+const passwordWarning = document.querySelector('div.password-warning') as HTMLElement;
 
 /**
  * Function to show a warning if the caps lock key is on
@@ -30,7 +30,7 @@ export const capsLockWarning = (event: KeyboardEvent) => {
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
-const messageWarning = document.querySelector('p.message-warning');
+const messageWarning = document.querySelector('p.message-warning') as HTMLElement;
 
 /**
  * Function to check the message length
@@ -39,7 +39,7 @@ const messageWarning = document.querySelector('p.message-warning');
  */
 export const checkMessageLength = (event: { target: HTMLTextAreaElement }): void => {
   // Set the message length.
-  document.querySelector('span.message-length').textContent = String(event.target.value.length);
+  document.querySelector('span.message-length')!.textContent = String(event.target.value.length);
 
   // Show a warning if the message is less than 50 characters from the maximum length.
   if (event.target.value.length >= event.target.maxLength - 50) messageWarning.classList.add('warning');

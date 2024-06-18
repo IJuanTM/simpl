@@ -53,7 +53,7 @@ const
   editUserButton = document.querySelector('button.edit-user');
 
 if (editProfileButton || editUserButton) {
-  const currentValues = {};
+  const currentValues: { [key: string]: string } = {};
 
   inputFields.forEach(field => {
     // Set the current values of the input fields
@@ -82,7 +82,7 @@ if (editProfileButton || editUserButton) {
 
 const
   deleteCheckbox = document.querySelector('input.delete-checkbox') as HTMLInputElement,
-  deleteUserButton = document.querySelector('button.delete-user');
+  deleteUserButton = document.querySelector('button.delete-user') as HTMLButtonElement;
 
 // On change, set or remove the inert attribute from the delete user button depending on whether the checkbox is checked
 if (deleteCheckbox) deleteCheckbox.addEventListener('change', () => deleteCheckbox.checked
