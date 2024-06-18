@@ -183,7 +183,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * Tested with PHP 8.3.2
 * Fix for error when the `Logs` directory doesn't exist
 
-#### Version 1.3.0 (2024-03-24)
+#### Version 1.3.0 (2024-06-19)
 
 * Switched to TypeScript instead of JavaScript
 * Small fixes to npm scripts
