@@ -4,17 +4,20 @@
 
 # Simpl
 
-#### Version 1.2.0
+#### An easy-to-use PHP, HTML, Sass and TypeScript framework!
+
+![GitHub release](https://img.shields.io/github/v/release/IJuanTM/simpl?color=D01018&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iYSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDQ0My40MSA1MTIiPgogIDxkZWZzPgogICAgPGZpbHRlciBpZD0iYiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPGZlT2Zmc2V0IGR4PSIwIiBkeT0iMCIvPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJjIiBzdGREZXZpYXRpb249IjIiLz4KICAgICAgPGZlRmxvb2QgZmxvb2QtY29sb3I9IiMwMDAiIGZsb29kLW9wYWNpdHk9Ii4yNSIvPgogICAgICA8ZmVDb21wb3NpdGUgaW4yPSJjIiBvcGVyYXRvcj0iaW4iLz4KICAgICAgPGZlQ29tcG9zaXRlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9ImQiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxmZU9mZnNldCBkeD0iMCIgZHk9IjAiLz4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZSIgc3RkRGV2aWF0aW9uPSIyIi8+CiAgICAgIDxmZUZsb29kIGZsb29kLWNvbG9yPSIjMDAwIiBmbG9vZC1vcGFjaXR5PSIuMjUiLz4KICAgICAgPGZlQ29tcG9zaXRlIGluMj0iZSIgb3BlcmF0b3I9ImluIi8+CiAgICAgIDxmZUNvbXBvc2l0ZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxnIGZpbHRlcj0idXJsKCNiKSI+CiAgICA8cG9seWdvbiBwb2ludHM9IjIyMS43MSAwIDAgMTI4IDAgMzg0IDIyMS43MSA1MTIgNDQzLjQxIDM4NCA0NDMuNDEgMTI4IDIyMS43MSAwIiBmaWxsPSIjRDAxMDE4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjQ0My40MSAxMjggNDQzLjQxIDM4NCAyMjEuNzEgNTEyIDIyMS43MSAyNTYgNDQzLjQxIDEyOCIgZmlsbD0iI0MwMDAwOCIvPgogICAgPHBvbHlnb24gcG9pbnRzPSIyMjEuNzEgMjU2IDIyMS43MSA1MTIgMCAzODQgMCAxMjggMjIxLjcxIDI1NiIgZmlsbD0iI0UwMjAyOCIvPgogIDwvZz4KICA8ZyBmaWx0ZXI9InVybCgjZCkiPgogICAgPHBhdGgKICAgICAgZD0iTTE5Ni4zNywzMDMuMTFjMy45Miw0Ljc0LDguMzMsOC40NSwxMy4yMiwxMS4xMXMxMC40NCw0LDE2LjY3LDRjOC4yOSwwLDE0Ljk2LTIuMjksMjAtNi44OSw1LjA0LTQuNTksNy41Ni0xMC40NCw3LjU2LTE3LjU2cy0xLjYzLTEyLjUyLTQuODktMTYuNjdjLTMuMjYtNC4xNS03LjUyLTcuNTItMTIuNzgtMTAuMTEtNS4yNi0yLjU5LTEwLjg1LTQuOTItMTYuNzgtNy0zLjg1LTEuMzMtOC4xNS0zLjA3LTEyLjg5LTUuMjItNC43NC0yLjE1LTkuMjYtNC44OS0xMy41NS04LjIyLTQuMy0zLjMzLTcuODItNy40NS0xMC41Ni0xMi4zMy0yLjc0LTQuODktNC4xMS0xMC44OS00LjExLTE4LDAtNy43LDEuOTItMTQuNTksNS43OC0yMC42NywzLjg1LTYuMDcsOS4xOC0xMC44NSwxNi0xNC4zMyw2LjgxLTMuNDgsMTQuNTktNS4yMiwyMy4zMy01LjIyczE1LjgxLDEuNTksMjIuMTEsNC43OGM2LjI5LDMuMTksMTEuNjcsNy4yNiwxNi4xMSwxMi4yMiw0LjQ0LDQuOTcsNy45MiwxMC4xOSwxMC40NSwxNS42N2wtMTYuMjIsOS4zM2MtMS45My0zLjg1LTQuMzctNy42My03LjMzLTExLjMzLTIuOTctMy43LTYuNTYtNi43NC0xMC43OC05LjExLTQuMjItMi4zNy05LjM3LTMuNTYtMTUuNDQtMy41Ni04LjQ1LDAtMTQuNTksMi4wNC0xOC40NCw2LjExLTMuODUsNC4wOC01Ljc4LDguNjMtNS43OCwxMy42NywwLDQuMywxLjExLDguMjYsMy4zMywxMS44OSwyLjIyLDMuNjMsNS45Niw3LjA0LDExLjIyLDEwLjIyLDUuMjYsMy4xOSwxMi40MSw2LjMzLDIxLjQ0LDkuNDQsNC4xNSwxLjQ4LDguNTIsMy40MSwxMy4xMSw1Ljc4LDQuNTksMi4zNyw4Ljg1LDUuMzcsMTIuNzgsOSwzLjkyLDMuNjMsNy4xNSw4LDkuNjcsMTMuMTEsMi41Miw1LjExLDMuNzgsMTEuMjIsMy43OCwxOC4zM3MtMS4zLDEyLjk2LTMuODksMTguNDRjLTIuNTksNS40OC02LjE1LDEwLjE1LTEwLjY2LDE0LTQuNTIsMy44NS05LjYzLDYuODItMTUuMzMsOC44OS01LjcsMi4wNy0xMS42NywzLjExLTE3Ljg5LDMuMTEtOC40NCwwLTE2LjI2LTEuODItMjMuNDQtNS40NS03LjE5LTMuNjMtMTMuNDgtOC40NC0xOC44OS0xNC40NC01LjQxLTYtOS44Mi0xMi40MS0xMy4yMi0xOS4yMmwxNS4xMS0xMC4yMmMzLjU2LDYuMjIsNy4yOSwxMS43LDExLjIyLDE2LjQ0WiIKICAgICAgZmlsbD0iI2ZmZiIvPgogIDwvZz4KPC9zdmc+Cg==)
+![GitHub license](https://img.shields.io/github/license/IJuanTM/simpl?color=A32D2A&logo=gnu)
 
 <br>
 
-#### An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!
-
-[![PHP logo](https://img.shields.io/badge/php-8.3.2-777BB3?logo=php)](https://www.php.net)
-[![Composer logo](https://img.shields.io/badge/composer-2.6.6-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-21.6.1-5FA04E?logo=node.js)](https://nodejs.org)
-[![npm logo](https://img.shields.io/badge/npm-10.4.0-CB0000?logo=npm)](https://www.npmjs.com)
-[![Sass logo](https://img.shields.io/badge/sass-1.70.0-CF649A?logo=sass)](https://sass-lang.com)
+[![PHP logo](https://img.shields.io/badge/php-8.3.8-777BB3?logo=php)](https://www.php.net)
+[![Composer logo](https://img.shields.io/badge/composer-2.7.7-89552C?logo=composer)](https://getcomposer.org)
+[![Node.js logo](https://img.shields.io/badge/node.js-22.3.0-5FA04E?logo=node.js)](https://nodejs.org)
+[![npm logo](https://img.shields.io/badge/npm-10.8.1-CB0000?logo=npm)](https://www.npmjs.com)
+[![Sass logo](https://img.shields.io/badge/sass-1.77.6-CC6699?logo=sass)](https://sass-lang.com)
+[![TypeScript logo](https://img.shields.io/badge/typescript-5.4.5-3178C6?logo=typescript)](https://www.typescriptlang.org)
+[![Rollup logo](https://img.shields.io/badge/rollup-4.18.0-EF3434?logo=rollup.js)](https://rollupjs.org)
 
 <br>
 
@@ -46,10 +49,10 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (tested with version **8.3.2**)
-* [Composer](https://getcomposer.org) (tested with version **2.6.6**)
-* [Node.js](https://nodejs.org) (tested with version **21.6.1**)
-* [npm](https://www.npmjs.com) (tested with version **10.4.0**)
+* [PHP](https://www.php.net) (tested with version **8.3.8**)
+* [Composer](https://getcomposer.org) (tested with version **2.7.7**)
+* [Node.js](https://nodejs.org) (tested with version **22.3.0**)
+* [npm](https://www.npmjs.com) (tested with version **10.8.1**)
 
 ### Step 1: Download Simpl
 
@@ -180,6 +183,15 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * Tested with PHP 8.3.2
 * Fix for error when the `Logs` directory doesn't exist
 
+#### Version 1.3.0 (2024-03-24)
+
+* Switched to TypeScript instead of JavaScript
+* Small fixes to npm scripts
+* Updated Font Awesome icons
+* Newer database collation in database example file
+* Updated npm packages
+* Support for PHP 8.3.8
+
 <br>
 
 ## Credits
@@ -207,7 +219,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 
 * [Hamburgers (1.2.0)](https://github.com/jonsuh/hamburgers)
 * [The New CCS Reset (1.11.2)](https://github.com/elad2412/the-new-css-reset)
-* [Font Awesome _Free_ (6.5.1)](https://fontawesome.com)
+* [Font Awesome _Free_ (6.5.2)](https://fontawesome.com)
 
 <br>
 
