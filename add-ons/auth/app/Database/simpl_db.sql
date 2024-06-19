@@ -1,7 +1,7 @@
 START TRANSACTION;
 
 DROP SCHEMA IF EXISTS simpl_db;
-CREATE SCHEMA simpl_db DEFAULT CHARACTER SET utf8mb4;
+CREATE SCHEMA simpl_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
 
 -- --------------------------------------------------------------------------------------------------------------------------------
 

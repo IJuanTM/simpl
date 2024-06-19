@@ -5,8 +5,8 @@ header {
 
   > div.navbar {
     z-index: 2;
-    height: 4rem;
     position: relative;
+    height: $header-height;
     background-color: $light-3;
 
     @include breakpoint-down(md) {

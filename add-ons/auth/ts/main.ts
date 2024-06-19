@@ -2,7 +2,7 @@ import {capsLockWarning, checkMessageLength, inputPassword, passwordToggleIcon, 
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
-const inputFields = document.querySelectorAll('input, textarea, select');
+const inputFields = document.querySelectorAll('input, textarea, select') as NodeListOf<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
 
 if (inputFields) inputFields.forEach(field => field.addEventListener('keydown', () => {
   const inputGroup = field.closest('div.input-group');
@@ -16,17 +16,17 @@ if (inputPassword) {
   passwordToggleIcon.addEventListener('click', togglePassword);
 
   // On keydown, check if the caps lock key is on
-  inputPassword.addEventListener('keydown', event => capsLockWarning(event));
+  inputPassword.addEventListener('keydown', (event: KeyboardEvent) => capsLockWarning(event));
 }
 
 const
-  messageTextarea = document.querySelector('textarea.message-field'),
+  messageTextarea = document.querySelector('textarea.message-field') as HTMLTextAreaElement,
   clearMessageButton = document.querySelector('p.clear-message');
 
 if (messageTextarea && clearMessageButton) {
   messageTextarea.addEventListener('keyup', event => {
     // Check the message length
-    checkMessageLength(event);
+    checkMessageLength({target: event.target as HTMLTextAreaElement});
 
     // If the message length is greater than 0, remove the inert attribute from the clear message button
     // Else, add the inert attribute to the clear message button
@@ -53,7 +53,7 @@ const
   editUserButton = document.querySelector('button.edit-user');
 
 if (editProfileButton || editUserButton) {
-  const currentValues = {};
+  const currentValues: { [key: string]: string } = {};
 
   inputFields.forEach(field => {
     // Set the current values of the input fields
@@ -81,8 +81,8 @@ if (editProfileButton || editUserButton) {
 }
 
 const
-  deleteCheckbox = document.querySelector('input.delete-checkbox'),
-  deleteUserButton = document.querySelector('button.delete-user');
+  deleteCheckbox = document.querySelector('input.delete-checkbox') as HTMLInputElement,
+  deleteUserButton = document.querySelector('button.delete-user') as HTMLButtonElement;
 
 // On change, set or remove the inert attribute from the delete user button depending on whether the checkbox is checked
 if (deleteCheckbox) deleteCheckbox.addEventListener('change', () => deleteCheckbox.checked

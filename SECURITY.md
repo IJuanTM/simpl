@@ -10,4 +10,4 @@ The table below shows which versions of the project are currently being supporte
 
 ## Reporting an Issue
 
-If you have discovered a security issue with this project, please create a new issue in the repository and assign the relevant label. We will look into it as soon as possible. Thank you!
+If you have discovered a security issue with this project, please create a new issue in the repository and assign the relevant label. I will look into it as soon as possible. Thank you!
