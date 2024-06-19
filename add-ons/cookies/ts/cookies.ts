@@ -1,11 +1,11 @@
-export const cookies = document.querySelector('section.cookies');
+export const cookies = document.querySelector('section.cookies') as HTMLElement;
 
 /**
  * Function to accept the cookies
  *
  * @returns {void}
  */
-export const acceptCookies = () => {
+export const acceptCookies = (): void => {
   // Add the invisible class to the cookies section
   cookies.classList.add('invisible');
 

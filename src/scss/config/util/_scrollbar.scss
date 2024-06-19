@@ -1,20 +1,27 @@
-::-webkit-scrollbar {
-  width: .5rem;
-  height: .5rem;
-}
-
-::-webkit-scrollbar-track {
-  background-color: $light-4;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: $light-7;
-
-  &:hover {
-    background-color: $light-8;
+* {
+  ::-webkit-scrollbar {
+    width: .5rem;
+    height: .5rem;
   }
 
-  &:active {
-    background-color: $light-9;
+  ::-webkit-scrollbar-track {
+    background-color: $light-4;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: $light-7;
+
+    &:hover {
+      background-color: $light-8;
+    }
+
+    &:active {
+      background-color: $light-9;
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: $light-7 $light-4;
   }
 }

@@ -42,7 +42,7 @@ It also comes with an example sql file to create a database with a user table an
 
 The database connection values are stored in the `config/database.php` as constants. By default, the database connection values are set to connect to a local database using the root user, don't forget to change these values to your own database connection values and add your own database user instead of root for security reasons.
 
-#### JavaScript
+#### TypeScript
 
 Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
 
@@ -50,7 +50,7 @@ Lastly, this add-on also adds functionality to the visibility toggle icon of the
 
 * Icons add-on
 
-_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.3.0**) or MariaDB (tested with version **11.2.2**)._
+_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.4.0**) or MariaDB (tested with version **11.4.2**)._
 
 ### Installation
 
@@ -63,8 +63,8 @@ Alternatively, you can follow these steps:
 3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
 4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
 5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
-6. Copy the `js/input.js` file to the `js` folder of your Simpl project's folder
-7. Copy the code from the `js/main.js` file to the `js/main.js` file of your project
+6. Copy the `ts/input.ts` file to the `ts` folder of your Simpl project's folder
+7. Copy the code from the `ts/main.ts` file to the `ts/main.ts` file of your project
 8. Copy the `scss/components` folder to the `scss` folder in your project folder
 9. Copy the contents of the `scss/views` folder to your project's `scss/views` folder
 10. Copy the imports from the `scss/main.scss` file to your project's `scss/main.scss` file

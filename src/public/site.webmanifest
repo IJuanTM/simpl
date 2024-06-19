@@ -3,7 +3,7 @@
   "start_url": "/",
   "name": "simpl",
   "short_name": "simpl",
-  "description": "An easy-to-use PHP, HTML, CSS, JavaScript and Sass framework!",
+  "description": "An easy-to-use PHP, HTML, Sass and TypeScript framework!",
   "icons": [
     {
       "src": "img/favicon/android-chrome-192x192.png",
