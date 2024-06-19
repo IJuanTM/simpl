@@ -35,9 +35,9 @@
 * Makes use of a MVC system using PHP
 * Works with both Windows and Linux
 * Made to work with the latest versions of PHP, Composer, Node.js, npm and Sass
-* Includes a bunch of npm scripts for compiling Sass and JavaScript, as well as live-reloading
+* Includes a bunch of npm scripts for compiling Sass and TypeScript, as well as live-reloading
 * Comes with example pages and a default landing page
-* A collection of handy JavaScript functions
+* A collection of handy TypeScript functions
 
 _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
@@ -66,7 +66,7 @@ Simpl makes use of PSR-4 autoloading, for this to work you will have to run `com
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and JavaScript files.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files.
 
 ### Step 4: Go to your localhost
 
@@ -93,7 +93,7 @@ The following scrips are included in the `package.json` file:
 * `live`: Runs the browser sync server to automatically reload the page when a file is changed
 * `dev`: Runs the live server and watches the files for changes
 
-After changing the styling or JavaScript of your website you will have to run the `build` script to compile the files. This will compile the Sass and JavaScript files and save them to the `public` folder. This can also be done automatically by running the `watch` script.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will compile the Sass and TypeScript files and save them to the `public` folder. This can also be done automatically by running the `watch` script.
 
 To make your website automatically reload when a file is changed you can run the `live` script. This will start the browser sync server and automatically reload the page when a file is changed. _Important: Before running the live-reload script you will have to change the url in the script, it's located in the `package.json` file. Change this url to your localhost._
 
@@ -121,11 +121,11 @@ There is also a `LogController` in the `Controllers` folder, this is used for lo
 
 You can find the HTML code in the `views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containg the `header.phtml` and `footer.phtml` files.
 
-#### Styling and JavaScript
+#### Styling and TypeScript
 
 The styling is located in the `scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
 
-The JavaScript code is located in the `js` folder. Simpl makes use of Rollup to bundle the JavaScript files, because of this you are able to create multiple JavaScript files and import them in the `main.js` file.
+The TypeScript code is located in the `ts` folder. Simpl makes use of Rollup to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
 
 #### Public
 

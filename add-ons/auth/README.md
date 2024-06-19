@@ -42,7 +42,7 @@ It also comes with an example sql file to create a database with a user table an
 
 The database connection values are stored in the `config/database.php` as constants. By default, the database connection values are set to connect to a local database using the root user, don't forget to change these values to your own database connection values and add your own database user instead of root for security reasons.
 
-#### JavaScript
+#### TypeScript
 
 Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
 
@@ -50,7 +50,7 @@ Lastly, this add-on also adds functionality to the visibility toggle icon of the
 
 * Icons add-on
 
-_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.3.0**) or MariaDB (tested with version **11.2.2**)._
+_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.4.0**) or MariaDB (tested with version **11.4.2**)._
 
 ### Installation
 
