@@ -174,6 +174,9 @@ class LoginPage
         // Add the role to the user array
         $user += ['role' => $role];
 
+        // Remove the password from the user array
+        unset($user['password']);
+
         // Set the session user
         $_SESSION['user'] = $user;
 
