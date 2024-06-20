@@ -5,7 +5,7 @@
   <div class="alert <?= implode(' ', $_SESSION['alert']['types']) ?>" role="alert" data-timeout="<?= isset($_SESSION['alert']['timeout']) ? ($_SESSION['alert']['timeout'] - time()) * 1000 : 0 ?>">
     <?= $_SESSION['alert']['message'] ?>
   </div>
-<?php endif; ?>
+<?php endif ?>
 
 <!-- Footer -->
 <?php $this->part('footer') ?>
