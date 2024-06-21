@@ -32,8 +32,11 @@ class LogController
         // Get the caller
         $caller = array_shift($trace);
 
+        // Get the relative path to the file
+        $path = str_replace(BASEDIR, '', $caller['file']);
+
         // Write message to file
-        fwrite($file, '[' . date('Y-m-d H:i:s') . "] $message ($caller[file] on line $caller[line])" . PHP_EOL);
+        fwrite($file, '[' . date('Y-M-d H:i:s e') . "] $message ($path on line $caller[line])" . PHP_EOL);
 
         // Close log file
         fclose($file);
