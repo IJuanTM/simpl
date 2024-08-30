@@ -60,7 +60,7 @@ class ProfilePage
     }
 
     /**
-     * This method is for updating an user's profile.
+     * This method is for updating a user's profile.
      * A user can update their name and email.
      *
      * @param int $id

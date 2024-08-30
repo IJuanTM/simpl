@@ -102,7 +102,7 @@ class UsersPage
     }
 
     /**
-     * This method is for updating an user's profile.
+     * This method is for updating a user's profile.
      * An administrator can update the user's name, email and role.
      *
      * @param int $id
