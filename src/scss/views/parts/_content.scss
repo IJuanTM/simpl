@@ -1,3 +1,5 @@
+@use "../../config/config" as *;
+
 main.content {
   padding: $content-padding;
   background-color: $light-1;

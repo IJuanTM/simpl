@@ -1,15 +1,14 @@
 // CONFIG (load first)
-@import "config/config";
+@forward "config/config";
 
 // STYLE
-@import "style";
+@forward "style";
 
 // VIEWS
-@import "views/error";
-@import "views/home";
+@forward "views/error";
 
 // PARTS
-@import "views/parts/alert";
-@import "views/parts/content";
-@import "views/parts/footer";
-@import "views/parts/header";
+@forward "views/parts/alert";
+@forward "views/parts/content";
+@forward "views/parts/footer";
+@forward "views/parts/header";

@@ -1,0 +1,7 @@
+@use "../config/config" as *;
+
+section.error h1 {
+  color: $red;
+  font-size: 6rem;
+  font-weight: 600;
+}

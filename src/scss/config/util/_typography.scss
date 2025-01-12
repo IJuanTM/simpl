@@ -1,30 +1,32 @@
-small {
-  font-size: .875rem;
+h1, h2, h3, h4, h5 {
+  font-weight: 700;
 }
 
 h1 {
-  font-size: 4rem;
+  font-size: 4.210rem;
 }
 
 h2 {
-  font-size: 3.25rem;
+  font-size: 3.158rem;
 }
 
 h3 {
-  font-size: 2.5rem;
+  font-size: 2.369rem;
 }
 
 h4 {
-  font-size: 2rem;
+  font-size: 1.777rem;
 }
 
 h5 {
-  font-size: 1.5rem;
+  font-size: 1.333rem;
 }
 
-h6 {
-  font-size: 1.25rem;
+small {
+  font-size: 0.750rem;
 }
+
+// ---------------------------------------------------------------- //
 
 a {
   text-decoration: underline;

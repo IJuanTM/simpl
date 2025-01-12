@@ -1,14 +1,14 @@
 // VARS (load first)
-@import "vars/breakpoints";
-@import "vars/colors";
-@import "vars/sizing";
+@forward "vars/breakpoints";
+@forward "vars/colors";
+@forward "vars/sizing";
 
 // RULES
-@import "rules/@mixin";
+@forward "rules/mixins";
 
 // UTIL
-@import "util/flex";
-@import "util/scrollbar";
-@import "util/sizing";
-@import "util/text";
-@import "util/visibility";
+@forward "util/dimentions";
+@forward "util/flex";
+@forward "util/scrollbar";
+@forward "util/typography";
+@forward "util/visibility";

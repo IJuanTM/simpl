@@ -1,3 +1,5 @@
+@use "../../config/config" as *;
+
 header {
   z-index: 2;
   position: relative;
@@ -22,10 +24,6 @@ header {
     > div.nav-brand {
       z-index: 3;
       padding: 0 1rem;
-
-      > div.row {
-        column-gap: .5rem;
-      }
 
       a.nav-logo {
         width: 2.5rem;

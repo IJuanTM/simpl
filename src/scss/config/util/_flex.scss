@@ -1,3 +1,5 @@
+@use "sass:math";
+
 *.row {
   display: flex;
   flex-wrap: wrap;
@@ -10,17 +12,39 @@
 
 // ---------------------------------------------------------------- //
 
+*.f-row {
+  display: flex;
+  flex-direction: row;
+}
+
+*.f-col {
+  display: flex;
+  flex-direction: column;
+}
+
+// ---------------------------------------------------------------- //
+
 *.f-0 {
   flex: 0 1 auto !important;
   max-width: none !important;
 }
 
-*.f-g {
-  flex-grow: 1;
+// ---------------------------------------------------------------- //
+
+$maxGrow: 4;
+
+@for $i from 0 through $maxGrow {
+  *.f-g-#{$i} {
+    flex-grow: $i !important;
+  }
 }
 
-*.f-s {
-  flex-shrink: 1;
+$maxShrink: 4;
+
+@for $i from 0 through $maxShrink {
+  *.f-s-#{$i} {
+    flex-shrink: $i !important;
+  }
 }
 
 // ---------------------------------------------------------------- //
@@ -30,6 +54,8 @@
   align-items: center;
   justify-content: center;
 }
+
+// ---------------------------------------------------------------- //
 
 *.start-x {
   display: flex;
@@ -64,6 +90,8 @@
   justify-content: space-around;
 }
 
+// ---------------------------------------------------------------- //
+
 *.start-y {
   display: flex;
   align-items: flex-start;
@@ -93,18 +121,6 @@
 
 // ---------------------------------------------------------------- //
 
-*.f-row {
-  display: flex;
-  flex-direction: row;
-}
-
-*.f-col {
-  display: flex;
-  flex-direction: column;
-}
-
-// ---------------------------------------------------------------- //
-
 *.f-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -113,4 +129,41 @@
 *.f-nowrap {
   display: flex;
   flex-wrap: nowrap;
+}
+
+// ---------------------------------------------------------------- //
+
+$max: 10;
+$step: 5;
+
+@for $i from 0 through math.div($max * 10, $step) {
+  $value: $i * math.div($step, 10);
+
+  @if $value % 1 == 0 {
+    *.g-#{$value} {
+      gap: #{$value}rem !important;
+    }
+
+    *.g-row-#{$value} {
+      row-gap: #{$value}rem !important;
+    }
+
+    *.g-col-#{$value} {
+      column-gap: #{$value}rem !important;
+    }
+  } @else {
+    $floor: math.floor($value);
+
+    *.g-#{$floor}\.#{($value - $floor) * 10} {
+      gap: #{$value}rem !important;
+    }
+
+    *.g-row-#{$floor}\.#{($value - $floor) * 10} {
+      row-gap: #{$value}rem !important;
+    }
+
+    *.g-col-#{$floor}\.#{($value - $floor) * 10} {
+      column-gap: #{$value}rem !important;
+    }
+  }
 }
