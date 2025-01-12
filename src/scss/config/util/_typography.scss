@@ -1,34 +1,42 @@
-h1, h2, h3, h4, h5 {
+h1, [data-typo="h1"],
+h2, [data-typo="h2"],
+h3, [data-typo="h3"],
+h4, [data-typo="h4"],
+h5, [data-typo="h5"] {
   font-weight: 700;
 }
 
-h1 {
-  font-size: 4.210rem;
+h1, [data-typo="h1"] {
+  font-size: 3.5rem;
 }
 
-h2 {
-  font-size: 3.158rem;
+h2, [data-typo="h2"] {
+  font-size: 2.5rem;
 }
 
-h3 {
-  font-size: 2.369rem;
+h3, [data-typo="h3"] {
+  font-size: 2rem;
 }
 
-h4 {
-  font-size: 1.777rem;
+h4, [data-typo="h4"] {
+  font-size: 1.5rem;
 }
 
-h5 {
-  font-size: 1.333rem;
+h5, [data-typo="h5"] {
+  font-size: 1.25rem;
 }
 
-small {
-  font-size: 0.750rem;
+p, [data-typo="p"] {
+  font-size: 1rem;
+}
+
+small, [data-typo="small"] {
+  font-size: .75rem;
 }
 
 // ---------------------------------------------------------------- //
 
-a {
+a, [data-typo="a"] {
   text-decoration: underline;
 
   &[target=_blank]::after {
@@ -44,7 +52,7 @@ a {
   }
 }
 
-:is(a, button):focus-visible {
+:is(a, [data-typo="a"], button):focus-visible {
   box-shadow: inset 0 0 0 .125rem #000;
 }
 
