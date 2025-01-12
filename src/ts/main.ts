@@ -35,5 +35,5 @@ window.addEventListener('load', () => {
     // Else, remove the inert attribute from the item
     if (item.classList.contains('alert')) item.classList.add('invisible');
     else item.removeAttribute('inert');
-  }, parseInt(item.dataset['timeout'] || '0')));
+  }, parseInt(item.dataset.timeout || '0')));
 });
