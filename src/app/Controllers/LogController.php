@@ -10,12 +10,12 @@ class LogController
     /**
      * This method is for logging different types of messages.
      *
-     * @param $message
-     * @param $type
+     * @param string $message
+     * @param string $type
      *
      * @return void
      */
-    public static function log($message, $type): void
+    public static function log(string $message, string $type): void
     {
         // Get the Logs directory
         $dir = BASEDIR . '/app/Logs';
