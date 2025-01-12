@@ -10,6 +10,7 @@ node_modules
 public/css/main.min.css
 public/css/main.min.css.map
 public/js/main.min.js
+public/js/main.min.js.map
 
 # Environment variables
 .env
