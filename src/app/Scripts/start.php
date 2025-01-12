@@ -15,15 +15,15 @@ foreach (glob(BASEDIR . '/app/Config/*.php') as $file) require_once $file;
 date_default_timezone_set(TIMEZONE);
 
 // Enable PHP error logging
-ini_set('log_errors', 'On');
+ini_set('log_errors', 1);
 
 // Set error reporting based on the environment
 if (DEV) {
-    ini_set('display_errors', 'On');
-    ini_set('display_startup_errors', 'On');
+    ini_set('display_errors', 1);
+    ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 } else {
-    ini_set('display_errors', 'Off');
-    ini_set('display_startup_errors', 'Off');
-    error_reporting(E_ALL & ~E_DEPRECATED & ~E_STRICT);
+    ini_set('display_errors', 0);
+    ini_set('display_startup_errors', 0);
+    error_reporting(E_ALL & ~E_DEPRECATED & ~E_NOTICE);
 }
