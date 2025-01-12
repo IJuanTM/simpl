@@ -2,7 +2,14 @@
 
 namespace app\Pages;
 
+/**
+ * Page specific code goes here, look at it as a controller for the page
+ */
 class HomePage
 {
-    // Page specific code goes here, look at it as a controller for the page
+    public function __construct(object $page)
+    {
+        // Set the page subtitle
+        $page->subtitle = 'Welcome';
+    }
 }

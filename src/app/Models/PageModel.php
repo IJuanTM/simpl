@@ -2,32 +2,24 @@
 
 namespace app\Models;
 
+/**
+ * The PageModel class is the model for a page.
+ * It contains properties for the page, such as the page object, the url parts, the title and the subtitle.
+ */
 class PageModel
 {
-    private object $obj;
-    private array $url;
+    public object $pageObj;
+    public array $urlArr;
+    public string|null $title;
+    public string|null $subtitle;
 
     public function __construct(string $page, array $subpages, array $params)
     {
-        $this->url = [
-            'page' => $page,
-            'subpages' => $subpages,
-            'params' => $params
-        ];
-    }
+        // Set the url array
+        $this->urlArr = compact('page', 'subpages', 'params');
 
-    public function getUrl(): array
-    {
-        return $this->url;
-    }
-
-    public function getObj(): object
-    {
-        return $this->obj;
-    }
-
-    public function setObj(object $obj): void
-    {
-        $this->obj = $obj;
+        // Set the title
+        $this->title = APP_NAME;
+        $this->subtitle = ucwords(str_replace('-', ' ', $page));
     }
 }

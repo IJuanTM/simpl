@@ -10,17 +10,30 @@ use app\Models\PageModel;
  */
 class PageController extends PageModel
 {
+    private array $aliases = [
+        'home' => [
+            'index',
+            'start'
+        ]
+    ];
+
     public function __construct()
     {
         // Split the url route into an array
         $urlArr = explode('/', explode('?', trim(strtolower($_SERVER['REQUEST_URI']), '/') ?: REDIRECT)[0]);
 
         // Create the a page object from the current url, with the page name, subpages and parameters
-        parent::__construct(
-            array_shift($urlArr),
-            $urlArr,
-            $_GET
-        );
+        parent::__construct(array_shift($urlArr), $urlArr, $_GET);
+
+        // Check if the page is an alias, if so set the page to the alias
+        foreach ($this->aliases as $alias => $pages) if (in_array($this->urlArr['page'], $pages)) {
+            $this->urlArr['page'] = $alias;
+            break;
+        }
+
+        // Get the Page class that corresponds with the current page and create an object from it. Pass this object to the PageModel if it exists.
+        $obj = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $this->urlArr['page']))) . 'Page';
+        if (class_exists($obj)) $this->pageObj = new $obj($this);
 
         // Load the page
         $this->load();
@@ -38,11 +51,7 @@ class PageController extends PageModel
         $this->part('top');
 
         // Get the page name
-        $page = $this->getUrl()['page'];
-
-        // Load the PHP class that corresponds with the page, give the current page object as parameter
-        $obj = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
-        if (class_exists($obj)) $this->setObj(new $obj($this));
+        $page = $this->urlArr['page'];
 
         // Get the file from the views folder
         $file = BASEDIR . "/views/$page.phtml";
@@ -94,7 +103,7 @@ class PageController extends PageModel
      *
      * @return void
      */
-    public static function redirect(string $location, ?int $refresh = 0): void
+    public static function redirect(string $location, int|null $refresh = 0): void
     {
         // Redirect to the given location with the given delay
         header("refresh: $refresh; url=" . self::url($location));
@@ -109,28 +118,23 @@ class PageController extends PageModel
      */
     public static function url(string $subUrl = ''): string
     {
-        // Make a static variable $baseUrl
         static $baseUrl;
 
-        // Check if http or https, then take the host, root directory and the base directory and return a complete URL path
-        if (!$baseUrl) $baseUrl = 'http' . (!empty($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . preg_replace('@^' . preg_quote(rtrim(BASEDIR, '/')) . '@', '', BASEDIR);
+        // Get the root directory and remove the trailing slash
+        $rootDir = rtrim(BASEDIR, '/');
 
-        // Create the url
-        $url = trim($baseUrl, '/') . '/' . ltrim($subUrl, '/');
+        // Get the base URL of the website
+        if (!$baseUrl) $baseUrl = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . preg_replace('@^' . preg_quote($rootDir) . '@', '', BASEDIR);
 
-        // Check if it is a file, if so add the filemtime to the url
-        if (is_file(rtrim(BASEDIR, '/') . '/' . $subUrl)) {
-            // Explode the url in a page and a fragment
-            [$page, $fragment] = explode('#', $url . '#', 2);
+        // Create the URL
+        $url = rtrim($baseUrl, '/') . '/' . ltrim($subUrl, '/');
 
-            // Add the filemtime to the url
-            $page .= (!str_contains($page, '?')) ? '?' : '&' . http_build_query(['_' => filemtime(rtrim(BASEDIR, '/') . '/' . $subUrl)]);
+        // Get the file path
+        $file = $rootDir . '/public/' . ltrim($subUrl, '/');
 
-            // Return the url
-            return $page . ($fragment ? '#' . $fragment : '');
-        } else $url = rtrim($url, '/');
+        // Check if the file exists, if so add the version to the URL
+        if (is_file($file)) return strtok($url, '#') . (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($file) . (str_contains($url, '#') ? '#' . explode('#', $url, 2)[1] : '');
 
-        // Return the URL
-        return $url;
+        return rtrim($url, '/');
     }
 }
