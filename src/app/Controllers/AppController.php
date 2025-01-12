@@ -10,10 +10,12 @@ class AppController
 {
     public function __construct()
     {
-        // Clear the alert if the timeout has passed
-        if (isset($_SESSION['alert']) && $_SESSION['alert']['timeout'] < time()) unset($_SESSION['alert']);
+        // Start the output buffer
+        ob_start();
 
-        // Create a new PageController object
+        // Initialize controllers
+        new SessionController();
+        new AlertController();
         new PageController();
     }
 
@@ -40,37 +42,5 @@ class AppController
                 return "SVG \"$name\" not found";
             } else return "<!-- SVG \"$name\" not found -->";
         }
-    }
-
-    /**
-     * Method for sanitizing data to prevent XSS attacks.
-     *
-     * @param $data
-     *
-     * @return string
-     */
-    public static function sanitize($data): string
-    {
-        // Sanitize the data
-        return htmlspecialchars(trim($data), ENT_QUOTES);
-    }
-
-    /**
-     * Method for showing a global alert at the bottom of the page.
-     *
-     * @param string $message
-     * @param array $types
-     * @param int $timeout
-     *
-     * @return void
-     */
-    public static function alert(string $message, array $types, int $timeout = 0): void
-    {
-        // Set the alert
-        $_SESSION['alert'] = [
-            'message' => $message,
-            'types' => $types,
-            'timeout' => time() + $timeout
-        ];
     }
 }
