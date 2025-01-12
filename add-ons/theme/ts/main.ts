@@ -14,7 +14,7 @@ const
 themeSwitch.addEventListener('click', () => {
   const
     currentTheme = localStorage.getItem('theme') || 'light',
-    nextTheme = themes[themes.findIndex(theme => theme.name === currentTheme) + 1] || themes[0]!;
+    nextTheme = themes[themes.findIndex((theme: { name: string; }) => theme.name === currentTheme) + 1] || themes[0]!;
 
   // Set the theme in localStorage
   localStorage.setItem('theme', nextTheme.name);
@@ -23,7 +23,7 @@ themeSwitch.addEventListener('click', () => {
   themeSwitch.innerHTML = `<i class="fas ${nextTheme.icon}"></i>`;
 
   // Set the theme
-  document.documentElement.dataset['theme'] = localStorage.getItem('theme')!;
+  document.documentElement.dataset.theme = localStorage.getItem('theme')!;
 });
 
 // -------------------------------------------------------------------------------------------------------------------------------- //

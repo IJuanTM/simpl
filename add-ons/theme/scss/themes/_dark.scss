@@ -1,3 +1,5 @@
+@use "../config/config" as *;
+
 html[data-theme="dark"] {
   a:hover, a:focus {
     color: rgba(#FFF, .75);
@@ -15,9 +17,13 @@ html[data-theme="dark"] {
     }
   }
 
+  /* ---- [ Body ] ---- */
+
   body {
     color: #FFF;
     background-color: $dark-2;
+
+    /* ---- [ Header ] ---- */
 
     header > div.navbar {
       background-color: $dark-3;
@@ -73,8 +79,12 @@ html[data-theme="dark"] {
       }
     }
 
+    /* ---- [ Content ] ---- */
+
     main.content {
       background-color: $dark-1;
+
+      /* ---- [ Auth (add-on) ] ---- */
 
       form {
         div.input-prepend, div.input-append {
@@ -138,16 +148,26 @@ html[data-theme="dark"] {
           }
         }
       }
+
+      div.card {
+        background-color: $dark-2;
+      }
     }
+
+    /* ---- [ Footer ] ---- */
 
     footer > div.row {
       background-color: $dark-3;
     }
 
-    section.cookies {
+    /* ---- [ Cookie (add-on) ] ---- */
+
+    section.cookie {
       background-color: $dark-3;
     }
   }
+
+  /* ---- [ Scrollbar ] ---- */
 
   ::-webkit-scrollbar-track {
     background-color: $dark-4;
