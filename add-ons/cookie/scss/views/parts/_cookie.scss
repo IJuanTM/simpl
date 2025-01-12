@@ -1,4 +1,6 @@
-section.cookies {
+@use "../../config/config" as *;
+
+section.cookie {
   right: 0;
   bottom: 0;
   z-index: 3;
@@ -19,8 +21,6 @@ section.cookies {
   }
 
   > div.row {
-    column-gap: 1rem;
-
     @include breakpoint-down(sm) {
       font-size: .875rem;
     }

@@ -1,4 +1,4 @@
-export const cookies = document.querySelector('section.cookies') as HTMLElement;
+export const cookie = document.querySelector('section.cookie') as HTMLElement | null;
 
 /**
  * Function to accept the cookies
@@ -7,7 +7,7 @@ export const cookies = document.querySelector('section.cookies') as HTMLElement;
  */
 export const acceptCookies = (): void => {
   // Add the invisible class to the cookies section
-  cookies.classList.add('invisible');
+  cookie?.classList.add('invisible');
 
   // Set the cookiesAccepted item in localStorage to true
   localStorage.setItem('cookiesAccepted', 'true');
