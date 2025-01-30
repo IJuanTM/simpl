@@ -1,8 +1,8 @@
+<?php use app\Controllers\SessionController; ?>
+
 </main>
 
 <!-- Alert -->
-<?php use app\Controllers\SessionController; ?>
-
 <?php if (SessionController::get('alert') !== null) : ?>
   <div class="alert <?= implode(' ', SessionController::get('alert')['types']) ?>" role="alert" data-timeout="<?= isset(SessionController::get('alert')['timeout']) ? (SessionController::get('alert')['timeout'] - time()) * 1000 : 0 ?>">
     <?= SessionController::get('alert')['message'] ?>
@@ -12,7 +12,7 @@
 <!-- Footer -->
 <?php $this->part('footer') ?>
 
-<!-- JavaScript -->
+<!-- Scripts -->
 <?php $this->part('index/js') ?>
 </body>
 </html>
