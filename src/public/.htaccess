@@ -1,9 +1,53 @@
+# Disable directory listings and MultiViews
+Options -MultiViews -Indexes
+
+# Deny access to sensitive files
+<FilesMatch "\.(env|htaccess|ini|log|sql|git|bak|sh)$">
+    Require all denied
+</FilesMatch>
+
+# Configure rewrite rules
 <IfModule mod_rewrite.c>
-    Options -MultiViews
-
     RewriteEngine On
+    RewriteBase /
 
+    # Redirect to index.php if not a file or directory
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+# Add security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+
+    # Prevent MIME-type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+
+    # Enable basic XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # Enforce HTTPS
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
+
+    # Referrer policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Enable compression
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Leverage browser caching
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresDefault "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
 </IfModule>
