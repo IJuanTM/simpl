@@ -16,6 +16,7 @@ class AppController
         // Initialize controllers
         new SessionController();
         new AlertController();
+        new AliasController();
         new PageController();
     }
 

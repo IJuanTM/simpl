@@ -9,7 +9,7 @@ class HomePage
 {
     public function __construct(object $page)
     {
-        // Set the page subtitle
+        // Override the subtitle
         $page->subtitle = 'Welcome';
     }
 }
