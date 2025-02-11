@@ -17,28 +17,26 @@ class LogController
      */
     public static function log(string $message, string $type): void
     {
-        // Get the Logs directory
+        // Check if the log directory exists, if not create it.
         $dir = BASEDIR . '/app/Logs';
-
-        // Check if the Logs directory exists and create it if it doesn't
         if (!is_dir($dir)) mkdir($dir);
 
-        // Open log file or create it if it doesn't exist
-        $file = fopen(BASEDIR . "/app/Logs/$type.log", 'a');
+        // Open the log file in append mode.
+        $file = fopen("$dir/$type.log", 'a');
 
-        // Get debug backtrace
-        $trace = debug_backtrace();
+        // Filter out the log method and index.php from the stack trace.
+        $traceLog = array_filter(debug_backtrace(), static fn($entry) => !($entry['function'] === 'log' || basename($entry['file'] ?? '') === 'index.php'));
 
-        // Get the caller
-        $caller = array_shift($trace);
+        // Format the log message.
+        $logMessage = '[' . date('Y-M-d H:i:s e') . "] $message" . PHP_EOL;
+        if ($traceLog) {
+            $logMessage .= 'Stack trace:' . PHP_EOL;
 
-        // Get the relative path to the file
-        $path = str_replace(BASEDIR, '', $caller['file']);
+            foreach ($traceLog as $index => $entry) $logMessage .= "#$index {$entry['file']}({$entry['line']}): " . ($entry['class'] ?? '') . ($entry['type'] ?? '') . $entry['function'] . '()' . PHP_EOL;
+        }
 
-        // Write message to file
-        fwrite($file, '[' . date('Y-M-d H:i:s e') . "] $message ($path on line $caller[line])" . PHP_EOL);
-
-        // Close log file
+        // Write the log message to the log file and close it.
+        fwrite($file, $logMessage . PHP_EOL);
         fclose($file);
     }
 }
