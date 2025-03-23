@@ -3,18 +3,18 @@
 html {
   scroll-behavior: smooth;
 
-  @media screen and (max-height: 900px) {
+  @media screen and (max-height: 56rem) {
     font-size: .875rem;
   }
 
-  @media screen and (min-height: 1100px) {
+  @media screen and (min-height: 64rem) {
     font-size: 1.125rem;
   }
 }
 
 body {
+  font: 100% $font-family;
   background-color: $light-2;
-  font-family: "Jost", sans-serif;
 
   @include breakpoint-up(lg) {
     margin: 0 12.5%;

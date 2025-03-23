@@ -62,8 +62,17 @@ header {
         text-decoration: none;
         white-space: pre-wrap;
 
-        &.nav-link.profile > i {
-          font-size: 1.5rem;
+        &.nav-link.profile {
+          column-gap: .5rem;
+
+          > img {
+            height: 2rem;
+            border-radius: 50%;
+          }
+
+          > i {
+            font-size: 1.5rem;
+          }
         }
 
         &.nav-button {
