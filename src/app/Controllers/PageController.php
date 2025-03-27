@@ -45,7 +45,7 @@ class PageController extends Page
             }
 
             // Call the API method
-            $this->pageObj->api();
+            $this->pageObj->api($this);
             return;
         }
 
