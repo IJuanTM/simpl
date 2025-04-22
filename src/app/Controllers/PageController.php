@@ -13,10 +13,16 @@ class PageController extends Page
     public function __construct()
     {
         // Split the url route into an array and get the page and parameters
-        $urlArr = explode('/', strtok(trim(strtolower($_SERVER['REQUEST_URI']), '/') ?: REDIRECT, '?'));
+        $urlArr = explode('/', strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')) ?: REDIRECT, '?'));
 
         $page = array_shift($urlArr);
         $params = $_GET;
+
+        // Check if the page is a special route, if so call the route function
+        if (isset($ROUTES[$page])) {
+            $ROUTES[$page]();
+            return;
+        }
 
         // Check if the page is an alias, if so set the page to the alias
         if ($alias = AliasController::resolve($page, $params)) [$page, $urlArr, $params] = [$alias['page'], $alias['subpages'], array_merge($params, $alias['params'])];
@@ -25,7 +31,7 @@ class PageController extends Page
         $api = $page === 'api';
         if ($api) $page = array_shift($urlArr);
 
-        // Create the a page object from the current url, with the page name, subpages and parameters
+        // Create a page object from the current url, with the page name, subpages and parameters
         parent::__construct($page, $urlArr, $params);
 
         // Get the Page class that corresponds with the current page and create an object from it. Pass this object to the Page model if it exists.
@@ -99,7 +105,6 @@ class PageController extends Page
 
     /**
      * Render the page by loading the needed HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
-     *
      * @return void
      */
     private function render(): void
@@ -142,16 +147,39 @@ class PageController extends Page
         // Get the file from the parts folder
         $file = BASEDIR . "/views/parts/$name.phtml";
 
-        // Check if the file exists, if so load the file
-        if (file_exists($file)) require_once $file;
-        else {
-            if (DEV) {
-                // Log the error
-                LogController::log("Could not load part \"$name\"", 'debug');
-
-                // Print an error message
-                echo "Part \"$name\" not found";
-            } else echo "<!-- Part \"$name\" not found -->";
+        if (is_file($file)) {
+            require_once $file;
+            return;
         }
+
+        $message = "Part \"$name\" not found";
+
+        if (DEV) {
+            // Write a debug log message
+            LogController::log($message, 'debug');
+            echo $message;
+        } else echo "<!-- $message -->";
+    }
+
+    /**
+     * Return the previous page URL from session history.
+     * @return string
+     */
+    public static function prev(): string
+    {
+        $history = self::history();
+
+        return self::url($history[count($history) - 2] ?? REDIRECT);
+    }
+
+    /**
+     * Redirect to the previous page.
+     * @return void
+     */
+    public static function back(): void
+    {
+        SessionController::set('history', $updated = array_slice(self::history(), 0, -2));
+
+        self::redirect(end($updated) ?: REDIRECT);
     }
 }

@@ -34,14 +34,12 @@ class AppController
 
         // Return the svg file if it exists, else return an error message
         if (file_exists($file)) return file_get_contents($file);
-        else {
-            if (DEV) {
-                // Log the error
-                LogController::log("Could not find SVG \"$name\"", 'debug');
+        else if (DEV) {
+            // Log the error
+            LogController::log("Could not find SVG \"$name\"", 'debug');
 
-                // Return an error message
-                return "SVG \"$name\" not found";
-            } else return "<!-- SVG \"$name\" not found -->";
-        }
+            // Return an error message
+            return "SVG \"$name\" not found";
+        } else return "<!-- SVG \"$name\" not found -->";
     }
 }

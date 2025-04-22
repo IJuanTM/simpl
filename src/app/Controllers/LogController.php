@@ -2,6 +2,8 @@
 
 namespace app\Controllers;
 
+use RuntimeException;
+
 /**
  * The LogController class is used for logging different types of messages.
  */
@@ -19,10 +21,11 @@ class LogController
     {
         // Check if the log directory exists, if not create it.
         $dir = BASEDIR . '/app/Logs';
-        if (!is_dir($dir)) mkdir($dir);
+
+        if (!mkdir($dir) && !is_dir($dir)) throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
 
         // Open the log file in append mode.
-        $file = fopen("$dir/$type.log", 'a');
+        $file = fopen("$dir/$type.log", 'ab');
 
         // Filter out the log method and index.php from the stack trace.
         $traceLog = array_filter(debug_backtrace(), static fn($entry) => !($entry['function'] === 'log' || basename($entry['file'] ?? '') === 'index.php'));
