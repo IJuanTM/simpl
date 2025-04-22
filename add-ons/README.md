@@ -13,15 +13,10 @@ let me know and I will look into adding it to the framework.
   * It also adds a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
   * An overview of registered users is also included for admins, which can be used to manage users and their roles.
   * Comes with a database table for users and roles and a controller for the database queries.
-    * (Requires the Icons add-on to be installed.)
 
 * Cookies
   * Adds a simple cookies alert to your website.
 
-* Icons
-  * Adds the free Font Awesome icons to the framework.
-
 * Theme
   * Adds functionality to be able to switch between different themes for your website.
   * Comes with a dark theme for the default Simpl theme.
-    * (Requires the Icons add-on to be installed.)
