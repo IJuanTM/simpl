@@ -50,8 +50,8 @@ $maxShrink: 4;
 // ---------------------------------------------------------------- //
 
 *.center {
-  display: flex;
   align-items: center;
+  display: flex;
   justify-content: center;
 }
 
@@ -93,18 +93,18 @@ $maxShrink: 4;
 // ---------------------------------------------------------------- //
 
 *.start-y {
-  display: flex;
   align-items: flex-start;
+  display: flex;
 }
 
 *.center-y {
-  display: flex;
   align-items: center;
+  display: flex;
 }
 
 *.end-y {
-  display: flex;
   align-items: flex-end;
+  display: flex;
 }
 
 *.between-y {

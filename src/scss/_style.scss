@@ -1,5 +1,10 @@
 @use "config/config" as *;
 
+// Generate CSS variables for themes set in config
+@include set-themes();
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
 html {
   scroll-behavior: smooth;
 
@@ -13,8 +18,9 @@ html {
 }
 
 body {
+  background-color: var(--body-background);
+  color: var(--text);
   font: 100% $font-family;
-  background-color: $light-2;
 
   @include breakpoint-up(lg) {
     margin: 0 12.5%;
@@ -32,13 +38,13 @@ body {
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 noscript {
-  left: 0;
-  z-index: 5;
+  background-color: var(--body-background);
   color: $red;
+  font-size: 1.25rem;
+  left: 0;
   padding: 2rem;
   position: fixed;
-  font-size: 1.25rem;
-  background-color: $light-1;
+  z-index: 5;
 
   @include breakpoint-up(lg) {
     font-size: 1.5rem;
@@ -48,15 +54,15 @@ noscript {
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 hr {
+  background-color: var(--border);
   height: .125rem;
-  background-color: #000;
 
   &.vertical {
     height: 100%;
     width: .125rem;
   }
 
-  &.dimmed {
-    background-color: rgba(#000, .25);
+  &.muted {
+    background-color: var(--border-muted);
   }
 }

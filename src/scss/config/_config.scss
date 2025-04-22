@@ -3,13 +3,15 @@
 @forward "vars/colors";
 @forward "vars/font";
 @forward "vars/sizing";
+@forward "vars/themes";
 
-// RULES
-@forward "rules/mixins";
+// ABSTRACTS
+@forward "abstracts/functions";
+@forward "abstracts/mixins";
 
 // UTIL
-@forward "util/dimentions";
-@forward "util/flex";
-@forward "util/scrollbar";
-@forward "util/typography";
-@forward "util/visibility";
+@forward "utils/dimentions";
+@forward "utils/flex";
+@forward "utils/scrollbar";
+@forward "utils/typography";
+@forward "utils/visibility";

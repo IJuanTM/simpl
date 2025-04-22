@@ -7,6 +7,10 @@
 // VIEWS
 @forward "views/error";
 
+// COMPONENTS
+@forward "components/button";
+@forward "components/input";
+
 // PARTS
 @forward "views/parts/alert";
 @forward "views/parts/content";

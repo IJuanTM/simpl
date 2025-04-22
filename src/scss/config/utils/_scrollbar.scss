@@ -1,0 +1,29 @@
+@use "../vars/colors" as *;
+
+* {
+  ::-webkit-scrollbar {
+    height: .5rem;
+    width: .5rem;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+
+    &:hover {
+      background-color: var(--scrollbar-thumb-hover);
+    }
+
+    &:active {
+      background-color: var(--scrollbar-thumb-active);
+    }
+  }
+
+  @supports not selector(::-webkit-scrollbar) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+}

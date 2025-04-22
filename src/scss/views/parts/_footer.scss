@@ -1,15 +1,15 @@
 @use "../../config/config" as *;
 
 footer {
-  z-index: 2;
+  box-shadow: 0 0 .25rem var(--shadow-25);
   position: relative;
-  box-shadow: 0 0 .25rem rgba(#000, .25);
+  z-index: 2;
 
   > div.row {
-    padding: 0 1rem;
+    background-color: var(--footer-background);
     font-size: .75rem;
     height: $footer-height;
-    background-color: $light-3;
+    padding: 0 1rem;
 
     a {
       text-decoration: none;

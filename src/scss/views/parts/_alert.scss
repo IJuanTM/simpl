@@ -1,18 +1,18 @@
 @use "../../config/config" as *;
 
 div.alert {
+  box-shadow: 0 0 .25rem var(--shadow);
   color: #FFF;
   display: flex;
   padding: 1rem;
-  box-shadow: 0 0 .25rem rgba(#000, .25);
   transition: visibility .15s, opacity .15s;
 
   &.global {
-    left: 0;
-    z-index: 4;
     bottom: 2rem;
+    left: 0;
     margin: 1rem;
     position: fixed;
+    z-index: 4;
 
     @include breakpoint-down(sm) {
       width: calc(100% - 2rem);

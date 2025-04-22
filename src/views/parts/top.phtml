@@ -25,6 +25,11 @@
   <p class="text-center">This website requires JavaScript to work properly. Please enable JavaScript!</p>
 </noscript>
 
+<!-- Theme -->
+<script>
+  document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
+</script>
+
 <!-- Header -->
 <?php $this->part('header') ?>
 

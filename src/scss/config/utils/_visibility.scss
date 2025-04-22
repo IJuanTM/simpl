@@ -8,5 +8,6 @@
 }
 
 *[inert] {
-  color: rgba(#000, .25);
+  color: var(--text-25);
+  interactivity: inert;
 }

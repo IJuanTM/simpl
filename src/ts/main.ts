@@ -18,21 +18,47 @@ if (navMenu) {
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
+const
+  themeSwitch = document.querySelector('div.theme-switch') as HTMLElement,
+  themes: { name: string, icon: string }[] = [
+    {
+      name: 'light',
+      icon: 'fa-sun'
+    },
+    {
+      name: 'dark',
+      icon: 'fa-moon'
+    }
+  ];
+
+themeSwitch.addEventListener('click', () => {
+  const nextTheme = themes[((themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'light'))) + 1) % themes.length];
+
+  // Set the theme in localStorage
+  localStorage.setItem('theme', nextTheme.name);
+
+  // Set the theme icon
+  themeSwitch.innerHTML = `<i class="fas ${nextTheme.icon}"></i>`;
+
+  // Set the theme
+  document.documentElement.dataset.theme = localStorage.getItem('theme')!;
+});
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
 // Set navigation items on resize
 window.addEventListener('resize', setNavItems);
 
-const timeoutItems = document.querySelectorAll('[data-timeout]') as NodeListOf<HTMLElement>;
-
 window.addEventListener('load', () => {
-  // Set active link on load
-  setActiveLink();
+  // Set the theme icon
+  themeSwitch.innerHTML = `<i class="fas ${themes[themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'light'))]!.icon}"></i>`;
 
-  // Set navigation items on load
+  // Set active link and navigation items
+  setActiveLink();
   setNavItems();
 
-  if (timeoutItems) timeoutItems.forEach(item => setTimeout(() => {
-    // If item is an alert, hide it
-    // Else, remove the inert attribute from the item
+  // Handle elements with the data-timeout attribute
+  (document.querySelectorAll('[data-timeout]') as NodeListOf<HTMLElement>).forEach(item => setTimeout(() => {
     if (item.classList.contains('alert')) item.classList.add('invisible');
     else item.removeAttribute('inert');
   }, parseInt(item.dataset.timeout || '0')));

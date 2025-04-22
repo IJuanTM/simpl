@@ -1,0 +1,61 @@
+@use "sass:map";
+
+@use "functions" as *;
+@use "../vars/breakpoints" as *;
+@use "../vars/themes" as *;
+
+@mixin set-themes($default: light) {
+  @each $name, $theme in $themes {
+    $shaded: shade($theme);
+
+    html[data-theme="#{$name}"] {
+      @each $key, $val in $shaded {
+        --#{$key}: #{$val};
+      }
+    }
+
+    @if $name == $default {
+      :root {
+        @each $key, $val in $shaded {
+          --#{$key}: #{$val};
+        }
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin breakpoint-up($size) {
+  @media (min-width: map.get($breakpoints, $size)) {
+    @content;
+  }
+}
+
+@mixin breakpoint-only($size) {
+  @media (min-width: map.get($breakpoints, $size)) and (max-width: (map.get($breakpoints, $size) - .015625rem)) {
+    @content;
+  }
+}
+
+@mixin breakpoint-down($size) {
+  @media (max-width: (map.get($breakpoints, $size) - .015625rem)) {
+    @content;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin hover-focus {
+  &:hover,
+  &:focus,
+  &:focus-visible {
+    @content;
+  }
+}
+
+@mixin touch-device {
+  @media (hover: none) and (pointer: coarse) {
+    @content;
+  }
+}

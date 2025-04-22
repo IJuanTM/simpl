@@ -1,3 +1,5 @@
+@use "../abstracts/mixins" as *;
+
 h1, [data-typo="h1"],
 h2, [data-typo="h2"],
 h3, [data-typo="h3"],
@@ -40,15 +42,15 @@ a, [data-typo="a"] {
   text-decoration: underline;
 
   &[target=_blank]::after {
+    color: var(--text-50);
     content: "🡵";
+    display: inline-block;
     font-size: .5rem;
     vertical-align: top;
-    color: rgba(#000, .5);
-    display: inline-block;
   }
 
-  &:hover, &:focus {
-    color: rgba(#000, .75);
+  @include hover-focus {
+    color: var(--text-75);
   }
 }
 
