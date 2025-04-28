@@ -188,6 +188,7 @@ header {
           width: 4rem;
 
           > span, > span::before, > span::after {
+            background-color: var(--text);
             width: 2rem;
           }
         }
