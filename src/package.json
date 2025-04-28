@@ -3,6 +3,7 @@
   "description": "An easy-to-use PHP, HTML, Sass and TypeScript framework!",
   "version": "1.4.0",
   "dependencies": {
+    "the-new-css-reset": "^1.11.3",
     "hamburgers": "^1.2.1",
     "@fortawesome/fontawesome-free": "^6.7.2"
   },
@@ -18,7 +19,7 @@
     "@rollup/plugin-typescript": "^12.1.2",
     "@rollup/plugin-terser": "^0.4.4",
     "browser-sync": "^3.0.4",
-    "cpx": "^1.5.0"
+    "cpy-cli": "^5.0.0"
   },
   "scripts": {
     "postinstall": "npm run build",
@@ -27,10 +28,11 @@
     "build:sass": "sass -s compressed scss/main.scss public/css/main.min.css",
     "build:ts": "rollup -c",
     "build:assets": "run-p build:assets:*",
+    "build:assets:the-new-css-reset": "cpy --flat node_modules/the-new-css-reset/css/reset.css public/assets/the-new-css-reset/css/",
     "build:assets:fontawesome": "run-p build:assets:fontawesome:*",
-    "build:assets:fontawesome:css": "cpx node_modules/@fortawesome/fontawesome-free/css/all.min.css public/assets/fontawesome/css/",
-    "build:assets:fontawesome:webfonts": "cpx node_modules/@fortawesome/fontawesome-free/webfonts/**/* public/assets/fontawesome/webfonts/",
-    "build:assets:hamburgers": "cpx node_modules/hamburgers/dist/hamburgers.min.css public/assets/hamburgers/css/",
+    "build:assets:fontawesome:css": "cpy --flat node_modules/@fortawesome/fontawesome-free/css/all.min.css public/assets/fontawesome/css/",
+    "build:assets:fontawesome:webfonts": "cpy --flat node_modules/@fortawesome/fontawesome-free/webfonts/* public/assets/fontawesome/webfonts/",
+    "build:assets:hamburgers": "cpy --flat node_modules/hamburgers/dist/hamburgers.min.css public/assets/hamburgers/css/",
     "watch": "run-p watch:*",
     "watch:sass": "sass -w --update -s compressed scss/main.scss public/css/main.min.css",
     "watch:ts": "rollup -c -w",
