@@ -1,7 +1,8 @@
-@use "../../config/config" as *;
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/colors" as *;
 
 section.cookie {
-  background-color: var(--section-background);
+  background-color: var(--bg-section);
   bottom: 0;
   box-shadow: 0 0 .25rem var(--shadow-25);
   display: flex;
