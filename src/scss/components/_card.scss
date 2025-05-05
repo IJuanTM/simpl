@@ -5,12 +5,19 @@
   background-color: var(--bg-section);
   border-radius: 1rem;
   max-width: 32rem !important;
-  min-width: 24rem;
   overflow: hidden;
   padding: 2rem;
   position: relative;
   text-decoration: none;
   transition: background-color .15s ease-in-out;
+
+  @include breakpoint-down(sm) {
+    min-width: 100%;
+  }
+
+  @include breakpoint-up(md) {
+    min-width: 24rem;
+  }
 
   @include shimmer;
 
