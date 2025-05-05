@@ -48,7 +48,8 @@ a.link, [data-typo="a"].link {
     content: "🡵";
     display: inline-block;
     font-size: .5rem;
-    vertical-align: top;
+    margin-left: .125rem;
+    vertical-align: super;
   }
 
   @include hover-focus {
