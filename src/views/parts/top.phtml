@@ -1,3 +1,5 @@
+<?php use app\Models\Url; ?>
+
 <!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl -->
 <!DOCTYPE html>
 <html lang="en" class="h-100">
@@ -16,7 +18,7 @@
   ?>
 
   <!-- Manifest -->
-  <link rel="manifest" href="<?= $this->url('site.webmanifest') ?>">
+  <link rel="manifest" href="<?= Url::file('site.webmanifest') ?>">
 </head>
 
 <body class="h-100">
@@ -27,7 +29,7 @@
 
 <!-- Theme -->
 <script>
-  document.documentElement.dataset.theme = localStorage.getItem('theme') || 'light';
+  document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';
 </script>
 
 <!-- Header -->

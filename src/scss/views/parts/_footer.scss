@@ -1,15 +1,21 @@
-@use "../../config/config" as *;
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/sizes" as *;
 
 footer {
-  box-shadow: 0 0 .25rem var(--shadow-25);
   position: relative;
   z-index: 2;
 
   > div.row {
-    background-color: var(--footer-background);
-    font-size: .75rem;
+    background-color: var(--bg-section);
+    border-top: .125rem solid var(--border-muted);
+    font-size: .875rem;
     height: $footer-height;
-    padding: 0 1rem;
+    padding: 1rem 4rem 2rem;
+
+    @include breakpoint-down(md) {
+      height: calc($footer-height - 1rem);
+      padding: 1rem;
+    }
 
     a {
       text-decoration: none;

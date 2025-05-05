@@ -1,4 +1,4 @@
-// CONFIG (load first)
+// CONFIG
 @forward "config/config";
 
 // STYLE
@@ -9,6 +9,7 @@
 
 // COMPONENTS
 @forward "components/button";
+@forward "components/card";
 @forward "components/input";
 
 // PARTS

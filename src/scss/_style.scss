@@ -1,4 +1,7 @@
-@use "config/config" as *;
+@use "config/abstracts/mixins" as *;
+@use "config/vars/colors" as *;
+@use "config/vars/fonts" as *;
+@use "config/vars/sizes" as *;
 
 // Generate CSS variables for themes set in config
 @include set-themes();
@@ -8,8 +11,16 @@
 html {
   scroll-behavior: smooth;
 
+  @include breakpoint-down(sm) {
+    font-size: .875rem;
+  }
+
   @media screen and (max-height: 56rem) {
     font-size: .875rem;
+  }
+
+  @include breakpoint-up(xl) {
+    font-size: 1.125rem;
   }
 
   @media screen and (min-height: 64rem) {
@@ -18,27 +29,16 @@ html {
 }
 
 body {
-  background-color: var(--body-background);
+  background-color: var(--bg-main);
   color: var(--text);
-  font: 100% $font-family;
-
-  @include breakpoint-up(lg) {
-    margin: 0 12.5%;
-  }
-
-  @include breakpoint-up(xl) {
-    margin: 0 17.5%;
-  }
-
-  @include breakpoint-up(xxl) {
-    margin: 0 22.5%;
-  }
+  font-family: $body, sans-serif;
+  font-size: 100%;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 noscript {
-  background-color: var(--body-background);
+  background-color: var(--bg-main);
   color: $red;
   font-size: 1.25rem;
   left: 0;

@@ -1,4 +1,5 @@
-@use "../../config/config" as *;
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/colors" as *;
 
 div.alert {
   box-shadow: 0 0 .25rem var(--shadow);

@@ -4,7 +4,7 @@
 @use "../vars/breakpoints" as *;
 @use "../vars/themes" as *;
 
-@mixin set-themes($default: light) {
+@mixin set-themes($default: dark) {
   @each $name, $theme in $themes {
     $shaded: shade($theme);
 
@@ -57,5 +57,43 @@
 @mixin touch-device {
   @media (hover: none) and (pointer: coarse) {
     @content;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin shimmer($color: var(--shimmer-color)) {
+  & {
+    position: relative;
+    overflow: hidden;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(
+        120deg,
+        transparent 0%,
+        $color 50%,
+        transparent 100%
+    );
+    transform: skewX(-20deg);
+    transition: left .5s ease-in-out;
+  }
+
+  @include hover-focus {
+    & {
+      transition: background-color .15s ease-in-out;
+    }
+
+    &::before {
+      left: 120%;
+      transition: left .5s ease-in-out;
+    }
   }
 }

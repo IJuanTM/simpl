@@ -1,3 +1,5 @@
+<?php use app\Models\Url; ?>
+
 <section class="error min-h-content f-col g-row-1 center-x">
   <div class="row">
     <div class="col center-x">
@@ -15,7 +17,7 @@
 
       <div class="row">
         <div class="col center-x">
-          <p>Click <a href="<?= $this->url(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page">here</a> to go back to the <?= REDIRECT ?> page.</p>
+          <p>Click <a href="<?= Url::to(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page">here</a> to go back to the <?= REDIRECT ?> page.</p>
         </div>
       </div>
     </div>

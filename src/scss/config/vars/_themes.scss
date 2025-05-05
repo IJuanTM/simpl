@@ -1,4 +1,5 @@
 // Dark
+$dark-0: #000;
 $dark-1: #101010;
 $dark-2: #0E0E0E;
 $dark-3: #141414;
@@ -10,6 +11,7 @@ $dark-8: #343434;
 $dark-9: #444;
 
 // Light
+$light-0: #FFF;
 $light-1: #FEFEFE;
 $light-2: #FCFCFC;
 $light-3: #F8F8F8;
@@ -24,43 +26,51 @@ $light-9: #C8C8C8;
 
 $themes: (
   light: (
-    text: #000,
-    text-inverse: #FFF,
-    body-background: $light-2,
-    header-background: $light-3,
-    content-background: $light-1,
-    section-background: $light-3,
-    footer-background: $light-3,
+    text: $dark-0,
+    text-inverse: $light-0,
+    bg-main: $light-2,
+    bg-content: $light-1,
+    bg-section: $light-3,
+    bg-accent: $light-4,
     scrollbar-track: $light-4,
     scrollbar-thumb: $light-7,
     scrollbar-thumb-hover: $light-8,
     scrollbar-thumb-active: $light-9,
-    border: #000,
-    border-muted: rgba(#000, .25),
-    shadow: #000,
+    border: $dark-0,
+    border-muted: rgba($dark-0, .25),
+    shadow: $dark-0,
     button: $light-3,
     button-hover: $light-4,
     input: $light-2,
     input-focus: $light-3,
+    input-prepend-append: $light-5,
+    table-header: $light-5,
+    table-row-even: $light-3,
+    table-row-odd: $light-2,
+    shimmer-color: rgba($dark-0, .0625),
   ),
   dark: (
-    text: #FFF,
-    text-inverse: #000,
-    body-background: $dark-2,
-    header-background: $dark-3,
-    content-background: $dark-1,
-    section-background: $dark-3,
-    footer-background: $dark-3,
+    text: $light-0,
+    text-inverse: $dark-0,
+    bg-main: $dark-2,
+    bg-content: $dark-1,
+    bg-section: $dark-3,
+    bg-accent: $dark-4,
     scrollbar-track: $dark-4,
     scrollbar-thumb: $dark-7,
     scrollbar-thumb-hover: $dark-8,
     scrollbar-thumb-active: $dark-9,
-    border: #FFF,
-    border-muted: rgba(#FFF, .25),
-    shadow: #000,
+    border: $light-0,
+    border-muted: rgba($light-0, .25),
+    shadow: $dark-0,
     button: $dark-3,
     button-hover: $dark-4,
     input: $dark-2,
     input-focus: $dark-3,
+    input-prepend-append: $dark-5,
+    table-header: $dark-5,
+    table-row-even: $dark-3,
+    table-row-odd: $dark-2,
+    shimmer-color: rgba($light-0, .0625),
   )
 );

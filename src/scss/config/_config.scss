@@ -1,17 +1,17 @@
-// VARS (load first)
-@forward "vars/breakpoints";
-@forward "vars/colors";
-@forward "vars/font";
-@forward "vars/sizing";
-@forward "vars/themes";
+// VARS
+@forward "vars/_breakpoints";
+@forward "vars/_colors";
+@forward "vars/_fonts";
+@forward "vars/_sizes";
+@forward "vars/_themes";
 
 // ABSTRACTS
-@forward "abstracts/functions";
-@forward "abstracts/mixins";
+@forward "abstracts/_functions";
+@forward "abstracts/_mixins";
 
-// UTIL
-@forward "utils/dimentions";
-@forward "utils/flex";
-@forward "utils/scrollbar";
-@forward "utils/typography";
-@forward "utils/visibility";
+// UTILS
+@forward "utils/_dimensions";
+@forward "utils/_flex";
+@forward "utils/_scrollbar";
+@forward "utils/_typography";
+@forward "utils/_visibility";

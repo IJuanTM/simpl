@@ -1,7 +1,7 @@
-@use "../config/config" as *;
+@use "../config/vars/colors" as *;
 
 section.error h1 {
   color: $red;
   font-size: 6rem;
-  font-weight: 600;
+  font-weight: 700;
 }

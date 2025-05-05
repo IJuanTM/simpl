@@ -32,7 +32,7 @@ const
   ];
 
 themeSwitch.addEventListener('click', () => {
-  const nextTheme = themes[((themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'light'))) + 1) % themes.length];
+  const nextTheme = themes[((themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'dark'))) + 1) % themes.length];
 
   // Set the theme in localStorage
   localStorage.setItem('theme', nextTheme.name);
@@ -51,7 +51,7 @@ window.addEventListener('resize', setNavItems);
 
 window.addEventListener('load', () => {
   // Set the theme icon
-  themeSwitch.innerHTML = `<i class="fas ${themes[themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'light'))]!.icon}"></i>`;
+  themeSwitch.innerHTML = `<i class="fas ${themes[themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'dark'))]!.icon}"></i>`;
 
   // Set active link and navigation items
   setActiveLink();

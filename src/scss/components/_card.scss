@@ -1,0 +1,32 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+.card {
+  background-color: var(--bg-section);
+  border-radius: 1rem;
+  max-width: 32rem !important;
+  min-width: 24rem;
+  overflow: hidden;
+  padding: 2rem;
+  position: relative;
+  text-decoration: none;
+  transition: background-color .15s ease-in-out;
+
+  @include shimmer;
+
+  @include hover-focus {
+    background-color: var(--bg-accent);
+  }
+
+  div.card-icon {
+    width: 4rem;
+
+    > i {
+      font-size: 3rem;
+    }
+  }
+
+  .card-title {
+    color: $simpl;
+  }
+}
