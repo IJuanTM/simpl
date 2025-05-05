@@ -3,6 +3,7 @@
 namespace app\Controllers;
 
 use app\Models\Page;
+use app\Models\Url;
 
 /**
  * The PageController class is the controller for the pages. It parses the URL and loads the page.
@@ -18,7 +19,7 @@ class PageController extends Page
         $page = array_shift($urlArr);
         $params = $_GET;
 
-        // Check if the page is a special route, if so call the route function
+        // Check if the page is a special route, if so call the route method
         if (isset($ROUTES[$page])) {
             $ROUTES[$page]();
             return;
@@ -35,8 +36,8 @@ class PageController extends Page
         parent::__construct($page, $urlArr, $params);
 
         // Get the Page class that corresponds with the current page and create an object from it. Pass this object to the Page model if it exists.
-        $obj = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
-        if (class_exists($obj)) $this->pageObj = new $obj($this);
+        $class = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
+        if (class_exists($class)) $this->pageObj = new $class($this);
 
         // Check if the page is called as an API endpoint
         if ($api) {
@@ -67,44 +68,15 @@ class PageController extends Page
      *
      * @return void
      */
-    public static function redirect(string $location, ?int $refresh = 0): void
+    public static function redirect(string $location, ?int $refresh = null): void
     {
-        // Redirect to the given location with the given delay
-        header("refresh: $refresh; url=" . self::url($location));
-    }
-
-    /**
-     * Generate a full URL from the given sub URL. If it is a file, add a version timestamp to the URL.
-     *
-     * @param string $subUrl
-     *
-     * @return string
-     */
-    public static function url(string $subUrl = ''): string
-    {
-        static $baseUrl;
-
-        // Get the root directory and remove the trailing slash
-        $rootDir = rtrim(BASEDIR, '/');
-
-        // Get the base URL of the website
-        if (!$baseUrl) $baseUrl = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . preg_replace('@^' . preg_quote($rootDir) . '@', '', BASEDIR);
-
-        // Create the URL
-        $url = rtrim($baseUrl, '/') . '/' . ltrim($subUrl, '/');
-
-        // Get the file path
-        $file = $rootDir . '/public/' . ltrim($subUrl, '/');
-
-        // Check if the file exists, if so add the version to the URL
-        if (is_file($file)) return strtok($url, '#') . (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($file) . (str_contains($url, '#') ? '#' . explode('#', $url, 2)[1] : '');
-
-        // Return the URL
-        return rtrim($url, '/');
+        $url = Url::to($location);
+        header($refresh ? "Refresh: $refresh; url=$url" : "Location: $url", true, 302);
     }
 
     /**
      * Render the page by loading the needed HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
+     *
      * @return void
      */
     private function render(): void
@@ -119,7 +91,7 @@ class PageController extends Page
         $file = BASEDIR . "/views/$page.phtml";
 
         // Check if the file exists, if not redirect to the 404 page
-        if (!file_exists($file)) {
+        if (!is_file($file)) {
             // Log the error if the environment is development
             if (DEV) LogController::log("Could not find view \"$page\"", 'debug');
 
@@ -147,6 +119,7 @@ class PageController extends Page
         // Get the file from the parts folder
         $file = BASEDIR . "/views/parts/$name.phtml";
 
+        // Check if the file exists, if so require it
         if (is_file($file)) {
             require_once $file;
             return;
@@ -163,23 +136,31 @@ class PageController extends Page
 
     /**
      * Return the previous page URL from session history.
+     *
      * @return string
      */
     public static function prev(): string
     {
         $history = self::history();
 
-        return self::url($history[count($history) - 2] ?? REDIRECT);
+        // Return the previous page URL or a default redirect URL
+        return Url::to($history[count($history) - 2] ?? REDIRECT);
     }
 
     /**
      * Redirect to the previous page.
+     *
      * @return void
      */
     public static function back(): void
     {
-        SessionController::set('history', $updated = array_slice(self::history(), 0, -2));
+        // Get the current history
+        $updated = array_slice(self::history(), 0, -2);
 
+        // Update the session history
+        SessionController::set('history', $updated);
+
+        // Redirect to the previous page
         self::redirect(end($updated) ?: REDIRECT);
     }
 }
