@@ -43,7 +43,7 @@ header {
         padding: 0;
         position: absolute;
         top: calc($header-height - 1rem);
-        transition: max-height .15s;
+        transition: max-height .15s ease-in-out;
         width: 100%;
 
         > div.nav-list {
@@ -142,9 +142,9 @@ header {
             bottom: .5rem;
             content: "";
             height: .25rem;
-            left: 30%;
             position: absolute;
-            width: 40%;
+            transition: width .15s ease-in-out;
+            width: calc(100% - 2rem);
 
             @include breakpoint-down(md) {
               border-radius: 0 .25rem .25rem 0;
@@ -158,6 +158,12 @@ header {
           @include hover-focus {
             &::after {
               background-color: var(--text-25);
+              transition: width .15s ease-in-out;
+              width: calc(75% - 2rem);
+
+              @include breakpoint-down(md) {
+                width: .5rem;
+              }
             }
           }
         }

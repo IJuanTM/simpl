@@ -6,7 +6,7 @@ div.alert {
   color: #FFF;
   display: flex;
   padding: 1rem;
-  transition: visibility .15s, opacity .15s;
+  transition: visibility .15s ease-out, opacity .15s ease-out;
 
   &.global {
     bottom: 2rem;
