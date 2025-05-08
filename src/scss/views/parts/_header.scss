@@ -82,16 +82,17 @@ header {
         }
 
         &.nav-button {
+          background-color: var(--nav-button);
+          border-radius: .5rem;
+
           &.login, &.logout, &.users {
-            color: var(--text-inverse);
+            color: #FFF;
 
             &.active::after {
               background-color: var(--text-inverse-50);
             }
 
             @include hover-focus {
-              color: var(--text-inverse-75);
-
               &::after {
                 background-color: var(--text-inverse-25);
               }
@@ -100,31 +101,25 @@ header {
 
           &.login {
             background-color: $green;
-            color: #FFF;
 
             @include hover-focus {
               background-color: $green-dark !important;
-              color: rgba(#FFF, .75) !important;
             }
           }
 
           &.logout {
             background-color: $red;
-            color: #FFF;
 
             @include hover-focus {
               background-color: $red-dark !important;
-              color: rgba(#FFF, .75) !important;
             }
           }
 
           &.users {
             background-color: $cyan;
-            color: #FFF;
 
             @include hover-focus {
               background-color: $cyan-dark !important;
-              color: rgba(#FFF, .75) !important;
             }
           }
 

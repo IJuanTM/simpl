@@ -1,4 +1,5 @@
 import {menuHamburger, navMenu, setActiveLink, setNavItems, toggleMenu} from './menu';
+import {acceptCookies, cookie} from './cookie'
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -7,7 +8,6 @@ console.info('This website is made using the Simpl framework. Read more about Si
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
-// Navigation menu event listeners
 if (navMenu) {
   // Hamburger menu button event listener
   menuHamburger.addEventListener('click', toggleMenu);
@@ -63,3 +63,15 @@ window.addEventListener('load', () => {
     else item.removeAttribute('inert');
   }, parseInt(item.dataset.timeout || '0')));
 });
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+if (cookie) {
+  // On click, accept the cookies
+  cookie?.querySelector('button')!.addEventListener('click', acceptCookies);
+
+  // On load, if the cookies have not been accepted, remove the invisible class from the cookies section
+  window.addEventListener('load', () => {
+    if (!localStorage.getItem('cookiesAccepted')) cookie?.classList.remove('invisible');
+  });
+}
