@@ -15,7 +15,7 @@
     min-width: 100%;
   }
 
-  @include breakpoint-up(md) {
+  @include breakpoint-up(sm) {
     min-width: 24rem;
   }
 
