@@ -9,7 +9,7 @@
     $val: map.get($theme, $key);
 
     @if $val {
-      @each $pct in (25, 50, 75) {
+      @each $pct in (5, 10, 25, 50, 75) {
         $out: map.merge($out, (#{$key}-#{$pct}: rgba($val, math.div($pct, 100))));
       }
     }
