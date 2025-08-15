@@ -11,13 +11,13 @@
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.8-777BB3?logo=php)](https://www.php.net)
-[![Composer logo](https://img.shields.io/badge/composer-2.7.7-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-22.3.0-5FA04E?logo=node.js)](https://nodejs.org)
-[![npm logo](https://img.shields.io/badge/npm-10.8.1-CB0000?logo=npm)](https://www.npmjs.com)
-[![Sass logo](https://img.shields.io/badge/sass-1.77.6-CC6699?logo=sass)](https://sass-lang.com)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.4.5-3178C6?logo=typescript)](https://www.typescriptlang.org)
-[![Rollup logo](https://img.shields.io/badge/rollup-4.18.0-EF3434?logo=rollup.js)](https://rollupjs.org)
+[![PHP logo](https://img.shields.io/badge/php-8.3.24-777BB3?logo=php)](https://www.php.net)
+[![Composer logo](https://img.shields.io/badge/composer-2.8.10-89552C?logo=composer)](https://getcomposer.org)
+[![Node.js logo](https://img.shields.io/badge/node.js-24.6.0-5FA04E?logo=node.js)](https://nodejs.org)
+[![npm logo](https://img.shields.io/badge/npm-10.9.2-CB0000?logo=npm)](https://www.npmjs.com)
+[![Sass logo](https://img.shields.io/badge/sass-1.90.0-CC6699?logo=sass)](https://sass-lang.com)
+[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.2-3178C6?logo=typescript)](https://www.typescriptlang.org)
+[![Rollup logo](https://img.shields.io/badge/rollup-4.46.2-EF3434?logo=rollup.js)](https://rollupjs.org)
 
 <br>
 
@@ -32,7 +32,7 @@
 * Easy to use
 * Quick setup
 * Composer PSR-4 autoloading
-* Makes use of a MVC system using PHP
+* Makes use of an MVC system using PHP
 * Works with both Windows and Linux
 * Made to work with the latest versions of PHP, Composer, Node.js, npm and Sass
 * Includes a bunch of npm scripts for compiling Sass and TypeScript, as well as live-reloading
@@ -49,10 +49,10 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (tested with version **8.3.8**)
-* [Composer](https://getcomposer.org) (tested with version **2.7.7**)
-* [Node.js](https://nodejs.org) (tested with version **22.3.0**)
-* [npm](https://www.npmjs.com) (tested with version **10.8.1**)
+* [PHP](https://www.php.net) (tested with version **8.3.24**)
+* [Composer](https://getcomposer.org) (tested with version **2.8.10**)
+* [Node.js](https://nodejs.org) (tested with version **24.6.0**)
+* [npm](https://www.npmjs.com) (tested with version **10.9.2**)
 
 ### Step 1: Download Simpl
 
@@ -111,7 +111,7 @@ In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders
 
 The `Controllers` folder contains an `AppController` and a `PageController` by default, these contain the main functions for the framework.
 
-The `Models` folder contains a `PageModel` by default, this contains an `obj` and a `url` property, these hold the current `Page` object if it exists and the current page name, subpages and parameters of the url. These can be accessed at all times in any view by using `$this->`.
+The `Models` folder contains a `Page` model by default, this contains an `obj` and a `url` property, these hold the current `Page` object if it exists and the current page name, subpages and parameters of the url. These can be accessed at all times in any view by using `$this->`.
 
 The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it.
 
@@ -119,7 +119,7 @@ There is also a `LogController` in the `Controllers` folder, this is used for lo
 
 #### Views
 
-You can find the HTML code in the `views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containg the `header.phtml` and `footer.phtml` files.
+You can find the HTML code in the `views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containing the `header.phtml` and `footer.phtml` files.
 
 #### Styling and TypeScript
 
@@ -150,7 +150,10 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 - [x] Make Simpl website
 - [ ] Write documentation
 - [ ] Add more add-ons
-- [ ] Improve the form validation system
+- [x] Improve the form validation system
+- [x] Improve page logic and add more functionality
+- [x] Improve mail system
+- [x] Improve the auth system
 
 <br>
 
@@ -192,14 +195,28 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * Updated npm packages
 * Support for PHP 8.3.8
 
-#### Version 1.3.1 (2024-08-30)
+#### Version 1.4.0 (2025-08-16)
 
 * Security improvements
 * Added a start script for the application
 * Added a cron job script
 * Small fixes and improvements all around
 * Updated npm packages
-* Support for PHP 8.3.11
+* Support for PHP 8.3.24
+* Updated Font Awesome icons to version 6.7.1
+* Updated the-new-css-reset to version 1.11.3
+* Improvements to the auth system (improved controller and pages logic)
+* Improved MailController by added async functionality for sending emails and more
+* Improved form validation by generalizing the validation functions
+* Added the option for multiple form alerts
+* Changed Sass to use @use and @forward instead of @import for future compatibility
+* Added flex gap classes to the flexbox system
+* Improved page controller logic (page classes now load before the top part and have extended functionality)
+* Moved error page logic to its own Page class
+* Added a timestamp to <head> files to prevent caching issues (dynamically added in the url() method)
+* Improved tsconfig.json file
+* Added a rollup.config.js file instead of using the rollup command in the package.json file
+* Added enums to the php code for better type safety and readability
 
 <br>
 
@@ -207,9 +224,11 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 
 ### Composer packages
 
-* [PHP dotenv (5.6.0)](https://github.com/vlucas/phpdotenv)
+* [PHP dotenv (5.6.2)](https://github.com/vlucas/phpdotenv)
 
 ### Node packages
+
+#### Development
 
 * [npm](https://www.npmjs.com)
 * [npm-run-all](https://www.npmjs.com/package/npm-run-all)
@@ -217,19 +236,23 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * [typescript](https://www.typescriptlang.org)
 * [tslib](https://www.npmjs.com/package/tslib)
 * [rollup](https://rollupjs.org)
+* [@rollup/plugin-commonjs](https://www.npmjs.com/package/@rollup/plugin-commonjs)
+* [@rollup/plugin-node-resolve](https://www.npmjs.com/package/@rollup/plugin-node-resolve)
 * [@rollup/plugin-typescript](https://www.npmjs.com/package/@rollup/plugin-typescript)
 * [@rollup/plugin-terser](https://www.npmjs.com/package/@rollup/plugin-terser)
 * [browser-sync](https://www.browsersync.io)
+* [cpy-cli](https://www.npmjs.com/package/cpy-cli)
 
-### Font
+#### Production
 
-* [Jost](https://fonts.google.com/specimen/Jost)
+* [the-new-css-reset](https://elad2412.github.io/the-new-css-reset)
+* [@fortawesome/fontawesome-free](https://fontawesome.com)
+* [hamburgers](https://jonsuh.com/hamburgers)
 
-### Extra
+### Fonts
 
-* [Hamburgers (1.2.0)](https://github.com/jonsuh/hamburgers)
-* [The New CCS Reset (1.11.2)](https://github.com/elad2412/the-new-css-reset)
-* [Font Awesome _Free_ (6.5.2)](https://fontawesome.com)
+* [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans)
+* [Inter](https://fonts.google.com/specimen/Inter)
 
 <br>
 

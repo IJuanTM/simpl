@@ -5,21 +5,21 @@
   "dependencies": {
     "the-new-css-reset": "^1.11.3",
     "hamburgers": "^1.2.1",
-    "@fortawesome/fontawesome-free": "^6.7.2"
+    "@fortawesome/fontawesome-free": "^7.0.0"
   },
   "devDependencies": {
-    "npm": "^11.3.0",
     "npm-run-all": "^4.1.5",
-    "sass": "^1.87.0",
-    "typescript": "^5.8.3",
+    "sass": "^1.90.0",
+    "typescript": "^5.9.2",
     "tslib": "^2.8.1",
-    "rollup": "^4.40.0",
-    "@rollup/plugin-commonjs": "^28.0.3",
+    "rollup": "^4.46.2",
+    "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/plugin-typescript": "^12.1.4",
     "@rollup/plugin-terser": "^0.4.4",
     "browser-sync": "^3.0.4",
-    "cpy-cli": "^5.0.0"
+    "cpy-cli": "^6.0.0",
+    "mjml": "^4.15.3"
   },
   "scripts": {
     "postinstall": "npm run build",
@@ -36,7 +36,8 @@
     "watch": "run-p watch:*",
     "watch:sass": "sass -w --update -s compressed scss/main.scss public/css/main.min.css",
     "watch:ts": "rollup -c -w",
-    "live": "browser-sync start --open external --host simpl.local -p simpl.local -f public views -w --no-notify --no-ui"
+    "live": "browser-sync start --open external --host simpl.local -p simpl.local -f public views -w --no-notify --no-ui",
+    "mjml": "mjml app/Mails/templates/*.mjml -o app/Mails/html --config.beautify false --config.minify true"
   },
   "repository": {
     "type": "git",
