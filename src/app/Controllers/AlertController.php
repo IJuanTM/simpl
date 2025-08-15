@@ -2,8 +2,10 @@
 
 namespace app\Controllers;
 
+use app\Enums\AlertType;
+
 /**
- * The AlertController class is the controller for showing global alerts.
+ * Manages global alert messages displayed to users.
  */
 class AlertController
 {
@@ -14,20 +16,18 @@ class AlertController
     }
 
     /**
-     * Method for showing a global alert at the bottom of the page.
+     * Creates a global alert to be displayed after page redirect.
      *
-     * @param string $message
-     * @param array $types
-     * @param int $timeout
-     *
-     * @return void
+     * @param string $message Alert message text
+     * @param AlertType $type Alert type (success, warning, error, info)
+     * @param int $timeout Duration in seconds before auto-dismissal (0 = no auto-dismiss)
      */
-    public static function alert(string $message, array $types, int $timeout = 0): void
+    public static function alert(string $message, AlertType $type, int $timeout = 0): void
     {
         // Set the alert in the session
         SessionController::set('alert', [
             'message' => $message,
-            'types' => $types,
+            'type' => $type->value,
             'timeout' => time() + $timeout
         ]);
     }

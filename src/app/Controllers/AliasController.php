@@ -19,8 +19,6 @@ class AliasController
      *
      * @param string $alias
      * @param Alias $aliasObj
-     *
-     * @return void
      */
     public static function register(string $alias, Alias $aliasObj): void
     {
@@ -36,7 +34,7 @@ class AliasController
      *
      * @return array|null
      */
-    public static function resolve(string $alias, array $params): ?array
+    public static function resolve(string $alias, array $params): array|null
     {
         // Check if the alias exists
         $aliasObj = self::$aliases[$alias] ?? null;

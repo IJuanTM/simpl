@@ -3,11 +3,12 @@
 namespace app\Models;
 
 use app\Controllers\LogController;
+use app\Enums\LogType;
 
 class Url
 {
-    private static ?string $baseUrl = null;
-    private static ?string $rootDir = null;
+    private static string|null $baseUrl = null;
+    private static string|null $rootDir = null;
 
     /**
      * Method to generate a full URL for a file. Adds a version query string to the URL based on the file's last modification time.
@@ -29,7 +30,7 @@ class Url
         // Check if the file exists
         if (!is_file($filePath)) {
             // Log the error if the environment is development
-            if (DEV) LogController::log("Could not find file \"$filePath\"", 'debug');
+            if (DEV) LogController::log("Could not find file \"$filePath\"", LogType::DEBUG);
 
             return $url;
         }

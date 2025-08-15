@@ -2,6 +2,8 @@
 
 namespace app\Controllers;
 
+use app\Enums\LogType;
+
 /**
  * The ApplicationController class is the base class for all controllers.
  * It contains methods that are used by all controllers. It also contains the autoloader.
@@ -21,7 +23,7 @@ class AppController
     }
 
     /**
-     * Method for loading an svg file and returning it as a string.
+     * Method for loading a svg file and returning it as a string.
      *
      * @param string $name
      *
@@ -36,7 +38,7 @@ class AppController
         if (file_exists($file)) return file_get_contents($file);
         else if (DEV) {
             // Log the error
-            LogController::log("Could not find SVG \"$name\"", 'debug');
+            LogController::log("Could not find SVG \"$name\"", LogType::DEBUG);
 
             // Return an error message
             return "SVG \"$name\" not found";

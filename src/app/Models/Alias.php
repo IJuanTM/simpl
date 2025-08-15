@@ -8,7 +8,7 @@ class Alias
     public array $subpages;
     public array $params;
 
-    final public function __construct(string $page, ?array $subpages = [], ?array $params = [])
+    final public function __construct(string $page, array|null $subpages = [], array|null $params = [])
     {
         $this->page = $page;
         $this->subpages = $subpages;

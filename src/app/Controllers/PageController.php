@@ -2,6 +2,7 @@
 
 namespace app\Controllers;
 
+use app\Enums\LogType;
 use app\Models\Page;
 use app\Models\Url;
 
@@ -44,7 +45,7 @@ class PageController extends Page
             // Check if the page object exists and the API method exists
             if (!$this->pageObj || !method_exists($this->pageObj, 'api')) {
                 // Log the error if the environment is development
-                if (DEV) LogController::log("Page \"$page\" was called as an API endpoint, but no page object or API method was found", 'debug');
+                if (DEV) LogController::log("Page \"$page\" was called as an API endpoint, but no page object or API method was found", LogType::DEBUG);
 
                 // Redirect to the 404 page
                 self::redirect('error/404');
@@ -63,21 +64,17 @@ class PageController extends Page
     /**
      * Redirect to the given location with the given delay.
      *
-     * @param string $location
-     * @param int|null $refresh
-     *
-     * @return void
+     * @param string $location The location to redirect to
+     * @param int|null $refresh The time to wait before redirecting
      */
-    public static function redirect(string $location, ?int $refresh = null): void
+    public static function redirect(string $location, int|null $refresh = 0): void
     {
-        $url = Url::to($location);
-        header($refresh ? "Refresh: $refresh; url=$url" : "Location: $url", true, 302);
+        // Redirect to the given location after the given refresh time.
+        header("refresh: $refresh; url=" . Url::to($location));
     }
 
     /**
      * Render the page by loading the needed HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
-     *
-     * @return void
      */
     private function render(): void
     {
@@ -93,7 +90,7 @@ class PageController extends Page
         // Check if the file exists, if not redirect to the 404 page
         if (!is_file($file)) {
             // Log the error if the environment is development
-            if (DEV) LogController::log("Could not find view \"$page\"", 'debug');
+            if (DEV) LogController::log("Could not find view \"$page\"", LogType::DEBUG);
 
             // Redirect to the 404 page
             self::redirect('error/404');
@@ -110,9 +107,7 @@ class PageController extends Page
     /**
      * Load the needed HTML parts. It takes a name as input and loads the corresponding part from the parts folder.
      *
-     * @param string $name
-     *
-     * @return void
+     * @param string $name The name of the part to load
      */
     private function part(string $name): void
     {
@@ -129,7 +124,7 @@ class PageController extends Page
 
         if (DEV) {
             // Write a debug log message
-            LogController::log($message, 'debug');
+            LogController::log($message, LogType::DEBUG);
             echo $message;
         } else echo "<!-- $message -->";
     }
@@ -149,8 +144,6 @@ class PageController extends Page
 
     /**
      * Redirect to the previous page.
-     *
-     * @return void
      */
     public static function back(): void
     {

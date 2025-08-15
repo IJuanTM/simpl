@@ -10,19 +10,19 @@ class ErrorPage
     public string $code;
 
     private array $errors = [
-        '400' => 'Bad request.',
-        '401' => 'You are not authorized to view this page.',
-        '403' => 'You have no access to this page.',
-        '404' => 'This page does not exist.',
-        '500' => 'An internal server error occurred.'
+        400 => 'Bad request.',
+        401 => 'You are not authorized to view this page.',
+        403 => 'You have no access to this page.',
+        404 => 'This page does not exist.',
+        500 => 'An internal server error occurred.'
     ];
 
     public function __construct(object $page)
     {
         // Check if the code is set in the URL and is valid
         if (!isset($page->urlArr['subpages'][0]) || !array_key_exists($page->urlArr['subpages'][0], $this->errors)) {
-            // Redirect to /error/404
-            PageController::redirect('/error/404');
+            // Redirect to the 404 page if the subpage is not set or is invalid
+            PageController::redirect('error/404');
             exit;
         }
 

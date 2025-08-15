@@ -19,8 +19,6 @@ class SessionController
      *
      * @param string $key
      * @param mixed $value
-     *
-     * @return void
      */
     public static function set(string $key, mixed $value): void
     {
@@ -55,8 +53,6 @@ class SessionController
      * Method for removing a session variable.
      *
      * @param string $key
-     *
-     * @return void
      */
     public static function remove(string $key): void
     {
