@@ -28,13 +28,13 @@ header {
 
         > svg {
           max-height: 100%;
-          width: 3rem;
+          width: 3.5rem;
         }
       }
     }
 
     > nav.menu {
-      @include breakpoint-down(md) {
+      @include breakpoint-down(lg) {
         background-color: var(--bg-section);
         flex-direction: column;
         left: 0;
@@ -42,7 +42,7 @@ header {
         overflow: hidden;
         padding: 0;
         position: absolute;
-        top: calc($header-height - 1rem);
+        top: calc($header-height);
         transition: max-height .15s ease-in-out;
         width: 100%;
 
@@ -55,46 +55,61 @@ header {
         }
       }
 
+      @include breakpoint-down(md) {
+        top: calc($header-height - 1rem);
+      }
+
       > div.nav-list .nav-item {
+        column-gap: .25rem;
         padding: 0 1rem;
-        text-decoration: none;
         white-space: pre-wrap;
 
-        &.nav-link {
+        > span {
+          position: relative;
+        }
+
+        &.link {
           font-weight: 700;
 
           &.profile {
             column-gap: .5rem;
 
+            @include breakpoint-up(lg) {
+              padding: 0 .5rem;
+            }
+
             > img {
               border-radius: 50%;
-              height: 2rem;
+              width: 2.5rem;
             }
 
             > i {
-              font-size: 1.5rem;
+              font-size: 2.5rem;
+              width: auto;
             }
-          }
-
-          @include hover-focus {
-            color: var(--text-75);
           }
         }
 
-        &.nav-button {
+        &.button {
           background-color: var(--nav-button);
           border-radius: .5rem;
+
+          @include breakpoint-down(lg) {
+            border-radius: unset;
+          }
 
           &.login, &.logout, &.users {
             color: #FFF;
 
+            @include shimmer(true, rgba(#FFF, .25));
+
             &.active::after {
-              background-color: var(--text-inverse-50);
+              background-color: rgba(#FFF, .5);
             }
 
             @include hover-focus {
               &::after {
-                background-color: var(--text-inverse-25);
+                background-color: rgba(#FFF, .25);
               }
             }
           }
@@ -129,19 +144,17 @@ header {
         }
 
         &.active {
-          position: relative;
-
-          &::after {
+          > span::after {
             background-color: var(--text-50);
             border-radius: .125rem;
-            bottom: .5rem;
+            bottom: .625rem;
             content: "";
             height: .25rem;
             position: absolute;
             transition: width .15s ease-in-out;
-            width: calc(100% - 2rem);
+            width: calc(100% - .5rem);
 
-            @include breakpoint-down(md) {
+            @include breakpoint-down(lg) {
               border-radius: 0 .25rem .25rem 0;
               height: 2rem;
               left: 0;
@@ -151,12 +164,12 @@ header {
           }
 
           @include hover-focus {
-            &::after {
+            > span::after {
               background-color: var(--text-25);
               transition: width .15s ease-in-out;
-              width: calc(75% - 2rem);
+              width: calc(100% - 1rem);
 
-              @include breakpoint-down(md) {
+              @include breakpoint-down(lg) {
                 width: .5rem;
               }
             }
@@ -168,7 +181,7 @@ header {
     > div.nav-options {
       z-index: 3;
 
-      @include breakpoint-up(md) {
+      @include breakpoint-up(lg) {
         flex: 0 0 auto;
       }
 
@@ -191,7 +204,7 @@ header {
         display: none;
         padding: 0;
 
-        @include breakpoint-down(md) {
+        @include breakpoint-down(lg) {
           display: flex;
         }
 

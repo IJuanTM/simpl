@@ -8,6 +8,12 @@
 }
 
 *[inert] {
-  color: var(--text-25);
-  interactivity: inert;
+  color: var(--text-25) !important;
+  interactivity: inert !important;
+}
+
+// ---------------------------------------------------------------- //
+
+:is(a, [data-typo="a"], button):focus-visible {
+  box-shadow: inset 0 0 0 .125rem var(--text);
 }

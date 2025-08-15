@@ -62,7 +62,7 @@
 
 // ---------------------------------------------------------------- //
 
-@mixin shimmer($color: var(--shimmer-color)) {
+@mixin shimmer($hover, $color: var(--shimmer-color)) {
   & {
     position: relative;
     overflow: hidden;
@@ -86,14 +86,16 @@
     transition: left .5s ease-in-out;
   }
 
-  @include hover-focus {
-    & {
-      transition: background-color .15s ease-in-out;
-    }
+  @if ($hover == true) {
+    @include hover-focus {
+      & {
+        transition: background-color .15s ease-in-out;
+      }
 
-    &::before {
-      left: 110%;
-      transition: left .5s ease-in-out;
+      &::before {
+        left: 110%;
+        transition: left .5s ease-in-out;
+      }
     }
   }
 }

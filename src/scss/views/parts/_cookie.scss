@@ -32,7 +32,7 @@ section.cookie {
       cursor: pointer;
       padding: 1rem;
 
-      @include shimmer(rgba(#FFF, .25));
+      @include shimmer(true, rgba(#FFF, .25));
 
       @include hover-focus {
         background-color: $green-dark;

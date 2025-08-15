@@ -19,7 +19,7 @@
     min-width: 24rem;
   }
 
-  @include shimmer;
+  @include shimmer(true);
 
   @include hover-focus {
     background-color: var(--bg-accent);

@@ -2,16 +2,18 @@
 @use "../../config/vars/colors" as *;
 
 div.alert {
-  box-shadow: 0 0 .25rem var(--shadow);
+  border-radius: .5rem;
   color: #FFF;
   display: flex;
   padding: 1rem;
   transition: visibility .15s ease-out, opacity .15s ease-out;
 
+  @include shimmer(false, rgba(#FFF, .25));
+
   &.global {
-    bottom: 2rem;
+    bottom: 5rem;
     left: 0;
-    margin: 1rem;
+    margin: 2rem;
     position: fixed;
     z-index: 4;
 
@@ -19,8 +21,13 @@ div.alert {
       width: calc(100% - 2rem);
     }
 
+    @include breakpoint-down(md) {
+      bottom: 4rem;
+      margin: 1rem;
+    }
+
     @include breakpoint-up(sm) {
-      max-width: 28rem;
+      max-width: 32rem;
     }
   }
 
@@ -30,6 +37,7 @@ div.alert {
 
   &.warning {
     background-color: $orange;
+    color: #000;
   }
 
   &.error {

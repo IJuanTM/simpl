@@ -3,6 +3,9 @@
 
 main.content {
   background-color: var(--bg-content);
+  background-image: radial-gradient(#{'var(--text-5)'} .0625rem, transparent 0);
+  background-position: center;
+  background-size: 1rem 1rem;
   min-height: $content-height;
   padding: $content-padding-row $content-padding-col;
 
