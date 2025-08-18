@@ -9,15 +9,8 @@
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 html {
+  font-size: clamp(.875rem, 1vw + .5rem, 1.125rem);
   scroll-behavior: smooth;
-
-  @include breakpoint-down(sm) {
-    font-size: 87.5%;
-  }
-
-  @media screen and (max-height: 56rem) {
-    font-size: 87.5%;
-  }
 }
 
 body {
