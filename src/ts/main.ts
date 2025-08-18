@@ -41,7 +41,7 @@ themeSwitch.addEventListener('click', () => {
   themeSwitch.innerHTML = `<i class="fas ${nextTheme.icon}"></i>`;
 
   // Set the theme
-  document.documentElement.dataset.theme = localStorage.getItem('theme')!;
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme')!.toString());
 });
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
@@ -61,7 +61,7 @@ window.addEventListener('load', () => {
   (document.querySelectorAll('[data-timeout]') as NodeListOf<HTMLElement>).forEach(item => setTimeout(() => {
     if (item.classList.contains('alert')) item.classList.add('invisible');
     else item.removeAttribute('inert');
-  }, parseInt(item.dataset.timeout || '0')));
+  }, parseInt(item.getAttribute('data-timeout') || '0')));
 });
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
