@@ -64,8 +64,13 @@ header {
         padding: 0 1rem;
         white-space: pre-wrap;
 
-        > span {
-          position: relative;
+        @include breakpoint-down(lg) {
+          justify-content: flex-start;
+          padding: 0 4rem;
+        }
+
+        @include breakpoint-down(md) {
+          padding: 0 2rem;
         }
 
         &.link {
@@ -144,34 +149,55 @@ header {
         }
 
         &.active {
-          > span::after {
-            background-color: var(--text-50);
-            border-radius: .125rem;
-            bottom: .625rem;
-            content: "";
-            height: .25rem;
-            position: absolute;
-            transition: width .15s ease-in-out;
-            width: calc(100% - .5rem);
+          @include breakpoint-down(lg) {
+            position: relative;
 
-            @include breakpoint-down(lg) {
-              border-radius: 0 .25rem .25rem 0;
-              height: 2rem;
-              left: 0;
-              top: 1rem;
-              width: .25rem;
+            &::after {
+              background-color: var(--text-50);
+              border-radius: .25rem;
+              content: "";
+              height: calc(100% - 2rem);
+              left: 3rem;
+              position: absolute;
+              transition: height .15s ease-in-out;
+              width: .375rem;
+
+              @include breakpoint-down(md) {
+                left: 1rem;
+              }
+            }
+
+            @include hover-focus {
+              &::after {
+                background-color: var(--text-25);
+                height: calc(100% - 2.25rem);
+              }
+            }
+
+            > span::after {
+              display: none;
+            }
+          }
+
+          > span {
+            position: relative;
+
+            &::after {
+              background-color: var(--text-50);
+              border-radius: .125rem;
+              bottom: .625rem;
+              content: "";
+              height: .25rem;
+              position: absolute;
+              transition: width .15s ease-in-out;
+              width: calc(100% - .5rem);
             }
           }
 
           @include hover-focus {
             > span::after {
               background-color: var(--text-25);
-              transition: width .15s ease-in-out;
-              width: calc(100% - 1rem);
-
-              @include breakpoint-down(lg) {
-                width: .5rem;
-              }
+              width: calc(100% - .75rem);
             }
           }
         }
