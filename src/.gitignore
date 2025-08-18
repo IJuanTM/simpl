@@ -20,3 +20,6 @@ app/Logs
 
 # Database .sql files
 app/Database/**/*.sql
+
+# Profile images
+public/img/profile
