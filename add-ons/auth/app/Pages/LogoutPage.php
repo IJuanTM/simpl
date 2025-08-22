@@ -2,23 +2,29 @@
 
 namespace app\Pages;
 
+use app\Controllers\AlertController;
 use app\Controllers\PageController;
+use app\Controllers\SessionController;
+use app\Enums\AlertType;
 
 /**
- * The LogoutPage class is the controller for the logout page.
- * It unsets all session variables and redirects the user back.
+ * Handles user logout functionality.
  */
 class LogoutPage
 {
-    public function __construct()
+    /**
+     * Processes logout request, clears session and redirects user.
+     */
+    final public function api(): void
     {
         // Unset the user session
-        unset($_SESSION['user']);
+        SessionController::remove('user');
 
         // Unset the remember cookie
         setcookie('remember', '', time() - 3600, '/');
 
-        // Redirect the user back to the homepage
-        PageController::redirect(REDIRECT, 2);
+        // Redirect the user to the redirect page with a success message
+        PageController::redirect(REDIRECT);
+        AlertController::alert('You have been logged out.', AlertType::SUCCESS, 4);
     }
 }

@@ -1,7 +1,7 @@
 div.table-container {
-  overflow: hidden;
+  border: .125rem solid var(--border-muted);
   border-radius: .25rem;
-  box-shadow: 0 0 .25rem rgba(#000, .25);
+  overflow: hidden;
 
   > div.col {
     overflow-x: auto;
@@ -10,21 +10,21 @@ div.table-container {
       width: 100%;
 
       th, td {
-        white-space: nowrap;
-        vertical-align: middle;
         padding: .625rem .5rem;
+        vertical-align: middle;
+        white-space: nowrap;
       }
 
       th {
-        font-weight: 600;
-        background-color: $light-5;
+        background-color: var(--table-header);
+        font-weight: 700;
       }
 
       tbody tr {
-        background-color: $light-2;
+        background-color: var(--table-row-odd);
 
         &:nth-child(even) {
-          background-color: $light-3;
+          background-color: var(--table-row-even);
         }
       }
     }

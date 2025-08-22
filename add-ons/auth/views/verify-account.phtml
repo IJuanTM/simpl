@@ -1,15 +1,20 @@
-<?php use app\Controllers\FormController; ?>
+<?php
+
+use app\Controllers\FormController;
+use app\Models\Url;
+
+?>
 
 <section class="verify-account">
   <div class="row center-x">
-    <form class="col" method="POST" action="">
+    <form class="col g-row-2" method="POST" action="">
       <div class="row">
         <div class="col center-x">
-          <h3>Verify account</h3>
+          <h1 data-typo="h2">Verify account</h1>
         </div>
       </div>
 
-      <?= FormController::$alert ?>
+      <?= FormController::formAlerts() ?>
 
       <div class="row">
         <div class="col">
@@ -18,31 +23,33 @@
       </div>
 
       <div class="row">
-        <div class="col form-group">
+        <div class="col form-group g-row-0.5">
           <div class="row">
             <label class="col" for="code">Code: <span class="required">*</span></label>
           </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['code'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
-            <input class="col" id="code" type="text" name="code" placeholder="Enter code:" maxlength="8" value="<?= $_POST['code'] ?? '' ?>">
+          <input class="col hidden" id="code" type="text" name="code" maxlength="8" value="<?= $_POST['code'] ?? '' ?>" hidden aria-hidden="true">
+          <div class="col center-x g-col-1">
+            <?php for ($i = 0; $i < 8; $i++): ?>
+              <input type="text" class="digit" maxlength="1" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
+            <?php endfor ?>
           </div>
         </div>
       </div>
 
       <div class="row">
         <div class="col">
-          <p class="form-details">It may take a few minutes for the email to arrive. If you don't see it in your inbox, check your spam folder.</p>
+          <p class="form-details">It may take a few minutes for the email to arrive. If you don't see it in your inbox, please check your spam folder.</p>
         </div>
       </div>
 
       <div class="row">
         <div class="col">
-          <p class="form-details">Didn't receive an email? <a href="<?= $this->url('resend-verification/' . ($this->getUrl()['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here</a> to resend.</p>
+          <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('resend-verification/' . ($this->urlArr['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here to resend</a>.</p>
         </div>
       </div>
 
-      <div class="row button-row center-x">
-        <button class="col center-y f-0" type="submit" name="submit" aria-label="Button to submit the email verification form"><i class="fas fa-right-to-bracket"></i>Verify</button>
+      <div class="row g-2 center-x">
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the email verification form"><i class="fas fa-right-to-bracket"></i>Verify</button>
       </div>
     </form>
   </div>

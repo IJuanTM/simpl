@@ -1,4 +1,11 @@
 import {capsLockWarning, checkMessageLength, inputPassword, passwordToggleIcon, togglePassword} from './input.js';
+import {editProfileImage, profileImageInput, setProfileImage} from './profile';
+import {handleVerificationCode} from './verification-code.js';
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+// Initialize verification code input if on verification page
+handleVerificationCode();
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -13,10 +20,10 @@ if (inputFields) inputFields.forEach(field => field.addEventListener('keydown', 
 
 if (inputPassword) {
   // On click, toggle the password visibility
-  passwordToggleIcon.addEventListener('click', togglePassword);
+  passwordToggleIcon?.addEventListener('click', togglePassword);
 
   // On keydown, check if the caps lock key is on
-  inputPassword.addEventListener('keydown', (event: KeyboardEvent) => capsLockWarning(event));
+  inputPassword?.addEventListener('keydown', (event: KeyboardEvent) => capsLockWarning(event));
 }
 
 const
@@ -88,3 +95,13 @@ const
 if (deleteCheckbox) deleteCheckbox.addEventListener('change', () => deleteCheckbox.checked
   ? deleteUserButton.removeAttribute('inert')
   : deleteUserButton.setAttribute('inert', ''));
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+if (editProfileImage && profileImageInput) {
+  // On click, open the file input
+  editProfileImage.addEventListener('click', () => profileImageInput?.click());
+
+  // On change, set the profile image
+  profileImageInput.addEventListener('change', () => setProfileImage());
+}

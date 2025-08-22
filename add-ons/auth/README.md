@@ -16,7 +16,7 @@ It also includes code for changing the navigation bar based on if the user is lo
 
 #### Controllers
 
-In the `UserController.php` file you can find the code for the user system. The functions here are used in mutiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
+In the `AuthController.php` file you can find the code for the user system. The functions here are used in mutiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
 
 In the `AppController.php` file is a line of code you will need to add in the exising `AppController.php` of your project. Add this above the call to create a new `PageController` object. This line is for checking if the user has a remember me cookie set and if this one is not expired yet. If so, the user will be logged in automatically.
 
@@ -28,7 +28,7 @@ In these pages form submissions are handled and the user is redirected to the co
 
 #### Views
 
-In the `views` folder you can find pages for all of the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `mails` folder with mail templates used by the framework, as well as a `users` folder with subpages for the admin system.
+In the `views` folder you can find pages for all of the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `users` folder with subpages for the admin system.
 
 #### Styling
 
@@ -46,9 +46,13 @@ The database connection values are stored in the `config/database.php` as consta
 
 Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
 
+### Mail templates
+
+To make mails easier this add-on uses mjml templates to generate html mails. These templates can be found in the `mails` folder. The `mails` folder contains a `templates` folder with the mjml templates and a `html` folder with the generated html files. You can read more about mjml [here](https://mjml.io/).
+
 ### Requirements
 
-* Icons add-on
+* Mjml npm package
 
 _Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.4.0**) or MariaDB (tested with version **11.4.2**)._
 
@@ -69,4 +73,4 @@ Alternatively, you can follow these steps:
 9. Copy the contents of the `scss/views` folder to your project's `scss/views` folder
 10. Copy the imports from the `scss/main.scss` file to your project's `scss/main.scss` file
 11. Copy the contents of the `views/parts/header.phtml` file to your project's `views/parts/header.phtml` file
-12. Recommended is to use the example sql file to create a database with a user table and a user role table, as this is what the add-on uses by default. You can find the example sql file in the `sql` folder of this add-on. If you want to use your own database, you can change the database connection values in the `config/database.php` file.
+12. Recommended is to use the example sql file to create a database with a user table and a user role table, as this is what the add-on uses by default. You can find the example sql file in the `Database` folder of this add-on. If you want to use your own database, you can change the database connection values in the `Config/database.php` file.

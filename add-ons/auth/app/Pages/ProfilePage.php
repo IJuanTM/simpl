@@ -2,91 +2,87 @@
 
 namespace app\Pages;
 
-use app\Controllers\{AppController, FormController, MailController, PageController, UserController};
+use app\Controllers\AlertController;
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\MailController;
+use app\Controllers\PageController;
+use app\Controllers\SessionController;
 use app\Database\Database;
+use app\Enums\AlertType;
+use app\Models\Url;
 
 /**
- * The ProfilePage class is the controller for the profile page.
- * It checks if the user is logged in and redirects the user to the 403 page if not.
+ * Handles user profile management functionality.
  */
 class ProfilePage
 {
     public function __construct()
     {
         // Check if the user is logged in
-        if (!isset($_SESSION['user']['id'])) {
+        if (!SessionController::get('user')) {
             PageController::redirect('error/403');
             exit;
         }
 
         // Check if the profile form is submitted
-        if (isset($_POST['submit'])) {
-            // Check if the required fields are not empty
-            if (empty($_POST['email'])) {
-                FormController::alert('Please enter your email!', 'warning', 'profile');
-                return;
-            }
-
-            // Check if the values entered in the fields are not too long
-            if (strlen($_POST['name']) > 100) {
-                FormController::alert('The input of the name field is too long!', 'warning', 'profile');
-                return;
-            }
-            if (strlen($_POST['email']) > 100) {
-                FormController::alert('The input of the email field is too long!', 'warning', 'profile');
-                return;
-            }
-
-            // Check if the email is valid
-            if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-                $_POST['email'] = $_SESSION['user']['email'];
-                FormController::alert('The entered email is not valid!', 'warning', 'profile');
-                return;
-            }
-
-            // Sanitize the email
-            $_POST['email'] = AppController::sanitize($_POST['email']);
-
-            // Check if the email is changed and if it is already in use by another user
-            if ($_SESSION['user']['email'] !== $_POST['email'] && UserController::checkEmail($_POST['email'])) {
-                $_POST['email'] = $_SESSION['user']['email'];
-                FormController::alert('An account with this email already exists!', 'warning', 'profile');
-                return;
-            }
-
-            // Update the user
-            self::update($_SESSION['user']['id'], AppController::sanitize($_POST['name']), $_POST['email']);
-        }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
-     * This method is for updating a user's profile.
-     * A user can update their name and email.
-     *
-     * @param int $id
-     * @param string $name
-     * @param string $email
-     *
-     * @return void
+     * Processes profile update form submission.
      */
-    public static function update(int $id, string $name, string $email): void
+    private function post(): void
+    {
+        $valid = true;
+
+        // Validate the form fields
+        if (!FormController::validate('username', ['maxLength' => 100])) $valid = false;
+        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) $valid = false;
+
+        if (!$valid) return;
+
+        // Sanitize the email
+        $_POST['email'] = FormController::sanitize($_POST['email']);
+
+        // Check if the email is changed and if it is already in use by another user
+        if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
+            $_POST['email'] = SessionController::get('user')['email'];
+
+            FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+            return;
+        }
+
+        // Update the user
+        $this->update(SessionController::get('user')['id'], FormController::sanitize($_POST['username']), $_POST['email']);
+    }
+
+    /**
+     * Updates user profile information in database.
+     *
+     * @param int $id User ID
+     * @param string $username New username
+     * @param string $email New email address
+     */
+    private function update(int $id, string $username, string $email): void
     {
         $db = new Database();
 
-        // Check if the name has changed
-        if ($_SESSION['user']['name'] !== $name) {
-            // Update the name in the database
-            $db->query('UPDATE users SET name = :name WHERE id = :id');
-            $db->bind(':name', $name);
+        // Check if the username has changed
+        if (SessionController::get('user')['username'] !== $username) {
+            // Update the username in the database
+            $db->query('UPDATE users SET username = :username WHERE id = :id');
+            $db->bind(':username', $username);
             $db->bind(':id', $id);
             $db->execute();
         }
 
         // Check if the email has changed
-        if ($_SESSION['user']['email'] !== $email) {
+        if (SessionController::get('user')['email'] !== $email) {
             // Check if the email is already in use
-            if (UserController::checkEmail($email)) {
-                FormController::alert('An account with this email already exists!', 'warning', "users/edit/$id");
+            if (AuthController::checkEmail($email)) {
+                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+                PageController::redirect("users/edit/$id");
                 return;
             }
 
@@ -97,7 +93,7 @@ class ProfilePage
             $db->execute();
 
             // Generate a verification token
-            $token = UserController::generateToken(4);
+            $token = AuthController::generateToken(4);
 
             // Set the verification token in the database
             $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
@@ -107,13 +103,7 @@ class ProfilePage
             $db->execute();
 
             // Send a verification email to the user
-            MailController::verification($id, $email, $token);
-
-            // Redirect to the logout page
-            PageController::redirect('logout');
-
-            // Show the success message
-            AppController::alert('Success! Your profile has been updated! Please verify your new email address!', ['success', 'global'], 4);
+            $this->verificationMail($id, $email, $token);
             return;
         }
 
@@ -123,16 +113,171 @@ class ProfilePage
         $user = $db->single();
 
         // Add the role to the user array
-        $user += ['role' => $_SESSION['user']['role']];
+        $user += ['role' => SessionController::get('user')['role']];
 
         // Update the user session
-        $_SESSION['user'] = $user;
+        SessionController::set('user', $user);
 
-        // Redirect to the profile page
+        // Redirect to the profile page with a success message
         PageController::redirect('profile');
-
-        // Show the success message
-        AppController::alert('Success! Your profile has been updated!', ['success', 'global'], 4);
+        AlertController::alert('Success! Your profile has been updated!', AlertType::SUCCESS, 4);
     }
 
+    /**
+     * Sends verification email after email address change.
+     *
+     * @param int $id User ID
+     * @param string $to New email address
+     * @param string $code Verification code
+     */
+    private function verificationMail(int $id, string $to, string $code): void
+    {
+        // Get the template from the views/parts/mails folder
+        $contents = MailController::template('verification', [
+            'code' => $code,
+            'link' => Url::to("verify-account/$id/$code")
+        ]);
+
+        // Check if template was loaded successfully
+        if ($contents === false) {
+            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            return;
+        }
+
+        // Send the message
+        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
+
+        if ($result) {
+            // Redirect to the logout page with a success message
+            PageController::redirect('api/logout');
+            AlertController::alert('Success! Your profile has been updated! Please verify your new email address!', AlertType::SUCCESS, 4);
+        } else FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+    }
+
+    /**
+     * Handles API requests for profile-related actions.
+     *
+     * @param object $page Page object with request information
+     */
+    final public function api(object $page): void
+    {
+        // Check if the user is trying to perform an action related to the profile image
+        if (isset($page->urlArr['subpages'][0])) {
+            switch ($page->urlArr['subpages'][0]) {
+                case 'update-profile-image':
+                    self::updateProfileImage();
+                    break;
+                case 'delete-profile-image':
+                    self::deleteProfileImage();
+                    break;
+            }
+        }
+    }
+
+    /**
+     * Processes profile image upload and update.
+     */
+    private static function updateProfileImage(): void
+    {
+        // Check if the file is uploaded correctly
+        if (!isset($_FILES['new_img']) || $_FILES['new_img']['error'] !== UPLOAD_ERR_OK) {
+            // Redirect to the profile page with an error message
+            PageController::redirect('profile');
+            AlertController::alert('Image upload failed. Please try again.', AlertType::ERROR, 4);
+            return;
+        }
+
+        $file = $_FILES['new_img'];
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        // Get the mime type of the file
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
+
+        // Validate if the file is an image by checking the mime type
+        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true)) {
+            PageController::redirect('profile');
+            AlertController::alert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
+            return;
+        }
+
+        // Validate if the file is an image by checking the image size
+        if (getimagesize($file['tmp_name']) === false) {
+            PageController::redirect('profile');
+            AlertController::alert('The uploaded file is not a valid image.', AlertType::ERROR, 4);
+            return;
+        }
+
+        // Check if the image is too large
+        if ($file['size'] > 2 * 1024 * 1024) {
+            // Redirect to the profile page with an error message
+            PageController::redirect('profile');
+            AlertController::alert('The image size is too large. Please choose an image that is less than 2MB.', AlertType::ERROR, 4);
+            return;
+        }
+
+        $id = SessionController::get('user')['id'];
+        $path = $_SERVER['DOCUMENT_ROOT'] . '/img/profile/';
+
+        $db = new Database();
+
+        // Fetch the old image name from the database
+        $db->query('SELECT profile_img FROM users WHERE id = :id');
+        $db->bind(':id', $id);
+        $old = $db->single()['profile_img'] ?? null;
+
+        // Remove the old image if it exists
+        if ($old) {
+            $oldPath = $path . $old;
+
+            // Remove the image if it exists
+            if (is_file($oldPath)) unlink($oldPath);
+        }
+
+        $name = "{$id}_" . time() . ".$extension";
+
+        // Move the new image to the profile folder
+        move_uploaded_file($file['tmp_name'], $path . $name);
+
+        // Update the database
+        $db->query('UPDATE users SET profile_img = :profile_img WHERE id = :id');
+        $db->bind(':profile_img', $name);
+        $db->bind(':id', $id);
+        $db->execute();
+
+        // Redirect to the profile page with a success message
+        PageController::redirect('profile');
+        AlertController::alert('Profile image updated successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Removes user's profile image.
+     */
+    private static function deleteProfileImage(): void
+    {
+        $db = new Database();
+
+        // Fetch the old image name from the database
+        $db->query('SELECT profile_img FROM users WHERE id = :id');
+        $db->bind(':id', SessionController::get('user')['id']);
+        $old = $db->single()['profile_img'] ?? null;
+
+        // Remove the old image if it exists
+        if ($old) {
+            $oldPath = $_SERVER['DOCUMENT_ROOT'] . '/img/profile/' . $old;
+
+            // Remove the image if it exists
+            if (is_file($oldPath)) unlink($oldPath);
+        }
+
+        // Remove the profile image from the database
+        $db->query('UPDATE users SET profile_img = NULL WHERE id = :id');
+        $db->bind(':id', SessionController::get('user')['id']);
+        $db->execute();
+
+        // Redirect to the profile page with a success message
+        PageController::redirect('profile');
+        AlertController::alert('Profile image deleted successfully!', AlertType::SUCCESS, 4);
+    }
 }

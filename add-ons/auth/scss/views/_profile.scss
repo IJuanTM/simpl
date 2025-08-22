@@ -1,0 +1,138 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+section.profile div.profile-container {
+  background-color: var(--bg-accent);
+  border: .125rem solid var(--border-muted);
+  border-radius: .5rem;
+  padding: 3rem 4rem;
+
+  @include breakpoint-down(md) {
+    padding: 2rem;
+  }
+
+  @include breakpoint-up(lg) {
+    flex: 0 0 auto;
+  }
+
+  > div.row {
+    @include breakpoint-down(lg) {
+      flex-direction: column;
+    }
+
+    div.profile-image-row {
+      @include breakpoint-up(md) {
+        width: 12rem;
+      }
+
+      @include breakpoint-up(lg) {
+        width: 16rem;
+      }
+
+      form.profile-image {
+        position: relative;
+
+        > img {
+          border-radius: 50%;
+          max-width: 12rem;
+        }
+
+        > i {
+          font-size: 10rem;
+          width: auto;
+
+          @include breakpoint-up(md) {
+            font-size: 8rem;
+          }
+
+          @include breakpoint-up(lg) {
+            font-size: 10rem;
+          }
+        }
+
+        > div.profile-image-menu {
+          background-color: rgba(#000, .5);
+          border-radius: 50%;
+          display: none;
+          position: absolute;
+
+          > *.profile-action {
+            cursor: pointer;
+            font-size: 1.5rem;
+
+            &.edit {
+              color: #FFF;
+
+              &:has(i.fa-plus) {
+                font-size: 2rem;
+              }
+
+              &:hover {
+                color: rgba(#FFF, .75);
+              }
+            }
+
+            &.delete {
+              color: $red;
+
+              &:hover {
+                color: $red-dark;
+              }
+            }
+          }
+        }
+
+        &.loading {
+          pointer-events: none;
+
+          &::after {
+            align-items: center;
+            animation: spin 1s linear infinite;
+            background-color: rgba(#000, .5);
+            border-radius: 50%;
+            color: #FFF;
+            content: '\f110';
+            display: flex;
+            font-family: 'Font Awesome 7 Free', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            height: 100%;
+            justify-content: center;
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+          }
+        }
+
+        &:hover {
+          > div.profile-image-menu {
+            display: flex;
+          }
+
+          &::after {
+            background-color: rgba(#000, .5);
+            display: flex;
+          }
+        }
+      }
+    }
+
+    form.edit-profile {
+      @include breakpoint-down(md) {
+        min-width: 100% !important;
+      }
+
+      a.button.change-password {
+        background-color: $red;
+        color: #FFF;
+
+        @include shimmer(true, rgba(#FFF, .25));
+
+        @include hover-focus {
+          background-color: $red-dark;
+          color: rgba(#FFF, .75);
+        }
+      }
+    }
+  }
+}

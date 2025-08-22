@@ -1,6 +1,8 @@
-@import "views/users";
-@import "views/profile";
+// VIEWS
+@forward "views/users";
+@forward "views/profile";
+@forward "views/verify-account";
 
 // COMPONENTS
-@import "components/form";
-@import "components/table";
+@forward "components/form";
+@forward "components/table";

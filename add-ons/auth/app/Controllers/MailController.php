@@ -2,132 +2,126 @@
 
 namespace app\Controllers;
 
+use app\Enums\LogType;
+
 /**
- * The MailController class is used for sending emails. It contains methods for sending emails to the site owner and to the user.
+ * Handles email creation and delivery throughout the application.
  */
 class MailController
 {
     /**
-     * This method is called when the user submits the contact form on the contact page.
+     * Processes an HTML email template by replacing placeholder variables.
      *
-     * @param string $from
-     * @param string $sender
-     * @param string $subject
-     * @param string $message
+     * @param string $name Template filename without extension
+     * @param array $vars Variables to replace in format {{ key }}
      *
-     * @return void
+     * @return string|false Processed HTML email content or false if template not found
      */
-    public static function contact(string $from, string $sender, string $subject, string $message): void
+    public static function template(string $name, array $vars): string|false
     {
-        // Get the template from the views/parts/mails folder
-        $contents = self::template('contact', [
-            'date' => date('Y-m-d'),
-            'time' => date('H:i'),
-            'contents' => nl2br($message),
-            'from' => $from
-        ]);
+        $templatePath = BASEDIR . "/app/Mails/html/$name.html";
 
-        // Send the message
-        if (self::send($from, SITE_MAIL, $sender, $subject, $contents)) {
-            // Redirect the user to the redirect page
-            PageController::redirect(REDIRECT);
+        // Check if template exists
+        if (!file_exists($templatePath)) {
+            LogController::log("Email template not found: \"$name.html\"", LogType::MAIL);
+            return false;
+        }
 
-            // Set the success message
-            AppController::alert('Your message has been sent!', ['success', 'global'], 4);
-        } else FormController::alert('An error occurred while sending your message!', 'danger', 'contact', 2);
-    }
+        // Get the template content
+        $template = file_get_contents($templatePath);
 
-    /**
-     * This method is for creating an email based on a template from the views/parts/mails folder.
-     * It replaces the variables in the template with the values from the array.
-     *
-     * @param string $name
-     * @param array $vars
-     *
-     * @return string
-     */
-    private static function template(string $name, array $vars): string
-    {
-        // Get the template from the views/parts/mails folder
-        $template = file_get_contents(BASEDIR . "/views/parts/mails/$name.phtml");
+        if ($template === false) {
+            LogController::log("Failed to read email template: \"$name.html\"", LogType::MAIL);
+            return false;
+        }
 
-        // Replace the variables in the template with the values from the array
-        foreach ($vars as $key => $value) $template = str_replace("{{ $$key }}", $value, $template);
+        // Replace the variables in the template
+        foreach ($vars as $key => $value) $template = str_replace("{{ $key }}", $value, $template);
 
-        // Return the template with the replaced variables
         return $template;
     }
 
     /**
-     * This method is used for sending emails.
+     * Sends an email with automatic async handling when possible.
      *
-     * @param string $from
-     * @param string $to
-     * @param string $sender
-     * @param string $subject
-     * @param string $message
+     * @param string $senderName Sender's display name
+     * @param string $to Recipient's email address
+     * @param string $senderEmail Sender's email address
+     * @param string $subject Email subject line
+     * @param string $message HTML content of the email
      *
-     * @return bool
+     * @return bool Success status (sent or queued)
      */
-    public static function send(string $from, string $to, string $sender, string $subject, string $message): bool
+    public static function send(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
     {
-        // Set the headers
+        // Validate recipient email
+        if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            LogController::log("Invalid recipient email: \"$to\"", LogType::MAIL);
+            return false;
+        }
+
+        // Use async sending if possible
+        if (function_exists('fastcgi_finish_request')) {
+            $_SESSION['pending_email'] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
+            register_shutdown_function([self::class, 'sendEmailAsync']);
+            return true;
+        }
+
+        // Fall back to synchronous sending
+        return self::sendEmail($senderName, $to, $senderEmail, $subject, $message);
+    }
+
+    /**
+     * Performs the actual email sending using PHP's mail() function.
+     *
+     * @param string $senderName Sender's display name
+     * @param string $to Recipient's email address
+     * @param string $senderEmail Sender's email address
+     * @param string $subject Email subject line
+     * @param string $message HTML content of the email
+     *
+     * @return bool Success status
+     */
+    private static function sendEmail(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
+    {
+        // Set the email headers
         $headers = [
-            'From' => "$from <$sender>",
-            'X-Mailer' => 'PHP/' . phpversion(),
-            'MIME-Version' => '1.0',
-            'Content-Type' => 'text/html; charset=UTF-8'
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=UTF-8',
+            'From: ' . $senderName . ' <' . $senderEmail . '>',
+            'Reply-To: ' . $senderEmail,
+            'X-Mailer: PHP/' . PHP_VERSION
         ];
 
         // Send the email
-        if (!@mail($to, $subject, $message, $headers)) {
-            // Log the error
-            LogController::log("An error occurred while sending an email from \"$sender\" to \"$to\" with subject \"$subject\"", 'error');
+        $result = mail($to, $subject, $message, implode("\r\n", $headers));
 
-            // Return false
-            return false;
+        // Log any errors
+        if (!$result) LogController::log("Failed to send email from \"$senderEmail\" to \"$to\": $subject", LogType::MAIL);
+
+        return $result;
+    }
+
+    /**
+     * Processes queued emails after the HTTP response has been sent.
+     */
+    public static function sendEmailAsync(): void
+    {
+        if (isset($_SESSION['pending_email'])) {
+            // Get the email data from the session
+            $email = $_SESSION['pending_email'];
+
+            // Send the email
+            self::sendEmail(
+                $email['senderName'],
+                $email['to'],
+                $email['senderEmail'],
+                $email['subject'],
+                $email['message']
+            );
+
+            // Remove the email data from the session
+            unset($_SESSION['pending_email']);
         }
-        return true;
-    }
-
-    /**
-     * This method is used for sending a verification mail to the user after registration.
-     *
-     * @param int $id
-     * @param string $to
-     * @param string $code
-     *
-     * @return void
-     */
-    public static function verification(int $id, string $to, string $code): void
-    {
-        // Get the template from the views/parts/mails folder
-        $contents = self::template('verification', [
-            'code' => $code,
-            'link' => PageController::url("verify-account/$id/$code")
-        ]);
-
-        // Send the message
-        self::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
-    }
-
-    /**
-     * This method is used for sending a password reset mail to the user.
-     *
-     * @param int $id
-     * @param string $to
-     * @param string $token
-     *
-     * @return void
-     */
-    public static function reset(int $id, string $to, string $token): void
-    {
-        // Get the template from the views/parts/mails folder
-        $contents = self::template('reset', [
-            'link' => PageController::url("reset-password/$id/$token")
-        ]);
-
-        // Send the message
-        self::send(APP_NAME, $to, NO_REPLY_MAIL, 'Reset password', $contents);
     }
 }

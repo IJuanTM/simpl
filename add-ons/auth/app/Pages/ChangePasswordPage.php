@@ -2,83 +2,76 @@
 
 namespace app\Pages;
 
+use app\Controllers\AlertController;
+use app\Controllers\AuthController;
 use app\Controllers\FormController;
+use app\Controllers\PageController;
+use app\Controllers\SessionController;
 use app\Database\Database;
+use app\Enums\AlertType;
 
+/**
+ * Handles password change functionality for authenticated users.
+ */
 class ChangePasswordPage
 {
     public function __construct()
     {
         // Check if the change password form is submitted
-        if (isset($_POST['submit'])) {
-            // Check if all the required fields are entered
-            if (empty($_POST['old-password'])) {
-                FormController::alert('Please enter your old password!', 'warning', 'change-password');
-                return;
-            }
-            if (empty($_POST['new-password'])) {
-                FormController::alert('Please enter your new password!', 'warning', 'change-password');
-                return;
-            }
-            if (empty($_POST['new-password-check'])) {
-                FormController::alert('Please confirm your new password!', 'warning', 'change-password');
-                return;
-            }
-
-            // Check if the values entered in fields are not too long
-            if (strlen($_POST['old-password']) > 50) {
-                $_POST['old-password'] = '';
-                FormController::alert('The input of the old password field is too long!', 'warning', 'change-password');
-                return;
-            }
-            if (strlen($_POST['new-password']) > 50) {
-                $_POST['new-password'] = '';
-                FormController::alert('The input of the new password field is too long!', 'warning', 'change-password');
-                return;
-            }
-            if (strlen($_POST['new-password-check']) > 50) {
-                $_POST['new-password-check'] = '';
-                FormController::alert('The input of the new password check field is too long!', 'warning', 'change-password');
-                return;
-            }
-
-            // Check if the old password is correct
-            if (!password_verify($_POST['old-password'], $_SESSION['user']['password'])) {
-                FormController::alert('The old password is incorrect!', 'warning', 'change-password');
-                return;
-            }
-
-            // Check if the new password contains at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number
-            if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $_POST['new-password'])) {
-                $_POST['new-password'] = '';
-                $_POST['new-password-check'] = '';
-                FormController::alert('Your new password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number!', 'warning', 'register');
-                return;
-            }
-
-            // Check if the new password is the same as the old password
-            if ($_POST['old-password'] === $_POST['new-password']) {
-                FormController::alert('The new password is the same as the old password!', 'warning', 'change-password');
-                return;
-            }
-
-            // Check if the new password and the new password check are the same
-            if ($_POST['new-password'] !== $_POST['new-password-check']) {
-                FormController::alert('The newly entered passwords do not match!', 'warning', 'change-password');
-                return;
-            }
-
-            $this->changePassword($_SESSION['user']['id'], $_POST['new-password']);
-        }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
-     * This method is for changing the password of a user.
+     * Processes password change form submission.
+     */
+    private function post(): void
+    {
+        $valid = true;
+
+        // Validate the form fields
+        if (!FormController::validate('old-password', ['required', 'maxLength' => 50])) $valid = false;
+        if (!FormController::validate('new-password', ['required', 'maxLength' => 50])) $valid = false;
+        if (!FormController::validate('new-password-check', ['required', 'maxLength' => 50])) $valid = false;
+
+        if (!$valid) return;
+
+        // Check if the old password is correct
+        if (!AuthController::checkPassword(SessionController::get('user')['email'], $_POST['old-password'])) {
+            $_POST['old-password'] = '';
+
+            FormController::addAlert('The old password is incorrect!', AlertType::WARNING);
+            return;
+        }
+
+        // Check if the new password contains at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number
+        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $_POST['new-password'])) {
+            $_POST['new-password'] = '';
+            $_POST['new-password-check'] = '';
+
+            FormController::addAlert('Your new password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number!', AlertType::WARNING);
+            return;
+        }
+
+        // Check if the new password is the same as the old password
+        if ($_POST['old-password'] === $_POST['new-password']) {
+            FormController::addAlert('The new password is the same as the old password!', AlertType::WARNING);
+            return;
+        }
+
+        // Check if the new password and the new password check are the same
+        if ($_POST['new-password'] !== $_POST['new-password-check']) {
+            FormController::addAlert('The newly entered passwords do not match!', AlertType::WARNING);
+            return;
+        }
+
+        $this->changePassword(SessionController::get('user')['id'], $_POST['new-password']);
+    }
+
+    /**
+     * Updates user's password in the database.
      *
-     * @param int $id
-     * @param string $password
-     *
-     * @return void
+     * @param int $id User ID
+     * @param string $password New password (will be hashed)
      */
     private function changePassword(int $id, string $password): void
     {
@@ -90,7 +83,8 @@ class ChangePasswordPage
         $db->bind(':id', $id);
         $db->execute();
 
-        // Redirect the user to the profile page
-        FormController::alert('Success! Your password has been changed!', 'success', 'profile', 2);
+        // Redirect to the profile page with a success message
+        PageController::redirect('profile');
+        AlertController::alert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
     }
 }

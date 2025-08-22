@@ -1,70 +1,98 @@
-<?php use app\Controllers\{FormController, UserController}; ?>
+<?php
 
-<section class="profile">
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\SessionController;
+use app\Models\Url;
+
+?>
+
+<section class="profile f-col g-row-2">
   <div class="row">
     <div class="col center-x">
-      <h3>Profile</h3>
+      <h1 data-typo="h2">Profile</h1>
     </div>
   </div>
 
   <div class="row center-x">
-    <div class="col card">
-      <div class="row center-y">
-        <div class="col profile-image center f-0">
-          <i class="fas fa-circle-user"></i>
+    <div class="col profile-container">
+      <div class="row g-2 center-y">
+        <div class="col profile-image-row center-x f-0">
+          <form class="profile-image h-100" method="POST" action="" enctype="multipart/form-data">
+            <?php $profileImage = AuthController::getProfileImage(SessionController::get('user')['id']); ?>
+
+            <?php if ($profileImage) : ?>
+              <img src="<?= $profileImage ?>" alt="Profile image">
+            <?php else : ?>
+              <i class="fas fa-circle-user"></i>
+            <?php endif ?>
+
+            <input id="id" type="hidden" name="id" value="<?= SessionController::get('user')['id'] ?>">
+
+            <input id="image" type="file" name="image" accept="image/*" hidden>
+
+            <div class="profile-image-menu center g-col-1 w-100 h-100">
+              <?php if ($profileImage) : ?>
+                <button class="col profile-action edit f-0" type="button"><i class="fas fa-pen"></i></button>
+                <a class="col profile-action delete f-0" href="<?= Url::to('api/profile/delete-profile-image') ?>"><i class="fas fa-trash"></i></a>
+              <?php else : ?>
+                <button class="col profile-action edit f-0" type="button"><i class="fas fa-plus"></i></button>
+              <?php endif ?>
+            </div>
+          </form>
         </div>
 
-        <form class="col edit-profile center-x" method="POST" action="">
+        <form class="col edit-profile g-row-2 center-x" method="POST" action="">
           <div class="row">
             <div class="col center-x">
-              <h5>Account details</h5>
+              <h2 data-typo="h4">Account details</h2>
             </div>
           </div>
 
-          <?= FormController::$alert ?>
+          <?= FormController::formAlerts() ?>
 
-          <div class="row form-row">
-            <div class="col form-group" inert>
+          <div class="row form-row g-1">
+            <div class="col form-group g-row-0.5" inert>
               <div class="row">
                 <label class="col" for="created_at">Created at:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
-                <input class="col" id="created_at" type="text" name="created_at" value="<?= $_SESSION['user']['created_at'] ?>">
+                <input class="col" id="created_at" type="text" name="created_at" value="<?= SessionController::get('user')['created_at'] ?>" readonly>
               </div>
             </div>
 
-            <div class="col form-group" inert>
+            <div class="col form-group g-row-0.5" inert>
               <div class="row">
                 <label class="col" for="verified">Verified:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
-                <input class="col" id="verified" type="text" name="verified" value="<?= UserController::isVerified($_SESSION['user']['id']) ? 'True' : 'False' ?>">
+                <input class="col" id="verified" type="text" name="verified" value="<?= AuthController::isVerified(SessionController::get('user')['id']) ? 'True' : 'False' ?>" readonly>
               </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="col form-group">
+            <div class="col form-group g-row-0.5">
               <div class="row">
-                <label class="col" for="name">Name:</label>
+                <label class="col" for="username">Username:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-                <input class="col" id="name" type="text" name="name" placeholder="Enter name:" maxlength="100" value="<?= $_POST['name'] ?? $_SESSION['user']['name'] ?>">
+                <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username:" value="<?= $_POST['username'] ?? SessionController::get('user')['username'] ?>" autocomplete="username" aria-label="Username input field">
               </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="col form-group">
+            <div class="col form-group g-row-0.5">
               <div class="row">
                 <label class="col" for="email">Email: <span class="required">*</span></label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-                <input class="col" id="email" type="email" name="email" value="<?= $_POST['email'] ?? $_SESSION['user']['email'] ?>">
+                <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? SessionController::get('user')['email'] ?>" autocomplete="email" aria-label="Email input field">
               </div>
               <div class="row">
                 <div class="col">
@@ -74,9 +102,9 @@
             </div>
           </div>
 
-          <div class="row button-row center-x">
-            <a class="col change-password center-y f-0" href="<?= $this->url('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
-            <button class="col edit-profile center-y f-0" type="submit" name="submit" inert><i class="fas fa-save"></i>Save</button>
+          <div class="row g-2 center-x">
+            <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
+            <button class="col button edit-profile g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-save"></i>Save</button>
           </div>
         </form>
       </div>

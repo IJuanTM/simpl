@@ -4,7 +4,7 @@ use app\Database\Database;
 
 /* ---------------------------------------------------------------- */
 
-// Extecute the start script
+// Execute the start script
 require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
