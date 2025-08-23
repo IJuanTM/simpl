@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl)
+[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
 
 # Simpl
 
@@ -11,13 +11,13 @@
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.24-777BB3?logo=php)](https://www.php.net)
-[![Composer logo](https://img.shields.io/badge/composer-2.8.10-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-24.6.0-5FA04E?logo=node.js)](https://nodejs.org)
-[![npm logo](https://img.shields.io/badge/npm-10.9.2-CB0000?logo=npm)](https://www.npmjs.com)
-[![Sass logo](https://img.shields.io/badge/sass-1.90.0-CC6699?logo=sass)](https://sass-lang.com)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.2-3178C6?logo=typescript)](https://www.typescriptlang.org)
-[![Rollup logo](https://img.shields.io/badge/rollup-4.46.2-EF3434?logo=rollup.js)](https://rollupjs.org)
+[![PHP logo](https://img.shields.io/badge/php-8.3.24-777BB3?logo=php)](https://www.php.net/)
+[![Composer logo](https://img.shields.io/badge/composer-2.8.11-89552C?logo=composer)](https://getcomposer.org/)
+[![Node.js logo](https://img.shields.io/badge/node.js-24.6.0-5FA04E?logo=node.js)](https://nodejs.org/)
+[![npm logo](https://img.shields.io/badge/npm-11.5.2-CB0000?logo=npm)](https://www.npmjs.com/)
+[![Sass logo](https://img.shields.io/badge/sass-1.90.0-CC6699?logo=sass)](https://sass-lang.com/)
+[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Rollup logo](https://img.shields.io/badge/rollup-4.47.1-EF3434?logo=rollup.js)](https://rollupjs.org/)
 
 <br>
 
@@ -39,7 +39,7 @@
 * Comes with example pages and a default landing page
 * A collection of handy TypeScript functions
 
-_Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
+_Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 <br>
 
@@ -49,16 +49,16 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about)._
 
 Before you can start using Simpl you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) (tested with version **8.3.24**)
-* [Composer](https://getcomposer.org) (tested with version **2.8.10**)
-* [Node.js](https://nodejs.org) (tested with version **24.6.0**)
-* [npm](https://www.npmjs.com) (tested with version **10.9.2**)
+* [PHP](https://www.php.net/)
+* [Composer](https://getcomposer.org/)
+* [Node.js](https://nodejs.org/)
+* [npm](https://www.npmjs.com/)
 
 ### Step 1: Download Simpl
 
-Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com) or [XAMPP](https://www.apachefriends.org) if you're on Windows, or plain [Apache](https://httpd.apache.org) if you're on Linux.
+Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
 
-Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm) or [Microsoft Visual Studio Code](https://code.visualstudio.com).
+Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
 ### Step 2: Run composer install
 
@@ -74,7 +74,7 @@ Now if you open your browser and go to your localhost url of this project, you s
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to Simpl by downloading them from [here](https://simpl.iwanvanderwal.nl/add-ons) and extracting them to the `src` folder. When asked to overwrite files, click **No** and manually copy the code in the files to the existing files. Each add-on has a `README.md` file with instructions on how to install it.
+Simpl comes with a few add-ons, these are optional and can be added to Simpl by downloading them from [here](https://simpl.iwanvanderwal.nl/add-ons/) and extracting them to the `src` folder. When asked to overwrite files, click **No** and manually copy the code in the files to the existing files. Each add-on has a `README.md` file with instructions on how to install it.
 
 ### Step 6: Start coding!
 
@@ -133,15 +133,15 @@ The `public` folder contains the compiled Sass and JavaScript files, these are t
 
 <br>
 
-_If you need more information about the framework and its features, you can find the documentation [here](https://simpl.iwanvanderwal.nl/docs) (page under construction)._
+_If you need more information about the framework and its features, you can find the documentation [here](https://simpl.iwanvanderwal.nl/docs/) (page under construction)._
 
 <br>
 
 ## Download
 
-Download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest).
+Download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
 
-Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
+Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 
 <br>
 
@@ -195,7 +195,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 * Updated npm packages
 * Support for PHP 8.3.8
 
-#### Version 1.4.0 (2025-08-16)
+#### Version 1.4.0 (2025-08-23)
 
 * Security improvements
 * Added a start script for the application
@@ -224,35 +224,35 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl`.
 
 ### Composer packages
 
-* [PHP dotenv (5.6.2)](https://github.com/vlucas/phpdotenv)
+* [PHP dotenv](https://github.com/vlucas/phpdotenv/)
 
 ### Node packages
 
 #### Development
 
-* [npm](https://www.npmjs.com)
-* [npm-run-all](https://www.npmjs.com/package/npm-run-all)
-* [sass](https://sass-lang.com)
-* [typescript](https://www.typescriptlang.org)
-* [tslib](https://www.npmjs.com/package/tslib)
-* [rollup](https://rollupjs.org)
-* [@rollup/plugin-commonjs](https://www.npmjs.com/package/@rollup/plugin-commonjs)
-* [@rollup/plugin-node-resolve](https://www.npmjs.com/package/@rollup/plugin-node-resolve)
-* [@rollup/plugin-typescript](https://www.npmjs.com/package/@rollup/plugin-typescript)
-* [@rollup/plugin-terser](https://www.npmjs.com/package/@rollup/plugin-terser)
-* [browser-sync](https://www.browsersync.io)
-* [cpy-cli](https://www.npmjs.com/package/cpy-cli)
+* [npm](https://www.npmjs.com/)
+* [npm-run-all](https://www.npmjs.com/package/npm-run-all/)
+* [sass](https://sass-lang.com/)
+* [typescript](https://www.typescriptlang.org/)
+* [tslib](https://www.npmjs.com/package/tslib/)
+* [rollup](https://rollupjs.org/)
+* [@rollup/plugin-commonjs](https://www.npmjs.com/package/@rollup/plugin-commonjs/)
+* [@rollup/plugin-node-resolve](https://www.npmjs.com/package/@rollup/plugin-node-resolve/)
+* [@rollup/plugin-typescript](https://www.npmjs.com/package/@rollup/plugin-typescript/)
+* [@rollup/plugin-terser](https://www.npmjs.com/package/@rollup/plugin-terser/)
+* [browser-sync](https://www.browsersync.io/)
+* [cpy-cli](https://www.npmjs.com/package/cpy-cli/)
 
 #### Production
 
-* [the-new-css-reset](https://elad2412.github.io/the-new-css-reset)
-* [@fortawesome/fontawesome-free](https://fontawesome.com)
-* [hamburgers](https://jonsuh.com/hamburgers)
+* [the-new-css-reset](https://elad2412.github.io/the-new-css-reset/)
+* [@fortawesome/fontawesome-free](https://fontawesome.com/)
+* [hamburgers](https://jonsuh.com/hamburgers/)
 
 ### Fonts
 
-* [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans)
-* [Inter](https://fonts.google.com/specimen/Inter)
+* [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans/)
+* [Inter](https://fonts.google.com/specimen/Inter/)
 
 <br>
 
