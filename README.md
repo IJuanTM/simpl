@@ -17,7 +17,7 @@
 [![npm logo](https://img.shields.io/badge/npm-11.5.2-CB0000?logo=npm)](https://www.npmjs.com/)
 [![Sass logo](https://img.shields.io/badge/sass-1.90.0-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-5.9.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Rollup logo](https://img.shields.io/badge/rollup-4.47.1-EF3434?logo=rollup.js)](https://rollupjs.org/)
+[![Vite logo](https://img.shields.io/badge/vite-7.1.3-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -35,7 +35,7 @@
 * Makes use of an MVC system using PHP
 * Works with both Windows and Linux
 * Made to work with the latest versions of PHP, Composer, Node.js, npm and Sass
-* Includes a bunch of npm scripts for compiling Sass and TypeScript, as well as live-reloading
+* Makes use of Vite for bundling TypeScript files and compiling Sass files, as well as live reloading
 * Comes with example pages and a default landing page
 * A collection of handy TypeScript functions
 
@@ -56,7 +56,7 @@ Before you can start using Simpl you will need to make sure you have the followi
 
 ### Step 1: Download Simpl
 
-Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux. You could also choose to use Vite's development server, you will have to change the `dev` script in the `package.json` file to just `vite` for this to work, this will start a server on port `5173` by default.
 
 Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
@@ -66,11 +66,15 @@ Simpl makes use of PSR-4 autoloading, for this to work you will have to run `com
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `dist` folder.
 
-### Step 4: Go to your localhost
+### Step 4: Set up your localhost
+
+Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. Make sure the document root is set to the `dist` folder of your project.
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling there is a chance there was an issue compiling the Sass files, you can try to fix this by running the `build` script again manually using `npm run build`.
+
+If you choose to use Vite's development server, you can start it by running `npm run dev`, this will start a server on port `5173` by default. You can then open your browser and go to `http://localhost:5173` to see the default landing page.
 
 ### Step 5: Install add-ons (optional)
 
@@ -84,20 +88,10 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 
 The following scrips are included in the `package.json` file:
 
-* `build:sass`: Compiles the Sass files
-* `build:js`: Bundles the `main.js` file using Rollup and minifies it using the Terser plugin
-* `build`: Runs both build commands
-* `watch:sass`: Watches the Sass files for changes and recompiles them
-* `watch:js`: Watches the `main.js` file for changes and rebundles it and minifies it
-* `watch`: Runs both watch commands
-* `live`: Runs the browser sync server to automatically reload the page when a file is changed
-* `dev`: Runs the live server and watches the files for changes
+* `build` - Compiles the Sass and TypeScript files using Vite
+* `dev` - Runs Vite in watch mode (not as a server, only watches files for changes and recompiles them)
 
-After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will compile the Sass and TypeScript files and save them to the `public` folder. This can also be done automatically by running the `watch` script.
-
-To make your website automatically reload when a file is changed you can run the `live` script. This will start the browser sync server and automatically reload the page when a file is changed. _Important: Before running the live-reload script you will have to change the url in the script, it's located in the `package.json` file. Change this url to your localhost._
-
-Alternatively you can run the `dev` script, this will start the live server and watch the files for changes.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `dist` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically.
 
 #### Config
 
@@ -129,7 +123,7 @@ The TypeScript code is located in the `ts` folder. Simpl makes use of Rollup to 
 
 #### Public
 
-The `public` folder contains the compiled Sass and JavaScript files, these are the files that are used in the website. Here you can also find things like images and fonts.
+The `public` folder contains the static files like images and fonts, as well as other static files for the website. Vite will copy the contents of this folder to the `dist` folder when ran, as well as the compiled Sass and TypeScript files. The `dist` folder is the folder that contains the final files that will be used on the website.
 
 <br>
 
