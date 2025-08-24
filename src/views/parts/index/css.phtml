@@ -8,4 +8,6 @@ use app\Models\Url;
 <link rel="stylesheet" href="<?= Url::file('fonts/fonts.css') ?>">
 
 <!-- Main -->
-<link rel="stylesheet" href="<?= Url::file('css/main.min.css') ?>">
+<?php if (!DEV) : ?>
+  <link rel="stylesheet" href="<?= Url::file('css/main.min.css') ?>">
+<?php endif ?>

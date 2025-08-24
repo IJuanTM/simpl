@@ -56,7 +56,7 @@ Before you can start using Simpl you will need to make sure you have the followi
 
 ### Step 1: Download Simpl
 
-Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux. You could also choose to use Vite's development server, you will have to change the `dev` script in the `package.json` file to just `vite` for this to work, this will start a server on port `5173` by default.
+Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
 
 Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
@@ -66,15 +66,13 @@ Simpl makes use of PSR-4 autoloading, for this to work you will have to run `com
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `dist` folder.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `dist` folder using Vite.
 
 ### Step 4: Set up your localhost
 
-Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. Make sure the document root is set to the `dist` folder of your project.
+Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `dist` folder of your project._
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling there is a chance there was an issue compiling the Sass files, you can try to fix this by running the `build` script again manually using `npm run build`.
-
-If you choose to use Vite's development server, you can start it by running `npm run dev`, this will start a server on port `5173` by default. You can then open your browser and go to `http://localhost:5173` to see the default landing page.
 
 ### Step 5: Install add-ons (optional)
 
@@ -88,10 +86,10 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 
 The following scrips are included in the `package.json` file:
 
-* `build` - Compiles the Sass and TypeScript files using Vite
-* `dev` - Runs Vite in watch mode (not as a server, only watches files for changes and recompiles them)
+* `dev` - Runs Vite in development mode with live reloading
+* `build` - Compiles the Sass and TypeScript files to the `dist` folder using Vite, ready for production
 
-After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `dist` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `dist` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
 
 #### Config
 

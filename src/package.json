@@ -16,7 +16,7 @@
   },
   "scripts": {
     "postinstall": "npm run build",
-    "dev": "vite build --watch",
+    "dev": "vite",
     "build": "vite build"
   },
   "repository": {
