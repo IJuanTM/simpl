@@ -1,6 +1,14 @@
 import {menuHamburger, navMenu, setActiveLink, setNavItems, toggleMenu} from './menu';
 import {acceptCookies, cookie} from './cookie'
 
+// Import main stylesheet
+import '../scss/main.scss';
+
+// Import external stylesheets
+import "the-new-css-reset/css/reset.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import "hamburgers/dist/hamburgers.min.css";
+
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 // Simpl attribution

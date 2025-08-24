@@ -10,16 +10,11 @@
     "allowJs": true,
     "checkJs": true,
     "sourceMap": true,
-    "outDir": "public/js",
     "removeComments": true,
     "importHelpers": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "allowUnusedLabels": true,
-    "allowUnreachableCode": false,
     "skipLibCheck": true
   },
   "include": [
