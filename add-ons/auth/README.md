@@ -4,7 +4,7 @@
 
 #### About
 
-This add-on adds a user system to your Simpl project. It includes code for logging in, logging out, registering, verifing your account and a contact form.
+This add-on adds a user system to your Simpl project. It includes code for logging in, logging out, registering, verifying your account and a contact form.
 
 It also includes a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
 
@@ -16,7 +16,7 @@ It also includes code for changing the navigation bar based on if the user is lo
 
 #### Controllers
 
-In the `AuthController.php` file you can find the code for the user system. The functions here are used in mutiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
+In the `AuthController.php` file you can find the code for the user system. The functions here are used in multiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
 
 In the `AppController.php` file is a line of code you will need to add in the exising `AppController.php` of your project. Add this above the call to create a new `PageController` object. This line is for checking if the user has a remember me cookie set and if this one is not expired yet. If so, the user will be logged in automatically.
 
@@ -46,15 +46,13 @@ The database connection values are stored in the `config/database.php` as consta
 
 Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
 
-### Mail templates
+### Mails
 
-To make mails easier this add-on uses mjml templates to generate html mails. These templates can be found in the `mails` folder. The `mails` folder contains a `templates` folder with the mjml templates and a `html` folder with the generated html files. You can read more about mjml [here](https://mjml.io/).
+Also included are email templates for the verification email, the contact form email and the reset password email. These templates are made to be as compatible as possible with most email clients by using tables and inline styles.
 
 ### Requirements
 
-* Mjml npm package
-
-_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.4.0**) or MariaDB (tested with version **11.4.2**)._
+* Database: MySQL (>= 9.4.0) or MariaDB (>= 12.0.2)
 
 ### Installation
 
@@ -63,8 +61,8 @@ The easiest way to install this add-on is to just extract it in your Simpl proje
 Alternatively, you can follow these steps:
 
 1. Copy the contents of the `.env` file to your project's `.env` file
-2. Copy the contents of the `app/Config` folder to your Simpl projects's `app/Config` folder
-3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
+2. Copy the contents of the `app/Config` folder to your Simpl project's `app/Config` folder
+3. Copy the contents of the `app/Controllers` folder to your Simpl project's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
 4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
 5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
 6. Copy the `ts/input.ts` file to the `ts` folder of your Simpl project's folder

@@ -187,7 +187,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Updated npm packages
 * Support for PHP 8.3.8
 
-#### Version 1.4.0 (2025-08-23)
+#### Version 1.4.0 (2025-08-26)
 
 * Security improvements
 * Added a start script for the application
@@ -195,7 +195,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Small fixes and improvements all around
 * Updated npm packages
 * Support for PHP 8.3.24
-* Updated Font Awesome icons to version 6.7.1
+* Updated Font Awesome icons to version 7.0.0
 * Updated the-new-css-reset to version 1.11.3
 * Improvements to the auth system (improved controller and pages logic)
 * Improved MailController by added async functionality for sending emails and more
@@ -222,18 +222,11 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 
 #### Development
 
-* [npm](https://www.npmjs.com/)
-* [npm-run-all](https://www.npmjs.com/package/npm-run-all/)
 * [sass](https://sass-lang.com/)
 * [typescript](https://www.typescriptlang.org/)
 * [tslib](https://www.npmjs.com/package/tslib/)
-* [rollup](https://rollupjs.org/)
-* [@rollup/plugin-commonjs](https://www.npmjs.com/package/@rollup/plugin-commonjs/)
-* [@rollup/plugin-node-resolve](https://www.npmjs.com/package/@rollup/plugin-node-resolve/)
-* [@rollup/plugin-typescript](https://www.npmjs.com/package/@rollup/plugin-typescript/)
-* [@rollup/plugin-terser](https://www.npmjs.com/package/@rollup/plugin-terser/)
-* [browser-sync](https://www.browsersync.io/)
-* [cpy-cli](https://www.npmjs.com/package/cpy-cli/)
+* [terser](https://terser.org/)
+* [vite](https://vite.dev/)
 
 #### Production
 
