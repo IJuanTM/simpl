@@ -8,7 +8,7 @@
     "@fortawesome/fontawesome-free": "^7.0.0"
   },
   "devDependencies": {
-    "sass": "^1.90.0",
+    "sass": "^1.91.0",
     "typescript": "^5.9.2",
     "tslib": "^2.8.1",
     "terser": "^5.43.1",
@@ -16,7 +16,7 @@
   },
   "scripts": {
     "postinstall": "npm run build",
-    "dev": "vite",
+    "dev": "vite build --watch",
     "build": "vite build"
   },
   "repository": {

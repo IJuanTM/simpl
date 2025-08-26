@@ -5,8 +5,4 @@ use app\Models\Url;
 ?>
 
 <!-- Main -->
-<?php if (DEV) : ?>
-  <script src="http://localhost:5173/ts/main.ts" type="module"></script>
-<?php else : ?>
-  <script src="<?= Url::file('js/main.min.js') ?>" type="module"></script>
-<?php endif ?>
+<script src="<?= Url::file('js/main.min.js') ?>" type="module"></script>
