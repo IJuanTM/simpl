@@ -1,21 +1,9 @@
 import {defineConfig} from 'vite';
 
 export default defineConfig({
-  server: {
-    origin: 'http://localhost:5173',
-    cors: {
-      origin: 'http://simpl.local',
-      credentials: true
-    },
-    hmr: {
-      host: 'simpl.local',
-      protocol: 'ws',
-    }
-  },
   build: {
     emptyOutDir: true,
     minify: 'terser',
-    sourcemap: true,
     rollupOptions: {
       input: {
         main: 'ts/main.ts'
