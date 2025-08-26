@@ -89,8 +89,9 @@ class ResendVerificationPage
     {
         // Get the template from the views/parts/mails folder
         $contents = MailController::template('verification', [
-            'code' => $code,
-            'link' => Url::to("verify-account/$id/$code")
+            'title' => 'Account Verification - ' . APP_NAME,
+            'link' => Url::to("verify-account/$id/$code"),
+            'code' => $code
         ]);
 
         // Check if template was loaded successfully

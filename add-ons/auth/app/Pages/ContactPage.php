@@ -55,10 +55,11 @@ class ContactPage
     {
         // Get the template from the views/parts/mails folder
         $contents = MailController::template('contact', [
+            'title' => 'New Contact Form Submission',
+            'from' => $from,
             'date' => date('Y-m-d'),
             'time' => date('H:i'),
-            'contents' => nl2br($message),
-            'from' => $from
+            'contents' => nl2br($message)
         ]);
 
         // Check if template was loaded successfully

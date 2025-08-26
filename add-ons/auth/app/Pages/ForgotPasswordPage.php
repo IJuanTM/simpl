@@ -105,6 +105,7 @@ class ForgotPasswordPage
     {
         // Get the template from the views/parts/mails folder
         $contents = MailController::template('reset-password', [
+            'title' => 'Password Reset Request - ' . APP_NAME,
             'link' => Url::to("reset-password/$id/$token")
         ]);
 

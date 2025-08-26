@@ -19,26 +19,22 @@ class MailController
      */
     public static function template(string $name, array $vars): string|false
     {
-        $templatePath = BASEDIR . "/app/Mails/html/$name.html";
+        $templatePath = BASEDIR . "/app/Mails/$name.phtml";
 
         // Check if template exists
         if (!file_exists($templatePath)) {
-            LogController::log("Email template not found: \"$name.html\"", LogType::MAIL);
+            LogController::log("Email template not found: \"$name.phtml\"", LogType::MAIL);
             return false;
         }
 
-        // Get the template content
-        $template = file_get_contents($templatePath);
+        // Extract variables for use in the template
+        extract($vars, EXTR_SKIP);
 
-        if ($template === false) {
-            LogController::log("Failed to read email template: \"$name.html\"", LogType::MAIL);
-            return false;
-        }
+        // Include the template file
+        include $templatePath;
 
-        // Replace the variables in the template
-        foreach ($vars as $key => $value) $template = str_replace("{{ $key }}", $value, $template);
-
-        return $template;
+        // Get the buffered content and clean the buffer
+        return ob_get_clean();
     }
 
     /**
