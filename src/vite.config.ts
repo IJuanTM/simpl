@@ -1,11 +1,7 @@
 import {defineConfig} from 'vite';
-import liveReload from 'vite-plugin-live-reload';
 
 export default defineConfig({
   publicDir: false,
-  plugins: [
-    liveReload(['**/*.php'])
-  ],
   build: {
     outDir: 'public',
     emptyOutDir: false,
