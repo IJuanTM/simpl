@@ -1,18 +1,18 @@
 // VARS
-@forward "vars/_breakpoints";
-@forward "vars/_colors";
-@forward "vars/_fonts";
-@forward "vars/_sizes";
-@forward "vars/_themes";
+@use "vars/_breakpoints";
+@use "vars/_colors";
+@use "vars/_fonts";
+@use "vars/_sizes";
+@use "vars/_themes";
 
 // ABSTRACTS
-@forward "abstracts/_functions";
-@forward "abstracts/_keyframes";
-@forward "abstracts/_mixins";
+@use "abstracts/_functions";
+@use "abstracts/_keyframes";
+@use "abstracts/_mixins";
 
 // UTILS
-@forward "utils/_dimensions";
-@forward "utils/_flex";
-@forward "utils/_scrollbar";
-@forward "utils/_typography";
-@forward "utils/_visibility";
+@use "utils/_dimensions";
+@use "utils/_flex";
+@use "utils/_scrollbar";
+@use "utils/_typography";
+@use "utils/_visibility";

@@ -1,20 +1,20 @@
 // CONFIG
-@forward "config/config";
+@use "config/config";
 
 // STYLE
-@forward "style";
+@use "style";
 
 // VIEWS
-@forward "views/error";
+@use "views/error";
 
 // COMPONENTS
-@forward "components/button";
-@forward "components/card";
-@forward "components/input";
+@use "components/button";
+@use "components/card";
+@use "components/input";
 
 // PARTS
-@forward "views/parts/alert";
-@forward "views/parts/content";
-@forward "views/parts/cookie";
-@forward "views/parts/footer";
-@forward "views/parts/header";
+@use "views/parts/alert";
+@use "views/parts/content";
+@use "views/parts/cookie";
+@use "views/parts/footer";
+@use "views/parts/header";

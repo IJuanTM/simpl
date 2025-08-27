@@ -1,13 +1,10 @@
-import {menuHamburger, navMenu, setActiveLink, setNavItems, toggleMenu} from './menu';
-import {acceptCookies, cookie} from './cookie'
+import {menuHamburger, navMenu, setActiveLink, setNavItems, toggleMenu} from './menu.ts';
+import {acceptCookies, cookie} from './cookie.ts'
 
-// Import external stylesheets
+// Import external stylesheets for Vite to bundle them, local stylesheets are handled by sass
 import "the-new-css-reset/css/reset.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "hamburgers/dist/hamburgers.min.css";
-
-// Import main stylesheet
-import '../scss/main.scss';
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
@@ -40,7 +37,7 @@ const
   ];
 
 themeSwitch.addEventListener('click', () => {
-  const nextTheme = themes[((themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'dark'))) + 1) % themes.length];
+  const nextTheme = themes[((themes.findIndex(theme => theme.name === (localStorage.getItem('theme') || 'dark'))) + 1) % themes.length]!;
 
   // Set the theme in localStorage
   localStorage.setItem('theme', nextTheme.name);

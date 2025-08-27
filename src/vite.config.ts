@@ -1,9 +1,16 @@
 import {defineConfig} from 'vite';
+import liveReload from 'vite-plugin-live-reload';
 
 export default defineConfig({
+  publicDir: false,
+  plugins: [
+    liveReload(['**/*.php'])
+  ],
   build: {
-    emptyOutDir: true,
+    outDir: 'public',
+    emptyOutDir: false,
     minify: 'terser',
+    sourcemap: true,
     rollupOptions: {
       input: {
         main: 'ts/main.ts'
@@ -11,12 +18,9 @@ export default defineConfig({
       output: {
         entryFileNames: 'js/main.min.js',
         chunkFileNames: 'js/[name].js',
-        assetFileNames: (assetInfo) => {
-          const name = assetInfo.names?.[0];
-
-          if (name?.endsWith(".css")) return "css/[name].min[extname]";
-
-          return "assets/[name]-[hash][extname]";
+        assetFileNames: assetInfo => {
+          if (assetInfo.names?.[0]?.endsWith('.css')) return 'css/libs.min.css';
+          return 'assets/[name][extname]';
         }
       }
     }
