@@ -6,8 +6,10 @@
 vendor/
 node_modules/
 
-# Compiled files
-dist/
+# Generated files
+assets/
+public/css/
+public/js/
 
 # Environment variables
 .env
