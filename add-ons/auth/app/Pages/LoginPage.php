@@ -33,24 +33,31 @@ class LoginPage
         // Sanitize the form data
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
-        // Check if the email exists in the database
-        if (!AuthController::checkEmail($_POST['email'])) {
-            $_POST['email'] = '';
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-            FormController::addAlert('An account with this email does not exist! Try registering!', AlertType::WARNING);
+        // Lockout check
+        if ($this->isLockedOut($_POST['email'], $ip)) {
+            FormController::addAlert('Too many failed login attempts. Please wait a few minutes before trying again.', AlertType::ERROR);
             return;
         }
 
-        // Check if the password is correct
-        if (!AuthController::checkPassword($_POST['email'], $_POST['password'])) {
+        // Check if email exists AND password is correct
+        if (!AuthController::checkEmail($_POST['email']) || !AuthController::checkPassword($_POST['email'], $_POST['password'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'incorrect');
+
+            $_POST['email'] = '';
             $_POST['password'] = '';
 
-            FormController::addAlert('The entered password is incorrect!', AlertType::WARNING);
+            FormController::addAlert('Invalid email or password. Please try again.', AlertType::WARNING);
             return;
         }
 
         // Check if the user is inactive
         if (!AuthController::isActive($_POST['email'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'inactive');
+
             $_POST['email'] = '';
             $_POST['password'] = '';
 
@@ -60,6 +67,9 @@ class LoginPage
 
         // Check if the user has not yet verified their account
         if (!AuthController::isVerified(null, $_POST['email'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'unverified');
+
             $_POST['email'] = '';
             $_POST['password'] = '';
 
@@ -72,12 +82,67 @@ class LoginPage
     }
 
     /**
+     * Checks if a user account is locked due to too many failed login attempts.
+     *
+     * @param string $email User's email address
+     * @param string $ip User's IP address
+     *
+     * @return bool True if the account is locked, false otherwise
+     */
+    private function isLockedOut(string $email, string $ip): bool
+    {
+        $db = new Database();
+
+        $userId = AuthController::getUserIdByEmail($email);
+
+        $userAttempts = 0;
+
+        // Count failed login attempts for the user in the last 5 minutes
+        if ($userId !== null) {
+            $db->query('SELECT COUNT(*) AS attempts FROM login_attempts WHERE user_id = :id AND success = 0 AND attempt_time > DATE_SUB(NOW(), INTERVAL 5 MINUTE)');
+            $db->bind(':id', $userId);
+            $userAttempts = $db->single()['attempts'] ?? 0;
+        }
+
+        // Count failed login attempts for the IP address in the last 15 minutes
+        $db->query('SELECT COUNT(*) AS attempts FROM login_attempts WHERE ip_address = :ip AND success = 0 AND attempt_time > DATE_SUB(NOW(), INTERVAL 15 MINUTE)');
+        $db->bind(':ip', $ip);
+        $ipAttempts = $db->single()['attempts'] ?? 0;
+
+        return ($userAttempts >= 5) || ($ipAttempts >= 20);
+    }
+
+    /**
+     * Records a user's login attempt in the database.
+     *
+     * @param string $email User's email address
+     * @param bool $success Whether the login attempt was successful
+     * @param string|null $failedReason Reason the login failed (e.g., 'incorrect', 'inactive' or 'unverified')
+     */
+    private function recordLoginAttempt(string $email, bool $success, string $failedReason = null): void
+    {
+        $db = new Database();
+
+        // Record the login attempt
+        $db->query('INSERT INTO login_attempts (user_id, ip_address, user_agent, success, failed_reason) VALUES (:id, :ip_address, :user_agent, :success, :failed_reason)');
+        $db->bind(':id', AuthController::getUserIdByEmail($email));
+        $db->bind(':ip_address', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $db->bind(':user_agent', $_SERVER['HTTP_USER_AGENT'] ?? 'unknown');
+        $db->bind(':success', $success ? 1 : 0);
+        $db->bind(':failed_reason', $failedReason);
+        $db->execute();
+    }
+
+    /**
      * Authenticates user and creates session.
      *
      * @param string $email User's email address
      */
     private function login(string $email): void
     {
+        // Record successful login attempt
+        $this->recordLoginAttempt($email, true);
+
         $db = new Database();
 
         // Get the user from the database

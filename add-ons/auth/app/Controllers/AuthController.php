@@ -148,6 +148,9 @@ class AuthController
      */
     public static function generateToken(int $bytes): string|null
     {
+        // Limit the number of bytes to a maximum of 16 (32 characters)
+        $bytes = min($bytes, 16);
+
         try {
             // Generate a random string
             return strtoupper(bin2hex(random_bytes($bytes)));
@@ -284,5 +287,25 @@ class AuthController
 
         // Return true if the user is active
         return $db->single()['is_active'] === 1;
+    }
+
+    /**
+     * Retrieves a user's ID based on their email address.
+     *
+     * @param string $email User email
+     *
+     * @return int|null User ID or null if not found
+     */
+    public static function getUserIdByEmail(string $email): int|null
+    {
+        $db = new Database();
+
+        // Get the user id from the database
+        $db->query('SELECT id FROM users WHERE email = :email');
+        $db->bind(':email', $email);
+        $user = $db->single();
+
+        // Return the user id or null if not found
+        return $user ? (int)$user['id'] : null;
     }
 }
