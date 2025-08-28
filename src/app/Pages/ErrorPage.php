@@ -3,6 +3,7 @@
 namespace app\Pages;
 
 use app\Controllers\PageController;
+use app\Models\Page;
 
 class ErrorPage
 {
@@ -17,7 +18,7 @@ class ErrorPage
         500 => 'An internal server error occurred.'
     ];
 
-    public function __construct(object $page)
+    public function __construct(Page $page)
     {
         // Check if the code is set in the URL and is valid
         if (!isset($page->urlArr['subpages'][0]) || !array_key_exists($page->urlArr['subpages'][0], $this->errors)) {

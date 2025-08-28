@@ -80,9 +80,9 @@ class UsersPage
     /**
      * This method is for handling the POST request of the users page.
      *
-     * @param object $page
+     * @param Page $page
      */
-    private function post(object $page): void
+    private function post(Page $page): void
     {
         // Check if the user wants to edit a user and if the form is submitted
         if ($page->urlArr['subpages'][0] === 'edit') {

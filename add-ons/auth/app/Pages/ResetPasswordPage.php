@@ -33,9 +33,9 @@ class ResetPasswordPage
     /**
      * This method is for handling the POST request of the reset password form.
      *
-     * @param object $page
+     * @param Page $page
      */
-    private function post(object $page): void
+    private function post(Page $page): void
     {
         $valid = true;
 

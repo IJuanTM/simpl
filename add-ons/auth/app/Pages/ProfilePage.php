@@ -158,9 +158,9 @@ class ProfilePage
     /**
      * Handles API requests for profile-related actions.
      *
-     * @param object $page Page object with request information
+     * @param Page $page Page object with request information
      */
-    final public function api(object $page): void
+    final public function api(Page $page): void
     {
         // Check if the user is trying to perform an action related to the profile image
         if (isset($page->urlArr['subpages'][0])) {

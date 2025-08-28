@@ -136,6 +136,6 @@ class RegisterPage
 
         // Show appropriate alert based on email sending result
         if ($result) AlertController::alert('Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
-        else AlertController::alert('Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 4);
+        else AlertController::alert('Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
     }
 }
