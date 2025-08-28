@@ -2,6 +2,7 @@
 
 namespace app\Pages;
 
+use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
@@ -103,8 +104,11 @@ class ResendVerificationPage
         // Send the message
         $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
 
+        // Redirect the user to the verification page
+        PageController::redirect("verify-account/$id");
+
         // Show appropriate alert based on email sending result
-        if ($result) FormController::addAlert('Success! A new verification email has been sent!', AlertType::SUCCESS);
-        else FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+        if ($result) AlertController::alert('Success! A new verification email has been sent!', AlertType::SUCCESS, 4);
+        else AlertController::alert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
     }
 }

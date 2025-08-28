@@ -44,7 +44,7 @@ use app\Models\Url;
 
       <div class="row">
         <div class="col">
-          <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('resend-verification/' . ($this->urlArr['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here to resend</a>.</p>
+          <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('api/resend-verification/' . ($this->urlArr['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here to resend</a>.</p>
         </div>
       </div>
 
