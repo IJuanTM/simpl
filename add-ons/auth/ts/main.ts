@@ -1,6 +1,6 @@
-import {capsLockWarning, checkMessageLength, inputPassword, passwordToggleIcon, togglePassword} from './input.js';
-import {editProfileImage, profileImageInput, setProfileImage} from './profile';
-import {handleVerificationCode} from './verification-code.js';
+import {capsLockWarning, checkMessageLength, inputPassword, passwordToggleIcon, togglePassword} from './input.ts';
+import {editProfileImage, profileImageInput, setProfileImage} from './profile.ts';
+import {handleVerificationCode} from './verification-code.ts';
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 

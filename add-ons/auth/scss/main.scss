@@ -1,8 +1,8 @@
 // VIEWS
-@forward "views/users";
-@forward "views/profile";
-@forward "views/verify-account";
+@use "views/users";
+@use "views/profile";
+@use "views/verify-account";
 
 // COMPONENTS
-@forward "components/form";
-@forward "components/table";
+@use "components/form";
+@use "components/table";

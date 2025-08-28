@@ -24,7 +24,7 @@
     "build:ts": "vite build",
     "watch:scss": "sass -w scss/main.scss:public/css/main.min.css -s compressed",
     "watch:ts": "vite build --watch",
-    "live": "browser-sync start --host simpl.local -p simpl.local -f public/js/*.js public/css/*.css views/**/*.phtml --no-notify --no-ui --open external"
+    "live": "browser-sync start --proxy http://simpl.local -f public/js/*.js public/css/*.css views/**/*.phtml --no-notify --no-ui --open external"
   },
   "repository": {
     "type": "git",

@@ -6,7 +6,7 @@ export const handleVerificationCode = (): void => {
   if (!codeInput || !digitInputs.length) return;
 
   // Pre-fill from existing value
-  if (codeInput.value) [...codeInput.value].forEach((char, i) => i < digitInputs.length && (digitInputs[i].value = char));
+  if (codeInput.value) [...codeInput.value].forEach((char, i) => i < digitInputs.length && (digitInputs[i]!.value = char));
 
   // Update hidden input
   const updateHiddenInput = () => codeInput.value = Array.from(digitInputs).map(input => input.value).join('');
@@ -24,7 +24,7 @@ export const handleVerificationCode = (): void => {
 
     // Handle backspace
     input.addEventListener('keydown', (e: KeyboardEvent) => {
-      if (e.key === 'Backspace' && input.value === '' && index > 0) digitInputs[index - 1].focus();
+      if (e.key === 'Backspace' && input.value === '' && index > 0) digitInputs[index - 1]!.focus();
     });
   });
 
@@ -38,13 +38,13 @@ export const handleVerificationCode = (): void => {
 
       // Process pasted content
       const alphanumericData = pasteData.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-      [...alphanumericData].forEach((char, i) => i < digitInputs.length && (digitInputs[i].value = char));
+      [...alphanumericData].forEach((char, i) => i < digitInputs.length && (digitInputs[i]!.value = char));
 
       updateHiddenInput();
 
       // Focus next empty input or last input
       const nextEmpty = Array.from(digitInputs).findIndex(input => !input.value);
-      nextEmpty !== -1 ? digitInputs[nextEmpty].focus() : digitInputs[digitInputs.length - 1].focus();
+      nextEmpty !== -1 ? digitInputs[nextEmpty]!.focus() : digitInputs[digitInputs.length - 1]!.focus();
     });
   });
 };
