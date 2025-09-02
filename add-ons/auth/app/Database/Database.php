@@ -19,6 +19,7 @@ class Database
     public function __construct()
     {
         try {
+            // Create a new PDO instance
             $this->pdo = new PDO(
                 'mysql:host=' . DB_SERVER . ';dbname=' . DB_NAME,
                 DB_USERNAME,
@@ -28,6 +29,9 @@ class Database
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
                 ]
             );
+
+            // Set database connection to use UTC timezone
+            $this->pdo->exec("SET time_zone = '+00:00'");
         } catch (PDOException $e) {
             $this->handleError($e);
         }
@@ -70,6 +74,7 @@ class Database
      */
     final public function bind(int|string $param, mixed $value, int|null $type = null): void
     {
+        // Determine the type if not provided explicitly
         $type = $type ?? match (true) {
             is_int($value) => PDO::PARAM_INT,
             is_bool($value) => PDO::PARAM_BOOL,
@@ -93,9 +98,11 @@ class Database
     {
         try {
             $this->execute();
+
             return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             $this->handleError($e);
+
             return [];
         }
     }
@@ -121,9 +128,11 @@ class Database
     {
         try {
             $this->execute();
+
             return $this->stmt->fetch(PDO::FETCH_ASSOC) ?: null;
         } catch (PDOException $e) {
             $this->handleError($e);
+
             return null;
         }
     }
@@ -137,9 +146,11 @@ class Database
     {
         try {
             $this->execute();
+
             return $this->stmt->rowCount();
         } catch (PDOException $e) {
             $this->handleError($e);
+
             return 0;
         }
     }
