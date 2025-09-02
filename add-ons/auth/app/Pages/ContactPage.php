@@ -24,15 +24,13 @@ class ContactPage
      */
     private function post(): void
     {
-        $valid = true;
-
         // Validate the form fields
-        if (!FormController::validate('name', ['required', 'maxLength' => 100])) $valid = false;
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) $valid = false;
-        if (!FormController::validate('subject', ['required', 'maxLength' => 100])) $valid = false;
-        if (!FormController::validate('message', ['required', 'maxLength' => 1000])) $valid = false;
-
-        if (!$valid) return;
+        if (
+            !FormController::validate('name', ['required', 'maxLength' => 100]) ||
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('subject', ['required', 'maxLength' => 100]) ||
+            !FormController::validate('message', ['required', 'maxLength' => 1000])
+        ) return;
 
         // Send the contact email
         $this->contactMail(

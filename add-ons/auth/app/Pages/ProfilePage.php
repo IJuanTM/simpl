@@ -34,13 +34,11 @@ class ProfilePage
      */
     private function post(): void
     {
-        $valid = true;
-
         // Validate the form fields
-        if (!FormController::validate('username', ['maxLength' => 100])) $valid = false;
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) $valid = false;
-
-        if (!$valid) return;
+        if (
+            !FormController::validate('username', ['maxLength' => 100]) ||
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])
+        ) return;
 
         // Sanitize the email
         $_POST['email'] = FormController::sanitize($_POST['email']);

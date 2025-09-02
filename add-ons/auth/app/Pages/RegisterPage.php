@@ -27,14 +27,12 @@ class RegisterPage
      */
     private function post(): void
     {
-        $valid = true;
-
         // Validate the form fields
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) $valid = false;
-        if (!FormController::validate('password', ['required', 'maxLength' => 50])) $valid = false;
-        if (!FormController::validate('password-check', ['required', 'maxLength' => 50])) $valid = false;
-
-        if (!$valid) return;
+        if (
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('password', ['required', 'maxLength' => 50]) ||
+            !FormController::validate('password-check', ['required', 'maxLength' => 50])
+        ) return;
 
         // Sanitize the email
         $_POST['email'] = FormController::sanitize($_POST['email']);

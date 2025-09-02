@@ -26,14 +26,12 @@ class ChangePasswordPage
      */
     private function post(): void
     {
-        $valid = true;
-
         // Validate the form fields
-        if (!FormController::validate('old-password', ['required', 'maxLength' => 50])) $valid = false;
-        if (!FormController::validate('new-password', ['required', 'maxLength' => 50])) $valid = false;
-        if (!FormController::validate('new-password-check', ['required', 'maxLength' => 50])) $valid = false;
-
-        if (!$valid) return;
+        if (
+            !FormController::validate('old-password', ['required', 'maxLength' => 50]) ||
+            !FormController::validate('new-password', ['required', 'maxLength' => 50]) ||
+            !FormController::validate('new-password-check', ['required', 'maxLength' => 50])
+        ) return;
 
         // Check if the old password is correct
         if (!AuthController::checkPassword(SessionController::get('user')['email'], $_POST['old-password'])) {

@@ -33,7 +33,9 @@ class ForgotPasswordPage
         }
 
         // Validate the form fields
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) return;
+        if (
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])
+        ) return;
 
         // Sanitize the form data
         $_POST['email'] = FormController::sanitize($_POST['email']);
