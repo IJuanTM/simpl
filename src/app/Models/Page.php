@@ -11,7 +11,7 @@ use app\Controllers\SessionController;
 class Page
 {
     public array $urlArr;
-    public ?self $pageObj = null;
+    public ?object $pageObj = null;
     public string $title;
     public string $subtitle;
 
