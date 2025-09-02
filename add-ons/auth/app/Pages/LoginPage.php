@@ -22,22 +22,22 @@ class LoginPage
 
     private function post(): void
     {
-        $valid = true;
-
         // Validate the form fields
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) $valid = false;
-        if (!FormController::validate('password', ['required', 'maxLength' => 50])) $valid = false;
-
-        if (!$valid) return;
+        if (
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('password', ['required', 'maxLength' => 50])
+        ) return;
 
         // Sanitize the form data
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        // Lockout check
-        if ($this->isLockedOut($_POST['email'], $ip)) {
-            FormController::addAlert('Too many failed login attempts. Please wait a few minutes before trying again.', AlertType::ERROR);
+        $lockOutMinutes = $this->lockOutTime($_POST['email'], $ip);
+
+        // Check if the user is locked out
+        if ($lockOutMinutes > 0) {
+            FormController::addAlert("Too many failed login attempts. Please wait $lockOutMinutes minute(s) before trying again.", AlertType::ERROR);
             return;
         }
 
@@ -87,29 +87,68 @@ class LoginPage
      * @param string $email User's email address
      * @param string $ip User's IP address
      *
-     * @return bool True if the account is locked, false otherwise
+     * @return int Lockout time in seconds (0 if not locked)
      */
-    private function isLockedOut(string $email, string $ip): bool
+    private function lockOutTime(string $email, string $ip): int
+    {
+        $endTimes = [];
+        $userId = AuthController::getUserIdByEmail($email);
+
+        // Check if the user is locked out based on user ID
+        if ($userId !== null) $endTimes[] = $this->calculateLockout('user_id', $userId, 5, 5, 60, 5) ?? 0;
+
+        // Check if the user is locked out based on IP address
+        $endTimes[] = $this->calculateLockout('ip_address', $ip, 20, 15, 180, 15) ?? 0;
+
+        // If there are no lockout end times, return 0
+        if (empty($endTimes)) return 0;
+
+        // Return the maximum lockout end time
+        $secondsLeft = max($endTimes) - time();
+        return $secondsLeft > 0 ? (int)ceil($secondsLeft / 60) : 0;
+    }
+
+    /**
+     * Calculates lockout end time for a given target (user or IP)
+     *
+     * @param string $column Column to query ('user_id' or 'ip_address')
+     * @param mixed $value Value to bind
+     * @param int $threshold Failed attempts threshold
+     * @param int $base Base lockout duration in minutes
+     * @param int $max Maximum lockout duration in minutes
+     * @param int $window Time window in minutes
+     *
+     * @return int|null Lockout end timestamp or null if not locked
+     */
+    private function calculateLockout(string $column, mixed $value, int $threshold, int $base, int $max, int $window): ?int
     {
         $db = new Database();
 
-        $userId = AuthController::getUserIdByEmail($email);
+        // Fetch failed login attempts within the time window
+        $db->query("SELECT UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts FROM login_attempts WHERE $column = :val AND success = 0 ORDER BY attempt_time DESC");
+        $db->bind(':val', $value);
+        $rows = $db->fetchAll();
 
-        $userAttempts = 0;
+        // If no failed attempts, return null
+        if (!$rows) return null;
 
-        // Count failed login attempts for the user in the last 5 minutes
-        if ($userId !== null) {
-            $db->query('SELECT COUNT(*) AS attempts FROM login_attempts WHERE user_id = :id AND success = 0 AND attempt_time > DATE_SUB(NOW(), INTERVAL 5 MINUTE)');
-            $db->bind(':id', $userId);
-            $userAttempts = $db->single()['attempts'] ?? 0;
+        // Extract timestamps and calculate lockout
+        $timestamps = array_map(static fn($r) => (int)$r['ts'], $rows);
+        $newest = $timestamps[0];
+
+        // Count attempts within the time window
+        $count = 0;
+        foreach ($timestamps as $ts) {
+            if (($newest - $ts) <= $window * 60) $count++;
+            else break;
         }
 
-        // Count failed login attempts for the IP address in the last 15 minutes
-        $db->query('SELECT COUNT(*) AS attempts FROM login_attempts WHERE ip_address = :ip AND success = 0 AND attempt_time > DATE_SUB(NOW(), INTERVAL 15 MINUTE)');
-        $db->bind(':ip', $ip);
-        $ipAttempts = $db->single()['attempts'] ?? 0;
+        // Calculate lockout duration
+        $blocks = (int)floor($count / $threshold);
+        if ($blocks === 0) return null;
 
-        return ($userAttempts >= 5) || ($ipAttempts >= 20);
+        // Return lockout end time
+        return $newest + (min($base * (2 ** ($blocks - 1)), $max) * 60);
     }
 
     /**
@@ -119,7 +158,7 @@ class LoginPage
      * @param bool $success Whether the login attempt was successful
      * @param string|null $failedReason Reason the login failed (e.g., 'incorrect', 'inactive' or 'unverified')
      */
-    private function recordLoginAttempt(string $email, bool $success, string $failedReason = null): void
+    private function recordLoginAttempt(string $email, bool $success, string|null $failedReason = null): void
     {
         $db = new Database();
 
