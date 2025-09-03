@@ -31,24 +31,16 @@ class LoginPage
         // Sanitize the form data
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
-        // Check for lockout
-        $lockOut = $this->lockOutTime($_POST['email'], $_SERVER['REMOTE_ADDR'] ?? 'unknown');
-
         // Check if the user is locked out
-        if ($lockOut['minutes'] > 0) {
-            // Show lockout message according to the type of lockout
-            $message = $lockOut['type'] === 'user'
-                ? "Your account is locked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again."
-                : "Access from your IP address is temporarily blocked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again.";
-
-            FormController::addAlert($message, AlertType::ERROR);
-            return;
-        }
+        if ($this->checkLockedOut()) return;
 
         // Check if email exists AND password is correct
         if (!AuthController::checkEmail($_POST['email']) || !AuthController::checkPassword($_POST['email'], $_POST['password'])) {
             // Record failed login attempt
             $this->recordLoginAttempt($_POST['email'], false, 'incorrect');
+
+            // Check if the user is now locked out
+            if ($this->checkLockedOut()) return;
 
             $_POST['email'] = '';
             $_POST['password'] = '';
@@ -62,6 +54,9 @@ class LoginPage
             // Record failed login attempt
             $this->recordLoginAttempt($_POST['email'], false, 'inactive');
 
+            // Check if the user is now locked out
+            if ($this->checkLockedOut()) return;
+
             $_POST['email'] = '';
             $_POST['password'] = '';
 
@@ -74,6 +69,9 @@ class LoginPage
             // Record failed login attempt
             $this->recordLoginAttempt($_POST['email'], false, 'unverified');
 
+            // Check if the user is now locked out
+            if ($this->checkLockedOut()) return;
+
             $_POST['email'] = '';
             $_POST['password'] = '';
 
@@ -83,6 +81,29 @@ class LoginPage
 
         // Login the user
         $this->login($_POST['email']);
+    }
+
+    /**
+     * Checks if a user account or IP address is locked out and adds an alert to the form if so.
+     *
+     * @return bool True if locked out, false otherwise
+     */
+    private function checkLockedOut(): bool
+    {
+        $lockOut = $this->lockOutTime($_POST['email'], $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+
+        if ($lockOut['minutes'] > 0) {
+            // Show lockout message according to the type of lockout
+            $message = $lockOut['type'] === 'user'
+                ? "Your account is locked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again."
+                : "Access from your IP address is temporarily blocked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again.";
+
+            // Show the message in the form
+            FormController::addAlert($message, AlertType::ERROR);
+            return true;
+        }
+
+        return false;
     }
 
     /**
