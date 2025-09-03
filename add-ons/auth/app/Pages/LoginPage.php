@@ -31,13 +31,17 @@ class LoginPage
         // Sanitize the form data
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-
-        $lockOutMinutes = $this->lockOutTime($_POST['email'], $ip);
+        // Check for lockout
+        $lockOut = $this->lockOutTime($_POST['email'], $_SERVER['REMOTE_ADDR'] ?? 'unknown');
 
         // Check if the user is locked out
-        if ($lockOutMinutes > 0) {
-            FormController::addAlert("Too many failed login attempts. Please wait $lockOutMinutes minute(s) before trying again.", AlertType::ERROR);
+        if ($lockOut['minutes'] > 0) {
+            // Show lockout message according to the type of lockout
+            $message = $lockOut['type'] === 'user'
+                ? "Your account is locked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again."
+                : "Access from your IP address is temporarily blocked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again.";
+
+            FormController::addAlert($message, AlertType::ERROR);
             return;
         }
 
@@ -87,25 +91,23 @@ class LoginPage
      * @param string $email User's email address
      * @param string $ip User's IP address
      *
-     * @return int Lockout time in seconds (0 if not locked)
+     * @return array Array with 'minutes' until unlock and 'type' of lock ('user', 'ip', or 'none')
      */
-    private function lockOutTime(string $email, string $ip): int
+    private function lockOutTime(string $email, string $ip): array
     {
-        $endTimes = [];
         $userId = AuthController::getUserIdByEmail($email);
 
         // Check if the user is locked out based on user ID
-        if ($userId !== null) $endTimes[] = $this->calculateLockout('user_id', $userId, 5, 5, 60, 5) ?? 0;
+        if ($userId !== null) {
+            $minutes = max(0, (int)ceil((($this->calculateLockout('user_id', $userId, 5, 5, 60, 5) ?? 0) - time()) / 60));
+            if ($minutes > 0) return ['minutes' => $minutes, 'type' => 'user'];
+        }
 
         // Check if the user is locked out based on IP address
-        $endTimes[] = $this->calculateLockout('ip_address', $ip, 20, 15, 180, 15) ?? 0;
+        $minutes = max(0, (int)ceil((($this->calculateLockout('ip_address', $ip, 20, 15, 180, 15) ?? 0) - time()) / 60));
+        if ($minutes > 0) return ['minutes' => $minutes, 'type' => 'ip'];
 
-        // If there are no lockout end times, return 0
-        if (empty($endTimes)) return 0;
-
-        // Return the maximum lockout end time
-        $secondsLeft = max($endTimes) - time();
-        return $secondsLeft > 0 ? (int)ceil($secondsLeft / 60) : 0;
+        return ['minutes' => 0, 'type' => 'none'];
     }
 
     /**
