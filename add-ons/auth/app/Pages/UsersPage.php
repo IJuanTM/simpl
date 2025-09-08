@@ -155,7 +155,7 @@ class UsersPage
             if (AuthController::checkEmail($email)) {
                 $_POST['email'] = $user['email'];
 
-                FormController::addAlert('An account with this email already exists!', 'warning');
+                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 PageController::redirect("users/edit/$id");
                 return;
             }

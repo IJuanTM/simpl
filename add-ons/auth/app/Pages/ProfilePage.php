@@ -10,6 +10,7 @@ use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\Database;
 use app\Enums\AlertType;
+use app\Models\Page;
 use app\Models\Url;
 
 /**
