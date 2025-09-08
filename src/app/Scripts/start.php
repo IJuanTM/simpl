@@ -12,6 +12,9 @@ Dotenv\Dotenv::createImmutable(BASEDIR)->safeLoad();
 // Require the config files
 foreach (glob(BASEDIR . '/app/Config/*.php') as $file) require_once $file;
 
+// Validate the timezone constant
+if (!in_array(TIMEZONE, DateTimeZone::listIdentifiers(), true)) throw new InvalidArgumentException('Invalid timezone constant: ' . TIMEZONE);
+
 // Set the timezone to be used
 date_default_timezone_set(TIMEZONE);
 

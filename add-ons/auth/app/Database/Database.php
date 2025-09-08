@@ -5,6 +5,9 @@ namespace app\Database;
 use app\Controllers\LogController;
 use app\Controllers\PageController;
 use app\Enums\LogType;
+use DateMalformedStringException;
+use DateTime;
+use DateTimeZone;
 use PDO;
 use PDOException;
 
@@ -31,9 +34,11 @@ class Database
             );
 
             // Set database connection to use UTC timezone
-            $this->pdo->exec("SET time_zone = '+00:00'");
+            $this->pdo->exec("SET time_zone = '" . (new DateTime('now', new DateTimeZone(TIMEZONE)))->format('P') . "'");
         } catch (PDOException $e) {
             $this->handleError($e);
+        } catch (DateMalformedStringException) {
+            $this->handleError(new PDOException('Invalid timezone configuration.'));
         }
     }
 
