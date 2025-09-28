@@ -14,22 +14,22 @@ html {
 }
 
 body {
-  background-color: var(--bg-main);
-  color: var(--text);
   font-family: $body;
   font-size: 100%;
+  color: var(--text);
+  background-color: var(--bg-main);
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 noscript {
-  background-color: var(--bg-main);
-  color: $red;
   font-size: 1.25rem;
-  left: 0;
-  padding: 2rem;
   position: fixed;
   z-index: 5;
+  left: 0;
+  padding: 2rem;
+  color: $red;
+  background-color: var(--bg-main);
 
   @include breakpoint-up(lg) {
     font-size: 1.5rem;
@@ -39,12 +39,12 @@ noscript {
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 hr {
-  background-color: var(--border);
   height: .125rem;
+  background-color: var(--border);
 
   &.vertical {
-    height: 100%;
     width: .125rem;
+    height: 100%;
   }
 
   &.muted {

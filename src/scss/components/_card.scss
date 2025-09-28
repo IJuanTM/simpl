@@ -2,14 +2,14 @@
 @use "../config/vars/colors" as *;
 
 .card {
-  background-color: var(--bg-section);
-  border-radius: 1rem;
-  max-width: 32rem !important;
-  overflow: hidden;
-  padding: 2rem;
   position: relative;
-  text-decoration: none;
+  overflow: hidden;
+  max-width: 32rem !important;
+  padding: 2rem;
   transition: background-color .15s ease-in-out;
+  text-decoration: none;
+  border-radius: 1rem;
+  background-color: var(--bg-section);
 
   @include breakpoint-down(sm) {
     min-width: 100%;

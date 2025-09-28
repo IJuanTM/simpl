@@ -2,16 +2,16 @@
 @use "../../config/vars/colors" as *;
 
 section.cookie {
-  background-color: var(--bg-accent);
-  border-radius: .5rem;
+  position: fixed;
+  z-index: 3;
+  right: 0;
   bottom: 0;
   display: flex;
   margin: 1rem;
   padding: 2rem;
-  position: fixed;
-  right: 0;
   transition: visibility .15s ease-out, opacity .15s ease-out;
-  z-index: 3;
+  border-radius: .5rem;
+  background-color: var(--bg-accent);
 
   @include breakpoint-down(sm) {
     width: calc(100% - 2rem);
@@ -27,16 +27,16 @@ section.cookie {
     }
 
     button {
-      background-color: $green;
-      color: #FFF;
-      cursor: pointer;
       padding: 1rem;
+      cursor: pointer;
+      color: #FFF;
+      background-color: $green;
 
       @include shimmer(true, rgba(#FFF, .25));
 
       @include hover-focus {
-        background-color: $green-dark;
         color: rgba(#FFF, .75);
+        background-color: $green-dark;
       }
     }
   }

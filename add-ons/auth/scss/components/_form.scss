@@ -18,8 +18,8 @@ form {
     }
 
     div.password-warning {
-      color: $red;
       font-size: .875rem;
+      color: $red;
     }
 
     div.input-group {
@@ -27,8 +27,8 @@ form {
       border-radius: .25rem;
 
       > :is(div.input-prepend, div.input-append) {
-        background-color: var(--input-prepend-append);
         width: 2.5rem;
+        background-color: var(--input-prepend-append);
 
         > i.password-toggle {
           cursor: pointer;
@@ -41,16 +41,16 @@ form {
       }
 
       > div.input-prepend {
-        border-radius: .25rem 0 0 .25rem;
         border-right: .125rem solid var(--border-muted);
+        border-radius: .25rem 0 0 .25rem;
 
         + :is(input, textarea, select) {
-          border-bottom-left-radius: 0;
           border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
 
           &:has(+ div.input-append) {
-            border-bottom-right-radius: 0;
             border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
           }
         }
       }
@@ -77,8 +77,8 @@ form {
   }
 
   p.form-details {
-    color: var(--text-50);
     font-size: .875rem;
+    color: var(--text-50);
 
     &.warning {
       color: $orange !important;
@@ -90,9 +90,9 @@ form {
   }
 
   p.form-link {
-    color: var(--text-50);
-    cursor: pointer;
     font-size: .875rem;
+    cursor: pointer;
+    color: var(--text-50);
 
     @include hover-focus {
       color: var(--text-25);

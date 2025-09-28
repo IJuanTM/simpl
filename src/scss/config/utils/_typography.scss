@@ -46,12 +46,12 @@ a.link, [data-typo="a"].link {
   }
 
   &[target=_blank]::after {
-    color: var(--text-50);
-    content: "🡵";
-    display: inline-block;
     font-size: .5rem;
+    display: inline-block;
     margin-left: .125rem;
+    content: "🡵";
     vertical-align: super;
+    color: var(--text-50);
   }
 
   @include hover-focus {

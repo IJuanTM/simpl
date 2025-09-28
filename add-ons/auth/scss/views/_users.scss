@@ -20,8 +20,8 @@ section.users {
     }
 
     a.table-action, a.users-action {
-      text-decoration: none;
       white-space: pre-wrap;
+      text-decoration: none;
 
       > i {
         font-size: .875rem;
@@ -60,8 +60,8 @@ section.users {
       background-color: $red !important;
 
       &[inert] {
-        background-color: rgba($red, .5) !important;
         color: rgba(#FFF, .5) !important;
+        background-color: rgba($red, .5) !important;
       }
 
       @include hover-focus {

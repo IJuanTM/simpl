@@ -3,14 +3,14 @@
 
 button.button,
 a.button {
-  background-color: var(--button);
-  border-radius: .5rem;
-  cursor: pointer;
+  position: relative;
   overflow: hidden;
   padding: 1rem 2rem;
-  position: relative;
-  text-decoration: none;
+  cursor: pointer;
   transition: background-color .15s ease-in-out;
+  text-decoration: none;
+  border-radius: .5rem;
+  background-color: var(--button);
 
   @include touch-device {
     touch-action: manipulation;
@@ -23,8 +23,8 @@ a.button {
   }
 
   &.simpl {
-    background-color: $simpl;
     color: #FFF;
+    background-color: $simpl;
 
     @include shimmer(true, rgba(#FFF, .25));
 

@@ -7,12 +7,12 @@ header {
   z-index: 2;
 
   > div.navbar {
-    background-color: var(--bg-section);
-    border-bottom: .125rem solid var(--border-muted);
-    height: $header-height;
-    padding: 2rem 3rem 1rem;
     position: relative;
     z-index: 2;
+    height: $header-height;
+    padding: 2rem 3rem 1rem;
+    border-bottom: .125rem solid var(--border-muted);
+    background-color: var(--bg-section);
 
     @include breakpoint-down(md) {
       height: calc($header-height - 1rem);
@@ -20,31 +20,31 @@ header {
     }
 
     > div.nav-brand {
-      padding: 0 1rem;
       z-index: 3;
+      padding: 0 1rem;
 
       a.nav-logo {
         text-decoration: none;
 
         > svg {
-          max-height: 100%;
           width: 3.5rem;
+          max-height: 100%;
         }
       }
     }
 
     > nav.menu {
       @include breakpoint-down(lg) {
-        background-color: var(--bg-section);
-        flex-direction: column;
-        left: 0;
-        max-height: 0;
-        overflow: hidden;
-        padding: 0;
         position: absolute;
         top: calc($header-height);
-        transition: max-height .15s ease-in-out;
+        left: 0;
+        overflow: hidden;
+        flex-direction: column;
         width: 100%;
+        max-height: 0;
+        padding: 0;
+        transition: max-height .15s ease-in-out;
+        background-color: var(--bg-section);
 
         > div.nav-list {
           flex-direction: column;
@@ -60,9 +60,9 @@ header {
       }
 
       > div.nav-list .nav-item {
-        column-gap: .25rem;
         padding: 0 1rem;
         white-space: pre-wrap;
+        column-gap: .25rem;
 
         @include breakpoint-down(lg) {
           justify-content: flex-start;
@@ -84,8 +84,8 @@ header {
             }
 
             > img {
-              border-radius: 50%;
               width: 2.5rem;
+              border-radius: 50%;
             }
 
             > i {
@@ -96,8 +96,8 @@ header {
         }
 
         &.button {
-          background-color: var(--nav-button);
           border-radius: .5rem;
+          background-color: var(--nav-button);
 
           @include breakpoint-down(lg) {
             border-radius: unset;
@@ -153,14 +153,14 @@ header {
             position: relative;
 
             &::after {
-              background-color: var(--text-50);
-              border-radius: .25rem;
-              content: "";
-              height: calc(100% - 2rem);
-              left: 3rem;
               position: absolute;
-              transition: height .15s ease-in-out;
+              left: 3rem;
               width: .375rem;
+              height: calc(100% - 2rem);
+              content: "";
+              transition: height .15s ease-in-out;
+              border-radius: .25rem;
+              background-color: var(--text-50);
 
               @include breakpoint-down(md) {
                 left: 1rem;
@@ -169,8 +169,8 @@ header {
 
             @include hover-focus {
               &::after {
-                background-color: var(--text-25);
                 height: calc(100% - 2.25rem);
+                background-color: var(--text-25);
               }
             }
 
@@ -183,21 +183,21 @@ header {
             position: relative;
 
             &::after {
-              background-color: var(--text-50);
-              border-radius: .125rem;
-              bottom: .625rem;
-              content: "";
-              height: .25rem;
               position: absolute;
-              transition: width .15s ease-in-out;
+              bottom: .625rem;
               width: calc(100% - .5rem);
+              height: .25rem;
+              content: "";
+              transition: width .15s ease-in-out;
+              border-radius: .125rem;
+              background-color: var(--text-50);
             }
           }
 
           @include hover-focus {
             > span::after {
-              background-color: var(--text-25);
               width: calc(100% - .75rem);
+              background-color: var(--text-25);
             }
           }
         }
@@ -212,8 +212,8 @@ header {
       }
 
       div.theme-switch {
-        cursor: pointer;
         width: 4rem;
+        cursor: pointer;
 
         > i {
           font-size: 1.5rem;
@@ -235,12 +235,12 @@ header {
         }
 
         > span {
-          height: 4rem;
           width: 4rem;
+          height: 4rem;
 
           > span, > span::before, > span::after {
-            background-color: var(--text);
             width: 2rem;
+            background-color: var(--text);
           }
         }
 

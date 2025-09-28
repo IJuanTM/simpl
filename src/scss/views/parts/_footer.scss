@@ -6,11 +6,11 @@ footer {
   z-index: 2;
 
   > div.row {
-    background-color: var(--bg-section);
-    border-top: .125rem solid var(--border-muted);
     font-size: .875rem;
     height: $footer-height;
     padding: 1rem 4rem 2rem;
+    border-top: .125rem solid var(--border-muted);
+    background-color: var(--bg-section);
 
     @include breakpoint-down(md) {
       height: calc($footer-height - 1rem);

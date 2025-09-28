@@ -1,9 +1,9 @@
 :is(input, textarea, select) {
-  background-color: var(--input);
-  border-radius: .25rem;
   line-height: 1.25;
-  padding: .625rem .5rem;
   width: 100%;
+  padding: .625rem .5rem;
+  border-radius: .25rem;
+  background-color: var(--input);
 
   &::placeholder {
     color: var(--text-25);
@@ -23,12 +23,12 @@ textarea {
   position: relative;
 
   &::after {
-    content: "\f0d7";
     font-family: "Font Awesome 7 Free", sans-serif;
     font-weight: 900;
     position: absolute;
-    right: .625rem;
     top: 50%;
+    right: .625rem;
+    content: "\f0d7";
     transform: translateY(-50%);
   }
 }
@@ -38,24 +38,24 @@ textarea {
 }
 
 input[type="checkbox"] {
-  background-color: var(--input);
+  width: 1.5rem;
+  cursor: pointer;
   border: .125rem solid var(--border-muted);
   border-radius: .25rem;
-  cursor: pointer;
-  width: 1.5rem;
+  background-color: var(--input);
 
   &:checked {
     position: relative;
 
     &::before, &::after {
-      background-color: var(--text);
-      border-radius: .125rem;
-      content: "";
-      height: .875rem;
-      left: 50%;
       position: absolute;
       top: 50%;
+      left: 50%;
       width: .125rem;
+      height: .875rem;
+      content: "";
+      border-radius: .125rem;
+      background-color: var(--text);
     }
 
     &::before {

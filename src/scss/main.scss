@@ -8,12 +8,12 @@
 @use "views/error";
 
 // COMPONENTS
+@use "components/alert";
 @use "components/button";
 @use "components/card";
 @use "components/input";
 
 // PARTS
-@use "views/parts/alert";
 @use "views/parts/content";
 @use "views/parts/cookie";
 @use "views/parts/footer";

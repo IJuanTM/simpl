@@ -1,7 +1,7 @@
 div.table-container {
+  overflow: hidden;
   border: .125rem solid var(--border-muted);
   border-radius: .25rem;
-  overflow: hidden;
 
   > div.col {
     overflow-x: auto;
@@ -16,8 +16,8 @@ div.table-container {
       }
 
       th {
-        background-color: var(--table-header);
         font-weight: 700;
+        background-color: var(--table-header);
       }
 
       tbody tr {
