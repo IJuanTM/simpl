@@ -81,10 +81,11 @@ class FormController
      *
      * @param string $message Alert message text
      * @param AlertType $type Alert type (success, warning, error, etc.)
+     * @param int|null $timeout Optional timeout in milliseconds before the alert disappears
      */
-    public static function addAlert(string $message, AlertType $type): void
+    public static function addAlert(string $message, AlertType $type, int|null $timeout = null): void
     {
-        static::$alerts[] = "<div class='alert $type->value' role='alert'>$message</div>";
+        static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">$message</div>";
     }
 
     /**

@@ -17,7 +17,7 @@ export const handleVerificationCode = (): void => {
     input.addEventListener('input', () => {
       input.value = input.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
 
-      if (input.value.length === 1 && index < digitInputs.length - 1) digitInputs[index + 1].focus();
+      if (input.value.length === 1 && index < digitInputs.length - 1) digitInputs[index + 1]!.focus();
 
       updateHiddenInput();
     });

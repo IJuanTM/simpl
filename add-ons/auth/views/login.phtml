@@ -1,6 +1,7 @@
 <?php
 
 use app\Controllers\FormController;
+use app\Controllers\SessionController;
 use app\Models\Url;
 
 ?>
@@ -17,7 +18,7 @@ use app\Models\Url;
       <?= FormController::formAlerts() ?>
 
       <div class="row">
-        <div class="col form-group g-row-0.5">
+        <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('timeout') !== null ? (SessionController::get('timeout') - time()) * 1000 : 0 ?>" inert>
           <div class="row">
             <label class="col" for="email">Email: <span class="required">*</span></label>
           </div>
@@ -29,7 +30,7 @@ use app\Models\Url;
       </div>
 
       <div class="row">
-        <div class="col form-group g-row-0.5">
+        <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('timeout') !== null ? (SessionController::get('timeout') - time()) * 1000 : 0 ?>" inert>
           <div class="row">
             <label class="col" for="password">Password: <span class="required">*</span></label>
             <div class="col password-warning end-x hidden">Caps lock is on!</div>
@@ -55,7 +56,7 @@ use app\Models\Url;
         </div>
       </div>
 
-      <div class="row g-col-1 center">
+      <div class="row g-col-1 center" data-timeout="<?= SessionController::get('timeout') !== null ? (SessionController::get('timeout') - time()) * 1000 : 0 ?>" inert>
         <div class="col f-0">
           <p>Stay logged in?</p>
         </div>
@@ -67,7 +68,7 @@ use app\Models\Url;
       </div>
 
       <div class="row g-2 center-x">
-        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form"><i class="fas fa-right-to-bracket"></i>Login</button>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= SessionController::get('timeout') !== null ? (SessionController::get('timeout') - time()) * 1000 : 0 ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
       </div>
     </form>
   </div>

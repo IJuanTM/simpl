@@ -64,8 +64,24 @@ window.addEventListener('load', () => {
 
   // Handle elements with the data-timeout attribute
   (document.querySelectorAll('[data-timeout]') as NodeListOf<HTMLElement>).forEach(item => setTimeout(() => {
-    if (item.classList.contains('alert')) item.classList.add('invisible');
-    else item.removeAttribute('inert');
+    if (item.classList.contains('alert')) {
+      if (item.classList.contains('global')) item.classList.add('invisible');
+      else {
+        const height = item.scrollHeight;
+        item.style.maxHeight = `${height}px`;
+
+        void item.offsetHeight;
+
+        item.classList.add('collapsing');
+
+        item.addEventListener('transitionend', function handler(e) {
+          if (e.propertyName === 'max-height') {
+            item.remove();
+            item.removeEventListener('transitionend', handler);
+          }
+        });
+      }
+    } else item.removeAttribute('inert');
   }, parseInt(item.getAttribute('data-timeout') || '0')));
 });
 
