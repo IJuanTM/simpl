@@ -5,7 +5,6 @@ namespace app\Pages;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Controllers\SessionController;
 use app\Database\Database;
 use app\Enums\AlertType;
 use app\Models\Page;
@@ -114,9 +113,6 @@ class ResetPasswordPage
         $db->bind(':user_id', $id);
         $db->bind(':type', 'reset');
         $db->execute();
-
-        // Clear the timeout session variable, it is not needed anymore and could affect other forms
-        SessionController::remove('timeout');
 
         // Show a success message and redirect to the login page
         FormController::addAlert('Success! Your password has been reset!', AlertType::SUCCESS);

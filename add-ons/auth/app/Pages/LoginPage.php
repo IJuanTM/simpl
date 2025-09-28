@@ -95,7 +95,7 @@ class LoginPage
 
         if ($lockOut['seconds'] > 0) {
             // Set the timeout in the session
-            SessionController::set('timeout', time() + $lockOut['seconds']);
+            SessionController::set('lockout-timeout', time() + $lockOut['seconds']);
 
             // Show lockout message according to the type of lockout
             $message = $lockOut['type'] === 'user'
@@ -109,10 +109,6 @@ class LoginPage
 
         return false;
     }
-
-
-    // Set the timeout to the lockout time
-    //SessionController::set('timeout', );
 
     /**
      * Calculates lockout time based on failed login attempts for both user and IP address.

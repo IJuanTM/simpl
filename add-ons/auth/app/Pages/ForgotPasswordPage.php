@@ -27,7 +27,7 @@ class ForgotPasswordPage
     private function post(): void
     {
         // Check if the timeout is not exceeded
-        if (SessionController::get('timeout') !== null && SessionController::get('timeout') > time()) {
+        if (SessionController::get('resend-timeout') !== null && SessionController::get('resend-timeout') > time()) {
             FormController::addAlert('Please wait a moment before trying again!', AlertType::WARNING);
             return;
         }
@@ -52,7 +52,7 @@ class ForgotPasswordPage
         $this->sendPasswordReset($_POST['email']);
 
         // Set the timeout to 1 minute
-        SessionController::set('timeout', time() + 60);
+        SessionController::set('resend-timeout', time() + 60);
     }
 
     /**
