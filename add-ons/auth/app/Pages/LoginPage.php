@@ -17,81 +17,43 @@ class LoginPage
 {
     public function __construct()
     {
+        // Check if the user is locked out
+        $this->checkLockedOut();
+
         // Check if the login form is submitted
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
-    }
-
-    private function post(): void
-    {
-        // Validate the form fields
-        if (
-            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
-            !FormController::validate('password', ['required', 'maxLength' => 50])
-        ) return;
-
-        // Sanitize the form data
-        $_POST['email'] = FormController::sanitize($_POST['email']);
-
-        // Check if the user is locked out
-        if ($this->checkLockedOut()) return;
-
-        // Check if email exists AND password is correct
-        if (!AuthController::checkEmail($_POST['email']) || !AuthController::checkPassword($_POST['email'], $_POST['password'])) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'incorrect');
-
-            // Check if the user is now locked out
-            if ($this->checkLockedOut()) return;
-
-            $_POST['email'] = '';
-            $_POST['password'] = '';
-
-            FormController::addAlert('Invalid email or password. Please try again.', AlertType::WARNING);
-            return;
-        }
-
-        // Check if the user is inactive
-        if (!AuthController::isActive($_POST['email'])) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'inactive');
-
-            // Check if the user is now locked out
-            if ($this->checkLockedOut()) return;
-
-            $_POST['email'] = '';
-            $_POST['password'] = '';
-
-            FormController::addAlert('Your account is inactive! Contant an administrator for more information!', AlertType::ERROR);
-            return;
-        }
-
-        // Check if the user has not yet verified their account
-        if (!AuthController::isVerified(null, $_POST['email'])) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'unverified');
-
-            // Check if the user is now locked out
-            if ($this->checkLockedOut()) return;
-
-            $_POST['email'] = '';
-            $_POST['password'] = '';
-
-            FormController::addAlert('Your account has not been verified! Check your email for the verification link!', AlertType::ERROR);
-            return;
-        }
-
-        // Login the user
-        $this->login($_POST['email']);
     }
 
     /**
      * Checks if a user account or IP address is locked out and adds an alert to the form if so.
      *
+     * @param string|null $email User email for fresh check (optional)
+     *
      * @return bool True if locked out, false otherwise
      */
-    private function checkLockedOut(): bool
+    private function checkLockedOut(string|null $email = null): bool
     {
-        $lockOut = $this->lockOutTime($_POST['email'], $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        // When no email is provided, only check existing session lockout
+        if ($email === null) {
+            $timeout = SessionController::get('lockout-timeout');
+
+            // Check if there is an active lockout in the session
+            if ($timeout && $timeout > time()) {
+                $seconds = $timeout - time();
+                $minutes = (int)ceil($seconds / 60);
+
+                // Show the message in the form
+                FormController::addAlert("You are still locked out due to too many failed login attempts. Please wait $minutes minute(s) before trying again.", AlertType::ERROR, $seconds * 1000);
+                return true;
+            }
+
+            // Lockout has expired, remove from session
+            SessionController::remove('lockout-timeout');
+            return false;
+        }
+
+        // Check lockout status for the provided email and current IP address
+        $lockOut = $this->lockOutTime($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
 
         if ($lockOut['seconds'] > 0) {
             // Set the timeout in the session
@@ -178,6 +140,69 @@ class LoginPage
 
         // Return lockout end time
         return $newest + (min($base * (2 ** ($blocks - 1)), $max) * 60);
+    }
+
+    private function post(): void
+    {
+        // Validate the form fields
+        if (
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('password', ['required', 'maxLength' => 50])
+        ) return;
+
+        // Sanitize the form data
+        $_POST['email'] = FormController::sanitize($_POST['email']);
+
+        // Check if the user is locked out
+        if ($this->checkLockedOut($_POST['email'])) return;
+
+        // Check if email exists AND password is correct
+        if (!AuthController::checkEmail($_POST['email']) || !AuthController::checkPassword($_POST['email'], $_POST['password'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'incorrect');
+
+            // Check if the user is now locked out
+            if ($this->checkLockedOut($_POST['email'])) return;
+
+            $_POST['email'] = '';
+            $_POST['password'] = '';
+
+            FormController::addAlert('Invalid email or password. Please try again.', AlertType::WARNING);
+            return;
+        }
+
+        // Check if the user is inactive
+        if (!AuthController::isActive($_POST['email'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'inactive');
+
+            // Check if the user is now locked out
+            if ($this->checkLockedOut($_POST['email'])) return;
+
+            $_POST['email'] = '';
+            $_POST['password'] = '';
+
+            FormController::addAlert('Your account is inactive! Contant an administrator for more information!', AlertType::ERROR);
+            return;
+        }
+
+        // Check if the user has not yet verified their account
+        if (!AuthController::isVerified(null, $_POST['email'])) {
+            // Record failed login attempt
+            $this->recordLoginAttempt($_POST['email'], false, 'unverified');
+
+            // Check if the user is now locked out
+            if ($this->checkLockedOut($_POST['email'])) return;
+
+            $_POST['email'] = '';
+            $_POST['password'] = '';
+
+            FormController::addAlert('Your account has not been verified! Check your email for the verification link!', AlertType::ERROR);
+            return;
+        }
+
+        // Login the user
+        $this->login($_POST['email']);
     }
 
     /**
