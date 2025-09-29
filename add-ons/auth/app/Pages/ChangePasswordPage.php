@@ -41,12 +41,10 @@ class ChangePasswordPage
             return;
         }
 
-        // Check if the new password contains at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $_POST['new-password'])) {
+        // Validate the new password against the password policy
+        if (!AuthController::validatePassword($_POST['password'])) {
             $_POST['new-password'] = '';
             $_POST['new-password-check'] = '';
-
-            FormController::addAlert('Your new password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number!', AlertType::WARNING);
             return;
         }
 
@@ -56,7 +54,7 @@ class ChangePasswordPage
             return;
         }
 
-        // Check if the new password and the new password check are the same
+        // Check if the new passwords match
         if ($_POST['new-password'] !== $_POST['new-password-check']) {
             FormController::addAlert('The newly entered passwords do not match!', AlertType::WARNING);
             return;

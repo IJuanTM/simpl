@@ -9,11 +9,13 @@ const REQUIRE_SPECIAL_CHARACTER = false;
 
 const EMAIL_VERIFICATION_REQUIRED = true;
 
+// User lockout settings
 const USER_LOGIN_ATTEMPTS = 5;
 const MIN_USER_LOCKOUT_DURATION = 5; // in minutes
 const MAX_USER_LOCKOUT_DURATION = 60; // in minutes
 const USER_LOCKOUT_WINDOW = 5; // in minutes
 
+// IP lockout settings
 const IP_LOGIN_ATTEMPTS = 20;
 const MIN_IP_LOCKOUT_DURATION = 15; // in minutes
 const MAX_IP_LOCKOUT_DURATION = 180; // in minutes

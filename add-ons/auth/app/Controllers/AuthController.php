@@ -99,6 +99,39 @@ class AuthController
     }
 
     /**
+     * Validates the password against defined security rules, see the auth config to change them.
+     *
+     * @param string $password The password to validate
+     *
+     * @return bool Whether the password is valid
+     */
+    public static function validatePassword(string $password): bool
+    {
+        $rules = array_filter([
+            REQUIRE_LOWERCASE ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
+            REQUIRE_UPPERCASE ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
+            REQUIRE_NUMBER ? ['(?=.*\d)', '1 number'] : null,
+            REQUIRE_SPECIAL_CHARACTER ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
+        ]);
+
+        // Build the regex pattern
+        $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . MIN_PASSWORD_LENGTH . ',}$/';
+
+        // Create an error message based on the rules
+        $messages = array_column($rules, 1);
+        array_unshift($messages, "at least " . MIN_PASSWORD_LENGTH . " characters");
+        $errorMessage = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . "!";
+
+        // Validate the password against the pattern
+        if (!preg_match($pattern, $password)) {
+            FormController::addAlert($errorMessage, AlertType::WARNING);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Gets the path to a user's profile image.
      *
      * @param string $id User ID
