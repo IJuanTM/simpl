@@ -91,19 +91,21 @@ class ProfilePage
             $db->bind(':id', $id);
             $db->execute();
 
-            // Generate a verification token
-            $token = AuthController::generateToken(4);
+            if (EMAIL_VERIFICATION_REQUIRED) {
+                // Generate a verification token
+                $token = AuthController::generateToken(4);
 
-            // Set the verification token in the database
-            $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
-            $db->bind(':id', $id);
-            $db->bind(':token', $token);
-            $db->bind(':type', 'verification');
-            $db->execute();
+                // Set the verification token in the database
+                $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
+                $db->bind(':id', $id);
+                $db->bind(':token', $token);
+                $db->bind(':type', 'verification');
+                $db->execute();
 
-            // Send a verification email to the user
-            $this->verificationMail($id, $email, $token);
-            return;
+                // Send a verification email to the user
+                $this->verificationMail($id, $email, $token);
+                return;
+            }
         }
 
         // Get the updated user from the database

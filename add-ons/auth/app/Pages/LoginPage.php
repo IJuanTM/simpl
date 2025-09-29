@@ -86,13 +86,13 @@ class LoginPage
 
         // Check if the user is locked out based on user ID
         if ($userId !== null) {
-            $seconds = max(0, ($this->calculateLockout('user_id', $userId, 5, 5, 60, 5) ?? 0) - time());
+            $seconds = max(0, ($this->calculateLockout('user_id', $userId, USER_LOGIN_ATTEMPTS, MIN_USER_LOCKOUT_DURATION, MAX_USER_LOCKOUT_DURATION, USER_LOCKOUT_WINDOW) ?? 0) - time());
             $minutes = (int)ceil($seconds / 60); // Round up to nearest minute for display
             if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'user'];
         }
 
         // Check if the user is locked out based on IP address
-        $seconds = max(0, ($this->calculateLockout('ip_address', $ip, 20, 15, 180, 15) ?? 0) - time());
+        $seconds = max(0, ($this->calculateLockout('ip_address', $ip, IP_LOGIN_ATTEMPTS, MIN_IP_LOCKOUT_DURATION, MAX_IP_LOCKOUT_DURATION, IP_LOCKOUT_WINDOW) ?? 0) - time());
         $minutes = (int)ceil($seconds / 60); // Round up to nearest minute for display
         if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'ip'];
 
@@ -187,7 +187,7 @@ class LoginPage
         }
 
         // Check if the user has not yet verified their account
-        if (!AuthController::isVerified(null, $_POST['email'])) {
+        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified(null, $_POST['email'])) {
             // Record failed login attempt
             $this->recordLoginAttempt($_POST['email'], false, 'unverified');
 

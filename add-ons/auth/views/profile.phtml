@@ -94,11 +94,17 @@ use app\Models\Url;
                 <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
                 <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? SessionController::get('user')['email'] ?>" autocomplete="email" aria-label="Email input field">
               </div>
-              <div class="row">
-                <div class="col">
-                  <p class="form-details">After changing your email, you will have to verify it again! You will receive an email with a verification link. You will be logged out after changing your email.</p>
+
+              <?php if (EMAIL_VERIFICATION_REQUIRED) : ?>
+
+                <div class="row">
+                  <div class="col">
+                    <p class="form-details">After changing your email, you will have to verify it again! You will be logged out after changing your email and receive an email with a verification link.</p>
+                  </div>
                 </div>
-              </div>
+
+              <?php endif ?>
+
             </div>
           </div>
 

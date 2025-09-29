@@ -37,7 +37,7 @@ class RegisterPage
         // Sanitize the email
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
-        // Check if the email is already in use by another user
+        // Check if the email is already in use
         if (AuthController::checkEmail($_POST['email'])) {
             $_POST['email'] = '';
 
@@ -45,16 +45,14 @@ class RegisterPage
             return;
         }
 
-        // Check if the password contains at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number
-        if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $_POST['password'])) {
+        // Validate the entered password
+        if (!$this->validatePassword($_POST['password'])) {
             $_POST['password'] = '';
             $_POST['password-check'] = '';
-
-            FormController::addAlert('Your password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter and 1 number!', AlertType::WARNING);
             return;
         }
 
-        // Check if the password and password check are the same
+        // Check if passwords match
         if ($_POST['password'] !== $_POST['password-check']) {
             FormController::addAlert('The entered passwords do not match!', AlertType::WARNING);
             return;
@@ -62,6 +60,39 @@ class RegisterPage
 
         // Register the user
         $this->register($_POST['email'], $_POST['password']);
+    }
+
+    /**
+     * Validates the password against defined security rules, see the auth config to change them.
+     *
+     * @param string $password The password to validate
+     *
+     * @return bool Whether the password is valid
+     */
+    private function validatePassword(string $password): bool
+    {
+        $rules = array_filter([
+            REQUIRE_LOWERCASE ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
+            REQUIRE_UPPERCASE ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
+            REQUIRE_NUMBER ? ['(?=.*\d)', '1 number'] : null,
+            REQUIRE_SPECIAL_CHARACTER ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
+        ]);
+
+        // Build the regex pattern
+        $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . MIN_PASSWORD_LENGTH . ',}$/';
+
+        // Create an error message based on the rules
+        $messages = array_column($rules, 1);
+        array_unshift($messages, "at least " . MIN_PASSWORD_LENGTH . " characters");
+        $errorMessage = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . "!";
+
+        // Validate the password against the pattern
+        if (!preg_match($pattern, $password)) {
+            FormController::addAlert($errorMessage, AlertType::WARNING);
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -90,18 +121,24 @@ class RegisterPage
         $db->bind(':id', $id);
         $db->execute();
 
-        // Generate a verification token
-        $token = AuthController::generateToken(4);
+        if (EMAIL_VERIFICATION_REQUIRED) {
+            // Generate a verification token
+            $token = AuthController::generateToken(4);
 
-        // Set the verification token in the database
-        $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
-        $db->bind(':id', $id);
-        $db->bind(':token', $token);
-        $db->bind(':type', 'verification');
-        $db->execute();
+            // Set the verification token in the database
+            $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
+            $db->bind(':id', $id);
+            $db->bind(':token', $token);
+            $db->bind(':type', 'verification');
+            $db->execute();
 
-        // Send a verification email to the user
-        $this->verificationMail($id, $email, $token);
+            // Send a verification email to the user
+            $this->verificationMail($id, $email, $token);
+        } else {
+            // If no email verification is required, redirect the user to the login page with a success message
+            PageController::redirect("login");
+            AlertController::alert('Success! Your account has been created!', AlertType::SUCCESS, 4);
+        }
     }
 
     /**
