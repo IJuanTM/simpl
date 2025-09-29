@@ -28,7 +28,7 @@ In these pages form submissions are handled and the user is redirected to the co
 
 #### Views
 
-In the `views` folder you can find pages for all of the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `users` folder with subpages for the admin system.
+In the `views` folder you can find pages for all the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `users` folder with subpages for the admin system.
 
 #### Styling
 
