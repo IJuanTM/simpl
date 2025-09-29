@@ -2,15 +2,12 @@
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
-use app\Controllers\MailController;
 use app\Controllers\PageController;
 use app\Database\Database;
 use app\Enums\AlertType;
 use app\Models\Page;
-use app\Models\Url;
 
 /**
  * Handles resending verification emails to users.
@@ -76,39 +73,6 @@ class ResendVerificationPage
         $db->bind(':id', $id);
 
         // Send a verification email to the user
-        $this->resendVerificationMail($id, $db->single()['email'], $token);
-    }
-
-    /**
-     * Sends verification email with new token and redirects user.
-     *
-     * @param int $id User ID
-     * @param string $to User's email address
-     * @param string $code Verification code
-     */
-    private function resendVerificationMail(int $id, string $to, string $code): void
-    {
-        // Get the template from the views/parts/mails folder
-        $contents = MailController::template('verification', [
-            'title' => 'Account Verification - ' . APP_NAME,
-            'link' => Url::to("verify-account/$id/$code"),
-            'code' => $code
-        ]);
-
-        // Check if template was loaded successfully
-        if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
-            return;
-        }
-
-        // Send the message
-        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
-
-        // Redirect the user to the verification page
-        PageController::redirect("verify-account/$id");
-
-        // Show appropriate alert based on email sending result
-        if ($result) AlertController::alert('Success! A new verification email has been sent!', AlertType::SUCCESS, 4);
-        else AlertController::alert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
+        AuthController::sendVerificationMail($id, $db->single()['email'], $token, true);
     }
 }

@@ -5,11 +5,9 @@ namespace app\Pages;
 use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
-use app\Controllers\MailController;
 use app\Controllers\PageController;
 use app\Database\Database;
 use app\Enums\AlertType;
-use app\Models\Url;
 
 /**
  * Handles user registration functionality.
@@ -100,44 +98,11 @@ class RegisterPage
             $db->execute();
 
             // Send a verification email to the user
-            $this->verificationMail($id, $email, $token);
+            AuthController::sendVerificationMail($id, $email, $token);
         } else {
             // If no email verification is required, redirect the user to the login page with a success message
             PageController::redirect("login");
             AlertController::alert('Success! Your account has been created!', AlertType::SUCCESS, 4);
         }
-    }
-
-    /**
-     * Sends verification email and redirects to verification page.
-     *
-     * @param int $id User ID
-     * @param string $to User's email address
-     * @param string $code Verification code
-     */
-    private function verificationMail(int $id, string $to, string $code): void
-    {
-        // Get the template from the views/parts/mails folder
-        $contents = MailController::template('verification', [
-            'title' => 'Account Verification - ' . APP_NAME,
-            'link' => Url::to("verify-account/$id/$code"),
-            'code' => $code
-        ]);
-
-        // Check if template was loaded successfully
-        if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
-            return;
-        }
-
-        // Send the email and handle the result
-        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
-
-        // Redirect the user to the verification page
-        PageController::redirect("verify-account/$id");
-
-        // Show appropriate alert based on email sending result
-        if ($result) AlertController::alert('Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
-        else AlertController::alert('Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
     }
 }

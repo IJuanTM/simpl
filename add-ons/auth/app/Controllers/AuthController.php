@@ -5,6 +5,7 @@ namespace app\Controllers;
 use app\Database\Database;
 use app\Enums\AlertType;
 use app\Enums\LogType;
+use app\Models\Url;
 use Exception;
 
 /**
@@ -340,5 +341,48 @@ class AuthController
 
         // Return the user id or null if not found
         return $user ? (int)$user['id'] : null;
+    }
+
+    /**
+     * Sends a verification email to the user and redirects them to the verification page.
+     *
+     * @param int $id User ID
+     * @param string $to User's email address
+     * @param string $code Verification code
+     * @param bool $isResend Whether this is a resend of the verification email
+     */
+    public static function sendVerificationMail(int $id, string $to, string $code, bool $isResend = false): void
+    {
+        // Get the template from the views/parts/mails folder
+        $contents = MailController::template('verification', [
+            'title' => 'Account Verification - ' . APP_NAME,
+            'link' => Url::to("verify-account/$id/$code"),
+            'code' => $code
+        ]);
+
+        // Check if template was loaded successfully
+        if ($contents === false) {
+            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            return;
+        }
+
+        // Send the email and handle the result
+        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
+
+        // Redirect the user to the verification page
+        PageController::redirect("verify-account/$id");
+
+        // Show appropriate alert based on email sending result
+        if ($result) {
+            $message = $isResend
+                ? 'Success! A new verification email has been sent!'
+                : 'Success! Your account has been created! A verification email has been sent!';
+            AlertController::alert($message, AlertType::SUCCESS, 4);
+        } else {
+            $message = $isResend
+                ? 'An error occurred while sending your verification email! Please contact support.'
+                : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
+            AlertController::alert($message, AlertType::ERROR, 8);
+        }
     }
 }
