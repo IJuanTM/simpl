@@ -62,7 +62,8 @@ header {
       > div.nav-list .nav-item {
         padding: 0 1rem;
         white-space: pre-wrap;
-        column-gap: .25rem;
+        border-radius: .5rem;
+        column-gap: .5rem;
 
         @include breakpoint-down(lg) {
           justify-content: flex-start;
@@ -77,8 +78,6 @@ header {
           font-weight: 700;
 
           &.profile {
-            column-gap: .5rem;
-
             @include breakpoint-up(lg) {
               padding: 0 .5rem;
             }
@@ -96,7 +95,6 @@ header {
         }
 
         &.button {
-          border-radius: .5rem;
           background-color: var(--nav-button);
 
           @include breakpoint-down(lg) {
