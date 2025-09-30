@@ -42,7 +42,7 @@ class ChangePasswordPage
         }
 
         // Validate the new password against the password policy
-        if (!AuthController::validatePassword($_POST['password'])) {
+        if (!AuthController::validatePassword($_POST['new-password'])) {
             $_POST['new-password'] = '';
             $_POST['new-password-check'] = '';
             return;
