@@ -11,13 +11,12 @@
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.24-777BB3?logo=php)](https://www.php.net/)
-[![Composer logo](https://img.shields.io/badge/composer-2.8.11-89552C?logo=composer)](https://getcomposer.org/)
-[![Node.js logo](https://img.shields.io/badge/node.js-24.6.0-5FA04E?logo=node.js)](https://nodejs.org/)
-[![npm logo](https://img.shields.io/badge/npm-11.5.2-CB0000?logo=npm)](https://www.npmjs.com/)
-[![Sass logo](https://img.shields.io/badge/sass-1.90.0-CC6699?logo=sass)](https://sass-lang.com/)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.1.3-646CFF?logo=vite)](https://vite.dev/)
+[![PHP logo](https://img.shields.io/badge/php-8.3.26-777BB3?logo=php)](https://www.php.net/)
+[![Composer logo](https://img.shields.io/badge/composer-2.8.12-89552C?logo=composer)](https://getcomposer.org/)
+[![Node.js logo](https://img.shields.io/badge/node.js-24.9.0-5FA04E?logo=node.js)](https://nodejs.org/)
+[![Sass logo](https://img.shields.io/badge/sass-1.93.2-CC6699?logo=sass)](https://sass-lang.com/)
+[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite logo](https://img.shields.io/badge/vite-7.1.7-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -66,11 +65,11 @@ Simpl makes use of PSR-4 autoloading, for this to work you will have to run `com
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `dist` folder using Vite.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
 
 ### Step 4: Set up your localhost
 
-Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `dist` folder of your project._
+Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling there is a chance there was an issue compiling the Sass files, you can try to fix this by running the `build` script again manually using `npm run build`.
 
@@ -86,28 +85,36 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 
 The following scrips are included in the `package.json` file:
 
-* `dev` - Runs Vite in development mode with live reloading
-* `build` - Compiles the Sass and TypeScript files to the `dist` folder using Vite, ready for production
+* `dev` - Runs the `watch` and `live` scripts in parallel
+* `build` - Runs the `build:scss` and `build:ts` scripts after one another
+* `watch` - Runs the `watch:scss` and `watch:ts` scripts in parallel
+* `build:scss` - Compiles the Sass files to the `public/css` folder using the `sass` package
+* `build:ts` - Bundles the TypeScript files to the `public/js` folder using Vite
+* `watch:scss` - Watches the Sass files for changes and compiles them to the `public/css` folder using the `sass` package
+* `watch:ts` - Watches the TypeScript files for changes and bundles them to the `public/js` folder using Vite
+* `live` - Runs a local server using `browser-sync` and watches the `public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
 
-After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `dist` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
+
+_The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver. _
 
 #### Config
 
 Config files for the PHP framework are located in the `app/Config` folder. Here you can find the `app.php` file, which contains the configuration for the framework.
 
-Feel free to add your own config files here as each `.php` file in this folder will be loaded automatically on page load.
+Feel free to add your own config files here, as each `.php` file in this folder will be loaded automatically on page load.
 
 #### Controllers, Models and Pages
 
 In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
-The `Controllers` folder contains an `AppController` and a `PageController` by default, these contain the main functions for the framework.
+* The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
+  - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+  - There is also a `LogController`, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder, with each different type having its own logfile.
+* The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
+* The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
-The `Models` folder contains a `Page` model by default, this contains an `obj` and a `url` property, these hold the current `Page` object if it exists and the current page name, subpages and parameters of the url. These can be accessed at all times in any view by using `$this->`.
-
-The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it.
-
-There is also a `LogController` in the `Controllers` folder, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder.
+Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
 
 #### Views
 
@@ -121,7 +128,7 @@ The TypeScript code is located in the `ts` folder. Simpl makes use of Rollup to 
 
 #### Public
 
-The `public` folder contains the static files like images and fonts, as well as other static files for the website. Vite will copy the contents of this folder to the `dist` folder when ran, as well as the compiled Sass and TypeScript files. The `dist` folder is the folder that contains the final files that will be used on the website.
+The `public` folder contains the static files like images and fonts, as well as other static files for the website. Here you can also find the `index.php` file, which is the entry point for the framework. This file loads the autoloader, environment variables and runs the main `AppController`. After running the `build` script, the compiled Sass and TypeScript files will be located in this folder under their respective `css` and `js` folders.
 
 <br>
 
@@ -139,13 +146,14 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 
 ## Roadmap
 
-- [x] Make Simpl website
-- [ ] Write documentation
-- [ ] Add more add-ons
 - [x] Improve the form validation system
 - [x] Improve page logic and add more functionality
 - [x] Improve mail system
 - [x] Improve the auth system
+- [x] Nicer default styling
+- [ ] Update Simpl website
+- [ ] Write documentation
+- [ ] Add more add-ons
 
 <br>
 
@@ -187,28 +195,34 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Updated npm packages
 * Support for PHP 8.3.8
 
-#### Version 1.4.0 (2025-08-27)
+#### Version 1.4.0 (2025-10-01)
 
 * Security improvements
 * Added a start script for the application
 * Added a cron job script
 * Small fixes and improvements all around
 * Updated npm packages
-* Support for PHP 8.3.24
-* Updated Font Awesome icons to version 7.0.0
+* Support for PHP 8.3.26
+* Updated Font Awesome icons to version 7.0.1
 * Updated the-new-css-reset to version 1.11.3
 * Improvements to the auth system (improved controller and pages logic)
 * Improved MailController by added async functionality for sending emails and more
 * Improved form validation by generalizing the validation functions
 * Added the option for multiple form alerts
-* Changed Sass to use @use and @forward instead of @import for future compatibility
+* Changed Sass to use @use and @forward instead of @import for future compatibility as @import is being deprecated
+* Improved Sass structure
 * Added flex gap classes to the flexbox system
 * Improved page controller logic (page classes now load before the top part and have extended functionality)
+* Added custom route support to the PageController, these can be used to create direct endpoints without creating a page class or view for it
+* Added options for aliases to pages (multiple urls for one page, or custom urls)
+* Improved error handling and logging
 * Moved error page logic to its own Page class
 * Added a timestamp to <head> files to prevent caching issues (dynamically added in the url() method)
 * Improved tsconfig.json file
-* Added a rollup.config.js file instead of using the rollup command in the package.json file
 * Added enums to the php code for better type safety and readability
+* The auth add-on now has config options for password requirements and to enable/disable user email verification
+* The project now uses Vite for bundling TypeScript files. The sass files are still compiled using the sass npm package and live reloading is still done using browser-sync.
+* Entire new styling for the default Simpl pages and components
 
 <br>
 
@@ -222,17 +236,18 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 
 #### Development
 
+* [browser-sync](https://browsersync.io/)
+* [npm-run-all](https://github.com/mysticatea/npm-run-all/)
 * [sass](https://sass-lang.com/)
-* [typescript](https://www.typescriptlang.org/)
-* [tslib](https://www.npmjs.com/package/tslib/)
 * [terser](https://terser.org/)
+* [typescript](https://www.typescriptlang.org/)
 * [vite](https://vite.dev/)
 
 #### Production
 
-* [the-new-css-reset](https://elad2412.github.io/the-new-css-reset/)
 * [@fortawesome/fontawesome-free](https://fontawesome.com/)
 * [hamburgers](https://jonsuh.com/hamburgers/)
+* [the-new-css-reset](https://elad2412.github.io/the-new-css-reset/)
 
 ### Fonts
 

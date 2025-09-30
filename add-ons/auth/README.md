@@ -14,6 +14,10 @@ Furthermore, it includes an admin system for managing users' accounts. It includ
 
 It also includes code for changing the navigation bar based on if the user is logged in and to add the added pages from this add-on to the menu.
 
+#### Config
+
+In the `Config` folder you can find configuration files for the add-on. In the `auth.php` file you can set options for the user system, such as if email verification is required and the password requirements. In the `mail.php` file you can set the configuration for sending emails, such as the SMTP server, port, username and password. In the `database.php` file database connection values are linked to the settings stored in the `.env` file.
+
 #### Controllers
 
 In the `AuthController.php` file you can find the code for the user system. The functions here are used in multiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
