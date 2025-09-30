@@ -108,6 +108,29 @@ class AuthController
      */
     public static function validatePassword(string $password): bool
     {
+        [$pattern, $message] = self::getPasswordRules();
+
+        // Validate the password against the pattern
+        if (!preg_match($pattern, $password)) {
+            FormController::addAlert($message, AlertType::WARNING);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns a message detailing the password requirements based on current configuration.
+     *
+     * @return array An array containing the regex pattern and the error message
+     */
+    private static function getPasswordRules(): array
+    {
+        static $cache = null;
+
+        // Return cached result if available
+        if ($cache !== null) return $cache;
+
         $rules = array_filter([
             REQUIRE_LOWERCASE ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
             REQUIRE_UPPERCASE ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
@@ -121,15 +144,22 @@ class AuthController
         // Create an error message based on the rules
         $messages = array_column($rules, 1);
         array_unshift($messages, "at least " . MIN_PASSWORD_LENGTH . " characters");
-        $errorMessage = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . "!";
+        $message = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . ".";
 
-        // Validate the password against the pattern
-        if (!preg_match($pattern, $password)) {
-            FormController::addAlert($errorMessage, AlertType::WARNING);
-            return false;
-        }
+        // Cache the result
+        $cache = [$pattern, $message];
 
-        return true;
+        return $cache;
+    }
+
+    /**
+     * Returns a user-friendly string detailing the password requirements.
+     *
+     * @return string Password requirements message
+     */
+    public static function getPasswordRequirements(): string
+    {
+        return self::getPasswordRules()[1];
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php
 
+use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Models\Url;
 
@@ -56,7 +57,7 @@ use app\Models\Url;
 
           <div class="row">
             <div class="col">
-              <p class="form-details">Password must be at least 8 characters long, and contain at least one uppercase letter, one lowercase letter and one number.</p>
+              <p class="form-details"><?= AuthController::getPasswordRequirements() ?></p>
             </div>
           </div>
         </div>
