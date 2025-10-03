@@ -1,6 +1,8 @@
-@import "views/users";
-@import "views/profile";
+// VIEWS
+@use "views/users";
+@use "views/profile";
+@use "views/verify-account";
 
 // COMPONENTS
-@import "components/form";
-@import "components/table";
+@use "components/form";
+@use "components/table";

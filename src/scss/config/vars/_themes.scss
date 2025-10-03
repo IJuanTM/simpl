@@ -1,0 +1,80 @@
+// Dark
+$dark-0: #000;
+$dark-1: #101010;
+$dark-2: #0E0E0E;
+$dark-3: #141414;
+$dark-4: #181818;
+$dark-5: #1C1C1C;
+$dark-6: #202020;
+$dark-7: #242424;
+$dark-8: #343434;
+$dark-9: #444;
+
+// Light
+$light-0: #FFF;
+$light-1: #FEFEFE;
+$light-2: #FCFCFC;
+$light-3: #F8F8F8;
+$light-4: #F4F4F4;
+$light-5: #F0F0F0;
+$light-6: #EEE;
+$light-7: #E8E8E8;
+$light-8: #D8D8D8;
+$light-9: #C8C8C8;
+
+// ---------------------------------------------------------------- //
+
+$themes: (
+  light: (
+    text: $dark-0,
+    text-inverse: $light-0,
+    bg-main: $light-2,
+    bg-content: $light-1,
+    bg-section: $light-3,
+    bg-accent: $light-4,
+    nav-button: $light-4,
+    nav-button-hover: $light-5,
+    scrollbar-track: $light-4,
+    scrollbar-thumb: $light-7,
+    scrollbar-thumb-hover: $light-8,
+    scrollbar-thumb-active: $light-9,
+    border: $dark-0,
+    border-muted: rgba($dark-0, .25),
+    shadow: $dark-0,
+    button: $light-3,
+    button-hover: $light-4,
+    input: $light-2,
+    input-focus: $light-3,
+    input-prepend-append: $light-5,
+    table-header: $light-5,
+    table-row-even: $light-3,
+    table-row-odd: $light-2,
+    shimmer-color: rgba($dark-0, .0625),
+  ),
+  dark: (
+    text: $light-0,
+    text-inverse: $dark-0,
+    bg-main: $dark-2,
+    bg-content: $dark-1,
+    bg-section: $dark-3,
+    bg-accent: $dark-4,
+    nav-button: $dark-4,
+    nav-button-hover: $dark-5,
+    scrollbar-track: $dark-4,
+    scrollbar-thumb: $dark-7,
+    scrollbar-thumb-hover: $dark-8,
+    scrollbar-thumb-active: $dark-9,
+    border: $light-0,
+    border-muted: rgba($light-0, .25),
+    shadow: $dark-0,
+    button: $dark-3,
+    button-hover: $dark-4,
+    input: $dark-2,
+    input-focus: $dark-3,
+    input-prepend-append: $dark-5,
+    table-header: $dark-5,
+    table-row-even: $dark-3,
+    table-row-odd: $dark-2,
+    shimmer-color: rgba($light-0, .0625),
+  )
+);

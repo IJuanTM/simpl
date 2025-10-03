@@ -2,7 +2,12 @@
 
 namespace app\Database;
 
-use app\Controllers\{LogController, PageController};
+use app\Controllers\LogController;
+use app\Controllers\PageController;
+use app\Enums\LogType;
+use DateMalformedStringException;
+use DateTime;
+use DateTimeZone;
 use PDO;
 use PDOException;
 
@@ -17,6 +22,7 @@ class Database
     public function __construct()
     {
         try {
+            // Create a new PDO instance
             $this->pdo = new PDO(
                 'mysql:host=' . DB_SERVER . ';dbname=' . DB_NAME,
                 DB_USERNAME,
@@ -26,45 +32,66 @@ class Database
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
                 ]
             );
-        } catch (PDOException $e) {
-            // Log error
-            LogController::log($e->getMessage(), 'database');
 
-            // Redirect to error page
-            PageController::redirect('error/500');
+            // Set database connection to use UTC timezone
+            $this->pdo->exec("SET time_zone = '" . (new DateTime('now', new DateTimeZone(TIMEZONE)))->format('P') . "'");
+        } catch (PDOException $e) {
+            $this->handleError($e);
+        } catch (DateMalformedStringException) {
+            $this->handleError(new PDOException('Invalid timezone configuration.'));
         }
+    }
+
+    /**
+     * This method is for handling database errors by logging the error and redirecting to an error page.
+     *
+     * @param PDOException $e
+     */
+    private function handleError(PDOException $e): void
+    {
+        // Log error
+        LogController::log($e->getMessage(), LogType::DATABASE);
+
+        // Redirect to error page
+        PageController::redirect('error/500');
     }
 
     /**
      * This method is for preparing a query for execution.
      *
-     * @param $query
-     *
-     * @return void
+     * @param string $query
      */
-    public function query($query): void
+    final public function query(string $query): void
     {
-        $this->stmt = $this->pdo->prepare($query);
+        try {
+            $this->stmt = $this->pdo->prepare($query);
+        } catch (PDOException $e) {
+            $this->handleError($e);
+        }
     }
 
     /**
      * This method is for binding a value to a parameter.
      *
-     * @param $param
-     * @param $value
-     * @param null $type
-     *
-     * @return void
+     * @param int|string $param
+     * @param mixed $value
+     * @param int|null $type
      */
-    public function bind($param, $value, $type = null): void
+    final public function bind(int|string $param, mixed $value, int|null $type = null): void
     {
+        // Determine the type if not provided explicitly
         $type = $type ?? match (true) {
             is_int($value) => PDO::PARAM_INT,
             is_bool($value) => PDO::PARAM_BOOL,
             $value === null => PDO::PARAM_NULL,
             default => PDO::PARAM_STR,
         };
-        $this->stmt->bindValue($param, $value, $type);
+
+        try {
+            $this->stmt->bindValue($param, $value, $type);
+        } catch (PDOException $e) {
+            $this->handleError($e);
+        }
     }
 
     /**
@@ -72,39 +99,47 @@ class Database
      *
      * @return array
      */
-    public function fetchAll(): array
+    final public function fetchAll(): array
     {
-        $this->execute();
-        return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $this->execute();
+
+            return $this->stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            $this->handleError($e);
+
+            return [];
+        }
     }
 
     /**
      * This method is for executing a prepared statement.
-     *
-     * @return void
      */
-    public function execute(): void
+    final public function execute(): void
     {
         try {
             $this->stmt->execute();
         } catch (PDOException $e) {
-            // Log error
-            LogController::log($e->getMessage(), 'database');
-
-            // Redirect to error page
-            PageController::redirect('error/500');
+            $this->handleError($e);
         }
     }
 
     /**
      * This method is for executing a prepared statement and returning the first row of the result set.
      *
-     * @return array
+     * @return array|null
      */
-    public function single(): array
+    final public function single(): array|null
     {
-        $this->execute();
-        return $this->stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $this->execute();
+
+            return $this->stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (PDOException $e) {
+            $this->handleError($e);
+
+            return null;
+        }
     }
 
     /**
@@ -112,9 +147,16 @@ class Database
      *
      * @return int
      */
-    public function rowCount(): int
+    final public function rowCount(): int
     {
-        $this->execute();
-        return $this->stmt->rowCount();
+        try {
+            $this->execute();
+
+            return $this->stmt->rowCount();
+        } catch (PDOException $e) {
+            $this->handleError($e);
+
+            return 0;
+        }
     }
 }

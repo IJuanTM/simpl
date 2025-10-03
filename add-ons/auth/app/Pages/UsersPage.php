@@ -2,9 +2,14 @@
 
 namespace app\Pages;
 
-use app\Controllers\{AppController, FormController, PageController, UserController};
+use app\Controllers\AlertController;
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\PageController;
+use app\Controllers\SessionController;
 use app\Database\Database;
-use app\Models\PageModel;
+use app\Enums\AlertType;
+use app\Models\Page;
 
 /**
  * The UsersPage class is the controller for the users page.
@@ -14,17 +19,16 @@ use app\Models\PageModel;
 class UsersPage
 {
     public int $page = 0;
-
     public array $user;
     public array $users;
 
-    public function __construct(PageModel $page)
+    public function __construct(Page $page)
     {
         // Only allow admins to access this page
-        UserController::access([1]);
+        AuthController::access([1]);
 
         // Get the page number from the url
-        if (isset($page->getUrl()['params']['page'])) $this->page = (int)$page->getUrl()['params']['page'];
+        if (isset($page->urlArr['params']['page'])) $this->page = (int)$page->urlArr['params']['page'];
 
         // Get all users from the database
         $db = new Database();
@@ -43,76 +47,91 @@ class UsersPage
         }
 
         // Check if the user wants to perform a specific action
-        if (isset($page->getUrl()['subpages'][0])) {
+        if (isset($page->urlArr['subpages'][0])) {
             // Check if the user wants to edit a user, delete a user or restore a user
-            if (in_array($page->getUrl()['subpages'][0], ['edit', 'delete', 'restore'])) {
-                // Check if the user id is given in the url
-                if (isset($page->getUrl()['params']['id'])) {
-                    // Get the index of the user in the users array
-                    $index = array_search((int)$page->getUrl()['params']['id'], array_column($this->users, 'id'));
-
-                    // Check if the user exists in the users array
-                    if ($index === false) {
-                        PageController::redirect('users', 2);
-                        return;
-                    }
-
-                    // Store the user in a variable
-                    $this->user = $this->users[$index];
-
-                    // Check if the user is the same as the logged in user
-                    if ($this->user['id'] == $_SESSION['user']['id']) PageController::redirect('users', 2);
-                } else PageController::redirect('users', 2);
-            }
-
-            // Check if the user wants to edit a user and if the form is submitted
-            if ($page->getUrl()['subpages'][0] == 'edit' && isset($_POST['submit'])) {
-                // Check if the email field is entered
-                if (empty($_POST['email'])) {
-                    FormController::alert('Please enter a new email!', 'warning', 'users/edit/' . $_POST['id']);
+            if (in_array($page->urlArr['subpages'][0], ['edit', 'delete', 'restore'])) {
+                // Check if the user id is not given in the url
+                if (!isset($page->urlArr['params']['id'])) {
+                    PageController::redirect('users', 2);
                     return;
                 }
 
-                // Check if the email field is not too long
-                if (strlen($_POST['email']) > 100) {
-                    FormController::alert('The email is too long!', 'warning', 'users/edit/' . $_POST['id']);
+                // Get the index of the user in the users array
+                $index = array_search((int)$page->urlArr['params']['id'], array_column($this->users, 'id'), true);
+
+                // Check if the user exists in the users array
+                if ($index === false) {
+                    PageController::redirect('users', 2);
                     return;
                 }
 
-                // Check if the email is valid
-                if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-                    FormController::alert('Please enter a valid email!', 'warning', 'users/edit/' . $_POST['id']);
-                    return;
-                }
+                // Store the user in a variable
+                $this->user = $this->users[$index];
 
-                // Update the user
-                self::update($_POST['id'], AppController::sanitize($_POST['name']), AppController::sanitize($_POST['email']), $_POST['role']);
+                // Check if the user is the same as the logged-in user
+                if ($this->user['id'] === SessionController::get('user')['id']) PageController::redirect('users', 2);
             }
 
-            // Check if the user wants to delete a user and if the form is submitted
-            if ($page->getUrl()['subpages'][0] == 'delete' && isset($_POST['submit'])) $this->delete($_POST['id']);
-
-            // Check if the user wants to restore a user
-            if ($page->getUrl()['subpages'][0] == 'restore' && isset($_POST['submit'])) {
-                // Check if the user is deleted or not
-                if (isset($this->user) && !$this->user['is_active']) $this->restore($_POST['id']);
-                else PageController::redirect('users', 2);
-            }
+            // Check if a form is submitted
+            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($page);
         }
     }
 
     /**
-     * This method is for updating an user's profile.
+     * This method is for handling the POST request of the users page.
+     *
+     * @param Page $page
+     */
+    private function post(Page $page): void
+    {
+        // Check if the user wants to edit a user and if the form is submitted
+        if ($page->urlArr['subpages'][0] === 'edit') {
+            // Check if the email field is entered
+            if (empty($_POST['email'])) {
+                FormController::addAlert('Please enter a new email!', AlertType::WARNING);
+                PageController::redirect('users/edit/' . $_POST['id']);
+                return;
+            }
+
+            // Check if the email field is not too long
+            if (strlen($_POST['email']) > 100) {
+                FormController::addAlert('The email is too long!', AlertType::WARNING);
+                PageController::redirect('users/edit/' . $_POST['id']);
+                return;
+            }
+
+            // Check if the email is valid
+            if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+                FormController::addAlert('Please enter a valid email!', AlertType::WARNING);
+                PageController::redirect('users/edit/' . $_POST['id']);
+                return;
+            }
+
+            // Update the user
+            self::update($_POST['id'], FormController::sanitize($_POST['username']), FormController::sanitize($_POST['email']), $_POST['role']);
+        }
+
+        // Check if the user wants to delete a user and if the form is submitted
+        if ($page->urlArr['subpages'][0] === 'delete') $this->delete($_POST['id']);
+
+        // Check if the user wants to restore a user
+        if ($page->urlArr['subpages'][0] === 'restore') {
+            // Check if the user is deleted or not
+            if (isset($this->user) && !$this->user['is_active']) $this->restore($_POST['id']);
+            else PageController::redirect('users', 2);
+        }
+    }
+
+    /**
+     * This method is for updating a user's profile.
      * An administrator can update the user's name, email and role.
      *
      * @param int $id
-     * @param string $name
+     * @param string $username
      * @param string $email
      * @param int $role
-     *
-     * @return void
      */
-    public static function update(int $id, string $name, string $email, int $role): void
+    public static function update(int $id, string $username, string $email, int $role): void
     {
         $db = new Database();
 
@@ -121,11 +140,11 @@ class UsersPage
         $db->bind(':id', $id);
         $user = $db->single();
 
-        // Check if the name has changed
-        if ($user['name'] !== $name) {
-            // Update the name in the database
-            $db->query('UPDATE users SET name = :name WHERE id = :id');
-            $db->bind(':name', $name);
+        // Check if the username has changed
+        if ($user['username'] !== $username) {
+            // Update the username in the database
+            $db->query('UPDATE users SET username = :username WHERE id = :id');
+            $db->bind(':username', $username);
             $db->bind(':id', $id);
             $db->execute();
         }
@@ -133,9 +152,11 @@ class UsersPage
         // Check if the email has changed
         if ($user['email'] !== $email) {
             // Check if the email is already in use
-            if (UserController::checkEmail($email)) {
+            if (AuthController::checkEmail($email)) {
                 $_POST['email'] = $user['email'];
-                FormController::alert('An account with this email already exists!', 'warning', "users/edit/$id");
+
+                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+                PageController::redirect("users/edit/$id");
                 return;
             }
 
@@ -159,19 +180,15 @@ class UsersPage
             $db->execute();
         }
 
-        // Redirect to the users page
+        // Redirect to the users page with a success message
         PageController::redirect('users');
-
-        // Show the success message
-        AppController::alert('Success! The user has been updated!', ['success', 'global'], 4);
+        AlertController::alert('Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
      * This method is for deleting the user in the database.
      *
      * @param int $id
-     *
-     * @return void
      */
     private function delete(int $id): void
     {
@@ -182,19 +199,15 @@ class UsersPage
         $db->bind(':id', $id);
         $db->execute();
 
-        // Redirect to the users page
+        // Redirect to the users page with a success message
         PageController::redirect('users');
-
-        // Show the success message
-        AppController::alert('User successfully deleted!', ['success', 'global'], 4);
+        AlertController::alert('User successfully deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
      * This method is for restoring the user after it has been deleted.
      *
      * @param int $id
-     *
-     * @return void
      */
     private function restore(int $id): void
     {
@@ -205,10 +218,8 @@ class UsersPage
         $db->bind(':id', $id);
         $db->execute();
 
-        // Redirect to the users page
+        // Redirect to the users page with a success message
         PageController::redirect('users');
-
-        // Show the success message
-        AppController::alert('User successfully restored!', ['success', 'global'], 4);
+        AlertController::alert('User successfully restored!', AlertType::SUCCESS, 4);
     }
 }

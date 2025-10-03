@@ -1,6 +1,6 @@
 export const
-  inputPassword = document.querySelector('input.input-password') as HTMLInputElement,
-  passwordToggleIcon = document.querySelector('i.password-toggle') as HTMLElement;
+  inputPassword = document.querySelector('input.input-password') as HTMLInputElement | null,
+  passwordToggleIcon = document.querySelector('i.password-toggle') as HTMLElement | null;
 
 /**
  * Function to toggle the password visibility
@@ -9,11 +9,11 @@ export const
  */
 export const togglePassword = (): void => {
   // Toggle the password visibility.
-  inputPassword.setAttribute('type', inputPassword.getAttribute('type') === 'password' ? 'text' : 'password');
+  inputPassword?.setAttribute('type', inputPassword?.getAttribute('type') === 'password' ? 'text' : 'password');
 
   // Toggle the password icon.
-  passwordToggleIcon.classList.toggle('fa-eye');
-  passwordToggleIcon.classList.toggle('fa-eye-slash');
+  passwordToggleIcon?.classList.toggle('fa-eye');
+  passwordToggleIcon?.classList.toggle('fa-eye-slash');
 }
 
 const passwordWarning = document.querySelector('div.password-warning') as HTMLElement;

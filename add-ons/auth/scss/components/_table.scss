@@ -1,0 +1,36 @@
+div.table-container {
+  overflow: hidden;
+  border: .125rem solid var(--border-muted);
+  border-radius: .25rem;
+
+  > div.col {
+    overflow-x: auto;
+
+    table {
+      width: 100%;
+
+      th, td {
+        padding: .625rem .5rem;
+        vertical-align: middle;
+        white-space: nowrap;
+      }
+
+      th {
+        font-weight: 700;
+        background-color: var(--table-header);
+      }
+
+      tbody tr {
+        background-color: var(--table-row-odd);
+
+        &:nth-child(even) {
+          background-color: var(--table-row-even);
+        }
+      }
+    }
+
+    &::-webkit-scrollbar {
+      height: .25rem;
+    }
+  }
+}

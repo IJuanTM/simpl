@@ -1,0 +1,35 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+button.button,
+a.button {
+  position: relative;
+  overflow: hidden;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: background-color .15s ease-in-out;
+  text-decoration: none;
+  border-radius: .5rem;
+  background-color: var(--button);
+
+  @include touch-device {
+    touch-action: manipulation;
+  }
+
+  @include shimmer(true);
+
+  @include hover-focus {
+    background-color: var(--button-hover);
+  }
+
+  &.simpl {
+    color: #FFF;
+    background-color: $simpl;
+
+    @include shimmer(true, rgba(#FFF, .25));
+
+    @include hover-focus {
+      background-color: $simpl-dark;
+    }
+  }
+}

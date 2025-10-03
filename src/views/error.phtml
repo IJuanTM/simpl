@@ -1,36 +1,27 @@
-<section class="error min-h-content f-col center-x">
-  <?php
-  $message = '';
+<?php
 
-  // Get the error code from the url
-  $code = $this->getUrl()['subpages'][0] ?? '404';
+use app\Models\Url;
 
-  // Set the error message
-  if ($code == '403') $message = 'You have no access to this page.';
-  else if ($code == '500') $message = 'An internal server occured.';
-  else $message = 'This page does not exist.';
+?>
 
-  // Redirect to the homepage if auto redirect is enabled
-  if (ERROR_AUTO_REDIRECT) $this->redirect(REDIRECT, 2);
-  ?>
-
+<section class="error min-h-content f-col g-row-1 center-x">
   <div class="row">
     <div class="col center-x">
-      <h1><?= $code ?></h1>
+      <h1><?= $this->pageObj->code ?></h1>
     </div>
   </div>
 
   <div class="row">
-    <div class="col f-col">
+    <div class="col f-col g-row-1">
       <div class="row">
         <div class="col center-x">
-          <h3><?= $message ?></h3>
+          <p data-typo="h3"><?= $this->pageObj->message ?></p>
         </div>
       </div>
 
       <div class="row">
         <div class="col center-x">
-          <p>You will be redirected to the <a href="<?= $this->url(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page"><?= REDIRECT ?></a> page.</p>
+          <p>Click <a class="link underline" href="<?= Url::to(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page">here</a> to go back to the <?= REDIRECT ?> page.</p>
         </div>
       </div>
     </div>

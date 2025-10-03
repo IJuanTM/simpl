@@ -2,72 +2,78 @@
 
 namespace app\Pages;
 
-use app\Controllers\{AppController, FormController, MailController};
+use app\Controllers\AlertController;
+use app\Controllers\FormController;
+use app\Controllers\MailController;
+use app\Controllers\PageController;
+use app\Enums\AlertType;
 
 /**
- * The ContactPage class is the controller for the contact page.
- * It checks if all inputs are entered and sends an email to the site owner and the user.
+ * Handles contact form submissions and email notifications.
  */
 class ContactPage
 {
     public function __construct()
     {
         // Check if the contact form is submitted
-        if (isset($_POST['submit'])) {
-            // Check if all the required fields are entered
-            if (empty($_POST['name'])) {
-                FormController::alert('Please enter your name!', 'warning', 'contact');
-                return;
-            }
-            if (empty($_POST['email'])) {
-                FormController::alert('Please enter your email!', 'warning', 'contact');
-                return;
-            }
-            if (empty($_POST['subject'])) {
-                FormController::alert('Please enter a subject!', 'warning', 'contact');
-                return;
-            }
-            if (empty($_POST['message'])) {
-                FormController::alert('Please enter a message!', 'warning', 'contact');
-                return;
-            }
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
+    }
 
-            // Check if the values entered in fields are not too long
-            if (strlen($_POST['name']) > 100) {
-                $_POST['name'] = '';
-                FormController::alert('The input of the name field is too long!', 'warning', 'contact');
-                return;
-            }
-            if (strlen($_POST['email']) > 100) {
-                $_POST['email'] = '';
-                FormController::alert('The input of the email field is too long!', 'warning', 'contact');
-                return;
-            }
-            if (strlen($_POST['subject']) > 100) {
-                $_POST['subject'] = '';
-                FormController::alert('The input of the subject field is too long!', 'warning', 'contact');
-                return;
-            }
-            if (strlen($_POST['message']) > 1000) {
-                $_POST['message'] = '';
-                FormController::alert('The input of the message field is too long!', 'warning', 'contact');
-                return;
-            }
+    /**
+     * Processes contact form submission.
+     */
+    private function post(): void
+    {
+        // Validate the form fields
+        if (
+            !FormController::validate('name', ['required', 'maxLength' => 100]) ||
+            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('subject', ['required', 'maxLength' => 100]) ||
+            !FormController::validate('message', ['required', 'maxLength' => 1000])
+        ) return;
 
-            // Check if the email is valid
-            if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-                $_POST['email'] = '';
-                FormController::alert('The entered email is not valid!', 'warning', 'contact');
-                return;
-            }
+        // Send the contact email
+        $this->contactMail(
+            FormController::sanitize($_POST['name']),
+            FormController::sanitize($_POST['email']),
+            FormController::sanitize($_POST['subject']),
+            FormController::sanitize($_POST['message'])
+        );
+    }
 
-            // Send the contact email
-            MailController::contact(
-                AppController::sanitize($_POST['name']),
-                AppController::sanitize($_POST['email']),
-                AppController::sanitize($_POST['subject']),
-                AppController::sanitize($_POST['message'])
-            );
+    /**
+     * Sends contact form email to site administrator.
+     *
+     * @param string $from Sender's name
+     * @param string $sender Sender's email address
+     * @param string $subject Email subject
+     * @param string $message Email message body
+     */
+    private function contactMail(string $from, string $sender, string $subject, string $message): void
+    {
+        // Get the template from the views/parts/mails folder
+        $contents = MailController::template('contact', [
+            'title' => 'New Contact Form Submission',
+            'from' => $from,
+            'date' => date('Y-m-d'),
+            'time' => date('H:i'),
+            'contents' => nl2br($message)
+        ]);
+
+        // Check if template was loaded successfully
+        if ($contents === false) {
+            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            return;
         }
+
+        // Send the message
+        $result = MailController::send($from, SITE_MAIL, $sender, $subject, $contents);
+
+        // Redirect the user to the redirect page
+        PageController::redirect(REDIRECT);
+
+        // Show appropriate alert based on email sending result
+        if ($result) AlertController::alert('Your message has been sent!', AlertType::SUCCESS, 4);
+        else AlertController::alert('There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }
 }

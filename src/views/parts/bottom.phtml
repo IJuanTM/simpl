@@ -1,16 +1,25 @@
+<?php
+
+use app\Controllers\SessionController;
+
+?>
+
 </main>
 
 <!-- Alert -->
-<?php if (isset($_SESSION['alert'])) : ?>
-  <div class="alert <?= implode(' ', $_SESSION['alert']['types']) ?>" role="alert" data-timeout="<?= isset($_SESSION['alert']['timeout']) ? ($_SESSION['alert']['timeout'] - time()) * 1000 : 0 ?>">
-    <?= $_SESSION['alert']['message'] ?>
+<?php if (SessionController::get('alert') !== null) : ?>
+  <div class="alert <?= SessionController::get('alert')['type'] ?? '' ?> global" role="alert" data-timeout="<?= isset(SessionController::get('alert')['timeout']) ? (SessionController::get('alert')['timeout'] - time()) * 1000 : 0 ?>">
+    <?= SessionController::get('alert')['message'] ?>
   </div>
-<?php endif; ?>
+<?php endif ?>
 
 <!-- Footer -->
 <?php $this->part('footer') ?>
 
-<!-- JavaScript -->
+<!-- Cookie -->
+<?php $this->part('cookie') ?>
+
+<!-- Scripts -->
 <?php $this->part('index/js') ?>
 </body>
 </html>

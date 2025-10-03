@@ -1,0 +1,24 @@
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/sizes" as *;
+
+footer {
+  position: relative;
+  z-index: 2;
+
+  > div.row {
+    font-size: .875rem;
+    height: $footer-height;
+    padding: 1rem 4rem 2rem;
+    border-top: .125rem solid var(--border-muted);
+    background-color: var(--bg-section);
+
+    @include breakpoint-down(md) {
+      height: calc($footer-height - 1rem);
+      padding: 1rem;
+    }
+
+    a {
+      text-decoration: none;
+    }
+  }
+}

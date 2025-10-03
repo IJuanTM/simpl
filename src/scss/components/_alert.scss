@@ -1,0 +1,59 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+div.alert {
+  display: flex;
+  overflow: hidden;
+  padding: 1rem;
+  transition: visibility .15s ease-out, opacity .15s ease-out, max-height .3s ease-out, margin-bottom .3s ease-out;
+  color: #FFF;
+  border-radius: .5rem;
+
+  @include shimmer(false, rgba(#FFF, .25));
+
+  &.global {
+    position: fixed;
+    z-index: 4;
+    bottom: 5rem;
+    left: 0;
+    margin: 2rem;
+
+    @include breakpoint-down(sm) {
+      width: calc(100% - 2rem);
+    }
+
+    @include breakpoint-down(md) {
+      bottom: 4rem;
+      margin: 1rem;
+    }
+
+    @include breakpoint-up(sm) {
+      max-width: 32rem;
+    }
+  }
+
+  &.collapsing {
+    max-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+
+  &.success {
+    background-color: $green;
+  }
+
+  &.warning {
+    color: #000;
+    background-color: $orange;
+  }
+
+  &.error {
+    background-color: $red;
+  }
+
+  &.info {
+    background-color: $cyan;
+  }
+}

@@ -1,22 +1,28 @@
-<?php use app\Controllers\UserController; ?>
+<?php
 
-<?php if (isset($this->getUrl()['subpages'][0]) && in_array($this->getUrl()['subpages'][0], ['edit', 'delete', 'restore'])) : ?>
+use app\Controllers\AuthController;
+use app\Controllers\SessionController;
+use app\Models\Url;
 
-  <?php $this->part('users/' . $this->getUrl()['subpages'][0]) ?>
+?>
+
+<?php if (isset($this->urlArr['subpages'][0]) && in_array($this->urlArr['subpages'][0], ['edit', 'delete', 'restore'])) : ?>
+
+  <?php $this->part('users/' . $this->urlArr['subpages'][0]) ?>
 
 <?php else : ?>
 
-  <section class="users">
+  <section class="users f-col g-row-2">
     <div class="row">
       <div class="col center-x">
-        <h3>Registered users</h3>
+        <h1 data-typo="h2">Registered users</h1>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col users-table">
+    <div class="row center-x">
+      <div class="col users-table f-col g-row-0.5">
 
-        <?php if (count($this->getObj()->users) > $this->getObj()->page * 10) : ?>
+        <?php if (count($this->pageObj->users) > $this->pageObj->page * 10) : ?>
 
           <div class="row table-container">
             <div class="col">
@@ -24,7 +30,7 @@
                 <thead>
                 <tr>
                   <th>Id</th>
-                  <th>Name</th>
+                  <th>Username</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Verified</th>
@@ -38,25 +44,25 @@
 
                 <tbody>
 
-                <?php foreach (array_slice($this->getObj()->users, $this->getObj()->page * 10, 10) as $user) : ?>
+                <?php foreach (array_slice($this->pageObj->users, $this->pageObj->page * 10, 10) as $user) : ?>
 
                   <tr class="<?= !$user['is_active'] ? 'deleted' : '' ?>">
                     <td><?= $user['id'] ?></td>
-                    <td><?= $user['name'] ?: '-' ?></td>
+                    <td><?= $user['username'] ?: '-' ?></td>
                     <td><?= $user['email'] ?></td>
-                    <td><?= $user['role'] == 1 ? 'Admin' : 'User' ?></td>
-                    <td><?= UserController::isVerified($user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
+                    <td><?= $user['role'] === 1 ? 'Admin' : 'User' ?></td>
+                    <td><?= AuthController::isVerified($user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
                     <td><?= $user['created_at'] ?></td>
                     <td><?= $user['last_update'] ?></td>
                     <td><?= !$user['is_active'] ? '<i class="fas fa-times"></i>' : '<i class="fas fa-check"></i>' ?></td>
                     <td><?= $user['deleted_at'] ?: '-' ?></td>
-                    <?php if ($user['id'] != $_SESSION['user']['id']) : ?>
-                      <td class="row action-row">
+                    <?php if ($user['id'] !== SessionController::get('user')['id']) : ?>
+                      <td class="row action-row g-col-1 center-y">
                         <?php if ($user['is_active']) : ?>
-                          <a class="col table-action f-0" href="<?= $this->url('users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
-                          <a class="col table-action f-0" href="<?= $this->url('users/delete?id=' . $user['id']) ?>"><i class="fas fa-trash"></i></a>
+                          <a class="col table-action f-0" href="<?= Url::to('users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
+                          <a class="col table-action delete f-0" href="<?= Url::to('users/delete?id=' . $user['id']) ?>"><i class="fas fa-trash"></i></a>
                         <?php else : ?>
-                          <a class="col table-action f-0" href="<?= $this->url('users/restore?id=' . $user['id']) ?>"><i class="fas fa-wrench"></i></a>
+                          <a class="col table-action restore f-0" href="<?= Url::to('users/restore?id=' . $user['id']) ?>"><i class="fas fa-wrench"></i></a>
                         <?php endif ?>
                       </td>
                     <?php else : ?>
@@ -64,20 +70,20 @@
                     <?php endif ?>
                   </tr>
 
-                <?php endforeach; ?>
+                <?php endforeach ?>
 
                 </tbody>
               </table>
             </div>
           </div>
 
-          <div class="row action-row">
+          <div class="row action-row g-col-1">
             <div class="col f-0">
-              <p><?= ($this->getObj()->page * 10) + 1 ?> - <?= min((($this->getObj()->page + 1) * 10), count($this->getObj()->users)) ?> of <?= count($this->getObj()->users) ?> users</p>
+              <p><?= ($this->pageObj->page * 10) + 1 ?> - <?= min((($this->pageObj->page + 1) * 10), count($this->pageObj->users)) ?> of <?= count($this->pageObj->users) ?> users</p>
             </div>
-            <div class="col users-pagination end-x">
-              <a class="users-action" href="<?= $this->url('users?page=' . ($this->getObj()->page - 1)) ?>" <?= $this->getObj()->page > 0 ?: 'inert' ?>><i class="fas fa-chevron-left"></i> Previous</a>
-              <a class="users-action" href="<?= $this->url('users?page=' . ($this->getObj()->page + 1)) ?>" <?= $this->getObj()->page < ceil(count($this->getObj()->users) / 10) - 1 ?: 'inert' ?>>Next <i class="fas fa-chevron-right"></i></a>
+            <div class="col users-pagination g-col-1 end-x">
+              <a class="users-action" href="<?= Url::to('users?page=' . ($this->pageObj->page - 1)) ?>" <?= $this->pageObj->page > 0 ?: 'inert' ?>><i class="fas fa-chevron-left"></i> Previous</a>
+              <a class="users-action" href="<?= Url::to('users?page=' . ($this->pageObj->page + 1)) ?>" <?= $this->pageObj->page < ceil(count($this->pageObj->users) / 10) - 1 ?: 'inert' ?>>Next <i class="fas fa-chevron-right"></i></a>
             </div>
           </div>
 

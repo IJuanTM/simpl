@@ -1,0 +1,80 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+section.users {
+  div.users-table {
+    @include breakpoint-up(sm) {
+      max-width: 96rem !important;
+    }
+
+    i.fa-check {
+      color: $green;
+    }
+
+    i.fa-times {
+      color: $red;
+    }
+
+    tr.deleted > td:not(.action-row) {
+      color: var(--text-25);
+    }
+
+    a.table-action, a.users-action {
+      white-space: pre-wrap;
+      text-decoration: none;
+
+      > i {
+        font-size: .875rem;
+      }
+
+      @include hover-focus {
+        color: var(--text-75);
+      }
+
+      &.delete {
+        color: $red;
+
+        @include hover-focus {
+          color: $red-dark;
+        }
+      }
+
+      &.restore {
+        color: $green;
+
+        @include hover-focus {
+          color: $green-dark;
+        }
+      }
+    }
+  }
+
+  form button {
+    &.delete-user, &.restore-user {
+      color: #FFF;
+
+      @include shimmer(true, rgba(#FFF, .25));
+    }
+
+    &.delete-user {
+      background-color: $red !important;
+
+      &[inert] {
+        color: rgba(#FFF, .5) !important;
+        background-color: rgba($red, .5) !important;
+      }
+
+      @include hover-focus {
+        background-color: $red-dark !important;
+      }
+    }
+
+    &.restore-user {
+      background-color: $green !important;
+
+      @include hover-focus {
+        background-color: $green-dark !important;
+      }
+    }
+  }
+}

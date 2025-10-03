@@ -1,20 +1,28 @@
-<!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl -->
+<?php
+
+use app\Models\Url;
+
+?>
+
+<!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl/ -->
 <!DOCTYPE html>
 <html lang="en" class="h-100">
 <head>
   <!-- Title -->
-  <title><?= APP_NAME . ' - ' . ucfirst(str_replace('-', ' ', $this->getUrl()['page'])); ?></title>
+  <title><?= ($this->title ?? APP_NAME) . ' - ' . $this->subtitle ?></title>
 
   <!-- Base -->
   <base href="<?= APP_URL ?>">
 
-  <!-- Meta and links -->
+  <!-- Meta, Styles, and Favicon -->
   <?php
   $this->part('index/meta');
-  $this->part('index/preload');
   $this->part('index/css');
   $this->part('index/favicon');
   ?>
+
+  <!-- Manifest -->
+  <link rel="manifest" href="<?= Url::file('site.webmanifest') ?>">
 </head>
 
 <body class="h-100">
@@ -22,6 +30,11 @@
 <noscript class="center h-100 w-100">
   <p class="text-center">This website requires JavaScript to work properly. Please enable JavaScript!</p>
 </noscript>
+
+<!-- Theme -->
+<script>
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+</script>
 
 <!-- Header -->
 <?php $this->part('header') ?>

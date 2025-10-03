@@ -33,14 +33,15 @@ export const toggleMenu = (): void => {
  *
  * @returns {void}
  */
-export const setActiveLink = (): void => navItems.forEach(item => {
-  const
-    itemHost = (item.getAttribute('href') || '').replace(/(^\w+:|^)\/\//, ''),
-    windowHost = window.location.host;
+export const setActiveLink = (): void => {
+  const currentPath = window.location.pathname.replace(/\/+$/, '') || '/home';
 
-  // Add the active class to the link if the href matches the current page.
-  if (itemHost === windowHost || itemHost === windowHost + '/home') item.classList.add('active');
-});
+  navItems.forEach(item => {
+    const itemPath = new URL(item.getAttribute('href') || '', location.origin).pathname.replace(/\/+$/, '') || '/home';
+
+    item.classList.toggle('active', itemPath === currentPath);
+  });
+};
 
 /**
  * Function to set the tabindex of the navigation menu items.

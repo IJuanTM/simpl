@@ -1,35 +1,27 @@
 {
   "compilerOptions": {
+    "target": "esnext",
     "lib": [
       "esnext",
-      "dom"
+      "dom",
+      "dom.iterable"
     ],
-    "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "bundler",
-    "removeComments": true,
-    "outDir": "public/js",
-    "baseUrl": "/",
-    "paths": {},
+    "moduleResolution": "nodenext",
     "sourceMap": true,
-    "sourceRoot": "/",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
-    "exactOptionalPropertyTypes": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "isolatedModules": true,
     "allowJs": true,
-    "checkJs": true
+    "removeComments": true,
+    "importHelpers": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "skipLibCheck": true,
+    "noEmit": true
   },
   "include": [
     "ts/**/*"

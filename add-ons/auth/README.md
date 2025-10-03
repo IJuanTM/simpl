@@ -4,7 +4,7 @@
 
 #### About
 
-This add-on adds a user system to your Simpl project. It includes code for logging in, logging out, registering, verifing your account and a contact form.
+This add-on adds a user system to your Simpl project. It includes code for logging in, logging out, registering, verifying your account and a contact form.
 
 It also includes a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
 
@@ -14,9 +14,13 @@ Furthermore, it includes an admin system for managing users' accounts. It includ
 
 It also includes code for changing the navigation bar based on if the user is logged in and to add the added pages from this add-on to the menu.
 
+#### Config
+
+In the `Config` folder you can find configuration files for the add-on. In the `auth.php` file you can set options for the user system, such as if email verification is required and the password requirements. In the `mail.php` file you can set the configuration for sending emails, such as the SMTP server, port, username and password. In the `database.php` file database connection values are linked to the settings stored in the `.env` file.
+
 #### Controllers
 
-In the `UserController.php` file you can find the code for the user system. The functions here are used in mutiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
+In the `AuthController.php` file you can find the code for the user system. The functions here are used in multiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
 
 In the `AppController.php` file is a line of code you will need to add in the exising `AppController.php` of your project. Add this above the call to create a new `PageController` object. This line is for checking if the user has a remember me cookie set and if this one is not expired yet. If so, the user will be logged in automatically.
 
@@ -28,7 +32,7 @@ In these pages form submissions are handled and the user is redirected to the co
 
 #### Views
 
-In the `views` folder you can find pages for all of the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `mails` folder with mail templates used by the framework, as well as a `users` folder with subpages for the admin system.
+In the `views` folder you can find pages for all the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `users` folder with subpages for the admin system.
 
 #### Styling
 
@@ -46,11 +50,13 @@ The database connection values are stored in the `config/database.php` as consta
 
 Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
 
+### Mails
+
+Also included are email templates for the verification email, the contact form email and the reset password email. These templates are made to be as compatible as possible with most email clients by using tables and inline styles.
+
 ### Requirements
 
-* Icons add-on
-
-_Before installing this add-on, make sure you have installed and setup either MySQL (tested with version **8.4.0**) or MariaDB (tested with version **11.4.2**)._
+* Database: MySQL (>= 9.4.0) or MariaDB (>= 12.0.2)
 
 ### Installation
 
@@ -59,8 +65,8 @@ The easiest way to install this add-on is to just extract it in your Simpl proje
 Alternatively, you can follow these steps:
 
 1. Copy the contents of the `.env` file to your project's `.env` file
-2. Copy the contents of the `app/Config` folder to your Simpl projects's `app/Config` folder
-3. Copy the contents of the `app/Controllers` folder to your Simpl projects's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
+2. Copy the contents of the `app/Config` folder to your Simpl project's `app/Config` folder
+3. Copy the contents of the `app/Controllers` folder to your Simpl project's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
 4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
 5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
 6. Copy the `ts/input.ts` file to the `ts` folder of your Simpl project's folder
@@ -69,4 +75,4 @@ Alternatively, you can follow these steps:
 9. Copy the contents of the `scss/views` folder to your project's `scss/views` folder
 10. Copy the imports from the `scss/main.scss` file to your project's `scss/main.scss` file
 11. Copy the contents of the `views/parts/header.phtml` file to your project's `views/parts/header.phtml` file
-12. Recommended is to use the example sql file to create a database with a user table and a user role table, as this is what the add-on uses by default. You can find the example sql file in the `sql` folder of this add-on. If you want to use your own database, you can change the database connection values in the `config/database.php` file.
+12. Recommended is to use the example sql file to create a database with a user table and a user role table, as this is what the add-on uses by default. You can find the example sql file in the `Database` folder of this add-on. If you want to use your own database, you can change the database connection values in the `Config/database.php` file.

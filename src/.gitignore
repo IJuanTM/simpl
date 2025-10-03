@@ -1,17 +1,24 @@
 # IDE files
-.idea
-.vscode
+.idea/
+.vscode/
 
 # Package manager files
-vendor
-node_modules
+vendor/
+node_modules/
 
-# Compiled files
-public/css/main.min.css
-public/js/main.min.js
+# Generated files
+assets/
+public/css/
+public/js/
 
 # Environment variables
 .env
 
 # Logs
-app/Logs
+app/Logs/
+
+# Database .sql files
+app/Database/**/*.sql
+
+# Profile images
+public/img/profile/

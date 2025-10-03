@@ -1,94 +1,100 @@
-<?php use app\Controllers\{FormController, PageController, UserController}; ?>
+<?php
 
-<?php if (isset($this->getObj()->user)) : ?>
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\SessionController;
 
-  <?php if ($this->getObj()->user['id'] != $_SESSION['user']['id']) : ?>
+?>
+
+<?php if (isset($this->pageObj->user)) : ?>
+
+  <?php if ($this->pageObj->user['id'] !== SessionController::get('user')['id']) : ?>
 
     <section class="users">
       <div class="row center-x">
-        <form class="col edit-user" method="POST" action="">
+        <form class="col g-row-2" method="POST" action="">
           <div class="row">
             <div class="col center-x">
               <h3>Edit user</h3>
             </div>
           </div>
 
-          <?= FormController::$alert ?>
+          <?= FormController::formAlerts() ?>
 
-          <div class="row form-row">
-            <div class="col form-group" inert>
+          <div class="row form-row g-1">
+            <div class="col form-group g-row-0.5" inert>
               <div class="row">
                 <label class="col" for="id">Id:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
-                <input class="col" id="id" type="number" name="id" value="<?= $this->getObj()->user['id'] ?>">
+                <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->user['id'] ?>" readonly>
               </div>
             </div>
 
-            <div class="col form-group" inert>
+            <div class="col form-group g-row-0.5" inert>
               <div class="row">
                 <label class="col" for="last_update">Last update:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
-                <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->getObj()->user['last_update'] ?>">
+                <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->pageObj->user['last_update'] ?>" readonly>
               </div>
             </div>
           </div>
 
-          <div class="row form-row">
-            <div class="col form-group">
+          <div class="row form-row g-1">
+            <div class="col form-group g-row-0.5">
               <div class="row">
-                <label class="col" for="name">Name:</label>
+                <label class="col" for="username">Username:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-                <input class="col" id="name" type="text" name="name" placeholder="Enter name:" maxlength="100" value="<?= $_POST['name'] ?? $this->getObj()->user['name'] ?>">
+                <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username:" value="<?= $_POST['username'] ?? $this->pageObj->user['username'] ?>">
               </div>
             </div>
           </div>
 
           <div class="row">
-            <div class="col form-group">
+            <div class="col form-group g-row-0.5">
               <div class="row">
                 <label class="col" for="email">Email:</label>
               </div>
               <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
                 <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-                <input class="col edit-email" id="email" type="email" name="email" placeholder="Enter email:" maxlength="100" value="<?= !empty($_POST['email']) ? $_POST['email'] : $this->getObj()->user['email'] ?>">
+                <input class="col edit-email" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= !empty($_POST['email']) ? $_POST['email'] : $this->pageObj->user['email'] ?>">
               </div>
             </div>
           </div>
 
-          <div class="row form-row">
-            <div class="col form-group">
+          <div class="row form-row g-1">
+            <div class="col form-group g-row-0.5">
               <div class="row">
                 <label class="col" for="role">User role:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
                 <select class="col edit-user-role" id="role" name="role">
-                  <option value="1" <?= ($_POST['role'] ?? $this->getObj()->user['role']) == 1 ? 'selected' : '' ?>>Admin</option>
-                  <option value="2" <?= ($_POST['role'] ?? $this->getObj()->user['role']) == 2 ? 'selected' : '' ?>>User</option>
+                  <option value="1" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 1 ? 'selected' : '' ?>>Admin</option>
+                  <option value="2" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 2 ? 'selected' : '' ?>>User</option>
                 </select>
               </div>
             </div>
 
-            <div class="col form-group" inert>
+            <div class="col form-group g-row-0.5" inert>
               <div class="row">
                 <label class="col" for="verified">Verified:</label>
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
-                <input class="col" id="verified" type="text" name="verified" value="<?= UserController::isVerified($this->getObj()->user['id']) ? 'True' : 'False' ?>">
+                <input class="col" id="verified" type="text" name="verified" value="<?= AuthController::isVerified($this->pageObj->user['id']) ? 'True' : 'False' ?>" readonly>
               </div>
             </div>
           </div>
 
-          <div class="row button-row center-x">
-            <a class="col center-y f-0" href="<?= PageController::url('users') ?>"><i class="fas fa-arrow-left"></i>Back</a>
-            <button class="col edit-user center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-pen"></i>Edit user</button>
+          <div class="row g-2 center-x">
+            <a class="col link g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+            <button class="col button edit-user g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-pen"></i>Edit user</button>
           </div>
         </form>
       </div>

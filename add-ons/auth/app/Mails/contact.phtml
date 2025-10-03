@@ -1,0 +1,31 @@
+<?php require_once __DIR__ . '/parts/top.phtml' ?>
+
+<?php require_once __DIR__ . '/parts/header.phtml' ?>
+
+<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+  <tr>
+    <td style="padding: 32px 48px;" width="100%">
+      <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
+        <tr>
+          <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white;" width="100%">
+            <strong><?= $from ?></strong> &bull; <?= $date ?> <?= $time ?>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="height: 2px; line-height: 2px; font-size: 0; background: #D01018; mso-line-height-rule: exactly;">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td style="padding-top: 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white;">
+            <?= $contents ?>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<?php require_once __DIR__ . '/parts/footer.phtml' ?>
+
+<?php require_once __DIR__ . '/parts/bottom.phtml' ?>

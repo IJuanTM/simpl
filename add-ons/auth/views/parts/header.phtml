@@ -1,13 +1,58 @@
-<div class="row nav-list w-auto end-x f-0">
-  <a class="col nav-item nav-link center f-0" href="<?= $this->url('contact') ?>" aria-label="Link to contact page">Contact</a>
-  <?php if (isset($_SESSION['user']['id'])) : ?>
-    <?php if ($_SESSION['user']['role'] == 1) : ?>
-      <a class="col nav-item nav-button users center f-0" href="<?= $this->url('users') ?>" aria-label="Link to registered users overview">Users</a>
+<?php
+
+use app\Controllers\AuthController;
+use app\Controllers\SessionController;
+
+?>
+
+<!-- <nav.menu> -->
+<!-- <div.nav-list></div> -->
+
+<div class="row nav-list w-auto g-col-1 end-x f-0">
+  <a class="col nav-item link center f-0" href="<?= Url::to('contact') ?>" aria-label="Link to contact page">
+    <span class="center h-100">Contact</span>
+  </a>
+
+  <?php if (isset(SessionController::get('user')['id'])) : ?>
+
+    <?php if (SessionController::get('user')['role'] === 1) : ?>
+      <a class="col nav-item button users center f-0" href="<?= Url::to('users') ?>" aria-label="Link to registered users overview">
+        <i class="fas fa-users"></i><span class="center h-100">Users</span>
+      </a>
     <?php endif ?>
-    <a class="col nav-item nav-link profile center f-0" href="<?= $this->url('profile') ?>" aria-label="Link to your profile"><i class="fas fa-circle-user"></i></a>
-    <a class="col nav-item nav-button logout center f-0" href="<?= $this->url('logout') ?>" aria-label="Logout button"><i class="fas fa-right-from-bracket"></i> Logout</a>
+
+    <a class="col nav-item link profile center f-0" href="<?= Url::to('profile') ?>" aria-label="Link to your profile">
+      <?php
+      $profileImage = AuthController::getProfileImage(SessionController::get('user')['id']);
+      $username = SessionController::get('user')['username'];
+      ?>
+
+      <?php if ($profileImage) : ?>
+        <img src="<?= $profileImage ?>" alt="Profile image">
+      <?php else : ?>
+        <i class="fas fa-circle-user"></i>
+      <?php endif ?>
+
+      <?php if ($username) : ?>
+        <span class="center h-100"><?= $username ?></span>
+      <?php else : ?>
+        <span class="center h-100">Profile</span>
+      <?php endif ?>
+    </a>
+    <a class="col nav-item button logout center f-0" href="<?= Url::to('api/logout') ?>" aria-label="Logout button">
+      <i class="fas fa-right-from-bracket"></i><span class="center h-100">Logout</span>
+    </a>
+
   <?php else : ?>
-    <a class="col nav-item nav-button center f-0" href="<?= $this->url('register') ?>" aria-label="Link to register page">Register</a>
-    <a class="col nav-item nav-button login center f-0" href="<?= $this->url('login') ?>" aria-label="Link to login page"><i class="fas fa-right-to-bracket"></i> Login</a>
+
+    <a class="col nav-item button center f-0" href="<?= Url::to('register') ?>" aria-label="Link to register page">
+      <i class="fas fa-user-plus"></i><span class="center h-100">Register</span>
+    </a>
+    <a class="col nav-item button login center f-0" href="<?= Url::to('login') ?>" aria-label="Link to login page">
+      <i class="fas fa-right-to-bracket"></i><span class="center h-100">Login</span>
+    </a>
+
   <?php endif ?>
+
 </div>
+<!-- </nav.menu> -->

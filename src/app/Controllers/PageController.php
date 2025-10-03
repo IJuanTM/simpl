@@ -2,135 +2,158 @@
 
 namespace app\Controllers;
 
-use app\Models\PageModel;
+use app\Enums\LogType;
+use app\Models\Page;
+use app\Models\Url;
 
 /**
  * The PageController class is the controller for the pages. It parses the URL and loads the page.
  * It also contains the methods for loading the needed HTML parts.
  */
-class PageController extends PageModel
+class PageController extends Page
 {
     public function __construct()
     {
-        // Split the url route into an array
-        $urlArr = explode('/', explode('?', trim(strtolower($_SERVER['REQUEST_URI']), '/') ?: REDIRECT)[0]);
+        // Split the url route into an array and get the page and parameters
+        $urlArr = explode('/', strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')) ?: REDIRECT, '?'));
 
-        // Create the a page object from the current url, with the page name, subpages and parameters
-        parent::__construct(
-            array_shift($urlArr),
-            $urlArr,
-            $_GET
-        );
+        $page = array_shift($urlArr);
+        $params = $_GET;
 
-        // Load the page
-        $this->load();
+        // Check if the page is a special route, if so call the route method
+        if (isset($ROUTES[$page])) {
+            $ROUTES[$page]();
+            return;
+        }
+
+        // Check if the page is an alias, if so set the page to the alias
+        if ($alias = AliasController::resolve($page, $params)) [$page, $urlArr, $params] = [$alias['page'], $alias['subpages'], array_merge($params, $alias['params'])];
+
+        // Check if the page is an API page, if so take the second part of the url as the page name
+        $api = $page === 'api';
+        if ($api) $page = array_shift($urlArr);
+
+        // Create a page object from the current url, with the page name, subpages and parameters
+        parent::__construct($page, $urlArr, $params);
+
+        // Get the Page class that corresponds with the current page and create an object from it. Pass this object to the Page model if it exists.
+        $class = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
+        if (class_exists($class)) $this->pageObj = new $class($this);
+
+        // Check if the page is called as an API endpoint
+        if ($api) {
+            // Check if the page object exists and the API method exists
+            if (!$this->pageObj || !method_exists($this->pageObj, 'api')) {
+                // Log the error if the environment is development
+                if (DEV) LogController::log("Page \"$page\" was called as an API endpoint, but no page object or API method was found", LogType::DEBUG);
+
+                // Redirect to the 404 page
+                self::redirect('error/404');
+                return;
+            }
+
+            // Call the API method
+            $this->pageObj->api($this);
+            return;
+        }
+
+        // Render the page
+        $this->render();
     }
 
     /**
-     * Method for loading the page. It loads the needed PHP class (Page) that corresponds with the page and loads the needed HTML parts.
-     * It also checks if the page exists. If not, it redirects to the 404 page.
+     * Redirect to the given location with the given delay.
      *
-     * @return void
+     * @param string $location The location to redirect to
+     * @param int|null $refresh The time to wait before redirecting
      */
-    private function load(): void
+    public static function redirect(string $location, int|null $refresh = 0): void
+    {
+        // Redirect to the given location after the given refresh time.
+        header("refresh: $refresh; url=" . Url::to($location));
+    }
+
+    /**
+     * Render the page by loading the needed HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
+     */
+    private function render(): void
     {
         // Get start of HTML and the HEAD
         $this->part('top');
 
         // Get the page name
-        $page = $this->getUrl()['page'];
-
-        // Load the PHP class that corresponds with the page, give the current page object as parameter
-        $obj = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
-        if (class_exists($obj)) $this->setObj(new $obj($this));
+        $page = $this->urlArr['page'];
 
         // Get the file from the views folder
         $file = BASEDIR . "/views/$page.phtml";
 
-        // Get the content of the BODY -> SECTION
-        if (file_exists($file)) require_once $file;
-        else {
+        // Check if the file exists, if not redirect to the 404 page
+        if (!is_file($file)) {
             // Log the error if the environment is development
-            if (DEV) LogController::log("Could not find view \"$page\"", 'debug');
+            if (DEV) LogController::log("Could not find view \"$page\"", LogType::DEBUG);
 
             // Redirect to the 404 page
             self::redirect('error/404');
+            return;
         }
+
+        // Get the content of the BODY -> SECTION
+        require_once $file;
 
         // Get the footer part and end of HTML
         $this->part('bottom');
     }
 
     /**
-     * Method for loading a part from the parts folder.
+     * Load the needed HTML parts. It takes a name as input and loads the corresponding part from the parts folder.
      *
-     * @param string $name
-     *
-     * @return void
+     * @param string $name The name of the part to load
      */
     private function part(string $name): void
     {
         // Get the file from the parts folder
         $file = BASEDIR . "/views/parts/$name.phtml";
 
-        // Check if the file exists, if so load the file
-        if (file_exists($file)) require_once $file;
-        else {
-            if (DEV) {
-                // Log the error
-                LogController::log("Could not load part \"$name\"", 'debug');
-
-                // Print an error message
-                echo "Part \"$name\" not found";
-            } else echo "<!-- Part \"$name\" not found -->";
+        // Check if the file exists, if so require it
+        if (is_file($file)) {
+            require_once $file;
+            return;
         }
+
+        $message = "Part \"$name\" not found";
+
+        if (DEV) {
+            // Write a debug log message
+            LogController::log($message, LogType::DEBUG);
+            echo $message;
+        } else echo "<!-- $message -->";
     }
 
     /**
-     * Method for redirecting to another page. It takes a delay and a location as input and redirects to the given location with the given delay.
-     *
-     * @param string $location
-     * @param int|null $refresh
-     *
-     * @return void
-     */
-    public static function redirect(string $location, ?int $refresh = 0): void
-    {
-        // Redirect to the given location with the given delay
-        header("refresh: $refresh; url=" . self::url($location));
-    }
-
-    /**
-     * Method for creating a URL. It takes a sub URL as input and returns a complete URL path.
-     *
-     * @param string $subUrl
+     * Return the previous page URL from session history.
      *
      * @return string
      */
-    public static function url(string $subUrl = ''): string
+    public static function prev(): string
     {
-        // Make a static variable $baseUrl
-        static $baseUrl;
+        $history = self::history();
 
-        // Check if http or https, then take the host, root directory and the base directory and return a complete URL path
-        if (!$baseUrl) $baseUrl = 'http' . (!empty($_SERVER['HTTPS']) ? 's' : '') . '://' . $_SERVER['HTTP_HOST'] . preg_replace('@^' . preg_quote(rtrim(BASEDIR, '/')) . '@', '', BASEDIR);
+        // Return the previous page URL or a default redirect URL
+        return Url::to($history[count($history) - 2] ?? REDIRECT);
+    }
 
-        // Create the url
-        $url = trim($baseUrl, '/') . '/' . ltrim($subUrl, '/');
+    /**
+     * Redirect to the previous page.
+     */
+    public static function back(): void
+    {
+        // Get the current history
+        $updated = array_slice(self::history(), 0, -2);
 
-        // Check if it is a file, if so add the filemtime to the url
-        if (is_file(rtrim(BASEDIR, '/') . '/' . $subUrl)) {
-            // Explode the url in a page and a fragment
-            [$page, $fragment] = explode('#', $url . '#', 2);
+        // Update the session history
+        SessionController::set('history', $updated);
 
-            // Add the filemtime to the url
-            $page .= (!str_contains($page, '?')) ? '?' : '&' . http_build_query(['_' => filemtime(rtrim(BASEDIR, '/') . '/' . $subUrl)]);
-
-            // Return the url
-            return $page . ($fragment ? '#' . $fragment : '');
-        } else $url = rtrim($url, '/');
-
-        // Return the URL
-        return $url;
+        // Redirect to the previous page
+        self::redirect(end($updated) ?: REDIRECT);
     }
 }

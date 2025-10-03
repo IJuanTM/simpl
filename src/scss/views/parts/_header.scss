@@ -1,0 +1,257 @@
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/colors" as *;
+@use "../../config/vars/sizes" as *;
+
+header {
+  position: relative;
+  z-index: 2;
+
+  > div.navbar {
+    position: relative;
+    z-index: 2;
+    height: $header-height;
+    padding: 2rem 3rem 1rem;
+    border-bottom: .125rem solid var(--border-muted);
+    background-color: var(--bg-section);
+
+    @include breakpoint-down(md) {
+      height: calc($header-height - 1rem);
+      padding: 1rem;
+    }
+
+    > div.nav-brand {
+      z-index: 3;
+      padding: 0 1rem;
+
+      a.nav-logo {
+        text-decoration: none;
+
+        > svg {
+          width: 3.5rem;
+          max-height: 100%;
+        }
+      }
+    }
+
+    > nav.menu {
+      @include breakpoint-down(lg) {
+        position: absolute;
+        top: calc($header-height);
+        left: 0;
+        overflow: hidden;
+        flex-direction: column;
+        width: 100%;
+        max-height: 0;
+        padding: 0;
+        transition: max-height .15s ease-in-out;
+        background-color: var(--bg-section);
+
+        > div.nav-list {
+          flex-direction: column;
+
+          .nav-item {
+            height: 4rem;
+          }
+        }
+      }
+
+      @include breakpoint-down(md) {
+        top: calc($header-height - 1rem);
+      }
+
+      > div.nav-list .nav-item {
+        padding: 0 1rem;
+        white-space: pre-wrap;
+        border-radius: .5rem;
+        column-gap: .5rem;
+
+        @include breakpoint-down(lg) {
+          justify-content: flex-start;
+          padding: 0 4rem;
+        }
+
+        @include breakpoint-down(md) {
+          padding: 0 2rem;
+        }
+
+        &.link {
+          font-weight: 700;
+
+          &.profile {
+            @include breakpoint-up(lg) {
+              padding: 0 .5rem;
+            }
+
+            > img {
+              width: 2.5rem;
+              border-radius: 50%;
+            }
+
+            > i {
+              font-size: 2.5rem;
+              width: auto;
+            }
+          }
+        }
+
+        &.button {
+          background-color: var(--nav-button);
+
+          @include breakpoint-down(lg) {
+            border-radius: unset;
+          }
+
+          &.login, &.logout, &.users {
+            color: #FFF;
+
+            @include shimmer(true, rgba(#FFF, .25));
+
+            &.active::after {
+              background-color: rgba(#FFF, .5);
+            }
+
+            @include hover-focus {
+              &::after {
+                background-color: rgba(#FFF, .25);
+              }
+            }
+          }
+
+          &.login {
+            background-color: $green;
+
+            @include hover-focus {
+              background-color: $green-dark !important;
+            }
+          }
+
+          &.logout {
+            background-color: $red;
+
+            @include hover-focus {
+              background-color: $red-dark !important;
+            }
+          }
+
+          &.users {
+            background-color: $cyan;
+
+            @include hover-focus {
+              background-color: $cyan-dark !important;
+            }
+          }
+
+          @include hover-focus {
+            background-color: var(--button-hover);
+          }
+        }
+
+        &.active {
+          @include breakpoint-down(lg) {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              left: 3rem;
+              width: .375rem;
+              height: calc(100% - 2rem);
+              content: "";
+              transition: height .15s ease-in-out;
+              border-radius: .25rem;
+              background-color: var(--text-50);
+
+              @include breakpoint-down(md) {
+                left: 1rem;
+              }
+            }
+
+            @include hover-focus {
+              &::after {
+                height: calc(100% - 2.25rem);
+                background-color: var(--text-25);
+              }
+            }
+
+            > span::after {
+              display: none;
+            }
+          }
+
+          > span {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              bottom: .625rem;
+              width: calc(100% - .5rem);
+              height: .25rem;
+              content: "";
+              transition: width .15s ease-in-out;
+              border-radius: .125rem;
+              background-color: var(--text-50);
+            }
+          }
+
+          @include hover-focus {
+            > span::after {
+              width: calc(100% - .75rem);
+              background-color: var(--text-25);
+            }
+          }
+        }
+      }
+    }
+
+    > div.nav-options {
+      z-index: 3;
+
+      @include breakpoint-up(lg) {
+        flex: 0 0 auto;
+      }
+
+      div.theme-switch {
+        width: 4rem;
+        cursor: pointer;
+
+        > i {
+          font-size: 1.5rem;
+        }
+
+        @include hover-focus {
+          > i {
+            color: var(--text-75);
+          }
+        }
+      }
+
+      button.hamburger {
+        display: none;
+        padding: 0;
+
+        @include breakpoint-down(lg) {
+          display: flex;
+        }
+
+        > span {
+          width: 4rem;
+          height: 4rem;
+
+          > span, > span::before, > span::after {
+            width: 2rem;
+            background-color: var(--text);
+          }
+        }
+
+        @include hover-focus {
+          opacity: 1;
+
+          > span {
+            > span, > span::before, > span::after {
+              background-color: var(--text-75);
+            }
+          }
+        }
+      }
+    }
+  }
+}

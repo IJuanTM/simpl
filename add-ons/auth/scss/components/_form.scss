@@ -1,0 +1,101 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+form {
+  display: flex;
+  flex-direction: column;
+
+  @include breakpoint-up(sm) {
+    max-width: 48rem !important;
+  }
+
+  div.form-group {
+    display: flex;
+    flex-direction: column;
+
+    span.required {
+      color: $red;
+    }
+
+    div.password-warning {
+      font-size: .875rem;
+      color: $red;
+    }
+
+    div.input-group {
+      border: .125rem solid var(--border-muted);
+      border-radius: .25rem;
+
+      > :is(div.input-prepend, div.input-append) {
+        width: 2.5rem;
+        background-color: var(--input-prepend-append);
+
+        > i.password-toggle {
+          cursor: pointer;
+          user-select: none;
+
+          @include hover-focus {
+            color: var(--text-75);
+          }
+        }
+      }
+
+      > div.input-prepend {
+        border-right: .125rem solid var(--border-muted);
+        border-radius: .25rem 0 0 .25rem;
+
+        + :is(input, textarea, select) {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+
+          &:has(+ div.input-append) {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+          }
+        }
+      }
+
+      > div.input-append {
+        border-left: .125rem solid var(--border-muted);
+        border-radius: 0 .25rem .25rem 0;
+      }
+
+      &.error > :is(div.input-prepend, input, textarea) {
+        color: $red;
+
+        &::placeholder {
+          color: rgba($red, .5);
+        }
+      }
+    }
+  }
+
+  div.form-row {
+    @include breakpoint-down(md) {
+      flex-direction: column;
+    }
+  }
+
+  p.form-details {
+    font-size: .875rem;
+    color: var(--text-50);
+
+    &.warning {
+      color: $orange !important;
+    }
+
+    &.error {
+      color: $red !important;
+    }
+  }
+
+  p.form-link {
+    font-size: .875rem;
+    cursor: pointer;
+    color: var(--text-50);
+
+    @include hover-focus {
+      color: var(--text-25);
+    }
+  }
+}

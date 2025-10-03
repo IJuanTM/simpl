@@ -1,15 +1,20 @@
-// CONFIG (load first)
-@import "config/config";
+// CONFIG
+@use "config/config";
 
 // STYLE
-@import "style";
+@use "style";
 
 // VIEWS
-@import "views/error";
-@import "views/home";
+@use "views/error";
+
+// COMPONENTS
+@use "components/alert";
+@use "components/button";
+@use "components/card";
+@use "components/input";
 
 // PARTS
-@import "views/parts/alert";
-@import "views/parts/content";
-@import "views/parts/footer";
-@import "views/parts/header";
+@use "views/parts/content";
+@use "views/parts/cookie";
+@use "views/parts/footer";
+@use "views/parts/header";

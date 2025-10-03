@@ -1,0 +1,73 @@
+:is(input, textarea, select) {
+  line-height: 1.25;
+  width: 100%;
+  padding: .625rem .5rem;
+  border-radius: .25rem;
+  background-color: var(--input);
+
+  &::placeholder {
+    color: var(--text-25);
+  }
+
+  &:focus {
+    background-color: var(--input-focus);
+  }
+}
+
+textarea {
+  resize: vertical;
+  word-break: break-word;
+}
+
+:has(> select) {
+  position: relative;
+
+  &::after {
+    font-family: "Font Awesome 7 Free", sans-serif;
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    right: .625rem;
+    content: "\f0d7";
+    transform: translateY(-50%);
+  }
+}
+
+:has(> select:focus)::after {
+  content: "\f0d8";
+}
+
+input[type="checkbox"] {
+  width: 1.5rem;
+  cursor: pointer;
+  border: .125rem solid var(--border-muted);
+  border-radius: .25rem;
+  background-color: var(--input);
+
+  &:checked {
+    position: relative;
+
+    &::before, &::after {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: .125rem;
+      height: .875rem;
+      content: "";
+      border-radius: .125rem;
+      background-color: var(--text);
+    }
+
+    &::before {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    &::after {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+  }
+}
+
+label:has(> input[type="checkbox"]) {
+  display: flex;
+}

@@ -1,14 +1,18 @@
-// VARS (load first)
-@import "vars/breakpoints";
-@import "vars/colors";
-@import "vars/sizing";
+// VARS
+@use "vars/_breakpoints";
+@use "vars/_colors";
+@use "vars/_fonts";
+@use "vars/_sizes";
+@use "vars/_themes";
 
-// RULES
-@import "rules/@mixin";
+// ABSTRACTS
+@use "abstracts/_functions";
+@use "abstracts/_keyframes";
+@use "abstracts/_mixins";
 
-// UTIL
-@import "util/flex";
-@import "util/scrollbar";
-@import "util/sizing";
-@import "util/text";
-@import "util/visibility";
+// UTILS
+@use "utils/_dimensions";
+@use "utils/_flex";
+@use "utils/_scrollbar";
+@use "utils/_typography";
+@use "utils/_visibility";

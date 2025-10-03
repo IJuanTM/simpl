@@ -1,0 +1,43 @@
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/colors" as *;
+
+section.cookie {
+  position: fixed;
+  z-index: 3;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  margin: 1rem;
+  padding: 2rem;
+  transition: visibility .15s ease-out, opacity .15s ease-out;
+  border-radius: .5rem;
+  background-color: var(--bg-accent);
+
+  @include breakpoint-down(sm) {
+    width: calc(100% - 2rem);
+  }
+
+  @include breakpoint-up(sm) {
+    max-width: 32rem;
+  }
+
+  > div.row {
+    @include breakpoint-down(sm) {
+      font-size: .875rem;
+    }
+
+    button {
+      padding: 1rem;
+      cursor: pointer;
+      color: #FFF;
+      background-color: $green;
+
+      @include shimmer(true, rgba(#FFF, .25));
+
+      @include hover-focus {
+        color: rgba(#FFF, .75);
+        background-color: $green-dark;
+      }
+    }
+  }
+}
