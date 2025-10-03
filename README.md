@@ -195,7 +195,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Updated npm packages
 * Support for PHP 8.3.8
 
-#### Version 1.4.0 (2025-10-01)
+#### Version 1.4.0 (2025-10-04)
 
 * Security improvements
 * Added a start script for the application
