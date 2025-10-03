@@ -16,7 +16,7 @@
 [![Node.js logo](https://img.shields.io/badge/node.js-24.9.0-5FA04E?logo=node.js)](https://nodejs.org/)
 [![Sass logo](https://img.shields.io/badge/sass-1.93.2-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.1.7-646CFF?logo=vite)](https://vite.dev/)
+[![Vite logo](https://img.shields.io/badge/vite-7.1.9-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -151,9 +151,10 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 - [x] Improve mail system
 - [x] Improve the auth system
 - [x] Nicer default styling
+- [ ] Improve logger, make it more flexible
 - [ ] Update Simpl website
 - [ ] Write documentation
-- [ ] Add more add-ons
+- [ ] Add more add-ons?
 
 <br>
 
