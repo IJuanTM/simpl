@@ -117,7 +117,10 @@ class LoginPage
         $rows = DB::select(
             "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
             'login_attempts',
-            [$column => $value, 'success' => 0],
+            [
+                $column => $value,
+                'success' => 0
+            ],
             ORDER_BY: 'attempt_time DESC'
         );
 
@@ -286,7 +289,10 @@ class LoginPage
         // Delete the old token(s) from the database
         DB::delete(
             'tokens',
-            ['user_id' => $id, 'type' => 'remember']
+            [
+                'user_id' => $id,
+                'type' => 'remember'
+            ]
         );
 
         // Set the token in the database

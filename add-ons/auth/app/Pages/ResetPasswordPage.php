@@ -52,7 +52,10 @@ class ResetPasswordPage
         // Check if the token exists in the database
         return DB::exists(
             'tokens',
-            ['user_id' => $userId, 'type' => 'reset']
+            [
+                'user_id' => $userId,
+                'type' => 'reset'
+            ]
         );
     }
 
@@ -99,14 +102,19 @@ class ResetPasswordPage
         // Update the password in the database for the user
         DB::update(
             'users',
-            ['password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)],
+            [
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+            ],
             compact('id')
         );
 
         // Delete the token from the database
         DB::delete(
             'tokens',
-            ['user_id' => $id, 'type' => 'reset']
+            [
+                'user_id' => $id,
+                'type' => 'reset'
+            ]
         );
 
         // Show a success message and redirect to the login page

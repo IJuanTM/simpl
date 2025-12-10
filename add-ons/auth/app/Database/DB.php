@@ -31,15 +31,15 @@ class DB
         // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
-        $whereClause = self::whereClause($WHERE);
+        [$whereClause, $params] = self::buildWhere($WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
 
         // Construct the final query
         $query = "SELECT $cols FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '');
 
-        // Execute the query and return results
-        return self::execute($query, $WHERE)->fetchAll();
+        // Execute and fetch results
+        return self::execute($query, $params)->fetchAll();
     }
 
     /**
@@ -69,8 +69,6 @@ class DB
     {
         // Ensure the identifier contains only valid characters (alphanumeric and underscores)
         if (!preg_match('/^\w+$/', $identifier)) throw new PDOException("Invalid identifier: $identifier");
-
-        // Return the sanitized identifier
         return $identifier;
     }
 
@@ -80,15 +78,37 @@ class DB
      * @param array $where
      * @param string $prefix
      *
-     * @return string
+     * @return array
      */
-    private static function whereClause(array $where, string $prefix = ''): string
+    private static function buildWhere(array $where, string $prefix = ''): array
     {
-        // Return empty string if no conditions
-        if (empty($where)) return '';
+        if (empty($where)) return ['', []];
 
-        // Build the WHERE clause by mapping each condition
-        return implode(' AND ', array_map(static fn($key) => self::sanitize($key) . " = :$prefix$key", array_keys($where)));
+        $conditions = [];
+        $params = [];
+        $counter = 0;
+
+        foreach ($where as $key => $value) {
+            $column = self::sanitize($key);
+
+            if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'])) {
+                $operator = strtoupper($value[0]);
+                $val = $value[1];
+
+                if ($val === null && in_array($operator, ['IS', 'IS NOT'])) $conditions[] = "$column $operator NULL";
+                else {
+                    $paramKey = ":$prefix" . $key . '_' . $counter++;
+                    $conditions[] = "$column $operator $paramKey";
+                    $params[$paramKey] = $val;
+                }
+            } else {
+                $paramKey = ":$prefix$key";
+                $conditions[] = "$column = $paramKey";
+                $params[$paramKey] = $value;
+            }
+        }
+
+        return [implode(' AND ', $conditions), $params];
     }
 
     /**
@@ -247,16 +267,13 @@ class DB
         // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
-        $whereClause = self::whereClause($WHERE);
+        [$whereClause, $params] = self::buildWhere($WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
         $query = "SELECT $cols FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '') . ' LIMIT 1';
 
-        // Execute the query and fetch a single result
-        $result = self::execute($query, $WHERE)->fetch();
-
-        // Return the result or null if not found
-        return $result ?: null;
+        // Execute and fetch single result
+        return self::execute($query, $params)->fetch() ?: null;
     }
 
     /**
@@ -278,10 +295,8 @@ class DB
         $placeholders = ':' . implode(', :', array_keys($VALUES));
         $query = "INSERT INTO $table ($columns) VALUES ($placeholders)";
 
-        // Execute the INSERT query
+        // Execute the INSERT query and return success
         self::execute($query, $VALUES);
-
-        // Return success
         return true;
     }
 
@@ -303,13 +318,13 @@ class DB
         // Build the UPDATE query
         $table = self::sanitize($UPDATE);
         $setClause = implode(', ', array_map(static fn($key) => self::sanitize($key) . " = :set_$key", array_keys($SET)));
-        $whereClause = self::whereClause($WHERE, 'where_');
+        [$whereClause, $whereParams] = self::buildWhere($WHERE, 'where_');
         $query = "UPDATE $table SET $setClause WHERE $whereClause";
 
         // Combine parameters for SET and WHERE clauses
         $params = [];
         foreach ($SET as $key => $value) $params[":set_$key"] = $value;
-        foreach ($WHERE as $key => $value) $params[":where_$key"] = $value;
+        $params = array_merge($params, $whereParams);
 
         // Execute the UPDATE query and return success
         self::execute($query, $params);
@@ -331,11 +346,11 @@ class DB
 
         // Build the DELETE query
         $table = self::sanitize($FROM);
-        $whereClause = self::whereClause($WHERE);
+        [$whereClause, $params] = self::buildWhere($WHERE);
         $query = "DELETE FROM $table WHERE $whereClause";
 
         // Execute the DELETE query and return success
-        self::execute($query, $WHERE);
+        self::execute($query, $params);
         return true;
     }
 
@@ -351,11 +366,11 @@ class DB
     {
         // Build the EXISTS query
         $table = self::sanitize($FROM);
-        $whereClause = self::whereClause($WHERE);
+        [$whereClause, $params] = self::buildWhere($WHERE);
         $query = "SELECT 1 FROM $table WHERE $whereClause LIMIT 1";
 
-        // Execute the query and return whether a record exists
-        return self::execute($query, $WHERE)->fetch() !== false;
+        // Execute the query and return existence
+        return self::execute($query, $params)->fetch() !== false;
     }
 
     /**
@@ -372,14 +387,12 @@ class DB
     {
         // Build the COUNT query
         $table = self::sanitize($FROM);
-        $whereClause = self::whereClause($WHERE);
+        [$whereClause, $params] = self::buildWhere($WHERE);
 
         if ($GROUP_BY === null) {
             // Simple count without GROUP BY
             $query = "SELECT COUNT(*) as count FROM $table" . ($whereClause ? " WHERE $whereClause" : '');
-
-            // Execute the query and return the count
-            return (int)self::execute($query, $WHERE)->fetch()['count'];
+            return (int)self::execute($query, $params)->fetch()['count'];
         }
 
         // Count with GROUP BY
@@ -387,8 +400,8 @@ class DB
         $sub = "SELECT 1 FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . " GROUP BY $groupCols";
         $query = "SELECT COUNT(*) as count FROM ($sub) AS grp";
 
-        // Execute the query and return the count of groups
-        return (int)self::execute($query, $WHERE)->fetch()['count'];
+        // Execute and return the count of groups
+        return (int)self::execute($query, $params)->fetch()['count'];
     }
 
     /**
@@ -405,9 +418,28 @@ class DB
         return self::execute($query, $params)->fetchAll();
     }
 
+    public static function lastInsertId(): string
+    {
+        return self::connect()->lastInsertId();
+    }
+
+    public static function beginTransaction(): bool
+    {
+        return self::connect()->beginTransaction();
+    }
+
+    public static function commit(): bool
+    {
+        return self::connect()->commit();
+    }
+
+    public static function rollback(): bool
+    {
+        return self::connect()->rollBack();
+    }
+
     /**
-     * Sanitize a GROUP BY element (simple column name).
-     * Accepts 'col' or 'table.col'
+     * Sanitize a GROUP BY element. Accepts 'col' and optional table.col.
      *
      * @param string $elem
      *
@@ -416,7 +448,8 @@ class DB
     private static function sanitizeGroupElement(string $elem): string
     {
         $elem = trim($elem);
-        // allow table.column
+
+        // Validate the GROUP BY element format
         if (!preg_match('/^\w+(\.\w+)?$/', $elem)) throw new PDOException("Invalid GROUP BY element: $elem");
         return $elem;
     }
@@ -432,6 +465,7 @@ class DB
     {
         $elem = trim($elem);
 
+        // Validate the ORDER BY element format
         if (preg_match('/^(\w+(\.\w+)?)(\s+(ASC|DESC))?$/i', $elem, $m)) {
             $column = $m[1];
             $dir = isset($m[4]) ? ' ' . strtoupper($m[4]) : '';

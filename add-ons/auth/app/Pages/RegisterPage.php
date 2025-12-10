@@ -6,7 +6,6 @@ use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\Database;
 use app\Database\DB;
 use app\Enums\AlertType;
 
@@ -69,8 +68,6 @@ class RegisterPage
      */
     private function register(string $email, string $password): void
     {
-        $db = new Database();
-
         // Push the new user to the database
         DB::insert(
             'users',
@@ -81,31 +78,37 @@ class RegisterPage
         );
 
         // Get the id of the new user
-        $db->query('SELECT id FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-        $id = $db->single()['id'];
+        $id = DB::single(
+            'id',
+            'users',
+            compact('email')
+        )['id'];
 
         // Set the user role
-        $db->query('INSERT INTO user_roles (user_id) VALUES(:id)');
-        $db->bind(':id', $id);
-        $db->execute();
+        DB::insert(
+            'user_roles',
+            ['user_id' => $id]
+        );
 
         if (EMAIL_VERIFICATION_REQUIRED) {
             // Generate a verification token
             $token = AuthController::generateToken(4);
 
             // Set the verification token in the database
-            $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
-            $db->bind(':id', $id);
-            $db->bind(':token', $token);
-            $db->bind(':type', 'verification');
-            $db->execute();
+            DB::insert(
+                'tokens',
+                [
+                    'user_id' => $id,
+                    'token' => $token,
+                    'type' => 'verification'
+                ]
+            );
 
             // Send a verification email to the user
             AuthController::sendVerificationMail($id, $email, $token);
         } else {
             // If no email verification is required, redirect the user to the login page with a success message
-            PageController::redirect("login");
+            PageController::redirect('login');
             AlertController::alert('Success! Your account has been created!', AlertType::SUCCESS, 4);
         }
     }

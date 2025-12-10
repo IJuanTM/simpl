@@ -30,7 +30,10 @@ class AuthController
         $token = DB::single(
             '*',
             'tokens',
-            ['token' => $rememberToken, 'type' => 'remember']
+            [
+                'token' => $rememberToken,
+                'type' => 'remember'
+            ]
         );
 
         // Check if the token exists
@@ -45,7 +48,9 @@ class AuthController
             // Delete the token from the database
             DB::delete(
                 'tokens',
-                ['token' => $token['token']]
+                [
+                    'token' => $token['token']
+                ]
             );
 
             // Delete the cookie
@@ -57,7 +62,9 @@ class AuthController
         $user = DB::single(
             '*',
             'users',
-            ['id' => $token['user_id']]
+            [
+                'id' => $token['user_id']
+            ]
         );
 
         // Set the user in the session
@@ -69,8 +76,12 @@ class AuthController
         // Refresh the token's expiration date
         DB::update(
             'tokens',
-            ['expires' => $timestamp],
-            ['token' => $rememberToken]
+            [
+                'expires' => $timestamp
+            ],
+            [
+                'token' => $rememberToken
+            ]
         );
 
         // Refresh the remember cookie
@@ -90,7 +101,9 @@ class AuthController
         $role = DB::single(
             'role_id',
             'user_roles',
-            ['user_id' => $user['id']]
+            [
+                'user_id' => $user['id']
+            ]
         )['role_id'];
 
         // Check if the user role is set
@@ -295,7 +308,10 @@ class AuthController
         // Check if there are any verification tokens for the user
         return DB::count(
                 'tokens',
-                ['user_id' => $id, 'type' => 'verification']
+                [
+                    'user_id' => $id,
+                    'type' => 'verification'
+                ]
             ) === 0;
     }
 
@@ -314,7 +330,10 @@ class AuthController
         return strcasecmp(DB::single(
                 'token',
                 'tokens',
-                ['user_id' => $id, 'type' => $type]
+                [
+                    'user_id' => $id,
+                    'type' => $type
+                ]
             )['token'], $token) === 0;
     }
 

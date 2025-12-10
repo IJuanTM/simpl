@@ -74,7 +74,9 @@ class ChangePasswordPage
         // Update the password in the database for the user
         DB::update(
             'users',
-            ['password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)],
+            [
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+            ],
             compact('id')
         );
 

@@ -63,7 +63,10 @@ class ResendVerificationPage
         DB::update(
             'tokens',
             compact('token'),
-            ['user_id' => $id, 'type' => 'verification']
+            [
+                'user_id' => $id,
+                'type' => 'verification'
+            ]
         );
 
         // Send a verification email to the user

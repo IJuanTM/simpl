@@ -42,7 +42,9 @@ class UsersPage
             $this->users[$key]['role'] = DB::single(
                 'role_id',
                 'user_roles',
-                ['user_id' => $user['id']]
+                [
+                    'user_id' => $user['id']
+                ]
             )['role_id'];
         }
 
@@ -159,8 +161,12 @@ class UsersPage
         // Update the user role in the database
         DB::update(
             'user_roles',
-            ['role_id' => $role],
-            ['user_id' => $id]
+            [
+                'role_id' => $role
+            ],
+            [
+                'user_id' => $id
+            ]
         );
 
         // Redirect to the users page with a success message
@@ -178,7 +184,10 @@ class UsersPage
         // Soft delete the user in the database
         DB::update(
             'users',
-            ['is_active' => 0, 'deleted_at' => date('Y-m-d H:i:s')],
+            [
+                'is_active' => 0,
+                'deleted_at' => date('Y-m-d H:i:s')
+            ],
             compact('id')
         );
 
@@ -197,7 +206,10 @@ class UsersPage
         // Restore the user in the database
         DB::update(
             'users',
-            ['is_active' => 1, 'deleted_at' => null],
+            [
+                'is_active' => 1,
+                'deleted_at' => null
+            ],
             compact('id')
         );
 

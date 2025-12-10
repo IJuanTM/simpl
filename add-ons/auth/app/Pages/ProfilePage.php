@@ -240,7 +240,9 @@ class ProfilePage
         // Update the database
         DB::update(
             'users',
-            ['profile_img' => $name],
+            [
+                'profile_img' => $name
+            ],
             compact('id')
         );
 
@@ -254,11 +256,13 @@ class ProfilePage
      */
     private static function deleteProfileImage(): void
     {
+        $id = SessionController::get('user')['id'];
+
         // Fetch the old image name from the database
         $old = DB::single(
             'profile_img',
             'users',
-            ['id' => SessionController::get('user')['id']]
+            compact('id')
         )['profile_img'] ?? null;
 
         // Remove the old image if it exists
@@ -272,8 +276,10 @@ class ProfilePage
         // Remove the profile image from the database
         DB::update(
             'users',
-            ['profile_img' => null],
-            ['id' => SessionController::get('user')['id']]
+            [
+                'profile_img' => null
+            ],
+            compact('id')
         );
 
         // Redirect to the profile page with a success message

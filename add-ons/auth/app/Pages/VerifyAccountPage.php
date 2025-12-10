@@ -78,7 +78,10 @@ class VerifyAccountPage
         // Empty the code in the database for the user
         DB::delete(
             'tokens',
-            ['user_id' => $id, 'type' => 'verification']
+            [
+                'user_id' => $id,
+                'type' => 'verification'
+            ]
         );
 
         // Redirect the user to the login page and show a success message
