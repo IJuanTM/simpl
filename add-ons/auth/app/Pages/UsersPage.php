@@ -7,7 +7,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
@@ -31,19 +31,19 @@ class UsersPage
         if (isset($page->urlArr['params']['page'])) $this->page = (int)$page->urlArr['params']['page'];
 
         // Get all users from the database
-        $db = new Database();
-        $db->query('SELECT * FROM users');
-
-        // Store the users in an array
-        $this->users = $db->fetchAll();
+        $this->users = DB::select(
+            '*',
+            'users'
+        );
 
         // Get the user roles for each user
         foreach ($this->users as $key => $user) {
-            $db->query('SELECT role_id FROM user_roles WHERE user_id = :id');
-            $db->bind(':id', $user['id']);
-
-            // Store the user role in the users array
-            $this->users[$key]['role'] = $db->single()['role_id'];
+            // Get the role id from the user_roles table and store it in the users array
+            $this->users[$key]['role'] = DB::single(
+                'role_id',
+                'user_roles',
+                ['user_id' => $user['id']]
+            )['role_id'];
         }
 
         // Check if the user wants to perform a specific action
@@ -133,52 +133,35 @@ class UsersPage
      */
     public static function update(int $id, string $username, string $email, int $role): void
     {
-        $db = new Database();
-
         // Get the user
-        $db->query('SELECT * FROM users WHERE id = :id');
-        $db->bind(':id', $id);
-        $user = $db->single();
+        $user = DB::single(
+            '*',
+            'users',
+            compact('id')
+        );
 
-        // Check if the username has changed
-        if ($user['username'] !== $username) {
-            // Update the username in the database
-            $db->query('UPDATE users SET username = :username WHERE id = :id');
-            $db->bind(':username', $username);
-            $db->bind(':id', $id);
-            $db->execute();
+        // Check if the email has changed and not already in use
+        if ($user['email'] !== $email && AuthController::checkEmail($email)) {
+            $_POST['email'] = $user['email'];
+
+            FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+            PageController::redirect("users/edit/$id");
+            return;
         }
 
-        // Check if the email has changed
-        if ($user['email'] !== $email) {
-            // Check if the email is already in use
-            if (AuthController::checkEmail($email)) {
-                $_POST['email'] = $user['email'];
+        // Update the user in the database
+        DB::update(
+            'users',
+            compact('email', 'username'),
+            compact('id')
+        );
 
-                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
-                PageController::redirect("users/edit/$id");
-                return;
-            }
-
-            // Update the email in the database
-            $db->query('UPDATE users SET email = :email WHERE id = :id');
-            $db->bind(':email', $email);
-            $db->bind(':id', $id);
-            $db->execute();
-        }
-
-        // Get the user role from the database
-        $db->query('SELECT role_id FROM user_roles WHERE user_id = :id');
-        $db->bind(':id', $id);
-
-        // Check if the user role has changed
-        if ($db->single()['role_id'] !== $role) {
-            // Update the user role in the database
-            $db->query('UPDATE user_roles SET role_id = :role WHERE user_id = :id');
-            $db->bind(':role', $role);
-            $db->bind(':id', $id);
-            $db->execute();
-        }
+        // Update the user role in the database
+        DB::update(
+            'user_roles',
+            ['role_id' => $role],
+            ['user_id' => $id]
+        );
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
@@ -186,18 +169,18 @@ class UsersPage
     }
 
     /**
-     * This method is for deleting the user in the database.
+     * This method is for soft deleting a user in the database.
      *
      * @param int $id
      */
     private function delete(int $id): void
     {
-        $db = new Database();
-
-        // Delete the user in the database
-        $db->query('UPDATE users SET is_active = 0, deleted_at = NOW() WHERE id = :id');
-        $db->bind(':id', $id);
-        $db->execute();
+        // Soft delete the user in the database
+        DB::update(
+            'users',
+            ['is_active' => 0, 'deleted_at' => date('Y-m-d H:i:s')],
+            compact('id')
+        );
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
@@ -211,12 +194,12 @@ class UsersPage
      */
     private function restore(int $id): void
     {
-        $db = new Database();
-
         // Restore the user in the database
-        $db->query('UPDATE users SET is_active = 1, deleted_at = NULL WHERE id = :id');
-        $db->bind(':id', $id);
-        $db->execute();
+        DB::update(
+            'users',
+            ['is_active' => 1, 'deleted_at' => null],
+            compact('id')
+        );
 
         // Redirect to the users page with a success message
         PageController::redirect('users');

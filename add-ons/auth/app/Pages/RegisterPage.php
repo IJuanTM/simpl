@@ -7,6 +7,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
@@ -71,10 +72,13 @@ class RegisterPage
         $db = new Database();
 
         // Push the new user to the database
-        $db->query('INSERT INTO users (email, password) VALUES(:email, :password_hash)');
-        $db->bind(':email', $email);
-        $db->bind(':password_hash', password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]));
-        $db->execute();
+        DB::insert(
+            'users',
+            [
+                'email' => $email,
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+            ]
+        );
 
         // Get the id of the new user
         $db->query('SELECT id FROM users WHERE email = :email');

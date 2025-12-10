@@ -6,7 +6,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\SessionController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Url;
 
@@ -62,35 +62,30 @@ class ForgotPasswordPage
      */
     private function sendPasswordReset(string $email): void
     {
-        $db = new Database();
-
         // Get the user id from the database
-        $db->query('SELECT id FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-        $id = $db->single()['id'];
-
-        // Get the reset token from the database
-        $db->query('SELECT token FROM tokens WHERE user_id = :id AND type = :type');
-        $db->bind(':id', $id);
-        $db->bind(':type', 'reset');
+        $id = DB::single(
+            'id',
+            'users',
+            compact('email')
+        )['id'];
 
         // If there is a reset token in the database remove it
-        if ($db->rowCount() > 0) {
-            $db->query('DELETE FROM tokens WHERE user_id = :id AND type = :type');
-            $db->bind(':id', $id);
-            $db->bind(':type', 'reset');
-            $db->execute();
-        }
+        if (DB::exists(
+            'tokens',
+            ['user_id' => $id, 'type' => 'reset'])
+        ) DB::delete(
+            'tokens',
+            ['user_id' => $id, 'type' => 'reset']
+        );
 
         // Generate a reset token
         $token = AuthController::generateToken(16);
 
         // Update the token in the database for the user
-        $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
-        $db->bind(':id', $id);
-        $db->bind(':token', $token);
-        $db->bind(':type', 'reset');
-        $db->execute();
+        DB::insert(
+            'tokens',
+            ['user_id' => $id, 'token' => $token, 'type' => 'reset']
+        );
 
         // Send a reset email to the user
         $this->passwordResetMail($id, $email, $token);

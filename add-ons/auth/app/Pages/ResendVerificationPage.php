@@ -5,7 +5,7 @@ namespace app\Pages;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
@@ -56,23 +56,26 @@ class ResendVerificationPage
      */
     private function resendVerification(int $id): void
     {
-        $db = new Database();
-
         // Generate a new verification token
         $token = AuthController::generateToken(4);
 
         // Update the code in the database for the user
-        $db->query('UPDATE tokens SET token = :token WHERE user_id = :id AND type = :type');
-        $db->bind(':id', $id);
-        $db->bind(':token', $token);
-        $db->bind(':type', 'verification');
-        $db->execute();
-
-        // Get the email of the user
-        $db->query('SELECT email FROM users WHERE id = :id');
-        $db->bind(':id', $id);
+        DB::update(
+            'tokens',
+            compact('token'),
+            ['user_id' => $id, 'type' => 'verification']
+        );
 
         // Send a verification email to the user
-        AuthController::sendVerificationMail($id, $db->single()['email'], $token, true);
+        AuthController::sendVerificationMail(
+            $id,
+            DB::single(
+                'email',
+                'users',
+                compact('id')
+            )['email'],
+            $token,
+            true
+        );
     }
 }

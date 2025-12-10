@@ -109,8 +109,8 @@ Feel free to add your own config files here, as each `.php` file in this folder 
 In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
-  - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
-  - There is also a `LogController`, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder, with each different type having its own logfile.
+    - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+    - There is also a `LogController`, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder, with each different type having its own logfile.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
@@ -224,6 +224,11 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * The auth add-on now has config options for password requirements and to enable/disable user email verification
 * The project now uses Vite for bundling TypeScript files. The sass files are still compiled using the sass npm package and live reloading is still done using browser-sync.
 * Entire new styling for the default Simpl pages and components
+
+#### Version 1.5.0 (2025-12-01)
+
+* Added support for PHP 8.5
+* Updated composer and npm packages
 
 <br>
 

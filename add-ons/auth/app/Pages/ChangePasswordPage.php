@@ -7,7 +7,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
@@ -71,13 +71,12 @@ class ChangePasswordPage
      */
     private function changePassword(int $id, string $password): void
     {
-        $db = new Database();
-
         // Update the password in the database for the user
-        $db->query('UPDATE users SET password = :password WHERE id = :id');
-        $db->bind(':password', password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]));
-        $db->bind(':id', $id);
-        $db->execute();
+        DB::update(
+            'users',
+            ['password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)],
+            compact('id')
+        );
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');

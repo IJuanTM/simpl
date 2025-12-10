@@ -6,7 +6,7 @@ use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
@@ -75,13 +75,11 @@ class VerifyAccountPage
      */
     private function verify(int $id): void
     {
-        $db = new Database();
-
         // Empty the code in the database for the user
-        $db->query('DELETE FROM tokens WHERE user_id = :id AND type = :type');
-        $db->bind(':id', $id);
-        $db->bind(':type', 'verification');
-        $db->execute();
+        DB::delete(
+            'tokens',
+            ['user_id' => $id, 'type' => 'verification']
+        );
 
         // Redirect the user to the login page and show a success message
         PageController::redirect('login');

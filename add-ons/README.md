@@ -7,8 +7,8 @@ Add-ons are extensions to the Simpl framework. They can be very simple and only 
 #### Add-ons
 
 * Auth
-  * Adds a user system to the framework.
-  * It adds login, logout, register, and verification functionality to the framework. As well as a way to reset your password if you forget it.
-  * It also adds a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
-  * An overview of registered users is also included for admins, which can be used to manage users and their roles.
-  * Comes with a database table for users and roles and a controller for the database queries.
+    * Adds a user system to the framework.
+    * It adds login, logout, register, and verification functionality to the framework. As well as a way to reset your password if you forget it.
+    * It also adds a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
+    * An overview of registered users is also included for admins, which can be used to manage users and their roles.
+    * Comes with a database table for users and roles and a controller for the database queries.

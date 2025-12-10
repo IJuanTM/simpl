@@ -8,7 +8,7 @@ use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 use app\Models\Url;
@@ -65,42 +65,35 @@ class ProfilePage
      */
     private function update(int $id, string $username, string $email): void
     {
-        $db = new Database();
-
-        // Check if the username has changed
-        if (SessionController::get('user')['username'] !== $username) {
-            // Update the username in the database
-            $db->query('UPDATE users SET username = :username WHERE id = :id');
-            $db->bind(':username', $username);
-            $db->bind(':id', $id);
-            $db->execute();
-        }
+        // Update the username in the database
+        DB::update(
+            'users',
+            compact('username'),
+            compact('id')
+        );
 
         // Check if the email has changed
         if (SessionController::get('user')['email'] !== $email) {
-            // Check if the email is already in use
-            if (AuthController::checkEmail($email)) {
-                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
-                PageController::redirect("users/edit/$id");
-                return;
-            }
-
             // Update the email in the database
-            $db->query('UPDATE users SET email = :email WHERE id = :id');
-            $db->bind(':email', $email);
-            $db->bind(':id', $id);
-            $db->execute();
+            DB::update(
+                'users',
+                compact('email'),
+                compact('id')
+            );
 
             if (EMAIL_VERIFICATION_REQUIRED) {
                 // Generate a verification token
                 $token = AuthController::generateToken(4);
 
                 // Set the verification token in the database
-                $db->query('INSERT INTO tokens (user_id, token, type) VALUES(:id, :token, :type)');
-                $db->bind(':id', $id);
-                $db->bind(':token', $token);
-                $db->bind(':type', 'verification');
-                $db->execute();
+                DB::insert(
+                    'tokens',
+                    [
+                        'user_id' => $id,
+                        compact('token'),
+                        'type' => 'verification'
+                    ]
+                );
 
                 // Send a verification email to the user
                 $this->verificationMail($id, $email, $token);
@@ -109,9 +102,11 @@ class ProfilePage
         }
 
         // Get the updated user from the database
-        $db->query('SELECT * FROM users WHERE id = :id');
-        $db->bind(':id', $id);
-        $user = $db->single();
+        $user = DB::single(
+            '*',
+            'users',
+            compact('id')
+        );
 
         // Add the role to the user array
         $user += ['role' => SessionController::get('user')['role']];
@@ -222,12 +217,12 @@ class ProfilePage
         $id = SessionController::get('user')['id'];
         $path = $_SERVER['DOCUMENT_ROOT'] . '/img/profile/';
 
-        $db = new Database();
-
         // Fetch the old image name from the database
-        $db->query('SELECT profile_img FROM users WHERE id = :id');
-        $db->bind(':id', $id);
-        $old = $db->single()['profile_img'] ?? null;
+        $old = DB::single(
+            'profile_img',
+            'users',
+            compact('id')
+        )['profile_img'] ?? null;
 
         // Remove the old image if it exists
         if ($old) {
@@ -243,10 +238,11 @@ class ProfilePage
         move_uploaded_file($file['tmp_name'], $path . $name);
 
         // Update the database
-        $db->query('UPDATE users SET profile_img = :profile_img WHERE id = :id');
-        $db->bind(':profile_img', $name);
-        $db->bind(':id', $id);
-        $db->execute();
+        DB::update(
+            'users',
+            ['profile_img' => $name],
+            compact('id')
+        );
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
@@ -258,12 +254,12 @@ class ProfilePage
      */
     private static function deleteProfileImage(): void
     {
-        $db = new Database();
-
         // Fetch the old image name from the database
-        $db->query('SELECT profile_img FROM users WHERE id = :id');
-        $db->bind(':id', SessionController::get('user')['id']);
-        $old = $db->single()['profile_img'] ?? null;
+        $old = DB::single(
+            'profile_img',
+            'users',
+            ['id' => SessionController::get('user')['id']]
+        )['profile_img'] ?? null;
 
         // Remove the old image if it exists
         if ($old) {
@@ -274,9 +270,11 @@ class ProfilePage
         }
 
         // Remove the profile image from the database
-        $db->query('UPDATE users SET profile_img = NULL WHERE id = :id');
-        $db->bind(':id', SessionController::get('user')['id']);
-        $db->execute();
+        DB::update(
+            'users',
+            ['profile_img' => null],
+            ['id' => SessionController::get('user')['id']]
+        );
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
