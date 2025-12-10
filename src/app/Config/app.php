@@ -4,7 +4,7 @@
 define('DEV', $_ENV['DEV']);
 
 // Timezone configuration
-const TIMEZONE = 'UTC'; // https://www.php.net/manual/en/timezones.php
+const TIMEZONE = 'UTC'; // Change to your desired timezone, see https://www.php.net/manual/en/timezones.php
 
 // App configuration
 define('APP_NAME', $_ENV['APP_NAME']);

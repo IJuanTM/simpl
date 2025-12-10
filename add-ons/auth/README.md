@@ -1,78 +1,171 @@
-## Auth
+# Auth Add-on
 
-### Description
+Complete authentication system for Simpl projects with user management, email verification, password reset, and admin controls.
 
-#### About
+## Features
 
-This add-on adds a user system to your Simpl project. It includes code for logging in, logging out, registering, verifying your account and a contact form.
+### User Authentication
 
-It also includes a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
+- **Login/Logout** - Secure session-based authentication with optional "remember me"
+- **Registration** - User account creation with customizable validation
+- **Email Verification** - Optional account verification via email
+- **Password Reset** - Forgot password flow with secure token-based reset
+- **Profile Management** - Users can edit username, email, and password
+- **Contact Form** - Built-in contact functionality
 
-There is also a way to reset your password if you forget it. It includes a page to enter your email address to send a reset link to. And a page to enter a new password after clicking on the reset link in the email.
+### Admin System
 
-Furthermore, it includes an admin system for managing users' accounts. It includes code for viewing, editing and deleting users. It also includes code for adding and removing roles from users.
+- **User Management** - View, edit, and soft-delete user accounts
+- **Role Management** - Assign and manage user roles
+- **Login Tracking** - Monitor failed attempts with automatic lockout protection
 
-It also includes code for changing the navigation bar based on if the user is logged in and to add the added pages from this add-on to the menu.
+### Security Features
 
-#### Config
+- **Lockout Protection** - Automatic account/IP lockouts after failed login attempts
+- **Password Hashing** - Secure bcrypt/Argon2id hashing with configurable cost
+- **CSRF Protection** - Form validation and sanitization
+- **Session Security** - Secure session handling with timezone support
+- **SQL Injection Prevention** - Parameterized queries with operator support
 
-In the `Config` folder you can find configuration files for the add-on. In the `auth.php` file you can set options for the user system, such as if email verification is required and the password requirements. In the `mail.php` file you can set the configuration for sending emails, such as the SMTP server, port, username and password. In the `database.php` file database connection values are linked to the settings stored in the `.env` file.
+## Database Class
 
-#### Controllers
+The included `DB` class provides a clean, modern interface for database operations:
 
-In the `AuthController.php` file you can find the code for the user system. The functions here are used in multiple different pages in the add-on. The `MailController.php` file contains the code for sending emails. The `FormController.php` file contains the code for a form alert that is displayed to show the user information about the form submission.
+```php
+// Basic SELECT (fetches multiple rows)
+DB::select(
+    SELECT: '*',
+    FROM: 'users',
+    WHERE: ['id' => 5] // Default operator is '='
+);
 
-In the `AppController.php` file is a line of code you will need to add in the exising `AppController.php` of your project. Add this above the call to create a new `PageController` object. This line is for checking if the user has a remember me cookie set and if this one is not expired yet. If so, the user will be logged in automatically.
+// Single value SELECT
+DB::single(
+    SELECT: 'email',
+    FROM: 'users',
+    WHERE: ['username' => 'john']
+);
 
-#### Pages
+// Insert a row
+DB::insert(
+    INTO: 'users',
+    VALUES: [
+        'username' => 'jane',
+        'email' => 'jane@example.com'
+    ]
+);
 
-In the `pages` folder you can find the code that goes along with the views for logging in, registering, verifying your account, the contact form, the user profile page, the change password page, the forgot password page, the reset password page and the admin system.
+// Update rows
+DB::update(
+    UPDATE: 'users',
+    SET: [
+        'status' => 'active'
+    ],
+    WHERE: [
+        'id' => 5
+    ]
+);
 
-In these pages form submissions are handled and the user is redirected to the correct page based on the form submission. Each page contains its own functions that go along with the views. For example, the `login.phtml` file contains a `login()` function that handles the login form submission.
+// Delete rows
+DB::delete(
+    FROM: 'tokens', 
+    WHERE: [
+        'expires' => ['<', date('Y-m-d H:i:s')] // Using a custom operator
+    ]
+);
 
-#### Views
+// Operators supported: =, !=, <>, >, >=, <, <=, LIKE, NOT LIKE, IS, IS NOT
+```
 
-In the `views` folder you can find pages for all the pages that are used in the add-on. These pages contain forms for logging in, registering, etc. In the `parts` folder you can find the code for changing the navigation bar based on if the user is logged in. Here you can also find a `users` folder with subpages for the admin system.
+## Structure
 
-#### Styling
+```
+auth/
+├── app/
+│   ├── Config/           # Configuration files (auth, mail, database)
+│   ├── Controllers/      # Core logic (Auth, Mail, Form)
+│   ├── Database/         # DB class and example SQL schema
+│   ├── Mails/           # Email templates (verification, reset, contact)
+│   ├── Pages/           # Page controllers (Login, Register, Profile, Users, etc.)
+│   └── Scripts/         # Helper scripts (CRON jobs)
+├── scss/                # Styling for forms, tables, and pages
+├── ts/                  # TypeScript for form interactions
+├── views/               # Templates for all auth pages
+└── README.md
+```
 
-In the `scss` folder you can find the styling for the add-on. Teh styling for the forms can be found in the `components/form` file, and stying for the users table in the `components/table` file. In the `views` folder you can find the styling for the profile and users pages.
+## Configuration
 
-#### Database
+### Auth Settings (`config/auth.php`)
 
-Also included is code for a database connection to go along with the user system. It uses PDO to connect to the database. It has functions to execute queries, fetch single rows and fetch multiple rows of data. It also has a function to fetch the amount of returned rows of a query. Furthermore, it has a function to bind parameters to a query and a function to escape strings to prevent SQL injections.
+- Email verification requirement
+- Password requirements (length, complexity)
+- Remember me duration
+- Login attempt limits and lockout durations
 
-It also comes with an example sql file to create a database with a user table and a user role table for quick setup together with this add-on.
+### Database (`config/database.php`)
 
-The database connection values are stored in the `config/database.php` as constants. By default, the database connection values are set to connect to a local database using the root user, don't forget to change these values to your own database connection values and add your own database user instead of root for security reasons.
+Set your database credentials in `.env`:
 
-#### TypeScript
+```env
+DB_SERVER=localhost
+DB_NAME=your_database
+DB_USERNAME=your_user
+DB_PASSWORD=your_password
+```
 
-Lastly, this add-on also adds functionality to the visibility toggle icon of the password field in a login input field and a warning when the user has Caps Lock on when typing in the password field. It also has code to show a counter for the max length of textareas. There is also code for disabling the save button when no changes have been made to the form or when the required checkbox to confirm the changes has not been checked. And lastly, it has code for disabling the submit button when the form is being submitted.
+### Mail Settings (`config/mail.php`)
 
-### Mails
+- SMTP server configuration
+- Email templates (verification, password reset, contact)
 
-Also included are email templates for the verification email, the contact form email and the reset password email. These templates are made to be as compatible as possible with most email clients by using tables and inline styles.
+## Installation
 
-### Requirements
+**Quick Method:**
 
-* Database: MySQL (>= 9.4.0) or MariaDB (>= 12.0.2)
+1. Extract the add-on into your Simpl project folder
+2. Skip overwriting existing files when prompted
+3. Manually merge conflicting files (see below)
 
-### Installation
+**Manual Method:**
 
-The easiest way to install this add-on is to just extract it in your Simpl project's folder. You will be prompted to overwrite some files, choose the option to _**skip**_ these files. Then manually copy the code in these files to your project's files.
+1. Copy `.env` contents to your project's `.env`
+2. Copy `app/Config`, `app/Controllers`, `app/Database`, `app/Enums`, `app/Pages` folders
+3. Merge `app/Controllers/AppController.php` - add the remember-me check before PageController instantiation
+4. Copy `ts/input.ts` and merge `ts/main.ts`
+5. Copy `scss/components` and merge `scss/views` and `scss/main.scss`
+6. Merge `views/parts/header.phtml` for navigation changes
+7. Import the database schema from `Database/example.sql`
 
-Alternatively, you can follow these steps:
+## Requirements
 
-1. Copy the contents of the `.env` file to your project's `.env` file
-2. Copy the contents of the `app/Config` folder to your Simpl project's `app/Config` folder
-3. Copy the contents of the `app/Controllers` folder to your Simpl project's `app/Controllers` folder, except for the `AppController.php` file. You will need to manually add the code from the `AppController.php` file to your project's `AppController.php` file.
-4. Copy the `app/Database` folder to the `app` folder of your Simpl project's folder
-5. Copy the `app/Pages` folder to the `app` folder of your Simpl project's folder
-6. Copy the `ts/input.ts` file to the `ts` folder of your Simpl project's folder
-7. Copy the code from the `ts/main.ts` file to the `ts/main.ts` file of your project
-8. Copy the `scss/components` folder to the `scss` folder in your project folder
-9. Copy the contents of the `scss/views` folder to your project's `scss/views` folder
-10. Copy the imports from the `scss/main.scss` file to your project's `scss/main.scss` file
-11. Copy the contents of the `views/parts/header.phtml` file to your project's `views/parts/header.phtml` file
-12. Recommended is to use the example sql file to create a database with a user table and a user role table, as this is what the add-on uses by default. You can find the example sql file in the `Database` folder of this add-on. If you want to use your own database, you can change the database connection values in the `Config/database.php` file.
+- **PHP**: >= 8.4
+- **Database**: MySQL >= 9.5.0 or MariaDB >= 12.1.2
+- **Extensions**: PDO
+
+## Email Templates
+
+Includes responsive, email-client-compatible templates:
+
+- Account verification
+- Password reset
+- Contact form notifications
+
+All templates use tables and inline styles for maximum compatibility.
+
+## TypeScript Features
+
+- Password visibility toggle
+- Caps Lock warning
+- Textarea character counter
+- Form validation with submit button disabling
+- Auto-save prevention when no changes detected
+
+## Security Notes
+
+- Change default database credentials immediately
+- Use a dedicated database user (not root)
+
+## License
+
+This add-on is provided as-is for use with Simpl framework projects.
