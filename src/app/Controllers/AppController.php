@@ -2,7 +2,7 @@
 
 namespace app\Controllers;
 
-use app\Enums\LogType;
+use app\Utils\Log;
 
 /**
  * The ApplicationController class is the base class for all controllers.
@@ -31,17 +31,19 @@ class AppController
      */
     public static function svg(string $name): bool|string
     {
-        // Get the svg file
+        // Get the full path to the svg file
         $file = BASEDIR . "/public/img/svg/$name.svg";
 
-        // Return the svg file if it exists, else return an error message
-        if (file_exists($file)) return file_get_contents($file);
-        else if (DEV) {
-            // Log the error
-            LogController::log("Could not find SVG \"$name\"", LogType::DEBUG);
+        // Check if the file exists
+        if (!file_exists($file)) {
+            $message = "SVG \"$name\" not found";
 
-            // Return an error message
-            return "SVG \"$name\" not found";
-        } else return "<!-- SVG \"$name\" not found -->";
+            // Log the warning
+            Log::warning($message);
+
+            return DEV ? $message : "<!-- $message -->";
+        }
+
+        return file_get_contents($file);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace app\Controllers;
 
-use app\Enums\LogType;
+use app\Utils\Log;
 
 /**
  * Handles email creation and delivery throughout the application.
@@ -23,7 +23,7 @@ class MailController
 
         // Check if template exists
         if (!file_exists($templatePath)) {
-            LogController::log("Email template not found: \"$name.phtml\"", LogType::MAIL);
+            Log::warning("Email template not found: \"$name.phtml\"");
             return false;
         }
 
@@ -52,7 +52,7 @@ class MailController
     {
         // Validate recipient email
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
-            LogController::log("Invalid recipient email: \"$to\"", LogType::MAIL);
+            Log::warning("Invalid recipient email: \"$to\"");
             return false;
         }
 
@@ -93,7 +93,7 @@ class MailController
         $result = mail($to, $subject, $message, implode("\r\n", $headers));
 
         // Log any errors
-        if (!$result) LogController::log("Failed to send email from \"$senderEmail\" to \"$to\": $subject", LogType::MAIL);
+        if (!$result) Log::error("Failed to send email from \"$senderEmail\" to \"$to\": $subject");
 
         return $result;
     }

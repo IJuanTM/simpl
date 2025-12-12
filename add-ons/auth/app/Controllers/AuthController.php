@@ -4,8 +4,8 @@ namespace app\Controllers;
 
 use app\Database\DB;
 use app\Enums\AlertType;
-use app\Enums\LogType;
 use app\Models\Url;
+use app\Utils\Log;
 use Exception;
 
 /**
@@ -109,7 +109,7 @@ class AuthController
         // Check if the user role is set
         if (!$role) {
             // Log an error message
-            LogController::log("No user role is set for user with id \"" . $user['id'] . "\"", LogType::SESSION);
+            Log::error("No user role is set for user with id \"" . $user['id'] . "\"");
 
             // Unset the session user
             SessionController::remove('user');
@@ -229,7 +229,7 @@ class AuthController
             return strtoupper(bin2hex(random_bytes($bytes)));
         } catch (Exception $e) {
             // Log the error
-            LogController::log($e->getMessage(), LogType::ERROR);
+            Log::error($e->getMessage());
 
             // Return an error message
             FormController::addAlert('Error! Something went wrong! Please try again or contact an admin.', AlertType::ERROR);

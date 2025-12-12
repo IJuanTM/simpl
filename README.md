@@ -110,11 +110,12 @@ In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
     - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
-    - There is also a `LogController`, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder, with each different type having its own logfile.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
 Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
+
+There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class, which is used for logging errors and other information to log files.
 
 #### Views
 
@@ -152,8 +153,8 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 - [x] Improve the auth system
 - [x] Nicer default styling
 - [x] Improve database class
-- [ ] Improve logger, make it more flexible
-- [ ] Update Simpl website
+- [x] Improve logger, make it more flexible
+- [x] Update Simpl website
 - [ ] Write documentation
 - [ ] Add more add-ons?
 
@@ -232,6 +233,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Updated composer and npm packages
 * Replaced the old database class with a new class that is more flexible and easier to use
 * Improved the readmes of the add-ons
+* Improve the logging system by adding log levels and better formatting
 
 <br>
 

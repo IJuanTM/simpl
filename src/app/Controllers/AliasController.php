@@ -4,6 +4,10 @@ namespace app\Controllers;
 
 use app\Models\Alias;
 
+/**
+ * Provides aliasing functionality for pages.
+ * Allows registering a page alias that maps to a different page and subpages, as well as parameters.
+ */
 class AliasController
 {
     private static array $aliases = [];

@@ -2,9 +2,8 @@
 
 namespace app\Database;
 
-use app\Controllers\LogController;
 use app\Controllers\PageController;
-use app\Enums\LogType;
+use app\Utils\Log;
 use DateMalformedStringException;
 use DateTime;
 use DateTimeZone;
@@ -246,7 +245,7 @@ class DB
     private static function handleError(PDOException $e): never
     {
         // Log the error message and redirect to the 500 error page
-        LogController::log($e->getMessage(), LogType::DATABASE);
+        Log::error($e->getMessage());
         PageController::redirect('error/500');
         exit;
     }
