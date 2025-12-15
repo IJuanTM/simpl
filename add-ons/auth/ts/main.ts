@@ -1,10 +1,13 @@
+// @addon-insert:prepend
 import {capsLockWarning, checkMessageLength, inputPassword, passwordToggleIcon, togglePassword} from './input.ts';
 import {editProfileImage, profileImageInput, setProfileImage} from './profile.ts';
 import {handleVerificationCode} from './verification-code.ts';
+// @addon-end
 
+// @addon-insert:append
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
-// Initialize verification code input if on verification page
+// Initialize verification code input if on the verification page
 handleVerificationCode();
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
@@ -14,7 +17,7 @@ const inputFields = document.querySelectorAll('input, textarea, select') as Node
 if (inputFields) inputFields.forEach(field => field.addEventListener('keydown', () => {
   const inputGroup = field.closest('div.input-group');
 
-  // Remove error class from input group
+  // Remove the error class from the input group
   if (inputGroup) inputGroup.classList.remove('error');
 }));
 
@@ -105,3 +108,4 @@ if (editProfileImage && profileImageInput) {
   // On change, set the profile image
   profileImageInput.addEventListener('change', () => setProfileImage());
 }
+// @addon-end
