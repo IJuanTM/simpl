@@ -50,11 +50,16 @@ class DB
      */
     private static function columns(string|array $columns): string
     {
-        // Handle wildcard and sanitize column names
-        if (is_string($columns)) return $columns === '*' ? '*' : self::sanitize($columns);
+        if (is_string($columns)) {
+            if ($columns === '*') return '*';
+            if (preg_match('/^\w+$/', $columns)) return self::sanitize($columns);
+            return $columns;
+        }
 
-        // If array, sanitize each column and join with commas
-        return implode(', ', array_map(static fn($col) => self::sanitize($col), $columns));
+        return implode(', ', array_map(static function ($col) {
+            if (preg_match('/^\w+$/', $col)) return self::sanitize($col);
+            return $col;
+        }, $columns));
     }
 
     /**
