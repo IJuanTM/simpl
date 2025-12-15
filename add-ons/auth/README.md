@@ -121,21 +121,34 @@ DB_PASSWORD=your_password
 
 ## Installation
 
-**Quick Method:**
+**Automated Installation (Recommended):**
 
-1. Extract the add-on into your Simpl project folder
-2. Skip overwriting existing files when prompted
-3. Manually merge conflicting files (see below)
+From your Simpl project's root directory, run:
 
-**Manual Method:**
+```bash
+npm run install-addon auth
+```
 
-1. Copy `.env` contents to your project's `.env`
-2. Copy `app/Config`, `app/Controllers`, `app/Database`, `app/Enums`, `app/Pages` folders
-3. Merge `app/Controllers/AppController.php` - add the remember-me check before PageController instantiation
-4. Copy `ts/input.ts` and merge `ts/main.ts`
-5. Copy `scss/components` and merge `scss/views` and `scss/main.scss`
-6. Merge `views/parts/header.phtml` for navigation changes
-7. Import the database schema from `Database/example.sql`
+The installer will:
+
+- Copy all new files from the addon
+- Automatically merge files that need integration (PHP, TypeScript, SCSS, .env)
+- Skip files that already exist and don't need merging
+- Show you which files (if any) need manual review
+
+**Post-Installation Steps:**
+
+1. Import the database schema from `app/Database/simpl.sql`
+2. Update `.env` with your database and mail credentials
+3. Manually merge `views/parts/header.phtml` for navigation links (if needed)
+4. Run `composer install` (if needed)
+5. Run `npm run build` to compile assets
+
+**Manual Method (If needed):**
+
+1. Copy all addon folders to your `src/` directory
+2. Manually merge conflicting files by following the inline `@addon-*` markers in the addon files
+3. Follow the post-installation steps above
 
 ## Requirements
 

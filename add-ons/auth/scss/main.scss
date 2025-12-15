@@ -1,8 +1,10 @@
-// VIEWS
+// @addon-insert:after('// VIEWS')
 @use "views/users";
 @use "views/profile";
 @use "views/verify-account";
+// @addon-end
 
-// COMPONENTS
+// @addon-insert:after('// COMPONENTS')
 @use "components/form";
 @use "components/table";
+// @addon-end

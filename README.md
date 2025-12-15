@@ -234,6 +234,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * Replaced the old database class with a new class that is more flexible and easier to use
 * Improved the readmes of the add-ons
 * Improve the logging system by adding log levels and better formatting
+* New automated installation script for add-ons
 
 <br>
 
