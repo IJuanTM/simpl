@@ -2,6 +2,8 @@
 
 namespace app\Models;
 
+use app\Utils\Log;
+
 class Url
 {
     private static string|null $baseUrl = null;

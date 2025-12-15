@@ -1,5 +1,4 @@
 <?php
-
 // Environment configuration
 define('DEV', $_ENV['DEV']);
 
