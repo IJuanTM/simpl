@@ -9,7 +9,7 @@ const COLORS = {
 
 const log = (message, color = 'reset') => console.log(`${COLORS[color]}${message}${COLORS.reset}`);
 
-function extractMarkers(content) {
+const extractMarkers = (content) => {
   const markers = [];
 
   content.split('\n').forEach((line, i) => {
@@ -20,7 +20,7 @@ function extractMarkers(content) {
   });
 
   return markers;
-}
+};
 
 function copyDirectory(src, dest, baseDir) {
   const copied = [], skipped = [], toMerge = [];
@@ -71,33 +71,67 @@ const collectContentBetweenMarkers = (lines, startIndex) => {
 
 const normalizeContent = (lines) => lines.map(l => l.trim()).filter(l => l && !l.startsWith('//') && !l.startsWith('#') && !l.startsWith('/*') && !l.startsWith('*')).join('|');
 
-function mergeFile(targetPath, addonPath, markers) {
+const processEnvContent = (content, targetContent) => {
+  const envVarsToAdd = [];
+  const comments = [];
+
+  content.forEach(line => {
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('#') || !trimmed) {
+      comments.push(line);
+      return;
+    }
+
+    const match = line.match(/^([A-Z_][A-Z0-9_]*)=/);
+
+    if (match && !new RegExp(`^${match[1]}=`, 'm').test(targetContent)) envVarsToAdd.push(line);
+  });
+
+  return {content: [...comments, ...envVarsToAdd], count: envVarsToAdd.length};
+};
+
+function mergeFile(targetPath, addonPath, markers, isEnv = false) {
   const targetContent = fs.readFileSync(targetPath, 'utf8');
   const addonLines = fs.readFileSync(addonPath, 'utf8').split('\n');
   const operations = [];
+
   let newContent = targetContent;
 
   markers.forEach(marker => {
-    const content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
+    let content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
 
     if (content.length === 0) return;
 
-    const signature = normalizeContent(content);
-    const targetSignature = normalizeContent(newContent.split('\n'));
+    let lineCount = content.length;
 
-    if (signature && targetSignature.includes(signature)) {
-      operations.push({success: false, type: marker.type, lines: content.length, searchText: marker.searchText});
-      return;
+    if (isEnv) {
+      const processed = processEnvContent(content, newContent);
+      content = processed.content;
+      lineCount = processed.count;
+
+      if (content.length === 0) {
+        operations.push({success: false, type: marker.type, lines: 0, searchText: marker.searchText});
+        return;
+      }
+    } else {
+      const signature = normalizeContent(content);
+      const targetSignature = normalizeContent(newContent.split('\n'));
+
+      if (signature && targetSignature.includes(signature)) {
+        operations.push({success: false, type: marker.type, lines: content.length, searchText: marker.searchText});
+        return;
+      }
     }
 
     if (marker.type === 'prepend') {
       newContent = content.join('\n') + '\n' + newContent;
-      operations.push({success: true, type: 'prepend', lines: content.length});
+      operations.push({success: true, type: 'prepend', lines: lineCount});
     } else if (marker.type === 'append') {
       if (!newContent.endsWith('\n')) newContent += '\n';
 
       newContent += '\n' + content.join('\n') + '\n';
-      operations.push({success: true, type: 'append', lines: content.length});
+      operations.push({success: true, type: 'append', lines: lineCount});
     } else if ((marker.type === 'after' || marker.type === 'before') && marker.searchText) {
       const targetLines = newContent.split('\n');
       const insertIndex = findInsertIndex(targetLines, marker.searchText, marker.type);
@@ -109,7 +143,7 @@ function mergeFile(targetPath, addonPath, markers) {
 
       targetLines.splice(insertIndex, 0, ...content);
       newContent = targetLines.join('\n');
-      operations.push({success: true, type: marker.type, lines: content.length, searchText: marker.searchText});
+      operations.push({success: true, type: marker.type, lines: lineCount, searchText: marker.searchText});
     }
   });
 
@@ -117,69 +151,23 @@ function mergeFile(targetPath, addonPath, markers) {
   return {modified: newContent !== targetContent, operations};
 }
 
-function mergeEnvFile(targetPath, addonPath) {
-  const targetContent = fs.readFileSync(targetPath, 'utf8');
-  const addonLines = fs.readFileSync(addonPath, 'utf8').split('\n');
-  const linesToAdd = [];
-  const comments = [];
-
-  let inBlock = false;
-
-  addonLines.forEach(line => {
-    const trimmed = line.trim();
-
-    if (trimmed.includes('@addon-insert:append') || trimmed.includes('@addon:insert-append')) {
-      inBlock = true;
-      return;
-    }
-
-    if (trimmed.includes('@addon-end') || trimmed.includes('@addon:insert-end')) {
-      inBlock = false;
-      return;
-    }
-
-    if (!inBlock) return;
-
-    if (trimmed.startsWith('#') || !trimmed) {
-      comments.push(line);
-      return;
-    }
-
-    const match = line.match(/^([A-Z_][A-Z0-9_]*)=/);
-    if (match && !new RegExp(`^${match[1]}=`, 'm').test(targetContent)) linesToAdd.push(line);
-  });
-
-  if (linesToAdd.length === 0) return {modified: false, added: 0};
-
-  let newContent = targetContent;
-  if (!newContent.endsWith('\n')) newContent += '\n';
-  newContent += '\n' + comments.join('\n') + '\n' + linesToAdd.join('\n') + '\n';
-
-  fs.writeFileSync(targetPath, newContent, 'utf8');
-  return {modified: true, added: linesToAdd.length};
-}
-
-function printMergeResults(relativePath, isEnv, result) {
+const printMergeResults = (relativePath, isEnv, result) => {
   const indent = '    ';
-
-  if (isEnv) {
-    if (result.modified) log(`${indent}${COLORS.green}✓${COLORS.reset} Added ${COLORS.bold}${result.added}${COLORS.reset} environment variable${result.added !== 1 ? 's' : ''}`); else log(`${indent}${COLORS.gray}○${COLORS.reset} ${COLORS.dim}All variables already exist${COLORS.reset}`);
-    return result.modified;
-  }
+  const varText = isEnv ? 'environment variable' : 'line';
 
   let hasChanges = false;
+
   result.operations.forEach(op => {
     if (op.success) {
       hasChanges = true;
-
-      if (op.type === 'prepend') log(`${indent}${COLORS.green}✓${COLORS.reset} Prepended ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} to file start`); else if (op.type === 'append') log(`${indent}${COLORS.green}✓${COLORS.reset} Appended ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} to file end`); else if (op.type === 'after') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}after${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`); else if (op.type === 'before') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}before${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`);
+      if (op.type === 'prepend') log(`${indent}${COLORS.green}✓${COLORS.reset} Prepended ${COLORS.bold}${op.lines}${COLORS.reset} ${varText}${op.lines !== 1 ? 's' : ''} to file start`); else if (op.type === 'append') log(`${indent}${COLORS.green}✓${COLORS.reset} Appended ${COLORS.bold}${op.lines}${COLORS.reset} ${varText}${op.lines !== 1 ? 's' : ''} to file end`); else if (op.type === 'after') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} ${varText}${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}after${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`); else if (op.type === 'before') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} ${varText}${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}before${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`);
     } else if (op.type === 'notfound') log(`${indent}${COLORS.yellow}⚠${COLORS.reset} ${COLORS.yellow}Could not find target:${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`); else log(`${indent}${COLORS.gray}○${COLORS.reset} ${COLORS.dim}Content already exists (${op.type})${COLORS.reset}`);
   });
 
   return hasChanges;
-}
+};
 
-function mergeFiles(toMerge) {
+const mergeFiles = (toMerge) => {
   if (toMerge.length === 0) return {merged: [], failed: [], unchanged: []};
 
   const merged = [], failed = [], unchanged = [];
@@ -189,7 +177,8 @@ function mergeFiles(toMerge) {
     log(`\n  ${COLORS.blue}•${COLORS.reset} ${COLORS.bold}${relativePath}${COLORS.reset}`);
 
     try {
-      const result = isEnv ? mergeEnvFile(destPath, srcPath) : mergeFile(destPath, srcPath, markers);
+      const result = mergeFile(destPath, srcPath, markers, isEnv);
+
       if (printMergeResults(relativePath, isEnv, result)) merged.push(relativePath); else unchanged.push(relativePath);
     } catch (error) {
       log(`    ${COLORS.red}✗ Error:${COLORS.reset} ${error.message}`, 'red');
@@ -198,7 +187,7 @@ function mergeFiles(toMerge) {
   });
 
   return {merged, failed, unchanged};
-}
+};
 
 function main() {
   const addonName = process.argv[2];
@@ -222,10 +211,12 @@ function main() {
     log(`\n  ${COLORS.red}✗${COLORS.reset} Add-on "${COLORS.bold}${addonName}${COLORS.reset}" not found`);
 
     const available = fs.readdirSync(addonsDir, {withFileTypes: true}).filter(entry => entry.isDirectory()).map(entry => entry.name);
+
     if (available.length > 0) {
       log(`\n  Available add-ons:`, 'cyan');
       available.forEach(name => log(`    • ${name}`));
     }
+
     console.log();
     process.exit(1);
   }
@@ -252,6 +243,7 @@ function main() {
   if (toMerge.length > 0) {
     console.log();
     log('  🔀 Merging existing files...', 'bold');
+
     const {merged, failed, unchanged} = mergeFiles(toMerge);
 
     console.log();
