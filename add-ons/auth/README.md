@@ -131,7 +131,7 @@ npm run install-addon auth
 
 The installer will:
 
-- Copy all new files from the addon
+- Copy all new files from the add-on
 - Automatically merge files that need integration (PHP, TypeScript, SCSS, .env)
 - Skip files that already exist and don't need merging
 - Show you which files (if any) need manual review
@@ -146,8 +146,8 @@ The installer will:
 
 **Manual Method (If needed):**
 
-1. Copy all addon folders to your `src/` directory
-2. Manually merge conflicting files by following the inline `@addon-*` markers in the addon files
+1. Copy all add-on folders to your `src/` directory
+2. Manually merge conflicting files by following the inline `@addon-*` markers in the add-on files
 3. Follow the post-installation steps above
 
 ## Requirements

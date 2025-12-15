@@ -4,38 +4,31 @@ const fs = require('fs');
 const path = require('path');
 
 const COLORS = {
-  reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m', bold: '\x1b[1m'
+  reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m', cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m'
 };
 
 const log = (message, color = 'reset') => console.log(`${COLORS[color]}${message}${COLORS.reset}`);
 
 function extractMarkers(content) {
   const markers = [];
-  const lines = content.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (line.includes('@addon-insert:after')) {
-      const match = line.match(/@addon-insert:after\s*\(\s*["'](.+?)["']\s*\)/);
-      if (match) markers.push({type: 'after', lineIndex: i, searchText: match[1]});
-    } else if (line.includes('@addon-insert:before')) {
-      const match = line.match(/@addon-insert:before\s*\(\s*["'](.+?)["']\s*\)/);
-      if (match) markers.push({type: 'before', lineIndex: i, searchText: match[1]});
-    } else if (line.includes('@addon-insert:prepend')) {
-      markers.push({type: 'prepend', lineIndex: i});
-    } else if (line.includes('@addon-insert:append')) {
-      markers.push({type: 'append', lineIndex: i});
-    }
-  }
+
+  content.split('\n').forEach((line, i) => {
+    const afterMatch = line.match(/@addon-insert:after\s*\(\s*["'](.+?)["']\s*\)/);
+    const beforeMatch = line.match(/@addon-insert:before\s*\(\s*["'](.+?)["']\s*\)/);
+
+    if (afterMatch) markers.push({type: 'after', lineIndex: i, searchText: afterMatch[1]}); else if (beforeMatch) markers.push({type: 'before', lineIndex: i, searchText: beforeMatch[1]}); else if (line.includes('@addon-insert:prepend')) markers.push({type: 'prepend', lineIndex: i}); else if (line.includes('@addon-insert:append')) markers.push({type: 'append', lineIndex: i});
+  });
+
   return markers;
 }
 
 function copyDirectory(src, dest, baseDir) {
   const copied = [], skipped = [], toMerge = [];
+
   if (!fs.existsSync(dest)) fs.mkdirSync(dest, {recursive: true});
 
-  const entries = fs.readdirSync(src, {withFileTypes: true});
-  for (const entry of entries) {
-    if (entry.name === 'README.md') continue;
+  fs.readdirSync(src, {withFileTypes: true}).forEach(entry => {
+    if (entry.name === 'README.md') return;
 
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
@@ -46,160 +39,173 @@ function copyDirectory(src, dest, baseDir) {
       copied.push(...results.copied);
       skipped.push(...results.skipped);
       toMerge.push(...results.toMerge);
+    } else if (fs.existsSync(destPath)) {
+      const markers = extractMarkers(fs.readFileSync(srcPath, 'utf8'));
+
+      if (markers.length > 0 || entry.name === '.env') toMerge.push({srcPath, destPath, relativePath, markers}); else skipped.push(relativePath);
     } else {
-      if (fs.existsSync(destPath)) {
-        const content = fs.readFileSync(srcPath, 'utf8');
-        const markers = extractMarkers(content);
-        if (markers.length > 0 || entry.name === '.env') toMerge.push({srcPath, destPath, relativePath, markers}); else skipped.push(relativePath);
-      } else {
-        fs.copyFileSync(srcPath, destPath);
-        copied.push(relativePath);
-      }
+      fs.copyFileSync(srcPath, destPath);
+      copied.push(relativePath);
     }
-  }
+  });
+
   return {copied, skipped, toMerge};
 }
 
-function findInsertIndex(lines, searchText, type = 'after') {
+const findInsertIndex = (lines, searchText, type) => {
   for (let i = 0; i < lines.length; i++) if (lines[i].includes(searchText)) return type === 'before' ? i : i + 1;
   return -1;
-}
+};
 
-function collectContentBetweenMarkers(addonLines, startIndex) {
+const collectContentBetweenMarkers = (lines, startIndex) => {
   const content = [];
-  for (let i = startIndex + 1; i < addonLines.length; i++) {
-    const trimmed = addonLines[i].trim();
-    if (trimmed.includes('@addon-end')) break;
-    content.push(addonLines[i]);
-  }
-  return content;
-}
 
-function getContentSignature(lines) {
-  return lines.map(l => l.trim()).filter(l => l && !l.startsWith('//') && !l.startsWith('#')).join('|');
-}
+  for (let i = startIndex + 1; i < lines.length; i++) {
+    if (lines[i].trim().includes('@addon-end')) break;
+
+    content.push(lines[i]);
+  }
+
+  return content;
+};
+
+const normalizeContent = (lines) => lines.map(l => l.trim()).filter(l => l && !l.startsWith('//') && !l.startsWith('#') && !l.startsWith('/*') && !l.startsWith('*')).join('|');
 
 function mergeFile(targetPath, addonPath, markers) {
-  let targetContent = fs.readFileSync(targetPath, 'utf8');
+  const targetContent = fs.readFileSync(targetPath, 'utf8');
   const addonLines = fs.readFileSync(addonPath, 'utf8').split('\n');
-  let modified = false;
+  const operations = [];
+  let newContent = targetContent;
 
-  for (const marker of markers) {
-    if (marker.type === 'prepend') {
-      const content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
-      const signature = getContentSignature(content);
-      const targetSignature = getContentSignature(targetContent.split('\n'));
+  markers.forEach(marker => {
+    const content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
 
-      if (signature && !targetSignature.includes(signature)) {
-        targetContent = content.join('\n') + '\n' + targetContent;
-        modified = true;
-        log(`  ✓ Prepended ${content.length} line(s)`, 'green');
-      } else log(`  ✓ Prepend content already exists`, 'green');
-    } else if (marker.type === 'append') {
-      const content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
-      const signature = getContentSignature(content);
-      const targetSignature = getContentSignature(targetContent.split('\n'));
+    if (content.length === 0) return;
 
-      if (signature && !targetSignature.includes(signature)) {
-        if (!targetContent.endsWith('\n')) targetContent += '\n';
-        targetContent += '\n' + content.join('\n') + '\n';
-        modified = true;
-        log(`  ✓ Appended ${content.length} line(s)`, 'green');
-      } else log(`  ✓ Append content already exists`, 'green');
-    } else if ((marker.type === 'after' || marker.type === 'before') && marker.searchText) {
-      const targetLines = targetContent.split('\n');
-      const insertIndex = findInsertIndex(targetLines, marker.searchText, marker.type);
-      if (insertIndex === -1) {
-        log(`  ⚠ Could not find "${marker.searchText}"`, 'yellow');
-        continue;
-      }
-      const content = collectContentBetweenMarkers(addonLines, marker.lineIndex);
-      const signature = getContentSignature(content);
-      const targetSignature = getContentSignature(targetLines);
+    const signature = normalizeContent(content);
+    const targetSignature = normalizeContent(newContent.split('\n'));
 
-      if (signature && !targetSignature.includes(signature)) {
-        targetLines.splice(insertIndex, 0, ...content);
-        targetContent = targetLines.join('\n');
-        modified = true;
-        log(`  ✓ Inserted ${content.length} line(s) ${marker.type} "${marker.searchText}"`, 'green');
-      } else log(`  ✓ Content already exists ${marker.type} "${marker.searchText}"`, 'green');
+    if (signature && targetSignature.includes(signature)) {
+      operations.push({success: false, type: marker.type, lines: content.length, searchText: marker.searchText});
+      return;
     }
-  }
 
-  if (modified) fs.writeFileSync(targetPath, targetContent, 'utf8');
-  return modified;
+    if (marker.type === 'prepend') {
+      newContent = content.join('\n') + '\n' + newContent;
+      operations.push({success: true, type: 'prepend', lines: content.length});
+    } else if (marker.type === 'append') {
+      if (!newContent.endsWith('\n')) newContent += '\n';
+
+      newContent += '\n' + content.join('\n') + '\n';
+      operations.push({success: true, type: 'append', lines: content.length});
+    } else if ((marker.type === 'after' || marker.type === 'before') && marker.searchText) {
+      const targetLines = newContent.split('\n');
+      const insertIndex = findInsertIndex(targetLines, marker.searchText, marker.type);
+
+      if (insertIndex === -1) {
+        operations.push({success: false, type: 'notfound', searchText: marker.searchText});
+        return;
+      }
+
+      targetLines.splice(insertIndex, 0, ...content);
+      newContent = targetLines.join('\n');
+      operations.push({success: true, type: marker.type, lines: content.length, searchText: marker.searchText});
+    }
+  });
+
+  if (newContent !== targetContent) fs.writeFileSync(targetPath, newContent, 'utf8');
+  return {modified: newContent !== targetContent, operations};
 }
 
 function mergeEnvFile(targetPath, addonPath) {
-  let targetContent = fs.readFileSync(targetPath, 'utf8');
+  const targetContent = fs.readFileSync(targetPath, 'utf8');
   const addonLines = fs.readFileSync(addonPath, 'utf8').split('\n');
   const linesToAdd = [];
-  let inMarkerBlock = false;
-  let blockComment = [];
+  const comments = [];
 
-  for (const line of addonLines) {
+  let inBlock = false;
+
+  addonLines.forEach(line => {
     const trimmed = line.trim();
 
     if (trimmed.includes('@addon-insert:append') || trimmed.includes('@addon:insert-append')) {
-      inMarkerBlock = true;
-      continue;
+      inBlock = true;
+      return;
     }
+
     if (trimmed.includes('@addon-end') || trimmed.includes('@addon:insert-end')) {
-      inMarkerBlock = false;
-      continue;
+      inBlock = false;
+      return;
     }
 
-    if (!inMarkerBlock) continue;
+    if (!inBlock) return;
 
-    if (trimmed.startsWith('#')) {
-      blockComment.push(line);
-      continue;
-    }
-
-    if (!trimmed) {
-      blockComment.push(line);
-      continue;
+    if (trimmed.startsWith('#') || !trimmed) {
+      comments.push(line);
+      return;
     }
 
     const match = line.match(/^([A-Z_][A-Z0-9_]*)=/);
     if (match && !new RegExp(`^${match[1]}=`, 'm').test(targetContent)) linesToAdd.push(line);
+  });
+
+  if (linesToAdd.length === 0) return {modified: false, added: 0};
+
+  let newContent = targetContent;
+  if (!newContent.endsWith('\n')) newContent += '\n';
+  newContent += '\n' + comments.join('\n') + '\n' + linesToAdd.join('\n') + '\n';
+
+  fs.writeFileSync(targetPath, newContent, 'utf8');
+  return {modified: true, added: linesToAdd.length};
+}
+
+function printMergeResults(relativePath, isEnv, result) {
+  const indent = '    ';
+
+  if (isEnv) {
+    if (result.modified) log(`${indent}${COLORS.green}✓${COLORS.reset} Added ${COLORS.bold}${result.added}${COLORS.reset} environment variable${result.added !== 1 ? 's' : ''}`); else log(`${indent}${COLORS.gray}○${COLORS.reset} ${COLORS.dim}All variables already exist${COLORS.reset}`);
+    return result.modified;
   }
 
-  if (linesToAdd.length === 0) {
-    log(`  ✓ All environment variables already exist`, 'green');
-    return false;
-  }
+  let hasChanges = false;
+  result.operations.forEach(op => {
+    if (op.success) {
+      hasChanges = true;
 
-  if (!targetContent.endsWith('\n')) targetContent += '\n';
-  targetContent += '\n' + blockComment.join('\n') + '\n' + linesToAdd.join('\n') + '\n';
-  fs.writeFileSync(targetPath, targetContent, 'utf8');
-  log(`  ✓ Added ${linesToAdd.length} environment variable(s)`, 'green');
-  return true;
+      if (op.type === 'prepend') log(`${indent}${COLORS.green}✓${COLORS.reset} Prepended ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} to file start`); else if (op.type === 'append') log(`${indent}${COLORS.green}✓${COLORS.reset} Appended ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} to file end`); else if (op.type === 'after') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}after${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`); else if (op.type === 'before') log(`${indent}${COLORS.green}✓${COLORS.reset} Inserted ${COLORS.bold}${op.lines}${COLORS.reset} line${op.lines !== 1 ? 's' : ''} ${COLORS.cyan}before${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`);
+    } else if (op.type === 'notfound') log(`${indent}${COLORS.yellow}⚠${COLORS.reset} ${COLORS.yellow}Could not find target:${COLORS.reset} "${COLORS.dim}${op.searchText}${COLORS.reset}"`); else log(`${indent}${COLORS.gray}○${COLORS.reset} ${COLORS.dim}Content already exists (${op.type})${COLORS.reset}`);
+  });
+
+  return hasChanges;
 }
 
 function mergeFiles(toMerge) {
-  if (toMerge.length === 0) return {merged: [], failed: []};
-  log('\n🔀 Auto-merging files...', 'bold');
+  if (toMerge.length === 0) return {merged: [], failed: [], unchanged: []};
 
-  const merged = [], failed = [];
-  for (const {srcPath, destPath, relativePath, markers} of toMerge) {
-    log(`\n  Merging: ${relativePath}`, 'cyan');
+  const merged = [], failed = [], unchanged = [];
+
+  toMerge.forEach(({srcPath, destPath, relativePath, markers}) => {
+    const isEnv = path.basename(destPath) === '.env';
+    log(`\n  ${COLORS.blue}•${COLORS.reset} ${COLORS.bold}${relativePath}${COLORS.reset}`);
+
     try {
-      const success = markers.length > 0 ? mergeFile(destPath, srcPath, markers) : mergeEnvFile(destPath, srcPath);
-      if (success) merged.push(relativePath);
+      const result = isEnv ? mergeEnvFile(destPath, srcPath) : mergeFile(destPath, srcPath, markers);
+      if (printMergeResults(relativePath, isEnv, result)) merged.push(relativePath); else unchanged.push(relativePath);
     } catch (error) {
-      log(`  ✗ Error: ${error.message}`, 'red');
+      log(`    ${COLORS.red}✗ Error:${COLORS.reset} ${error.message}`, 'red');
       failed.push(relativePath);
     }
-  }
-  return {merged, failed};
+  });
+
+  return {merged, failed, unchanged};
 }
 
 function main() {
   const addonName = process.argv[2];
+
   if (!addonName) {
-    log('Usage: node install-addon.js <addon-name>', 'red');
-    log('Example: node install-addon.js auth', 'cyan');
+    log('\n  Usage: node install-addon.js <add-on-name>', 'red');
+    log('  Example: node install-addon.js auth\n', 'cyan');
     process.exit(1);
   }
 
@@ -208,45 +214,64 @@ function main() {
   const srcDir = path.join(__dirname, 'src');
 
   if (!fs.existsSync(addonsDir)) {
-    log(`✗ Add-ons directory not found: ${addonsDir}`, 'red');
+    log(`\n  ${COLORS.red}✗${COLORS.reset} Add-ons directory not found: ${addonsDir}\n`);
     process.exit(1);
   }
 
   if (!fs.existsSync(addonPath)) {
-    log(`✗ Add-on "${addonName}" not found`, 'red');
+    log(`\n  ${COLORS.red}✗${COLORS.reset} Add-on "${COLORS.bold}${addonName}${COLORS.reset}" not found`);
+
     const available = fs.readdirSync(addonsDir, {withFileTypes: true}).filter(entry => entry.isDirectory()).map(entry => entry.name);
     if (available.length > 0) {
-      log('\nAvailable add-ons:', 'cyan');
-      available.forEach(name => log(`  • ${name}`, 'reset'));
+      log(`\n  Available add-ons:`, 'cyan');
+      available.forEach(name => log(`    • ${name}`));
     }
+    console.log();
     process.exit(1);
   }
 
-  log(`\n${COLORS.bold}Installing add-on: ${addonName}${COLORS.reset}\n`);
-  log('📦 Copying files...', 'bold');
+  console.log();
+  log(`  ╭${'─'.repeat(62)}╮`);
+  log(`  │  ${COLORS.bold}Installing add-on: ${COLORS.cyan}${addonName}${COLORS.reset}${' '.repeat(41 - addonName.length)}│`);
+  log(`  ╰${'─'.repeat(62)}╯`);
+  console.log();
 
+  log('  📦 Copying new files...', 'bold');
   const {copied, skipped, toMerge} = copyDirectory(addonPath, srcDir, srcDir);
 
-  console.log();
-  if (copied.length > 0) log(`✓ Copied ${copied.length} new file(s)`, 'green');
-  if (skipped.length > 0) log(`⊘ Skipped ${skipped.length} existing file(s)`, 'yellow');
-
-  const {merged, failed} = mergeFiles(toMerge);
-
-  if (merged.length > 0) {
+  if (copied.length > 0) {
     console.log();
-    log(`✓ Auto-merged ${merged.length} file(s)`, 'green');
+    log(`  ${COLORS.green}✓${COLORS.reset} Copied ${COLORS.bold}${copied.length}${COLORS.reset} new file${copied.length !== 1 ? 's' : ''}`);
   }
 
-  if (failed.length > 0) {
+  if (skipped.length > 0) {
     console.log();
-    log(`⚠ ${failed.length} file(s) could not be auto-merged`, 'yellow');
-    log('  Please review these files manually:', 'yellow');
-    failed.forEach(file => log(`    • ${file}`, 'cyan'));
+    log(`  ${COLORS.gray}○${COLORS.reset} ${COLORS.dim}Skipped ${skipped.length} file${skipped.length !== 1 ? 's' : ''} (no merge markers)${COLORS.reset}`);
+  }
+
+  if (toMerge.length > 0) {
+    console.log();
+    log('  🔀 Merging existing files...', 'bold');
+    const {merged, failed, unchanged} = mergeFiles(toMerge);
+
+    console.log();
+    log('  ─'.repeat(16), 'gray');
+    console.log();
+
+    if (merged.length > 0) log(`  ${COLORS.green}✓${COLORS.reset} Successfully merged ${COLORS.bold}${merged.length}${COLORS.reset} file${merged.length !== 1 ? 's' : ''}`);
+    if (unchanged.length > 0) log(`  ${COLORS.gray}○${COLORS.reset} ${COLORS.dim}${unchanged.length} file${unchanged.length !== 1 ? 's' : ''} unchanged (content already exists)${COLORS.reset}`);
+
+    if (failed.length > 0) {
+      console.log();
+      log(`  ${COLORS.yellow}⚠${COLORS.reset} ${COLORS.yellow}${failed.length} file${failed.length !== 1 ? 's' : ''} failed to merge${COLORS.reset}`);
+      log(`  ${COLORS.yellow}Please review manually:${COLORS.reset}`);
+
+      failed.forEach(file => log(`    • ${file}`, 'cyan'));
+    }
   }
 
   console.log();
-  log(`✓ Add-on "${addonName}" installation complete!`, 'green');
+  log(`  ${COLORS.green}✓${COLORS.reset} ${COLORS.bold}${COLORS.green}Installation complete!${COLORS.reset}`, 'green');
   console.log();
 }
 
