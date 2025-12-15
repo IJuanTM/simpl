@@ -3,20 +3,34 @@ const navItems = navMenu?.querySelectorAll('*.nav-item') as NodeListOf<HTMLEleme
 const menuHamburger = document.querySelector('button.hamburger') as HTMLElement | null;
 
 export const menuModule = {
-  toggle: (): void => {
+  updateHeight: (): void => {
     if (!navMenu || !navItems || !menuHamburger) return;
 
-    let menuHeight = 0;
-    const isActive = menuHamburger.classList.contains('is-active');
+    if (menuHamburger.classList.contains('is-active')) {
+      let menuHeight = 0;
 
-    navItems.forEach(item => {
-      menuHeight += item.offsetHeight;
-      item.setAttribute('tabindex', isActive ? '-1' : '0');
-    });
+      navItems.forEach(item => menuHeight += item.offsetHeight);
+      navMenu.style.maxHeight = `${menuHeight}px`;
+    } else navMenu.style.maxHeight = '';
+  },
 
-    navMenu.style.maxHeight = navMenu.style.maxHeight ? '' : `${menuHeight}px`;
-    menuHamburger.classList.toggle('is-active');
-    menuHamburger.toggleAttribute('aria-expanded');
+  setMenuState: (isOpen: boolean): void => {
+    if (!navMenu || !navItems || !menuHamburger) return;
+
+    menuHamburger.classList.toggle('is-active', isOpen);
+    navMenu.classList.toggle('extended', isOpen);
+
+    if (isOpen) menuHamburger.setAttribute('aria-expanded', 'true');
+    else menuHamburger.removeAttribute('aria-expanded');
+
+    navItems.forEach(item => item.setAttribute('tabindex', isOpen ? '0' : '-1'));
+    menuModule.updateHeight();
+  },
+
+  toggle: (): void => {
+    if (!menuHamburger) return;
+
+    menuModule.setMenuState(!menuHamburger.classList.contains('is-active'));
   },
 
   setActive: (): void => {
@@ -31,10 +45,12 @@ export const menuModule = {
   },
 
   setTabIndex: (): void => {
-    if (!navItems) return;
+    if (!navItems || !menuHamburger) return;
 
-    const tabindex = window.innerWidth > 768 ? '0' : '-1';
-    navItems.forEach(item => item.setAttribute('tabindex', tabindex));
+    if (window.innerWidth > 1024) {
+      menuModule.setMenuState(false);
+      navItems.forEach(item => item.setAttribute('tabindex', '0'));
+    } else menuModule.updateHeight();
   },
 
   init: (): void => {

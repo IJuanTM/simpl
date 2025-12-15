@@ -49,7 +49,7 @@ header {
         > div.nav-list {
           flex-direction: column;
 
-          .nav-item {
+          *.nav-item {
             height: 4rem;
           }
         }
@@ -59,7 +59,7 @@ header {
         top: calc($header-height - 1rem);
       }
 
-      > div.nav-list .nav-item {
+      > div.nav-list > *.nav-item {
         padding: 0 1rem;
         white-space: pre-wrap;
         border-radius: .5rem;
@@ -198,6 +198,16 @@ header {
               background-color: var(--text-25);
             }
           }
+        }
+      }
+
+      &.extended > div.nav-list > *.nav-item.profile {
+        > img {
+          width: 2rem;
+        }
+
+        > i {
+          font-size: 2rem;
         }
       }
     }
