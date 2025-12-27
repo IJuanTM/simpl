@@ -75,7 +75,23 @@ Now if you open your browser and go to your localhost url of this project, you s
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to Simpl by downloading them from [here](https://simpl.iwanvanderwal.nl/add-ons/) and extracting them to the `src` folder. When asked to overwrite files, click **No** and manually copy the code in the files to the existing files. Each add-on has a `README.md` file with instructions on how to install it.
+Simpl comes with a few add-ons, these are optional and can be added to a clean install of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
+
+Navigate to your project directory and run:
+
+```bash
+# List available add-ons
+npx @ijuantm/simpl-addon --list
+
+# Install an add-on (e.g. auth)
+npx @ijuantm/simpl-addon auth
+```
+
+Available commands:
+
+- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
+- `npx @ijuantm/simpl-addon --list` - List all available add-ons
+- `npx @ijuantm/simpl-addon --help` - Show help
 
 ### Step 6: Start coding!
 

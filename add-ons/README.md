@@ -46,6 +46,25 @@ A production-ready authentication system with modern security practices and clea
 
 ---
 
+## Installing Add-ons
+
+Navigate to your project directory and run (this should be a clean installation of Simpl):
+
+```bash
+# List available add-ons
+npx @ijuantm/simpl-addon --list
+
+# Install an add-on (e.g. auth)
+npx @ijuantm/simpl-addon auth
+```
+
+Available commands:
+
+- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
+- `npx @ijuantm/simpl-addon --list` - List all available add-ons
+- `npx @ijuantm/simpl-addon --help` - Show help
+-
+
 ## Contributing
 
 Have an idea for an add-on or created one yourself? Contributions are welcome! Please open an issue or pull request to discuss adding new add-ons to the framework.
