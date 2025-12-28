@@ -10,6 +10,10 @@ class SessionController
 {
     public function __construct()
     {
+        // Set session lifetime based on REMEMBER_ME_DURATION
+        ini_set('session.gc_maxlifetime', 86400 * REMEMBER_ME_DURATION);
+        session_set_cookie_params(86400 * REMEMBER_ME_DURATION);
+
         // Start the session
         session_start();
     }

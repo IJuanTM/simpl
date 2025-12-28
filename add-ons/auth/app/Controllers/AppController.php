@@ -6,8 +6,8 @@ class AppController
 {
     public function __construct()
     {
-        // new AlertController();
+        // @addon-insert:after('new AlertController();')
         new AuthController();
-        // new AliasController();
+        // @addon-end
     }
 }

@@ -7,7 +7,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
@@ -113,12 +113,16 @@ class LoginPage
      */
     private function calculateLockout(string $column, mixed $value, int $threshold, int $base, int $max, int $window): ?int
     {
-        $db = new Database();
-
         // Fetch failed login attempts within the time window
-        $db->query("SELECT UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts FROM login_attempts WHERE $column = :val AND success = 0 ORDER BY attempt_time DESC");
-        $db->bind(':val', $value);
-        $rows = $db->fetchAll();
+        $rows = DB::select(
+            "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
+            'login_attempts',
+            [
+                $column => $value,
+                'success' => 0
+            ],
+            ORDER_BY: 'attempt_time DESC'
+        );
 
         // If no failed attempts, return null
         if (!$rows) return null;
@@ -214,16 +218,17 @@ class LoginPage
      */
     private function recordLoginAttempt(string $email, bool $success, string|null $failedReason = null): void
     {
-        $db = new Database();
-
-        // Record the login attempt
-        $db->query('INSERT INTO login_attempts (user_id, ip_address, user_agent, success, failed_reason) VALUES (:id, :ip_address, :user_agent, :success, :failed_reason)');
-        $db->bind(':id', AuthController::getUserIdByEmail($email));
-        $db->bind(':ip_address', $_SERVER['REMOTE_ADDR'] ?? 'unknown');
-        $db->bind(':user_agent', $_SERVER['HTTP_USER_AGENT'] ?? 'unknown');
-        $db->bind(':success', $success ? 1 : 0);
-        $db->bind(':failed_reason', $failedReason);
-        $db->execute();
+        // Insert the login attempt into the database
+        DB::insert(
+            'login_attempts',
+            [
+                'user_id' => AuthController::getUserIdByEmail($email),
+                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+                'success' => $success ? 1 : 0,
+                'failed_reason' => $failedReason
+            ]
+        );
     }
 
     /**
@@ -236,12 +241,12 @@ class LoginPage
         // Record successful login attempt
         $this->recordLoginAttempt($email, true);
 
-        $db = new Database();
-
         // Get the user from the database
-        $db->query('SELECT * FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-        $user = $db->single();
+        $user = DB::single(
+            '*',
+            'users',
+            compact('email')
+        );
 
         // Remove the password from the user array
         unset($user['password']);
@@ -257,8 +262,8 @@ class LoginPage
             // Generate a remember token
             $token = AuthController::generateToken(16);
 
-            // Timestamp for the cookie (30 days)
-            $timestamp = time() + (86400 * 30);
+            // Timestamp for the cookie expiration
+            $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
             // Set the cookie
             setcookie('remember', $token, $timestamp, '/');
@@ -281,20 +286,24 @@ class LoginPage
      */
     private function setRememberToken(int $id, string $token, int $timestamp): void
     {
-        $db = new Database();
-
         // Delete the old token(s) from the database
-        $db->query('DELETE FROM tokens WHERE user_id = :id AND type = :type');
-        $db->bind(':id', $id);
-        $db->bind(':type', 'remember');
-        $db->execute();
+        DB::delete(
+            'tokens',
+            [
+                'user_id' => $id,
+                'type' => 'remember'
+            ]
+        );
 
         // Set the token in the database
-        $db->query('INSERT INTO tokens (user_id, token, type, expires) VALUES(:id, :token, :type, :expires)');
-        $db->bind(':id', $id);
-        $db->bind(':token', $token);
-        $db->bind(':type', 'remember');
-        $db->bind(':expires', date('Y-m-d H:i:s', $timestamp));
-        $db->execute();
+        DB::insert(
+            'tokens',
+            [
+                'user_id' => $id,
+                'token' => $token,
+                'type' => 'remember',
+                'expires' => date('Y-m-d H:i:s', $timestamp)
+            ]
+        );
     }
 }

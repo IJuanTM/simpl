@@ -1,14 +1,79 @@
-## Add-ons
+# Add-ons
 
-#### About
+Extensions that add functionality to the Simpl framework. Add-ons range from simple utilities to complete systems that extend the framework's capabilities.
 
-Add-ons are extensions to the Simpl framework. They can be very simple and only a couple of lines of code, to complex and larger systems that add a lot of functionality to the framework. I will add more add-ons to Simpl as I create them for my own projects, so that they can be used by others. If you have an idea for an add-on, or made one yourself, please let me know and I will look into adding it to the framework.
+## Available Add-ons
 
-#### Add-ons
+### Auth
 
-* Auth
-  * Adds a user system to the framework.
-  * It adds login, logout, register, and verification functionality to the framework. As well as a way to reset your password if you forget it.
-  * It also adds a user profile page, which can be used to display user information. It also comes with a form to edit your profile. As well as a page to change your password.
-  * An overview of registered users is also included for admins, which can be used to manage users and their roles.
-  * Comes with a database table for users and roles and a controller for the database queries.
+**Complete authentication and user management system**
+
+A production-ready authentication system with modern security practices and clean database abstraction.
+
+**Core Features:**
+
+- User authentication (login/logout/register)
+- Email verification system
+- Password reset flow
+- User profile management
+- Role-based access control
+- Admin dashboard for user management
+
+**Security:**
+
+- Automatic lockout protection (account & IP-based)
+- Secure password hashing (bcrypt/Argon2id)
+- Session security with timezone support
+- CSRF protection and input sanitization
+- SQL injection prevention
+
+**Database:**
+
+- Modern `DB` class with clean query builder syntax
+- Support for operators: `=`, `!=`, `>`, `<`, `>=`, `<=`, `LIKE`, `IS NULL`, etc.
+- Prepared statements with automatic type detection
+- Transaction support
+
+**Includes:**
+
+- Email templates (verification, password reset, contact)
+- TypeScript form enhancements
+- Responsive SCSS styling
+- Example database schema
+- CRON job scripts
+
+[View full documentation →](auth/README.md)
+
+---
+
+## Installing Add-ons
+
+Navigate to your project directory and run (this should be a clean installation of Simpl):
+
+```bash
+# List available add-ons
+npx @ijuantm/simpl-addon --list
+
+# Install an add-on (e.g. auth)
+npx @ijuantm/simpl-addon auth
+```
+
+Available commands:
+
+- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
+- `npx @ijuantm/simpl-addon --list` - List all available add-ons
+- `npx @ijuantm/simpl-addon --help` - Show help
+-
+
+## Contributing
+
+Have an idea for an add-on or created one yourself? Contributions are welcome! Please open an issue or pull request to discuss adding new add-ons to the framework.
+
+## Requirements
+
+Add-ons may have specific requirements. Check individual add-on documentation for:
+
+- Minimum PHP version
+- Required PHP extensions
+- Database requirements
+- Third-party dependencies

@@ -2,8 +2,7 @@
 
 namespace app\Models;
 
-use app\Controllers\LogController;
-use app\Enums\LogType;
+use app\Utils\Log;
 
 class Url
 {
@@ -29,8 +28,8 @@ class Url
 
         // Check if the file exists
         if (!is_file($filePath)) {
-            // Log the error if the environment is development
-            if (DEV) LogController::log("Could not find file \"$filePath\"", LogType::DEBUG);
+            // Log a warning if the file does not exist
+            Log::warning("Could not find file \"$filePath\"");
 
             return $url;
         }

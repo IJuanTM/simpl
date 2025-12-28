@@ -1,5 +1,4 @@
 <?php
-
 // Auth configuration
 const MIN_PASSWORD_LENGTH = 8;
 const REQUIRE_UPPERCASE = true;
@@ -20,3 +19,14 @@ const IP_LOGIN_ATTEMPTS = 20;
 const MIN_IP_LOCKOUT_DURATION = 15; // in minutes
 const MAX_IP_LOCKOUT_DURATION = 180; // in minutes
 const IP_LOCKOUT_WINDOW = 15; // in minutes
+
+// Remember me settings
+const REMEMBER_ME_DURATION = 30; // in days
+
+// Password hashing settings
+const PASSWORD_HASH_ALGO = PASSWORD_ARGON2ID;
+const PASSWORD_HASH_OPTIONS = [
+    'memory_cost' => 65536,
+    'time_cost' => 4,
+    'threads' => 3
+];

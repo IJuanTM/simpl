@@ -2,10 +2,10 @@
 
 namespace app\Controllers;
 
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
-use app\Enums\LogType;
 use app\Models\Url;
+use app\Utils\Log;
 use Exception;
 
 /**
@@ -16,7 +16,7 @@ class AuthController
     public function __construct()
     {
         // Log in the user if the remember cookie is set
-        if (isset($_COOKIE['remember']) && SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
+        if (isset($_COOKIE['remember']) && !SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
     }
 
     /**
@@ -26,39 +26,66 @@ class AuthController
      */
     public static function rememberLogin(string $rememberToken): void
     {
-        $db = new Database();
-
         // Get the remember token from the database
-        $db->query('SELECT * FROM tokens WHERE token = :token AND type = :type');
-        $db->bind(':token', $rememberToken);
-        $db->bind(':type', 'remember');
-        $token = $db->single();
+        $token = DB::single(
+            '*',
+            'tokens',
+            [
+                'token' => $rememberToken,
+                'type' => 'remember'
+            ]
+        );
 
         // Check if the token exists
         if (!$token) {
             // Delete the cookie
-            setcookie('remember', '', time() - 3600);
+            setcookie('remember', '', time() - 3600, '/');
             return;
         }
 
         // Check if the token is expired
         if ($token['expires'] < time()) {
             // Delete the token from the database
-            $db->query('DELETE FROM tokens WHERE token = :token');
-            $db->bind(':token', $token['token']);
-            $db->execute();
+            DB::delete(
+                'tokens',
+                [
+                    'token' => $token['token']
+                ]
+            );
 
             // Delete the cookie
-            setcookie('remember', '', time() - 3600);
+            setcookie('remember', '', time() - 3600, '/');
             return;
         }
 
         // Get the user from the database
-        $db->query('SELECT * FROM users WHERE id = :id');
-        $db->bind(':id', $token['user_id']);
+        $user = DB::single(
+            '*',
+            'users',
+            [
+                'id' => $token['user_id']
+            ]
+        );
 
         // Set the user in the session
-        self::setUserSession($db->single());
+        self::setUserSession($user);
+
+        // Calculate new expiration timestamp
+        $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
+
+        // Refresh the token's expiration date
+        DB::update(
+            'tokens',
+            [
+                'expires' => $timestamp
+            ],
+            [
+                'token' => $rememberToken
+            ]
+        );
+
+        // Refresh the remember cookie
+        setcookie('remember', $rememberToken, $timestamp, '/');
     }
 
     /**
@@ -70,17 +97,19 @@ class AuthController
      */
     public static function setUserSession(array $user): bool
     {
-        $db = new Database();
-
         // Get the user role from the database
-        $db->query('SELECT role_id FROM user_roles WHERE user_id = :id');
-        $db->bind(':id', $user['id']);
-        $role = $db->single()['role_id'];
+        $role = DB::single(
+            'role_id',
+            'user_roles',
+            [
+                'user_id' => $user['id']
+            ]
+        )['role_id'];
 
         // Check if the user role is set
         if (!$role) {
             // Log an error message
-            LogController::log("No user role is set for user with id \"" . $user['id'] . "\"", LogType::SESSION);
+            Log::error("No user role is set for user with id \"" . $user['id'] . "\"");
 
             // Unset the session user
             SessionController::remove('user');
@@ -171,36 +200,16 @@ class AuthController
      */
     public static function getProfileImage(string $id): string|null
     {
-        $db = new Database();
-
         // Get the profile image from the database
-        $db->query('SELECT profile_img FROM users WHERE id = :id');
-        $db->bind(':id', $id);
-        $profile_img = $db->single()['profile_img'];
+        $profile_img = DB::single(
+            'profile_img',
+            'users',
+            compact('id')
+        )['profile_img'];
 
         // Return the path to the profile image
         if ($profile_img) return 'img/profile/' . $profile_img;
         else return null;
-    }
-
-    /**
-     * Checks if a user exists in the database.
-     *
-     * @param int $id User ID
-     *
-     * @return bool Whether the user exists
-     */
-    public static function exists(int $id): bool
-    {
-        $db = new Database();
-
-        // Check if the user exists in the database
-        $db->query('SELECT id FROM users WHERE id = :id');
-        $db->bind(':id', $id);
-        $db->execute();
-
-        // Return true if the user exists in the database
-        return $db->rowCount() > 0;
     }
 
     /**
@@ -220,7 +229,7 @@ class AuthController
             return strtoupper(bin2hex(random_bytes($bytes)));
         } catch (Exception $e) {
             // Log the error
-            LogController::log($e->getMessage(), LogType::ERROR);
+            Log::error($e->getMessage());
 
             // Return an error message
             FormController::addAlert('Error! Something went wrong! Please try again or contact an admin.', AlertType::ERROR);
@@ -238,14 +247,27 @@ class AuthController
      */
     public static function checkEmail(string $email): bool
     {
-        $db = new Database();
-
         // Check if the email exists in the database
-        $db->query('SELECT * FROM users WHERE email = :email');
-        $db->bind(':email', $email);
+        return DB::exists(
+            'users',
+            compact('email')
+        );
+    }
 
-        // Return true if the email exists in the database
-        return $db->rowCount() > 0;
+    /**
+     * Checks if a user exists in the database.
+     *
+     * @param int $id User ID
+     *
+     * @return bool Whether the user exists
+     */
+    public static function exists(int $id): bool
+    {
+        // Check if the user exists in the database
+        return DB::exists(
+            'users',
+            compact('id')
+        );
     }
 
     /**
@@ -274,22 +296,23 @@ class AuthController
      */
     public static function isVerified(int|null $id = null, string|null $email = null): bool
     {
-        $db = new Database();
-
         if ($email !== null) {
             // Get the user id from the database
-            $db->query('SELECT id FROM users WHERE email = :email');
-            $db->bind(':email', $email);
-            $id = $db->single()['id'];
+            $id = DB::single(
+                'id',
+                'users',
+                compact('email')
+            )['id'];
         }
 
-        // Check if the user is verified
-        $db->query('SELECT * FROM tokens WHERE user_id = :id AND type = :type');
-        $db->bind(':id', $id);
-        $db->bind(':type', 'verification');
-
-        // Return true if the user is verified
-        return $db->rowCount() === 0;
+        // Check if there are any verification tokens for the user
+        return DB::count(
+                'tokens',
+                [
+                    'user_id' => $id,
+                    'type' => 'verification'
+                ]
+            ) === 0;
     }
 
     /**
@@ -303,15 +326,15 @@ class AuthController
      */
     public static function checkToken(int $id, string $token, string $type): bool
     {
-        $db = new Database();
-
-        // Get the token from the database
-        $db->query('SELECT token FROM tokens WHERE user_id = :user_id AND type = :type');
-        $db->bind(':user_id', $id);
-        $db->bind(':type', $type);
-
-        // Check if the token is valid
-        return strcasecmp($db->single()['token'], $token) === 0;
+        // Get the token from the database and compare it
+        return strcasecmp(DB::single(
+                'token',
+                'tokens',
+                [
+                    'user_id' => $id,
+                    'type' => $type
+                ]
+            )['token'], $token) === 0;
     }
 
     /**
@@ -324,14 +347,12 @@ class AuthController
      */
     public static function checkPassword(string $email, string $password): bool
     {
-        $db = new Database();
-
-        // Get the password from the database
-        $db->query('SELECT password FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-
-        // Return true if the password is correct
-        return password_verify($password, $db->single()['password']);
+        // Verify the password against the hash in the database
+        return password_verify($password, DB::single(
+            'password',
+            'users',
+            compact('email')
+        )['password']);
     }
 
     /**
@@ -343,14 +364,12 @@ class AuthController
      */
     public static function isActive(string $email): bool
     {
-        $db = new Database();
-
-        // Check if the user is deleted
-        $db->query('SELECT is_active FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-
-        // Return true if the user is active
-        return $db->single()['is_active'] === 1;
+        // Check if the user is active in the database
+        return DB::single(
+                'is_active',
+                'users',
+                compact('email')
+            )['is_active'] === 1;
     }
 
     /**
@@ -362,12 +381,12 @@ class AuthController
      */
     public static function getUserIdByEmail(string $email): int|null
     {
-        $db = new Database();
-
-        // Get the user id from the database
-        $db->query('SELECT id FROM users WHERE email = :email');
-        $db->bind(':email', $email);
-        $user = $db->single();
+        // Get the user from the database
+        $user = DB::single(
+            'id',
+            'users',
+            compact('email')
+        );
 
         // Return the user id or null if not found
         return $user ? (int)$user['id'] : null;

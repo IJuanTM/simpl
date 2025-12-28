@@ -2,7 +2,10 @@
 @use "sass:math";
 
 @function shade($theme, $keys: null) {
-  $keys: if($keys == null, (text, text-inverse, shadow, border), $keys);
+  @if $keys == null {
+    $keys: (text, text-inverse, shadow, border);
+  }
+
   $out: $theme;
 
   @each $key in $keys {

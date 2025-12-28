@@ -6,17 +6,17 @@
 
 #### An easy-to-use PHP, HTML, Sass and TypeScript framework!
 
-[![GitHub release](https://img.shields.io/github/v/release/IJuanTM/simpl?color=D01018&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyBpZD0iYSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDQ0My40MSA1MTIiPgogIDxkZWZzPgogICAgPGZpbHRlciBpZD0iYiIgZmlsdGVyVW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPGZlT2Zmc2V0IGR4PSIwIiBkeT0iMCIvPgogICAgICA8ZmVHYXVzc2lhbkJsdXIgcmVzdWx0PSJjIiBzdGREZXZpYXRpb249IjIiLz4KICAgICAgPGZlRmxvb2QgZmxvb2QtY29sb3I9IiMwMDAiIGZsb29kLW9wYWNpdHk9Ii4yNSIvPgogICAgICA8ZmVDb21wb3NpdGUgaW4yPSJjIiBvcGVyYXRvcj0iaW4iLz4KICAgICAgPGZlQ29tcG9zaXRlIGluPSJTb3VyY2VHcmFwaGljIi8+CiAgICA8L2ZpbHRlcj4KICAgIDxmaWx0ZXIgaWQ9ImQiIGZpbHRlclVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxmZU9mZnNldCBkeD0iMCIgZHk9IjAiLz4KICAgICAgPGZlR2F1c3NpYW5CbHVyIHJlc3VsdD0iZSIgc3RkRGV2aWF0aW9uPSIyIi8+CiAgICAgIDxmZUZsb29kIGZsb29kLWNvbG9yPSIjMDAwIiBmbG9vZC1vcGFjaXR5PSIuMjUiLz4KICAgICAgPGZlQ29tcG9zaXRlIGluMj0iZSIgb3BlcmF0b3I9ImluIi8+CiAgICAgIDxmZUNvbXBvc2l0ZSBpbj0iU291cmNlR3JhcGhpYyIvPgogICAgPC9maWx0ZXI+CiAgPC9kZWZzPgogIDxnIGZpbHRlcj0idXJsKCNiKSI+CiAgICA8cG9seWdvbiBwb2ludHM9IjIyMS43MSAwIDAgMTI4IDAgMzg0IDIyMS43MSA1MTIgNDQzLjQxIDM4NCA0NDMuNDEgMTI4IDIyMS43MSAwIiBmaWxsPSIjRDAxMDE4Ii8+CiAgICA8cG9seWdvbiBwb2ludHM9IjQ0My40MSAxMjggNDQzLjQxIDM4NCAyMjEuNzEgNTEyIDIyMS43MSAyNTYgNDQzLjQxIDEyOCIgZmlsbD0iI0MwMDAwOCIvPgogICAgPHBvbHlnb24gcG9pbnRzPSIyMjEuNzEgMjU2IDIyMS43MSA1MTIgMCAzODQgMCAxMjggMjIxLjcxIDI1NiIgZmlsbD0iI0UwMjAyOCIvPgogIDwvZz4KICA8ZyBmaWx0ZXI9InVybCgjZCkiPgogICAgPHBhdGgKICAgICAgZD0iTTE5Ni4zNywzMDMuMTFjMy45Miw0Ljc0LDguMzMsOC40NSwxMy4yMiwxMS4xMXMxMC40NCw0LDE2LjY3LDRjOC4yOSwwLDE0Ljk2LTIuMjksMjAtNi44OSw1LjA0LTQuNTksNy41Ni0xMC40NCw3LjU2LTE3LjU2cy0xLjYzLTEyLjUyLTQuODktMTYuNjdjLTMuMjYtNC4xNS03LjUyLTcuNTItMTIuNzgtMTAuMTEtNS4yNi0yLjU5LTEwLjg1LTQuOTItMTYuNzgtNy0zLjg1LTEuMzMtOC4xNS0zLjA3LTEyLjg5LTUuMjItNC43NC0yLjE1LTkuMjYtNC44OS0xMy41NS04LjIyLTQuMy0zLjMzLTcuODItNy40NS0xMC41Ni0xMi4zMy0yLjc0LTQuODktNC4xMS0xMC44OS00LjExLTE4LDAtNy43LDEuOTItMTQuNTksNS43OC0yMC42NywzLjg1LTYuMDcsOS4xOC0xMC44NSwxNi0xNC4zMyw2LjgxLTMuNDgsMTQuNTktNS4yMiwyMy4zMy01LjIyczE1LjgxLDEuNTksMjIuMTEsNC43OGM2LjI5LDMuMTksMTEuNjcsNy4yNiwxNi4xMSwxMi4yMiw0LjQ0LDQuOTcsNy45MiwxMC4xOSwxMC40NSwxNS42N2wtMTYuMjIsOS4zM2MtMS45My0zLjg1LTQuMzctNy42My03LjMzLTExLjMzLTIuOTctMy43LTYuNTYtNi43NC0xMC43OC05LjExLTQuMjItMi4zNy05LjM3LTMuNTYtMTUuNDQtMy41Ni04LjQ1LDAtMTQuNTksMi4wNC0xOC40NCw2LjExLTMuODUsNC4wOC01Ljc4LDguNjMtNS43OCwxMy42NywwLDQuMywxLjExLDguMjYsMy4zMywxMS44OSwyLjIyLDMuNjMsNS45Niw3LjA0LDExLjIyLDEwLjIyLDUuMjYsMy4xOSwxMi40MSw2LjMzLDIxLjQ0LDkuNDQsNC4xNSwxLjQ4LDguNTIsMy40MSwxMy4xMSw1Ljc4LDQuNTksMi4zNyw4Ljg1LDUuMzcsMTIuNzgsOSwzLjkyLDMuNjMsNy4xNSw4LDkuNjcsMTMuMTEsMi41Miw1LjExLDMuNzgsMTEuMjIsMy43OCwxOC4zM3MtMS4zLDEyLjk2LTMuODksMTguNDRjLTIuNTksNS40OC02LjE1LDEwLjE1LTEwLjY2LDE0LTQuNTIsMy44NS05LjYzLDYuODItMTUuMzMsOC44OS01LjcsMi4wNy0xMS42NywzLjExLTE3Ljg5LDMuMTEtOC40NCwwLTE2LjI2LTEuODItMjMuNDQtNS40NS03LjE5LTMuNjMtMTMuNDgtOC40NC0xOC44OS0xNC40NC01LjQxLTYtOS44Mi0xMi40MS0xMy4yMi0xOS4yMmwxNS4xMS0xMC4yMmMzLjU2LDYuMjIsNy4yOSwxMS43LDExLjIyLDE2LjQ0WiIKICAgICAgZmlsbD0iI2ZmZiIvPgogIDwvZz4KPC9zdmc+Cg==)](https://github.com/IJuanTM/simpl/releases/latest)
+[![GitHub release](https://img.shields.io/github/v/release/IJuanTM/simpl?color=D01018&logo=data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjxzdmcgaWQ9ImEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHZpZXdCb3g9IjAgMCA0NDMuNDA1IDUxMiI+DQogIDxwb2x5Z29uIHBvaW50cz0iMCAxMjggMCAzODQgMjIxLjcwMjUgNTEyIDQ0My40MDUgMzg0IDQ0My40MDUgMTI4IDIyMS43MDI1IDAgMCAxMjgiIGZpbGw9IiNEMDEwMTgiIHN0cm9rZS13aWR0aD0iMCIvPg0KICA8cG9seWdvbiBwb2ludHM9IjIyMS43MDI1IDI1NiAyMjEuNzAyNSA1MTIgMCAzODQgMCAxMjggMjIxLjcwMjUgMjU2IiBmaWxsPSIjRTAyMDI4IiBzdHJva2Utd2lkdGg9IjAiLz4NCiAgPHBvbHlnb24gcG9pbnRzPSIyMjEuNzAyNSAyNTYgNDQzLjQwNSAxMjggNDQzLjQwNSAzODQgMjIxLjcwMjUgNTEyIDIyMS43MDI1IDI1NiIgZmlsbD0iI0MwMDAwOCIgc3Ryb2tlLXdpZHRoPSIwIi8+DQogIDxwYXRoDQogICAgZD0ibTIyMS44MzA3LDM0OC40MTZjLTE0Ljg0ODEsMC0yNy41NjQtMi43NzY0LTM4LjE0NC04LjMyMDMtMTAuNTg0LTUuNTQzOS0xOS42Mjc5LTEyLjgzOTgtMjcuMTM1Ny0yMS44ODc3bDIwLjIyMzYtMTguNjg4NWM2LjE0NCw3LjY4MDIsMTMuMDEyMiwxMy40ODQ0LDIwLjYwNzksMTcuNDA4Miw3LjU5MjMsMy45Mjc3LDE2LjI1NjMsNS44ODc3LDI1Ljk4NDQsNS44ODc3LDExLjQzMTYsMCwyMC4wNTE4LTIuNTk5NiwyNS44NTYtNy44MDc2LDUuNzk5OC01LjIwNDEsOC43MDQxLTEyLjA3MjMsOC43MDQxLTIwLjYwNzksMC00LjYwNzktLjg1NjQtOC42MTYyLTIuNTYwMS0xMi4wMzIyLTEuNzA4LTMuNDEyMS00LjYwNzktNi4yMjgtOC43MDQxLTguNDQ3OC00LjA5NjItMi4yMTYzLTkuNTYwMS00LjAwODMtMTYuMzg0My01LjM3NmwtMTUuODcxNi0yLjgxNjRjLTExLjYwODQtMi4yMTU4LTIxLjI5Mi01LjQ2LTI5LjA1NjItOS43MjgtNy43NjgxLTQuMjYzNy0xMy42MTE4LTkuODU2LTE3LjUzNjEtMTYuNzY3Ni0zLjkyNzctNi45MTIxLTUuODg3Ny0xNS4wNjAxLTUuODg3Ny0yNC40NDgyLDAtMTAuNTgwMSwyLjU1OTYtMTkuNzExOSw3LjY3OTctMjcuMzkyMSw1LjEyMDEtNy42Nzk3LDEyLjQxNi0xMy41Njc5LDIxLjg4ODItMTcuNjY0MSw5LjQ3MTctNC4wOTU3LDIwLjUyLTYuMTQzNiwzMy4xNTE5LTYuMTQzNiwxMy40OCwwLDI1LjE3MTksMi4zNDc3LDM1LjA3MjMsNy4wMzk2LDkuODk1LDQuNjk2MywxOC4yNjAzLDExLjQ4LDI1LjA4ODQsMjAuMzUyMWwtMjAuMjI0NiwxNy45MTk5Yy00LjYwNzktNS45NzE3LTEwLjIzOTctMTAuNzUyLTE2Ljg5Ni0xNC4zMzU5LTYuNjU1OC0zLjU4NC0xNC45MzYtNS4zNzYtMjQuODMyLTUuMzc2LTEwLjIzOTcsMC0xOC4xMzU3LDIuMDQ4My0yMy42ODAyLDYuMTQ0LTUuNTQ3OSw0LjA5NjItOC4zMTk4LDEwLjA3MjMtOC4zMTk4LDE3LjkxOTksMCw0Ljk1MjEsMS4wMjM5LDkuMDQ4MywzLjA3MjMsMTIuMjg4MSwyLjA0NzksMy4yNDQxLDUuMTU5Nyw1Ljg4ODIsOS4zNDM4LDcuOTM2LDQuMTgwMiwyLjA0NzksOS40MjgyLDMuNjcxOSwxNS43NDQxLDQuODY0M2wxNS44NzIxLDMuMzI3NmMxMS45NDM4LDIuMjIwMiwyMS43NTk4LDUuNTQ4MywyOS40Mzk5LDkuOTg0NCw3LjY3OTcsNC40Mzk5LDEzLjM1MTYsMTAuMDI3OCwxNy4wMjM0LDE2Ljc2NzYsMy42NjgsNi43NDQxLDUuNTAzOSwxNC44OTIxLDUuNTAzOSwyNC40NDgyLDAsMTEuMDk2Mi0yLjU1ODYsMjAuNzc5OC03LjY3OTcsMjkuMDU2Mi01LjExOTEsOC4yODAzLTEyLjU0MywxNC43NjM3LTIyLjI3MiwxOS40NTYxLTkuNzI4LDQuNjkxNC0yMS40MTk5LDcuMDQtMzUuMDcxOCw3LjA0WiINCiAgICBmaWxsPSIjRkZGIiBzdHJva2Utd2lkdGg9IjAiLz4NCjwvc3ZnPg0K)](https://github.com/IJuanTM/simpl/releases/latest)
 [![GitHub license](https://img.shields.io/github/license/IJuanTM/simpl?color=A32D2A&logo=gnu)](LICENSE)
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.3.26-777BB3?logo=php)](https://www.php.net/)
-[![Composer logo](https://img.shields.io/badge/composer-2.8.12-89552C?logo=composer)](https://getcomposer.org/)
-[![Node.js logo](https://img.shields.io/badge/node.js-24.9.0-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.93.2-CC6699?logo=sass)](https://sass-lang.com/)
+[![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
+[![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
+[![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
+[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.1.9-646CFF?logo=vite)](https://vite.dev/)
+[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -46,22 +46,38 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 ### Step 0: Requirements
 
-Before you can start using Simpl you will need to make sure you have the following installed:
+Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net/)
-* [Composer](https://getcomposer.org/)
-* [Node.js](https://nodejs.org/)
-* [npm](https://www.npmjs.com/)
+* [PHP](https://www.php.net/) >= 8.4.x
+* [Composer](https://getcomposer.org/) >= 2.9.x
+* [Node.js](https://nodejs.org/) >= 24.x.x
+* [npm](https://www.npmjs.com/) >= 11.x.x
 
 ### Step 1: Download Simpl
 
-Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+You can set up a new Simpl project by running the following commands in your terminal:
 
-Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
+```bash
+npx @ijuantm/simpl-install <project-name>
+```
+
+Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl, with all dependencies installed and ready to use.
+
+Available commands:
+
+- `npx @ijuantm/simpl-install` - You will be prompted to enter a project name
+- `npx @ijuantm/simpl-install <project-name>` - Create a new Simpl project with the specified name
+- `npx @ijuantm/simpl-install --help` - Show help
+
+Alternatively, you can also set up a new Simpl project manually by following these steps:
+
+- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+
+- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
 ### Step 2: Run composer install
 
-Simpl makes use of PSR-4 autoloading, for this to work you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
+Simpl makes use of PSR-4 autoloading; for this to work, you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
 
 ### Step 3: Install packages
 
@@ -71,11 +87,27 @@ Next, a few npm packages will need to be installed. You can do this by running `
 
 Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
-Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling there is a chance there was an issue compiling the Sass files, you can try to fix this by running the `build` script again manually using `npm run build`.
+Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling, there is a chance there was an issue compiling the Sass files; you can try to fix this by running the `build` script again manually using `npm run build`.
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to Simpl by downloading them from [here](https://simpl.iwanvanderwal.nl/add-ons/) and extracting them to the `src` folder. When asked to overwrite files, click **No** and manually copy the code in the files to the existing files. Each add-on has a `README.md` file with instructions on how to install it.
+Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
+
+Navigate to your project directory and run:
+
+```bash
+# List available add-ons
+npx @ijuantm/simpl-addon --list
+
+# Install an add-on (e.g. auth)
+npx @ijuantm/simpl-addon auth
+```
+
+Available commands:
+
+- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
+- `npx @ijuantm/simpl-addon --list` - List all available add-ons
+- `npx @ijuantm/simpl-addon --help` - Show help
 
 ### Step 6: Start coding!
 
@@ -109,12 +141,13 @@ Feel free to add your own config files here, as each `.php` file in this folder 
 In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
-  - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
-  - There is also a `LogController`, this is used for logging errors and warnings. You can use this controller to log errors and warnings in your own code. There will be stored in the `app/Logs` folder, with each different type having its own logfile.
+    - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
 Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
+
+There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class, which is used for logging errors and other information to log files.
 
 #### Views
 
@@ -138,9 +171,17 @@ _If you need more information about the framework and its features, you can find
 
 ## Download
 
-Download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
+Run the following command to download the latest version of Simpl:
+
+```bash
+npx @ijuantm/simpl-install
+```
+
+Alternatively, download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
 
 Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
+
+Follow the steps in the [Getting Started](#getting-started) section to set up your project.
 
 <br>
 
@@ -151,8 +192,9 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 - [x] Improve mail system
 - [x] Improve the auth system
 - [x] Nicer default styling
-- [ ] Improve logger, make it more flexible
-- [ ] Update Simpl website
+- [x] Improve database class
+- [x] Improve logger, make it more flexible
+- [x] Update Simpl website
 - [ ] Write documentation
 - [ ] Add more add-ons?
 
@@ -224,6 +266,16 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * The auth add-on now has config options for password requirements and to enable/disable user email verification
 * The project now uses Vite for bundling TypeScript files. The sass files are still compiled using the sass npm package and live reloading is still done using browser-sync.
 * Entire new styling for the default Simpl pages and components
+
+#### Version 1.5.0 (2025-12-28)
+
+* Added support for PHP 8.5.1
+* Updated composer and npm packages
+* Replaced the old database class with a new class that is more flexible and easier to use
+* Improved the readmes of the add-ons
+* Improve the logging system by adding log levels and better formatting
+* Npx tools for installing a new Simpl project and installing add-ons to an existing project
+* Added merge markers add-on files for safely merging code into existing files when using the add-on installer
 
 <br>
 

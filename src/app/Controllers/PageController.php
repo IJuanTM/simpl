@@ -2,9 +2,9 @@
 
 namespace app\Controllers;
 
-use app\Enums\LogType;
 use app\Models\Page;
 use app\Models\Url;
+use app\Utils\Log;
 
 /**
  * The PageController class is the controller for the pages. It parses the URL and loads the page.
@@ -45,7 +45,7 @@ class PageController extends Page
             // Check if the page object exists and the API method exists
             if (!$this->pageObj || !method_exists($this->pageObj, 'api')) {
                 // Log the error if the environment is development
-                if (DEV) LogController::log("Page \"$page\" was called as an API endpoint, but no page object or API method was found", LogType::DEBUG);
+                if (DEV) Log::error("Page \"$page\" was called as an API endpoint, but no page object or API method was found");
 
                 // Redirect to the 404 page
                 self::redirect('error/404');
@@ -90,7 +90,7 @@ class PageController extends Page
         // Check if the file exists, if not redirect to the 404 page
         if (!is_file($file)) {
             // Log the error if the environment is development
-            if (DEV) LogController::log("Could not find view \"$page\"", LogType::DEBUG);
+            if (DEV) Log::error("Could not find view \"$page\"");
 
             // Redirect to the 404 page
             self::redirect('error/404');
@@ -122,11 +122,11 @@ class PageController extends Page
 
         $message = "Part \"$name\" not found";
 
-        if (DEV) {
-            // Write a debug log message
-            LogController::log($message, LogType::DEBUG);
-            echo $message;
-        } else echo "<!-- $message -->";
+        // Log the warning
+        Log::warning($message);
+
+        if (DEV) echo $message;
+        else echo "<!-- $message -->";
     }
 
     /**

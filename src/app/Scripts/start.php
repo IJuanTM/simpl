@@ -1,5 +1,4 @@
 <?php
-
 // Set the base directory
 define('BASEDIR', realpath(dirname(__DIR__, 2)));
 

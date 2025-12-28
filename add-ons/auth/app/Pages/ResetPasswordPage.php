@@ -5,7 +5,7 @@ namespace app\Pages;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\Database;
+use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
@@ -49,15 +49,14 @@ class ResetPasswordPage
      */
     private function resetRequested(string $userId): bool
     {
-        $db = new Database();
-
         // Check if the token exists in the database
-        $db->query('SELECT * FROM tokens WHERE user_id = :user_id AND type = :type');
-        $db->bind(':user_id', $userId);
-        $db->bind(':type', 'reset');
-        $db->execute();
-
-        return $db->rowCount() > 0;
+        return DB::exists(
+            'tokens',
+            [
+                'user_id' => $userId,
+                'type' => 'reset'
+            ]
+        );
     }
 
     /**
@@ -100,19 +99,23 @@ class ResetPasswordPage
      */
     private function resetPassword(int $id, string $password): void
     {
-        $db = new Database();
-
         // Update the password in the database for the user
-        $db->query('UPDATE users SET password = :password WHERE id = :id');
-        $db->bind(':password', password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]));
-        $db->bind(':id', $id);
-        $db->execute();
+        DB::update(
+            'users',
+            [
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+            ],
+            compact('id')
+        );
 
         // Delete the token from the database
-        $db->query('DELETE FROM tokens WHERE user_id = :user_id AND type = :type');
-        $db->bind(':user_id', $id);
-        $db->bind(':type', 'reset');
-        $db->execute();
+        DB::delete(
+            'tokens',
+            [
+                'user_id' => $id,
+                'type' => 'reset'
+            ]
+        );
 
         // Show a success message and redirect to the login page
         FormController::addAlert('Success! Your password has been reset!', AlertType::SUCCESS);
