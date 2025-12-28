@@ -11,12 +11,12 @@
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.5.0-777BB3?logo=php)](https://www.php.net/)
+[![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
 [![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
 [![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.95.1-CC6699?logo=sass)](https://sass-lang.com/)
+[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.2.7-646CFF?logo=vite)](https://vite.dev/)
+[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -50,7 +50,7 @@ Before you can start using Simpl, you will need to make sure you have the follow
 
 * [PHP](https://www.php.net/) >= 8.4.x
 * [Composer](https://getcomposer.org/) >= 2.9.x
-* [Node.js](https://nodejs.org/) >= 20.x.x
+* [Node.js](https://nodejs.org/) >= 24.x.x
 * [npm](https://www.npmjs.com/) >= 11.x.x
 
 ### Step 1: Download Simpl
@@ -261,7 +261,7 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 
 #### Version 1.5.0 (2025-12-28)
 
-* Added support for PHP 8.5
+* Added support for PHP 8.5.1
 * Updated composer and npm packages
 * Replaced the old database class with a new class that is more flexible and easier to use
 * Improved the readmes of the add-ons
