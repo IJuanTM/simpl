@@ -46,22 +46,38 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 ### Step 0: Requirements
 
-Before you can start using Simpl you will need to make sure you have the following installed:
+Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net/)
-* [Composer](https://getcomposer.org/)
-* [Node.js](https://nodejs.org/)
-* [npm](https://www.npmjs.com/)
+* [PHP](https://www.php.net/) >= 8.4.x
+* [Composer](https://getcomposer.org/) >= 2.9.x
+* [Node.js](https://nodejs.org/) >= 20.x.x
+* [npm](https://www.npmjs.com/) >= 11.x.x
 
 ### Step 1: Download Simpl
 
-Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+You can set up a new Simpl project by running the following commands in your terminal:
 
-Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
+```bash
+npx @ijuantm/simpl-install <project-name>
+```
+
+Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl, with all dependencies installed and ready to use.
+
+Available commands:
+
+- `npx @ijuantm/simpl-install` - You will be prompted to enter a project name
+- `npx @ijuantm/simpl-install <project-name>` - Create a new Simpl project with the specified name
+- `npx @ijuantm/simpl-install --help` - Show help
+
+Alternatively, you can also set up a new Simpl project manually by following these steps:
+
+- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+
+- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
 ### Step 2: Run composer install
 
-Simpl makes use of PSR-4 autoloading, for this to work you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
+Simpl makes use of PSR-4 autoloading; for this to work, you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
 
 ### Step 3: Install packages
 
@@ -71,11 +87,11 @@ Next, a few npm packages will need to be installed. You can do this by running `
 
 Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
-Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling there is a chance there was an issue compiling the Sass files, you can try to fix this by running the `build` script again manually using `npm run build`.
+Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling, there is a chance there was an issue compiling the Sass files; you can try to fix this by running the `build` script again manually using `npm run build`.
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to a clean install of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
+Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
 
 Navigate to your project directory and run:
 
@@ -243,14 +259,15 @@ Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
 * The project now uses Vite for bundling TypeScript files. The sass files are still compiled using the sass npm package and live reloading is still done using browser-sync.
 * Entire new styling for the default Simpl pages and components
 
-#### Version 1.5.0 (2025-12-01)
+#### Version 1.5.0 (2025-12-28)
 
 * Added support for PHP 8.5
 * Updated composer and npm packages
 * Replaced the old database class with a new class that is more flexible and easier to use
 * Improved the readmes of the add-ons
 * Improve the logging system by adding log levels and better formatting
-* New automated installation script for add-ons
+* Npx tools for installing a new Simpl project and installing add-ons to an existing project
+* Added merge markers add-on files for safely merging code into existing files when using the add-on installer
 
 <br>
 

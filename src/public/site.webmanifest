@@ -1,8 +1,8 @@
 {
   "lang": "en",
   "start_url": "/",
-  "name": "simpl",
-  "short_name": "simpl",
+  "name": "Simpl",
+  "short_name": "Simpl",
   "description": "An easy-to-use PHP, HTML, Sass and TypeScript framework!",
   "icons": [
     {

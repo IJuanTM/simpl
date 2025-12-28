@@ -4,11 +4,11 @@
   "version": "1.5.0",
   "type": "project",
   "require": {
-    "php": "^8.3",
+    "php": "^8.4",
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
     "ext-fileinfo": "*",
-    "vlucas/phpdotenv": "^v5.6.2"
+    "vlucas/phpdotenv": "^v5.6.3"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest"

@@ -7,12 +7,12 @@ const TIMEZONE = 'UTC'; // Change to your desired timezone, see https://www.php.
 
 // App configuration
 define('APP_NAME', $_ENV['APP_NAME']);
-define('APP_VERSION', $_ENV['APP_VERSION']);
 define('APP_URL', $_ENV['APP_URL']);
-
-// Last update
-define('LAST_UPDATE', $_ENV['LAST_UPDATE']);
 
 // Redirect configuration
 const REDIRECT = 'home';
 const ERROR_AUTO_REDIRECT = true;
+
+// Simpl variables
+define('SIMPL_VERSION', $_ENV['SIMPL_VERSION']);
+define('SIMPL_LAST_UPDATE', $_ENV['SIMPL_LAST_UPDATE']);
