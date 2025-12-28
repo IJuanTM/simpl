@@ -171,9 +171,17 @@ _If you need more information about the framework and its features, you can find
 
 ## Download
 
-Download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
+Run the following command to download the latest version of Simpl:
+
+```bash
+npx @ijuantm/simpl-install
+```
+
+Alternatively, download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
 
 Or clone the repository using `git clone https://github.com/IJuanTM/simpl/`.
+
+Follow the steps in the [Getting Started](#getting-started) section to set up your project.
 
 <br>
 
