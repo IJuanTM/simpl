@@ -264,7 +264,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Improved tsconfig.json file
 * Added enums to the php code for better type safety and readability
 * The auth add-on now has config options for password requirements and to enable/disable user email verification
-* The project now uses Vite for bundling TypeScript files. The sass files are still compiled using the sass npm package and live reloading is still done using browser-sync.
+* The project now uses Vite for bundling TypeScript files. The SCSS files are still compiled using the `sass` npm package, and live reloading is still done using browser-sync.
 * Entire new styling for the default Simpl pages and components
 
 #### Version 1.5.0 (2025-12-28)
@@ -276,6 +276,11 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Improve the logging system by adding log levels and better formatting
 * Npx tools for installing a new Simpl project and installing add-ons to an existing project
 * Added merge markers add-on files for safely merging code into existing files when using the add-on installer
+
+#### Version 1.5.1 (2025-12-30)
+
+* Added a .simpl file to mark the root of a Simpl project as well as to store project metadata like the current version. This is used by the npm add-on installer to check if the project is a valid Simpl project and to check which version of Simpl is being used.
+* Updates to the Simpl installer npx tool and add-on installer npx tool
 
 <br>
 
