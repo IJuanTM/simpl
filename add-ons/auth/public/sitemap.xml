@@ -1,0 +1,40 @@
+<urlset>
+  <!-- @addon-insert:before('</urlset>') -->
+  <url>
+    <loc>http://simpl.local/login</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/register</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/contact</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/profile</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/verify-account</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/change-password</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/forgot-password</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/reset-password</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <url>
+    <loc>http://simpl.local/users</loc>
+    <lastmod>2025-12-30</lastmod>
+  </url>
+  <!-- @addon-end -->
+</urlset>

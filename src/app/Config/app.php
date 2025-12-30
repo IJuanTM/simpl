@@ -9,6 +9,9 @@ const TIMEZONE = 'UTC'; // Change to your desired timezone, see https://www.php.
 define('APP_NAME', $_ENV['APP_NAME']);
 define('APP_URL', $_ENV['APP_URL']);
 
+// Session configuration
+const SESSION_LIFETIME = 3; // in days
+
 // Redirect configuration
 const REDIRECT = 'home';
 const ERROR_AUTO_REDIRECT = true;
