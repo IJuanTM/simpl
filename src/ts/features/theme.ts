@@ -14,7 +14,7 @@ export const themeModule = {
 
   getNext: (): typeof themes[number] => {
     const currentIndex = themes.findIndex(t => t.name === themeModule.getCurrent().name);
-    return themes[(currentIndex + 1) % themes.length];
+    return themes[(currentIndex + 1) % themes.length]!;
   },
 
   set: (theme: typeof themes[number]): void => {
