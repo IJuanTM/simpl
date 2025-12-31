@@ -21,12 +21,20 @@ div.code-block {
     display: none;
     cursor: pointer;
 
-    > i {
-      pointer-events: none;
-    }
-
     @include hover-focus {
       color: var(--text-75);
+    }
+
+    > i {
+      pointer-events: none;
+
+      &.fa-check {
+        color: $green;
+
+        @include hover-focus {
+          color: $green-dark;
+        }
+      }
     }
   }
 
