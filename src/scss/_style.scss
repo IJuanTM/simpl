@@ -1,7 +1,9 @@
+@use "sass:map";
 @use "config/abstracts/mixins" as *;
 @use "config/vars/colors" as *;
 @use "config/vars/fonts" as *;
 @use "config/vars/sizes" as *;
+@use "config/vars/breakpoints" as *;
 
 // Generate CSS variables for themes set in config
 @include set-themes();
@@ -11,6 +13,10 @@
 html {
   font-size: clamp(.875rem, .25vw + .75rem, 1.125rem);
   scroll-behavior: smooth;
+
+  @media (max-height: map.get($breakpoints, lg)) {
+    font-size: clamp(.75rem, .25vw + .75rem, 1rem);
+  }
 }
 
 body {
