@@ -1,4 +1,4 @@
-import {storage} from '../utils/storage';
+import {storage} from '../utils/storage.ts';
 
 const cookie = document.querySelector('section.cookie') as HTMLElement | null;
 

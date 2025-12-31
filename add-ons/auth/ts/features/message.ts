@@ -1,4 +1,4 @@
-import {inputModule} from './input';
+import {inputModule} from './input.ts';
 
 const messageTextarea = document.querySelector('textarea.message-field') as HTMLTextAreaElement | null;
 const clearMessageButton = document.querySelector('p.clear-message') as HTMLElement | null;

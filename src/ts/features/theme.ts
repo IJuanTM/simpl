@@ -1,4 +1,4 @@
-import {storage} from '../utils/storage';
+import {storage} from '../utils/storage.ts';
 
 const themeSwitch = document.querySelector('div.theme-switch') as HTMLElement | null;
 const themes = [
