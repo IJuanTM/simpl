@@ -290,6 +290,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 #### Version 1.6.1 (2025-12-31)
 
 * Small formatting changes and improvements
+* Added a code block to the landing page with the command to install add-ons using the npx tool
 
 <br>
 
