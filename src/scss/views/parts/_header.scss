@@ -146,6 +146,18 @@ header {
           }
         }
 
+        &.icon {
+          > i {
+            font-size: 2rem;
+          }
+
+          @include hover-focus {
+            > i {
+              color: var(--text-75);
+            }
+          }
+        }
+
         &.active {
           @include breakpoint-down(lg) {
             position: relative;

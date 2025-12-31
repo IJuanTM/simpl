@@ -1,0 +1,50 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+div.code-block {
+  padding: 1rem;
+  text-decoration: none;
+  border-radius: .5rem;
+  background-color: var(--bg-section);
+
+  code {
+    > span.command-argument {
+      color: $simpl;
+    }
+
+    > span.command-arguments {
+      color: var(--text-muted);
+    }
+  }
+
+  > span.copy-code {
+    display: none;
+    cursor: pointer;
+
+    @include breakpoint-down(sm) {
+      display: inline-flex;
+    }
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+
+    > i {
+      pointer-events: none;
+
+      &.fa-check {
+        color: $green;
+
+        @include hover-focus {
+          color: $green-dark;
+        }
+      }
+    }
+  }
+
+  @include hover-focus {
+    > span.copy-code {
+      display: inline-flex;
+    }
+  }
+}

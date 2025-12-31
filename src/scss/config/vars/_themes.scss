@@ -28,6 +28,7 @@ $themes: (
   light: (
     text: $dark-0,
     text-inverse: $light-0,
+    text-muted: rgba($dark-0, .5),
     bg-main: $light-2,
     bg-content: $light-1,
     bg-section: $light-3,
@@ -54,6 +55,7 @@ $themes: (
   dark: (
     text: $light-0,
     text-inverse: $dark-0,
+    text-muted: rgba($light-0, .5),
     bg-main: $dark-2,
     bg-content: $dark-1,
     bg-section: $dark-3,

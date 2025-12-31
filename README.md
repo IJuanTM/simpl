@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl)
+[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
 
 # Simpl
 
@@ -11,12 +11,12 @@
 
 <br>
 
-[![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net)
-[![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org)
-[![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org)
-[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org)
-[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev)
+[![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
+[![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
+[![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
+[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com/)
+[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -48,10 +48,10 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net) >= 8.4.x
-* [Composer](https://getcomposer.org) >= 2.9.x
-* [Node.js](https://nodejs.org) >= 24.x.x
-* [npm](https://www.npmjs.com) >= 11.x.x
+* [PHP](https://www.php.net/) >= 8.4.x
+* [Composer](https://getcomposer.org/) >= 2.9.x
+* [Node.js](https://nodejs.org/) >= 24.x.x
+* [npm](https://www.npmjs.com/) >= 11.x.x
 
 ### Step 1: Download Simpl
 
@@ -71,9 +71,9 @@ Available commands:
 
 Alternatively, you can also set up a new Simpl project manually by following these steps:
 
-- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com) or [XAMPP](https://www.apachefriends.org) if you're on Windows, or plain [Apache](https://httpd.apache.org) if you're on Linux.
+- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
 
-- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com).
+- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
 
 ### Step 2: Run composer install
 
@@ -287,6 +287,11 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Fix for missing constant error introduced in version 1.5.0
 * Added sitemap.xml file to the auth add-on for its pages
 
+#### Version 1.6.1 (2025-12-31)
+
+* Small formatting changes and improvements
+* Added a code block to the landing page with the command to install add-ons using the npx tool
+
 <br>
 
 ## Credits
@@ -299,16 +304,16 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 #### Development
 
-* [browser-sync](https://browsersync.io)
+* [browser-sync](https://browsersync.io/)
 * [npm-run-all](https://github.com/mysticatea/npm-run-all/)
-* [sass](https://sass-lang.com)
-* [terser](https://terser.org)
-* [typescript](https://www.typescriptlang.org)
-* [vite](https://vite.dev)
+* [sass](https://sass-lang.com/)
+* [terser](https://terser.org/)
+* [typescript](https://www.typescriptlang.org/)
+* [vite](https://vite.dev/)
 
 #### Production
 
-* [@fortawesome/fontawesome-free](https://fontawesome.com)
+* [@fortawesome/fontawesome-free](https://fontawesome.com/)
 * [hamburgers](https://jonsuh.com/hamburgers/)
 * [the-new-css-reset](https://elad2412.github.io/the-new-css-reset/)
 

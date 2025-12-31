@@ -1,7 +1,7 @@
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
-.card {
+*.card {
   position: relative;
   overflow: hidden;
   max-width: 32rem !important;
@@ -33,7 +33,7 @@
     }
   }
 
-  .card-title {
+  *.card-title {
     color: $simpl;
   }
 }

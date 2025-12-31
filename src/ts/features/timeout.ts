@@ -19,12 +19,10 @@ export const timeoutModule = {
     if (item.classList.contains('alert')) {
       if (item.classList.contains('global')) item.classList.add('invisible');
       else timeoutModule.handleAlertCollapse(item);
-    } else {
-      item.removeAttribute('inert');
-    }
+    } else item.removeAttribute('inert');
   },
 
-  init: (): void => {
+  onLoad: (): void => {
     document.querySelectorAll('[data-timeout]').forEach((item: Element) => {
       const timeout = parseInt((item as HTMLElement).getAttribute('data-timeout') || '0');
       setTimeout(() => timeoutModule.process(item as HTMLElement), timeout);
