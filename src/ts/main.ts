@@ -9,7 +9,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import "hamburgers/dist/hamburgers.min.css";
 
 // Simpl attribution
-console.info('This website is made using the Simpl framework. Read more about Simpl here: https://www.github.com/IJuanTM/simpl');
+console.info('This website is made using the Simpl framework. Read more about Simpl here: https://www.github.com/IJuanTM/simpl/');
 
 // Initialize modules
 menuModule.init();
