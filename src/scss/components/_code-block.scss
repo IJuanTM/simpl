@@ -21,6 +21,10 @@ div.code-block {
     display: none;
     cursor: pointer;
 
+    @include breakpoint-down(sm) {
+      display: inline-flex;
+    }
+
     @include hover-focus {
       color: var(--text-75);
     }

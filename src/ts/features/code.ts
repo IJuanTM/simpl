@@ -33,9 +33,13 @@ export const codeModule = {
             textarea.value = text;
             textarea.style.position = 'fixed';
             textarea.style.opacity = '0';
+            textarea.setAttribute('readonly', '');
+
             document.body.appendChild(textarea);
+
             textarea.select();
             document.execCommand('copy');
+
             document.body.removeChild(textarea);
 
             updateIcon();
