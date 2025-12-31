@@ -2,6 +2,7 @@ import {menuModule} from './features/menu.ts';
 import {cookieModule} from './features/cookie.ts';
 import {themeModule} from './features/theme.ts';
 import {timeoutModule} from './features/timeout.ts';
+import {codeModule} from "./features/code.ts";
 
 // Import external stylesheets for Vite to bundle them, local stylesheets are handled by sass
 import "the-new-css-reset/css/reset.css";
@@ -20,5 +21,6 @@ themeModule.init();
 window.addEventListener('load', () => {
   menuModule.setActive();
   menuModule.setTabIndex();
-  timeoutModule.init();
+  timeoutModule.onLoad();
+  codeModule.onLoad();
 });

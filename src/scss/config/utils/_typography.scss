@@ -6,7 +6,7 @@ h2, [data-typo="h2"],
 h3, [data-typo="h3"],
 h4, [data-typo="h4"],
 h5, [data-typo="h5"] {
-  font-family: $head, sans-serif;
+  font-family: $head;
   font-weight: 700;
 }
 
@@ -40,6 +40,13 @@ small, [data-typo="small"] {
 
 // ---------------------------------------------------------------- //
 
+pre, code {
+  font-family: $mono;
+  font-size: .875rem;
+}
+
+// ---------------------------------------------------------------- //
+
 a.link, [data-typo="a"].link {
   &.underline {
     text-decoration: underline;
@@ -61,10 +68,16 @@ a.link, [data-typo="a"].link {
 
 // ---------------------------------------------------------------- //
 
-.text-center {
+*.text-center {
   text-align: center;
 }
 
-.text-end {
+*.text-end {
   text-align: end;
+}
+
+// ---------------------------------------------------------------- //
+
+*.text-muted {
+  color: var(--text-muted) !important;
 }
