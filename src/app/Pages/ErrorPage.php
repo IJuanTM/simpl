@@ -17,7 +17,7 @@ class ErrorPage
         $errorCode = ErrorCode::tryFrom((int)($page->urlArr['subpages'][0] ?? 0));
 
         // Check if the code is set in the URL and is valid
-        if ($errorCode) {
+        if (!$errorCode) {
             // Redirect to the 404 page if the subpage is not set or is invalid
             PageController::error(ErrorCode::NOT_FOUND);
             exit;
