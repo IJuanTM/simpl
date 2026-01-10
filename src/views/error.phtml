@@ -19,7 +19,7 @@ use app\Models\Url;
 
       <div class="row">
         <div class="col center-x">
-          <p>Click <a class="link underline" href="<?= Url::to(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page">here</a> to go back to the <?= REDIRECT ?> page.</p>
+          <p>Click <a class="link underline" href="<?= Url::to($this->pageObj->redirectPage) ?>" aria-label="Link to <?= $this->pageObj->redirectPage ?> page">here</a> to go back to the <?= $this->pageObj->redirectPage ?> page.</p>
         </div>
       </div>
     </div>

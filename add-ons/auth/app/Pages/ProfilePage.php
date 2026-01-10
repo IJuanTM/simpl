@@ -10,6 +10,7 @@ use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Models\Url;
 
@@ -22,7 +23,7 @@ class ProfilePage
     {
         // Check if the user is logged in
         if (!SessionController::get('user')) {
-            PageController::redirect('error/403');
+            PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }
 

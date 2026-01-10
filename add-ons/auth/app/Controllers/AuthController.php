@@ -4,6 +4,7 @@ namespace app\Controllers;
 
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\ErrorCode;
 use app\Models\Url;
 use app\Utils\Log;
 use Exception;
@@ -281,7 +282,7 @@ class AuthController
         if (SessionController::get('user')['role'] !== null && in_array(SessionController::get('user')['role'], $roles, true)) return;
         else {
             // Redirect to error page
-            PageController::redirect('error/403');
+            PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }
     }

@@ -2,6 +2,7 @@
 
 namespace app\Controllers;
 
+use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Models\Url;
 use app\Utils\Log;
@@ -48,7 +49,7 @@ class PageController extends Page
                 if (DEV) Log::error("Page \"$page\" was called as an API endpoint, but no page object or API method was found");
 
                 // Redirect to the 404 page
-                self::redirect('error/404');
+                self::error(ErrorCode::NOT_FOUND);
                 return;
             }
 
@@ -59,6 +60,18 @@ class PageController extends Page
 
         // Render the page
         $this->render();
+    }
+
+    /**
+     * Redirect to a specific error page with the given error code and optional redirect URL.
+     *
+     * @param ErrorCode $code The error code
+     * @param string|null $redirect The optional redirect URL
+     */
+    public static function error(ErrorCode $code, string|null $redirect = null): void
+    {
+        // Redirect to the error page with the given code and optional redirect parameter
+        self::redirect("error/$code->value" . ($redirect ? '?redirect=' . urlencode($redirect) : ''));
     }
 
     /**
@@ -74,26 +87,29 @@ class PageController extends Page
     }
 
     /**
-     * Render the page by loading the needed HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
+     * Render the page by loading the HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
      */
     private function render(): void
     {
         // Get start of HTML and the HEAD
         $this->part('top');
 
-        // Get the page name
+        // Get the page name and subpage
         $page = $this->urlArr['page'];
+        $subpage = $this->urlArr['subpages'][0] ?? null;
 
-        // Get the file from the views folder
-        $file = BASEDIR . "/views/$page.phtml";
+        // Get the file from the views folder, check for subpage first
+        $file = $subpage && is_file(BASEDIR . "/views/$page/$subpage.phtml")
+            ? BASEDIR . "/views/$page/$subpage.phtml"
+            : BASEDIR . "/views/$page.phtml";
 
-        // Check if the file exists, if not redirect to the 404 page
+        // Check if the file exists, if not, redirect to the 404 page
         if (!is_file($file)) {
             // Log the error if the environment is development
-            if (DEV) Log::error("Could not find view \"$page\"");
+            if (DEV) Log::error("Could not find view \"$page\"" . ($subpage ? "/$subpage" : ''));
 
             // Redirect to the 404 page
-            self::redirect('error/404');
+            self::error(ErrorCode::NOT_FOUND);
             return;
         }
 
@@ -105,7 +121,7 @@ class PageController extends Page
     }
 
     /**
-     * Load the needed HTML parts. It takes a name as input and loads the corresponding part from the parts folder.
+     * Load the HTML parts. It takes a name as input and loads the corresponding part from the 'parts' folder.
      *
      * @param string $name The name of the part to load
      */
@@ -114,7 +130,7 @@ class PageController extends Page
         // Get the file from the parts folder
         $file = BASEDIR . "/views/parts/$name.phtml";
 
-        // Check if the file exists, if so require it
+        // Check if the file exists, if so, require it
         if (is_file($file)) {
             require_once $file;
             return;

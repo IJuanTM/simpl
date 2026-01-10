@@ -3,6 +3,7 @@
 namespace app\Database;
 
 use app\Controllers\PageController;
+use app\Enums\ErrorCode;
 use app\Utils\Log;
 use DateMalformedStringException;
 use DateTime;
@@ -251,7 +252,7 @@ class DB
     {
         // Log the error message and redirect to the 500 error page
         Log::error($e->getMessage());
-        PageController::redirect('error/500');
+        PageController::error(ErrorCode::INTERNAL_ERROR);
         exit;
     }
 
