@@ -3,52 +3,50 @@ use app\Controllers\FormController;
 use app\Models\Url;
 ?>
 
-<section class="verify-account">
-  <div class="row center-x">
-    <form class="col g-row-2" method="POST" action="">
-      <div class="row">
-        <div class="col center-x">
-          <h1 data-typo="h2">Verify account</h1>
+<section class="row verify-account center-x">
+  <form class="col g-row-2" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Verify account</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details">A verification code has been sent to your email address. Please enter the code below to verify your account.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="code">Code: <span class="required">*</span></label>
+        </div>
+        <input class="col hidden" id="code" type="text" name="code" maxlength="8" value="<?= $_POST['code'] ?? '' ?>" hidden aria-hidden="true">
+        <div class="col center-x g-col-1">
+          <?php for ($i = 0; $i < 8; $i++): ?>
+            <input type="text" class="digit" maxlength="1" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
+          <?php endfor ?>
         </div>
       </div>
+    </div>
 
-      <?= FormController::formAlerts() ?>
-
-      <div class="row">
-        <div class="col">
-          <p class="form-details">A verification code has been sent to your email address. Please enter the code below to verify your account.</p>
-        </div>
+    <div class="row">
+      <div class="col">
+        <p class="form-details">It may take a few minutes for the email to arrive. If you don't see it in your inbox, please check your spam folder.</p>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col form-group g-row-0.5">
-          <div class="row">
-            <label class="col" for="code">Code: <span class="required">*</span></label>
-          </div>
-          <input class="col hidden" id="code" type="text" name="code" maxlength="8" value="<?= $_POST['code'] ?? '' ?>" hidden aria-hidden="true">
-          <div class="col center-x g-col-1">
-            <?php for ($i = 0; $i < 8; $i++): ?>
-              <input type="text" class="digit" maxlength="1" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
-            <?php endfor ?>
-          </div>
-        </div>
+    <div class="row">
+      <div class="col">
+        <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('api/resend-verification/' . ($this->urlArr['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here to resend</a>.</p>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col">
-          <p class="form-details">It may take a few minutes for the email to arrive. If you don't see it in your inbox, please check your spam folder.</p>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="col">
-          <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('api/resend-verification/' . ($this->urlArr['subpages'][0] ?? '')) ?>" aria-label="Link to resend verification code email">Click here to resend</a>.</p>
-        </div>
-      </div>
-
-      <div class="row g-2 center-x">
-        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the email verification form"><i class="fas fa-right-to-bracket"></i>Verify</button>
-      </div>
-    </form>
-  </div>
+    <div class="row g-2 center-x">
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the email verification form"><i class="fas fa-right-to-bracket"></i>Verify</button>
+    </div>
+  </form>
 </section>

@@ -7,103 +7,99 @@ use app\Controllers\FormController;
 
   <?php if (!$this->pageObj->user['is_active']) : ?>
 
-    <section class="users">
-      <div class="row center-x">
-        <form class="col g-row-2" method="POST" action="">
-          <div class="row">
-            <div class="col center-x">
-              <h3>Restore user</h3>
+    <section class="row users center-x">
+      <form class="col g-row-2" method="POST" action="">
+        <div class="row">
+          <div class="col center-x">
+            <h3>Restore user</h3>
+          </div>
+        </div>
+
+        <?= FormController::formAlerts() ?>
+
+        <div class="row form-row g-1">
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="id">Id:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
+              <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->user['id'] ?>" readonly>
             </div>
           </div>
 
-          <?= FormController::formAlerts() ?>
-
-          <div class="row form-row g-1">
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="id">Id:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
-                <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->user['id'] ?>" readonly>
-              </div>
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="last_update">Last update:</label>
             </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
+              <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->pageObj->user['last_update'] ?>" readonly>
+            </div>
+          </div>
+        </div>
 
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="last_update">Last update:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
-                <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->pageObj->user['last_update'] ?>" readonly>
-              </div>
+        <div class="row">
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="username">Username:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+              <input class="col" id="username" type="text" name="username" value="<?= $this->pageObj->user['username'] ?? '-' ?>" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="email">Email:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+              <input class="col" id="email" type="email" name="email" value="<?= $this->pageObj->user['email'] ?>" readonly>
+            </div>
+          </div>
+        </div>
+
+        <div class="row form-row g-1">
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="role">User role:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
+              <select class="col" id="role" name="role">
+                <option value="1" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 1 ? 'selected' : '' ?>>Admin</option>
+                <option value="2" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 2 ? 'selected' : '' ?>>User</option>
+              </select>
             </div>
           </div>
 
-          <div class="row">
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="username">Username:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-                <input class="col" id="username" type="text" name="username" value="<?= $this->pageObj->user['username'] ?? '-' ?>" readonly>
-              </div>
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="verified">Verified:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
+              <input class="col" id="verified" type="text" name="verified" value="<?= AuthController::isVerified($this->pageObj->user['id']) ? 'True' : 'False' ?>" readonly>
             </div>
           </div>
+        </div>
 
-          <div class="row">
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="email">Email:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-                <input class="col" id="email" type="email" name="email" value="<?= $this->pageObj->user['email'] ?>" readonly>
-              </div>
-            </div>
-          </div>
-
-          <div class="row form-row g-1">
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="role">User role:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-                <select class="col" id="role" name="role">
-                  <option value="1" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 1 ? 'selected' : '' ?>>Admin</option>
-                  <option value="2" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 2 ? 'selected' : '' ?>>User</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="col form-group g-row-0.5" inert>
-              <div class="row">
-                <label class="col" for="verified">Verified:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
-                <input class="col" id="verified" type="text" name="verified" value="<?= AuthController::isVerified($this->pageObj->user['id']) ? 'True' : 'False' ?>" readonly>
-              </div>
-            </div>
-          </div>
-
-          <div class="row g-2 center-x">
-            <a class="col link g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-            <button class="col button restore-user g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-wrench"></i>Restore</button>
-          </div>
-        </form>
-      </div>
+        <div class="row g-2 center-x">
+          <a class="col link g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+          <button class="col button restore-user g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-wrench"></i>Restore</button>
+        </div>
+      </form>
     </section>
 
   <?php else : ?>
 
-    <section class="users min-h-content center-x">
-      <div class="row">
-        <div class="col center-x">
-          <h5>User is not deleted.</h5>
-        </div>
+    <section class="row users min-h-content center-y">
+      <div class="col center-x">
+        <h5>User is not deleted.</h5>
       </div>
     </section>
 
@@ -111,11 +107,9 @@ use app\Controllers\FormController;
 
 <?php else : ?>
 
-  <section class="users min-h-content center-x">
-    <div class="row">
-      <div class="col center-x">
-        <h5>Could not find user.</h5>
-      </div>
+  <section class="row users min-h-content center-y">
+    <div class="col center-x">
+      <h5>Could not find user.</h5>
     </div>
   </section>
 

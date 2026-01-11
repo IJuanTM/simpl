@@ -4,70 +4,68 @@ use app\Controllers\SessionController;
 use app\Models\Url;
 ?>
 
-<section class="login">
-  <div class="row center-x">
-    <form class="col g-row-2" method="POST" action="">
-      <div class="row">
-        <div class="col center-x">
-          <h1 data-typo="h2">Login</h1>
+<section class="row login center-x">
+  <form class="col g-row-2" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Login</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
+        <div class="row">
+          <label class="col" for="email">Email: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+          <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? '' ?>" autocomplete="email" aria-label="Email input field">
         </div>
       </div>
+    </div>
 
-      <?= FormController::formAlerts() ?>
-
-      <div class="row">
-        <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
-          <div class="row">
-            <label class="col" for="email">Email: <span class="required">*</span></label>
-          </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-            <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? '' ?>" autocomplete="email" aria-label="Email input field">
-          </div>
+    <div class="row">
+      <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
+        <div class="row">
+          <label class="col" for="password">Password: <span class="required">*</span></label>
+          <div class="col password-warning end-x hidden">Caps lock is on!</div>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col form-group g-row-0.5" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
-          <div class="row">
-            <label class="col" for="password">Password: <span class="required">*</span></label>
-            <div class="col password-warning end-x hidden">Caps lock is on!</div>
-          </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-            <input class="col input-password" id="password" type="password" name="password" maxlength="50" placeholder="Enter password:" autocomplete="password" aria-label="Password input field">
-            <div class="col input-append center f-0"><i class="fas fa-eye password-toggle"></i></div>
-          </div>
-          <div class="row">
-            <div class="col">
-              <p class="form-details">
-                <a class="link underline" href="<?= Url::to('forgot-password') ?>" aria-label="Link to forgot password page">Forgot your password?</a>
-              </p>
-            </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+          <input class="col input-password" id="password" type="password" name="password" maxlength="50" placeholder="Enter password:" autocomplete="password" aria-label="Password input field">
+          <div class="col input-append center f-0"><i class="fas fa-eye password-toggle"></i></div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <p class="form-details">
+              <a class="link underline" href="<?= Url::to('forgot-password') ?>" aria-label="Link to forgot password page">Forgot your password?</a>
+            </p>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col">
-          <p class="form-details">Don't have an account? <a class="link underline" href="<?= Url::to('register') ?>" aria-label="Link to register page">Click here to register</a>.</p>
-        </div>
+    <div class="row">
+      <div class="col">
+        <p class="form-details">Don't have an account? <a class="link underline" href="<?= Url::to('register') ?>" aria-label="Link to register page">Click here to register</a>.</p>
       </div>
+    </div>
 
-      <div class="row g-col-1 center" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
-        <div class="col f-0">
-          <p>Stay logged in?</p>
-        </div>
-        <div class="col f-0">
-          <label for="remember">
-            <input class="remember-checkbox" id="remember" type="checkbox" name="remember" autocomplete="off" aria-label="Checkbox to remember login">
-          </label>
-        </div>
+    <div class="row g-col-1 center" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
+      <div class="col f-0">
+        <p>Stay logged in?</p>
       </div>
+      <div class="col f-0">
+        <label for="remember">
+          <input class="remember-checkbox" id="remember" type="checkbox" name="remember" autocomplete="off" aria-label="Checkbox to remember login">
+        </label>
+      </div>
+    </div>
 
-      <div class="row g-2 center-x">
-        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
-      </div>
-    </form>
-  </div>
+    <div class="row g-2 center-x">
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
+    </div>
+  </form>
 </section>

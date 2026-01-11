@@ -2,84 +2,82 @@
 use app\Controllers\FormController;
 ?>
 
-<section class="contact">
-  <div class="row center-x">
-    <form class="col g-row-2" method="POST" action="">
-      <div class="row">
-        <div class="col center-x">
-          <h1 data-typo="h2">Contact</h1>
+<section class="row contact center-x">
+  <form class="col g-row-2" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Contact</h1>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <p>If you have any questions or need help, please feel free to contact us. Fill out the form below, and we will get back to you as soon as possible.</p>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="name">Name: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+          <input class="col" id="name" type="text" name="name" maxlength="100" placeholder="Enter name:" value="<?= $_POST['name'] ?? '' ?>" autocomplete="name" aria-label="Name input field">
         </div>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col">
-          <p>If you have any questions or need help, please feel free to contact us. Fill out the form below, and we will get back to you as soon as possible.</p>
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="email">Email: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+          <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? '' ?>" autocomplete="email" aria-label="Email input field">
         </div>
       </div>
+    </div>
 
-      <?= FormController::formAlerts() ?>
-
-      <div class="row">
-        <div class="col form-group g-row-0.5">
-          <div class="row">
-            <label class="col" for="name">Name: <span class="required">*</span></label>
-          </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-            <input class="col" id="name" type="text" name="name" maxlength="100" placeholder="Enter name:" value="<?= $_POST['name'] ?? '' ?>" autocomplete="name" aria-label="Name input field">
-          </div>
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="subject">Subject: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['subject'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-heading"></i></div>
+          <input class="col" id="subject" name="subject" maxlength="100" placeholder="Enter subject:" value="<?= $_POST['subject'] ?? '' ?>" autocomplete="off" aria-label="Subject input field">
         </div>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col form-group g-row-0.5">
-          <div class="row">
-            <label class="col" for="email">Email: <span class="required">*</span></label>
-          </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-            <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? '' ?>" autocomplete="email" aria-label="Email input field">
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="message">Message: <span class="required">*</span></label>
+          <div class="col end-x end-y">
+            <p class="form-link clear-message" inert>Clear</p>
           </div>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col form-group g-row-0.5">
-          <div class="row">
-            <label class="col" for="subject">Subject: <span class="required">*</span></label>
-          </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['subject'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-heading"></i></div>
-            <input class="col" id="subject" name="subject" maxlength="100" placeholder="Enter subject:" value="<?= $_POST['subject'] ?? '' ?>" autocomplete="off" aria-label="Subject input field">
-          </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['message'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-message"></i></div>
+          <textarea class="col message-field" id="message" name="message" maxlength="1000" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= $_POST['message'] ?? '' ?></textarea>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col form-group g-row-0.5">
-          <div class="row">
-            <label class="col" for="message">Message: <span class="required">*</span></label>
-            <div class="col end-x end-y">
-              <p class="form-link clear-message" inert>Clear</p>
-            </div>
+        <div class="row">
+          <div class="col">
           </div>
-          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['message'])) ? 'error' : '' ?>">
-            <div class="col input-prepend center f-0"><i class="fas fa-message"></i></div>
-            <textarea class="col message-field" id="message" name="message" maxlength="1000" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= $_POST['message'] ?? '' ?></textarea>
-          </div>
-          <div class="row">
-            <div class="col">
-            </div>
-            <div class="col end-x">
-              <p class="form-details message-warning"><span class="message-length">0</span>/1000</p>
-            </div>
+          <div class="col end-x">
+            <p class="form-details message-warning"><span class="message-length">0</span>/1000</p>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="row g-2 center-x">
-        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"><i class="fas fa-paper-plane"></i>Send</button>
-      </div>
-    </form>
-  </div>
+    <div class="row g-2 center-x">
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"><i class="fas fa-paper-plane"></i>Send</button>
+    </div>
+  </form>
 </section>

@@ -2,24 +2,26 @@
 use app\Models\Url;
 ?>
 
-<section class="error min-h-content f-col g-row-1 center-x">
-  <div class="row">
-    <div class="col center-x">
-      <h1><?= $this->pageObj->code ?></h1>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col f-col g-row-1">
-      <div class="row">
-        <div class="col center-x">
-          <p data-typo="h3"><?= $this->pageObj->message ?></p>
-        </div>
+<section class="row error min-h-content center-y">
+  <div class="col f-col g-row-1">
+    <div class="row">
+      <div class="col center-x">
+        <h1><?= $this->pageObj->code ?></h1>
       </div>
+    </div>
 
-      <div class="row">
-        <div class="col center-x">
-          <p>Click <a class="link underline" href="<?= Url::to($this->pageObj->redirectPage) ?>" aria-label="Link to <?= $this->pageObj->redirectPage ?> page">here</a> to go back to the <?= $this->pageObj->redirectPage ?> page.</p>
+    <div class="row">
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col center-x">
+            <p data-typo="h3"><?= $this->pageObj->message ?></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col center-x">
+            <p>Click <a class="link underline" href="<?= Url::to($this->pageObj->redirectPage) ?>" aria-label="Link to <?= $this->pageObj->redirectPage ?> page">here</a> to go back to the <?= $this->pageObj->redirectPage ?> page.</p>
+          </div>
         </div>
       </div>
     </div>
