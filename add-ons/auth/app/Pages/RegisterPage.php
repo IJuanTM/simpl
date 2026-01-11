@@ -68,13 +68,13 @@ class RegisterPage
      */
     private function register(string $email, string $password): void
     {
+        // Hash the password
+        $password = password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
+
         // Push the new user to the database
         DB::insert(
             'users',
-            [
-                'email' => $email,
-                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
-            ]
+            compact('email', 'password')
         );
 
         // Get the id of the new user
@@ -92,7 +92,7 @@ class RegisterPage
 
         if (EMAIL_VERIFICATION_REQUIRED) {
             // Generate a verification token
-            $token = AuthController::generateToken(4);
+            $token = AuthController::generateToken(8);
 
             // Set the verification token in the database
             DB::insert(

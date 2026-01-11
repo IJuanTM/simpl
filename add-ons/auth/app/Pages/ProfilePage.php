@@ -54,11 +54,15 @@ class ProfilePage
         }
 
         // Update the user
-        $this->update(SessionController::get('user')['id'], FormController::sanitize($_POST['username']), $_POST['email']);
+        $this->update(
+            SessionController::get('user')['id'],
+            FormController::sanitize($_POST['username']),
+            $_POST['email']
+        );
     }
 
     /**
-     * Updates user profile information in database.
+     * Updates user profile information in the database.
      *
      * @param int $id User ID
      * @param string $username New username
@@ -84,7 +88,7 @@ class ProfilePage
 
             if (EMAIL_VERIFICATION_REQUIRED) {
                 // Generate a verification token
-                $token = AuthController::generateToken(4);
+                $token = AuthController::generateToken(8);
 
                 // Set the verification token in the database
                 DB::insert(
@@ -253,7 +257,7 @@ class ProfilePage
     }
 
     /**
-     * Removes user's profile image.
+     * Removes a user's profile image.
      */
     private static function deleteProfileImage(): void
     {

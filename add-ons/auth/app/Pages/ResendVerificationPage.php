@@ -15,7 +15,7 @@ use app\Models\Page;
 class ResendVerificationPage
 {
     /**
-     * Validates user ID and initiates verification email resend process.
+     * Validates user ID and initiates a verification email resend process.
      *
      * @param Page $page Page object containing URL parameters
      */
@@ -50,14 +50,14 @@ class ResendVerificationPage
     }
 
     /**
-     * Generates new verification token and updates database.
+     * Generates a new verification token and updates the database.
      *
      * @param int $id User ID
      */
     private function resendVerification(int $id): void
     {
         // Generate a new verification token
-        $token = AuthController::generateToken(4);
+        $token = AuthController::generateToken(8);
 
         // Update the code in the database for the user
         DB::update(

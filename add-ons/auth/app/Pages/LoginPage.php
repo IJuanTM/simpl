@@ -259,8 +259,8 @@ class LoginPage
 
         // Check if the user has the remember me checkbox checked
         if (isset($_POST['remember'])) {
-            // Generate a remember token
-            $token = AuthController::generateToken(16);
+            // Generate a 'remember' token
+            $token = AuthController::generateToken();
 
             // Timestamp for the cookie expiration
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
@@ -278,7 +278,7 @@ class LoginPage
     }
 
     /**
-     * Stores remember-me token in database.
+     * Stores remember-me token in the database.
      *
      * @param int $id User ID
      * @param string $token Remember token

@@ -16,18 +16,18 @@ class AuthController
 {
     public function __construct()
     {
-        // Log in the user if the remember cookie is set
+        // Log in the user if the 'remember' cookie is set
         if (isset($_COOKIE['remember']) && !SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
     }
 
     /**
-     * Automatically logs in a user using a remember token.
+     * Automatically logs in a user using a 'remember' token.
      *
-     * @param string $rememberToken Token from cookie
+     * @param string $rememberToken Token stored in the 'remember' cookie
      */
     public static function rememberLogin(string $rememberToken): void
     {
-        // Get the remember token from the database
+        // Get the 'remember' token from the database
         $token = DB::single(
             '*',
             'tokens',
@@ -85,7 +85,7 @@ class AuthController
             ]
         );
 
-        // Refresh the remember cookie
+        // Refresh the 'remember' cookie
         setcookie('remember', $rememberToken, $timestamp, '/');
     }
 
@@ -150,7 +150,7 @@ class AuthController
     }
 
     /**
-     * Returns a message detailing the password requirements based on current configuration.
+     * Returns a message detailing the password requirements based on the current configuration.
      *
      * @return array An array containing the regex pattern and the error message
      */
@@ -158,7 +158,7 @@ class AuthController
     {
         static $cache = null;
 
-        // Return cached result if available
+        // Return the cached result if available
         if ($cache !== null) return $cache;
 
         $rules = array_filter([
@@ -214,20 +214,33 @@ class AuthController
     }
 
     /**
-     * Generates a random token for verification or password reset.
+     * Generates a random password.
      *
-     * @param int $bytes Number of random bytes (token length = bytes*2)
+     * @param int $length Desired character length of output
      *
-     * @return string|null Generated token or null on failure
+     * @return string|null Generated password or null on failure
      */
-    public static function generateToken(int $bytes): string|null
+    public static function generatePassword(int $length = 12): string|null
     {
-        // Limit the number of bytes to a maximum of 16 (32 characters)
-        $bytes = min($bytes, 16);
+        return self::generateToken($length, false);
+    }
 
+    /**
+     * Generates a random token or password.
+     *
+     * @param int $length Desired character length of output
+     * @param bool $uppercase Convert to uppercase (for tokens)
+     *
+     * @return string|null Generated string or null on failure
+     */
+    public static function generateToken(int $length = 32, bool $uppercase = true): string|null
+    {
         try {
-            // Generate a random string
-            return strtoupper(bin2hex(random_bytes($bytes)));
+            // Generate a random token of the specified length
+            $token = substr(bin2hex(random_bytes(min((int)ceil($length / 2), 16))), 0, $length);
+
+            // Return the token in the desired case
+            return $uppercase ? strtoupper($token) : $token;
         } catch (Exception $e) {
             // Log the error
             Log::error($e->getMessage());
@@ -410,7 +423,7 @@ class AuthController
             'code' => $code
         ]);
 
-        // Check if template was loaded successfully
+        // Check if the template was loaded successfully
         if ($contents === false) {
             FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
             return;
@@ -422,7 +435,7 @@ class AuthController
         // Redirect the user to the verification page
         PageController::redirect("verify-account/$id");
 
-        // Show appropriate alert based on email sending result
+        // Show appropriate alert based on the email sending result
         if ($result) {
             $message = $isResend
                 ? 'Success! A new verification email has been sent!'
@@ -434,5 +447,37 @@ class AuthController
                 : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
             AlertController::alert($message, AlertType::ERROR, 8);
         }
+    }
+
+    /**
+     * Sends an account creation email to the newly created user. This is called after an admin creates a new user.
+     *
+     * @param string $to User's email address
+     * @param string $password Generated password
+     */
+    public static function sendCreatedUserMail(string $to, string $password): void
+    {
+        // Get the template from the views/parts/mails folder
+        $contents = MailController::template('account-created', [
+            'title' => 'Account Created - ' . APP_NAME,
+            'link' => Url::to('login'),
+            'password' => $password
+        ]);
+
+        // Check if the template was loaded successfully
+        if ($contents === false) {
+            FormController::addAlert('An error occurred while sending the account creation email! Please contact support.', AlertType::ERROR);
+            return;
+        }
+
+        // Send the email and handle the result
+        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'An account has been created', $contents);
+
+        // Redirect to the users page
+        PageController::redirect('users');
+
+        // Show appropriate alert based on the email sending result
+        if ($result) AlertController::alert('Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
+        else AlertController::alert('The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
     }
 }

@@ -14,13 +14,15 @@ use app\Models\Page;
 /**
  * The UsersPage class is the controller for the users page.
  * It checks if the user is an admin when accessing this page.
- * It shows all the users in the database and allows the admin to edit, delete or restore a user.
+ * It shows all the users in the database and allows the admin to edit, delete, or restore a user.
  */
 class UsersPage
 {
     public int $page = 0;
     public array $user;
     public array $users;
+
+    public string $generatedPassword = '';
 
     public function __construct(Page $page)
     {
@@ -50,6 +52,12 @@ class UsersPage
 
         // Check if the user wants to perform a specific action
         if (isset($page->urlArr['subpages'][0])) {
+            // Check if the user wants to create a new user
+            if ($page->urlArr['subpages'][0] === 'create') {
+                // Generate a random password for the new user
+                $this->generatedPassword = AuthController::generatePassword();
+            }
+
             // Check if the user wants to edit a user, delete a user or restore a user
             if (in_array($page->urlArr['subpages'][0], ['edit', 'delete', 'restore'])) {
                 // Check if the user id is not given in the url
@@ -86,31 +94,62 @@ class UsersPage
      */
     private function post(Page $page): void
     {
+        // Check if the user wants to create a new user
+        if ($page->urlArr['subpages'][0] === 'create') {
+            // Validate the form fields
+            if (
+                !FormController::validate('username', ['maxLength' => 100]) ||
+                !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+                !FormController::validate('role', ['required', 'type' => 'number'])
+            ) return;
+
+            // Sanitize the email
+            $_POST['email'] = FormController::sanitize($_POST['email']);
+
+            // Check if the email is changed and if it is already in use by another user
+            if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
+                $_POST['email'] = '';
+
+                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+                return;
+            }
+
+            // Create the user
+            self::create(
+                $_POST['email'],
+                $this->generatedPassword,
+                $_POST['role'],
+                FormController::sanitize($_POST['username'])
+            );
+        }
+
         // Check if the user wants to edit a user and if the form is submitted
         if ($page->urlArr['subpages'][0] === 'edit') {
-            // Check if the email field is entered
-            if (empty($_POST['email'])) {
-                FormController::addAlert('Please enter a new email!', AlertType::WARNING);
-                PageController::redirect('users/edit/' . $_POST['id']);
-                return;
-            }
+            // Validate the form fields
+            if (
+                !FormController::validate('username', ['maxLength' => 100]) ||
+                !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+                !FormController::validate('role', ['required', 'type' => 'number'])
+            ) return;
 
-            // Check if the email field is not too long
-            if (strlen($_POST['email']) > 100) {
-                FormController::addAlert('The email is too long!', AlertType::WARNING);
-                PageController::redirect('users/edit/' . $_POST['id']);
-                return;
-            }
+            // Sanitize the email
+            $_POST['email'] = FormController::sanitize($_POST['email']);
 
-            // Check if the email is valid
-            if (!filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
-                FormController::addAlert('Please enter a valid email!', AlertType::WARNING);
-                PageController::redirect('users/edit/' . $_POST['id']);
+            // Check if the email is changed and if it is already in use by another user
+            if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
+                $_POST['email'] = SessionController::get('user')['email'];
+
+                FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 return;
             }
 
             // Update the user
-            self::update($_POST['id'], FormController::sanitize($_POST['username']), FormController::sanitize($_POST['email']), $_POST['role']);
+            self::update(
+                $_POST['id'],
+                FormController::sanitize($_POST['username']),
+                $_POST['email'],
+                $_POST['role']
+            );
         }
 
         // Check if the user wants to delete a user and if the form is submitted
@@ -125,32 +164,60 @@ class UsersPage
     }
 
     /**
+     * This method is for creating a new user.
+     * An administrator can create a new user with a username, email, password, and role.
+     *
+     * @param string $email
+     * @param string $rawPassword
+     * @param int $role
+     * @param string|null $username
+     */
+    private static function create(string $email, string $rawPassword, int $role, string|null $username = null): void
+    {
+        // Hash the password
+        $password = password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
+
+        // Insert the new user into the database
+        DB::insert(
+            'users',
+            compact('username', 'email', 'password')
+        );
+
+        // Get the id of the new user
+        $id = DB::single(
+            'id',
+            'users',
+            compact('email')
+        )['id'];
+
+        // Insert the user role into the database
+        DB::insert(
+            'user_roles',
+            [
+                'user_id' => $id,
+                'role_id' => $role
+            ]
+        );
+
+        // Send an email to the new user with their credentials
+        AuthController::sendCreatedUserMail($email, $rawPassword);
+
+        // Redirect to the users page with a success message
+        PageController::redirect('users');
+        AlertController::alert('Success! The user has been created!', AlertType::SUCCESS, 4);
+    }
+
+    /**
      * This method is for updating a user's profile.
-     * An administrator can update the user's name, email and role.
+     * An administrator can update the user's name, email, and role.
      *
      * @param int $id
      * @param string $username
      * @param string $email
      * @param int $role
      */
-    public static function update(int $id, string $username, string $email, int $role): void
+    private static function update(int $id, string $username, string $email, int $role): void
     {
-        // Get the user
-        $user = DB::single(
-            '*',
-            'users',
-            compact('id')
-        );
-
-        // Check if the email has changed and not already in use
-        if ($user['email'] !== $email && AuthController::checkEmail($email)) {
-            $_POST['email'] = $user['email'];
-
-            FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
-            PageController::redirect("users/edit/$id");
-            return;
-        }
-
         // Update the user in the database
         DB::update(
             'users',
@@ -175,7 +242,7 @@ class UsersPage
     }
 
     /**
-     * This method is for soft deleting a user in the database.
+     * This method is for soft-deleting a user in the database.
      *
      * @param int $id
      */

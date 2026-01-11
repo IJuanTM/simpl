@@ -69,7 +69,7 @@ class ForgotPasswordPage
             compact('email')
         )['id'];
 
-        // If there is a reset token in the database remove it
+        // If there is a reset token in the database, remove it
         if (DB::exists(
             'tokens',
             ['user_id' => $id, 'type' => 'reset'])
@@ -79,7 +79,7 @@ class ForgotPasswordPage
         );
 
         // Generate a reset token
-        $token = AuthController::generateToken(16);
+        $token = AuthController::generateToken();
 
         // Update the token in the database for the user
         DB::insert(
@@ -92,7 +92,7 @@ class ForgotPasswordPage
     }
 
     /**
-     * Sends password reset email with reset link.
+     * Sends password reset email with a reset link.
      *
      * @param int $id User ID
      * @param string $to User's email address
@@ -106,7 +106,7 @@ class ForgotPasswordPage
             'link' => Url::to("reset-password/$id/$token")
         ]);
 
-        // Check if template was loaded successfully
+        // Check if the template was loaded successfully
         if ($contents === false) {
             FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
             return;

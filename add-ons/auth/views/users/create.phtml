@@ -1,0 +1,74 @@
+<?php
+use app\Controllers\FormController;
+?>
+
+<section class="row users center-x">
+  <form class="col g-row-2" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h3>Create user</h3>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row form-row g-1">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="username">Username:</label>
+        </div>
+        <div class="row input-group">
+          <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+          <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username:" value="<?= $_POST['username'] ?? '' ?>">
+        </div>
+      </div>
+
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="role">User role: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group">
+          <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
+          <select class="col" id="role" name="role">
+            <option value="1" <?= ($_POST['role'] ?? '') === 1 ? 'selected' : '' ?>>Admin</option>
+            <option value="2" <?= ($_POST['role'] ?? '') === 2 ? 'selected' : '' ?>>User</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col form-group g-row-0.5">
+        <div class="row">
+          <label class="col" for="email">Email: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+          <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= $_POST['email'] ?? '' ?>">
+        </div>
+        <div class="row">
+          <div class="col">
+            <p class="form-details">The user will be sent an email with information about the created account, as well as including the generated password. Which they will have to change upon first login.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col form-group g-row-0.5" inert>
+        <div class="row">
+          <label class="col" for="password">Password: <span class="required">*</span></label>
+        </div>
+        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
+          <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+          <input class="col" id="password" type="password" name="password" maxlength="50" placeholder="Enter password:" value="<?= $this->pageObj->generatedPassword ?>" readonly>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <a class="col link g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+      <button class="col button edit-user g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-plus"></i>Create user</button>
+    </div>
+  </form>
+</section>

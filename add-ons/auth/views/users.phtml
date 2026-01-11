@@ -65,6 +65,11 @@ use app\Models\Url;
 
                 <?php endforeach ?>
 
+                <tr>
+                  <td class="row action-row g-col-1 center-y" colspan="10">
+                    <a class="col table-action f-0" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i> Create new user</a>
+                  </td>
+                </tr>
                 </tbody>
               </table>
             </div>
