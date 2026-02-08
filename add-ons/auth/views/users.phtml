@@ -13,7 +13,7 @@ use app\Models\Url;
     </div>
 
     <div class="row center-x">
-      <div class="col users-table f-col g-row-0.5">
+      <div class="col users-table f-col g-row-0.5 w-100">
 
         <?php if (count($this->pageObj->users) > $this->pageObj->page * 10) : ?>
 
@@ -66,8 +66,8 @@ use app\Models\Url;
                 <?php endforeach ?>
 
                 <tr>
-                  <td class="row action-row g-col-1 center-y" colspan="10">
-                    <a class="col table-action f-0" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i> Create new user</a>
+                  <td class="row create-row" colspan="10">
+                    <a class="col button create-user g-col-0.5 center" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
                   </td>
                 </tr>
                 </tbody>
@@ -76,12 +76,14 @@ use app\Models\Url;
           </div>
 
           <div class="row action-row g-col-1">
-            <div class="col f-0">
+            <div class="col">
               <p><?= ($this->pageObj->page * 10) + 1 ?> - <?= min((($this->pageObj->page + 1) * 10), count($this->pageObj->users)) ?> of <?= count($this->pageObj->users) ?> users</p>
             </div>
-            <div class="col users-pagination g-col-1 end-x">
-              <a class="users-action" href="<?= Url::to('users?page=' . ($this->pageObj->page - 1)) ?>" <?= $this->pageObj->page > 0 ?: 'inert' ?>><i class="fas fa-chevron-left"></i> Previous</a>
-              <a class="users-action" href="<?= Url::to('users?page=' . ($this->pageObj->page + 1)) ?>" <?= $this->pageObj->page < ceil(count($this->pageObj->users) / 10) - 1 ?: 'inert' ?>>Next <i class="fas fa-chevron-right"></i></a>
+            <div class="col">
+              <div class="row users-pagination g-col-1 end-x">
+                <a class="col users-action g-col-0.5 center-y f-0" href="<?= Url::to('users?page=' . ($this->pageObj->page - 1)) ?>" <?= $this->pageObj->page > 0 ?: 'inert' ?>><i class="fas fa-chevron-left"></i>Previous</a>
+                <a class="col users-action g-col-0.5 center-y f-0" href="<?= Url::to('users?page=' . ($this->pageObj->page + 1)) ?>" <?= $this->pageObj->page < ceil(count($this->pageObj->users) / 10) - 1 ?: 'inert' ?>>Next<i class="fas fa-chevron-right"></i></a>
+              </div>
             </div>
           </div>
 

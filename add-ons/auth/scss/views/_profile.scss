@@ -1,12 +1,7 @@
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
-section.profile div.profile-container {
-  padding: 3rem 4rem;
-  border: .125rem solid var(--border-muted);
-  border-radius: .5rem;
-  background-color: var(--bg-accent);
-
+section.profile {
   @include breakpoint-down(md) {
     padding: 2rem;
   }

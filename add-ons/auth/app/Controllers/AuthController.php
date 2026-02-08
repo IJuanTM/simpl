@@ -222,7 +222,7 @@ class AuthController
      */
     public static function generatePassword(int $length = 12): string|null
     {
-        return self::generateToken($length, false);
+        return self::generateToken($length);
     }
 
     /**

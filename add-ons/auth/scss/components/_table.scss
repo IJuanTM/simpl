@@ -1,3 +1,5 @@
+@use "../config/vars/themes" as *;
+
 div.table-container {
   overflow: hidden;
   border: .125rem solid var(--border-muted);
@@ -7,24 +9,49 @@ div.table-container {
     overflow-x: auto;
 
     table {
+      display: table;
       width: 100%;
+      border-collapse: separate;
 
-      th, td {
-        padding: .625rem .5rem;
-        vertical-align: middle;
-        white-space: nowrap;
+      tr {
+        display: table-row;
+
+        th, td {
+          line-height: 1;
+          display: table-cell;
+          padding: .625rem .5rem;
+          vertical-align: middle;
+          white-space: nowrap;
+        }
       }
 
-      th {
-        font-weight: 700;
-        background-color: var(--table-header);
+      thead {
+        display: table-header-group;
+
+        th {
+          font-weight: 700;
+          border-bottom: .125rem solid var(--border-muted);
+          background-color: var(--table-header);
+
+          &:not(:last-child) {
+            border-right: .0625rem solid var(--border-muted);
+          }
+        }
       }
 
-      tbody tr {
-        background-color: var(--table-row-odd);
+      tbody {
+        display: table-row-group;
 
-        &:nth-child(even) {
-          background-color: var(--table-row-even);
+        tr {
+          background-color: var(--table-row-odd);
+
+          > td:not(:last-child) {
+            border-right: .0625rem solid rgba($light-0, .125);
+          }
+
+          &:nth-child(even) {
+            background-color: var(--table-row-even);
+          }
         }
       }
     }

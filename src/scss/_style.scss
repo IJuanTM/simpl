@@ -12,6 +12,7 @@
 
 html {
   font-size: clamp(.875rem, .25vw + .75rem, 1.125rem);
+  line-height: 1.6;
   scroll-behavior: smooth;
 
   @media (max-height: map.get($breakpoints, lg)) {

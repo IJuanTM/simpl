@@ -9,7 +9,7 @@ use app\Controllers\SessionController;
   <?php if ($this->pageObj->user['id'] !== SessionController::get('user')['id']) : ?>
 
     <section class="row users center-x">
-      <form class="col g-row-2" method="POST" action="">
+      <form class="col g-row-2" method="POST" action="" data-track-form>
         <div class="row">
           <div class="col center-x">
             <h3>Edit user</h3>
