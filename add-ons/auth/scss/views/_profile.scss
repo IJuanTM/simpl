@@ -10,104 +10,94 @@ section.profile {
     flex: 0 0 auto;
   }
 
-  > div.row {
+  div.profile-row {
     @include breakpoint-down(lg) {
       flex-direction: column;
     }
 
-    div.profile-image-row {
-      @include breakpoint-up(md) {
-        width: 12rem;
+    form.profile-image {
+      position: relative;
+
+      > img {
+        max-width: 12rem;
+        border-radius: 50%;
       }
 
-      @include breakpoint-up(lg) {
-        width: 16rem;
-      }
+      > i {
+        font-size: 10rem;
+        width: auto;
 
-      form.profile-image {
-        position: relative;
-
-        > img {
-          max-width: 12rem;
-          border-radius: 50%;
+        @include breakpoint-up(md) {
+          font-size: 8rem;
         }
 
-        > i {
+        @include breakpoint-up(lg) {
           font-size: 10rem;
-          width: auto;
+        }
+      }
 
-          @include breakpoint-up(md) {
-            font-size: 8rem;
+      > div.profile-image-menu {
+        position: absolute;
+        display: none;
+        border-radius: 50%;
+        background-color: rgba(#000, .5);
+
+        > *.profile-action {
+          font-size: 1.5rem;
+          cursor: pointer;
+
+          &.edit {
+            color: #FFF;
+
+            &:has(i.fa-plus) {
+              font-size: 2rem;
+            }
+
+            &:hover {
+              color: rgba(#FFF, .75);
+            }
           }
 
-          @include breakpoint-up(lg) {
-            font-size: 10rem;
+          &.delete {
+            color: $red;
+
+            &:hover {
+              color: $red-dark;
+            }
           }
         }
+      }
 
-        > div.profile-image-menu {
+      &.loading {
+        pointer-events: none;
+
+        &::after {
+          font-family: "Font Awesome 7 Free", sans-serif;
+          font-size: 2rem;
+          font-weight: 900;
           position: absolute;
-          display: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          content: "\f110";
+          animation: spin 1s linear infinite;
+          pointer-events: none;
+          color: #FFF;
           border-radius: 50%;
           background-color: rgba(#000, .5);
+        }
+      }
 
-          > *.profile-action {
-            font-size: 1.5rem;
-            cursor: pointer;
-
-            &.edit {
-              color: #FFF;
-
-              &:has(i.fa-plus) {
-                font-size: 2rem;
-              }
-
-              &:hover {
-                color: rgba(#FFF, .75);
-              }
-            }
-
-            &.delete {
-              color: $red;
-
-              &:hover {
-                color: $red-dark;
-              }
-            }
-          }
+      &:hover {
+        > div.profile-image-menu {
+          display: flex;
         }
 
-        &.loading {
-          pointer-events: none;
-
-          &::after {
-            font-family: "Font Awesome 7 Free", sans-serif;
-            font-size: 2rem;
-            font-weight: 900;
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            content: "\f110";
-            animation: spin 1s linear infinite;
-            pointer-events: none;
-            color: #FFF;
-            border-radius: 50%;
-            background-color: rgba(#000, .5);
-          }
-        }
-
-        &:hover {
-          > div.profile-image-menu {
-            display: flex;
-          }
-
-          &::after {
-            display: flex;
-            background-color: rgba(#000, .5);
-          }
+        &::after {
+          display: flex;
+          background-color: rgba(#000, .5);
         }
       }
     }

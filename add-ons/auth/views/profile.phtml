@@ -15,8 +15,8 @@ use app\Models\Url;
 
     <?= FormController::formAlerts() ?>
 
-    <div class="row g-2 center-x">
-      <div class="col profile-image-row center-x f-0">
+    <div class="row profile-row g-4 center">
+      <div class="col center-x f-0">
         <form class="profile-image h-100" method="POST" action="" enctype="multipart/form-data">
           <?php $profileImage = AuthController::getProfileImage(SessionController::get('user')['id']); ?>
 
