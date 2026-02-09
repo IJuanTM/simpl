@@ -435,6 +435,105 @@ class AuthController
     }
 
     /**
+     * Retrieves a user's ID based on their username or email address.
+     *
+     * @param string $identifier Username or email
+     *
+     * @return int|null User ID or null if not found
+     */
+    public static function getUserIdByIdentifier(string $identifier): int|null
+    {
+        // Try to get user by email first
+        $user = DB::single('id', 'users', ['email' => $identifier]);
+
+        // If not found by email, try username
+        if (!$user) {
+            $user = DB::single('id', 'users', ['username' => $identifier]);
+        }
+
+        // Return the user id or null if not found
+        return $user ? (int)$user['id'] : null;
+    }
+
+    /**
+     * Checks if a username or email exists in the database.
+     *
+     * @param string $identifier Username or email to check
+     *
+     * @return bool Whether the identifier exists
+     */
+    public static function checkIdentifier(string $identifier): bool
+    {
+        // Check if the identifier exists as email or username
+        return DB::exists('users', ['email' => $identifier]) ||
+            DB::exists('users', ['username' => $identifier]);
+    }
+
+    /**
+     * Verifies a password against the stored hash using username or email.
+     *
+     * @param string $identifier Username or email
+     * @param string $password Password to check
+     *
+     * @return bool Whether the password is correct
+     */
+    public static function checkPasswordByIdentifier(string $identifier, string $password): bool
+    {
+        // Try to get user by email first
+        $user = DB::single('password', 'users', ['email' => $identifier]);
+
+        // If not found by email, try username
+        if (!$user) {
+            $user = DB::single('password', 'users', ['username' => $identifier]);
+        }
+
+        // Verify the password if user was found
+        return $user && password_verify($password, $user['password']);
+    }
+
+    /**
+     * Checks if a user account is active using username or email.
+     *
+     * @param string $identifier Username or email
+     *
+     * @return bool Whether the account is active
+     */
+    public static function isActiveByIdentifier(string $identifier): bool
+    {
+        // Try to get user by email first
+        $user = DB::single('is_active', 'users', ['email' => $identifier]);
+
+        // If not found by email, try username
+        if (!$user) {
+            $user = DB::single('is_active', 'users', ['username' => $identifier]);
+        }
+
+        // Check if the user is active
+        return $user && $user['is_active'] === 1;
+    }
+
+    /**
+     * Retrieves user email based on their username or email identifier.
+     *
+     * @param string $identifier Username or email
+     *
+     * @return string|null User email or null if not found
+     */
+    public static function getEmailByIdentifier(string $identifier): string|null
+    {
+        // Try to get user by email first
+        $user = DB::single('email', 'users', ['email' => $identifier]);
+
+        // If not found by email, try username
+        if (!$user) {
+            $user = DB::single('email', 'users', ['username' => $identifier]);
+        }
+
+        // Return the email or null if not found
+        return $user ? $user['email'] : null;
+    }
+
+    /**
      * Sends a verification email to the user and redirects them to the verification page.
      *
      * @param int $id User ID

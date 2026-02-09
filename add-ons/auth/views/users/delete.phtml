@@ -52,6 +52,38 @@ use app\Controllers\SessionController;
           </div>
         </div>
 
+        <div class="row form-row connected-row">
+          <div class="row">
+            <div class="col form-group g-row-0.5 f-g-2" inert>
+              <div class="row">
+                <label class="col" for="first_name">First name:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
+                <input class="col" id="first_name" type="text" name="first_name" placeholder="Enter first name:" value="<?= $this->pageObj->user['first_name'] ?? '-' ?>" readonly>
+              </div>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.5" inert>
+            <div class="row">
+              <label class="col" for="infix">Infix:</label>
+            </div>
+            <div class="row input-group">
+              <input class="col" id="infix" type="text" name="infix" placeholder="Enter infix:" value="<?= $this->pageObj->user['infix'] ?? '-' ?>" readonly>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.5 f-g-2" inert>
+            <div class="row">
+              <label class="col" for="last_name">Last name:</label>
+            </div>
+            <div class="row input-group">
+              <input class="col" id="last_name" type="text" name="last_name" placeholder="Enter last name:" value="<?= $this->pageObj->user['last_name'] ?? '-' ?>" readonly>
+            </div>
+          </div>
+        </div>
+
         <div class="row">
           <div class="col form-group g-row-0.5" inert>
             <div class="row">

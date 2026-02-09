@@ -69,11 +69,6 @@ use app\Models\Url;
 
                 <?php endforeach ?>
 
-                <tr>
-                  <td class="row create-row" colspan="12">
-                    <a class="col button create-user g-col-0.5 center" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
-                  </td>
-                </tr>
                 </tbody>
               </table>
             </div>
@@ -102,6 +97,10 @@ use app\Models\Url;
         <?php endif ?>
 
       </div>
+    </div>
+
+    <div class="row center-x">
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
     </div>
   </div>
 </section>

@@ -27,14 +27,14 @@ class LoginPage
     /**
      * Checks if a user account or IP address is locked out and adds an alert to the form if so.
      *
-     * @param string|null $email User email for fresh check (optional)
+     * @param string|null $identifier Username or email for fresh check (optional)
      *
      * @return bool True if locked out, false otherwise
      */
-    private function checkLockedOut(string|null $email = null): bool
+    private function checkLockedOut(string|null $identifier = null): bool
     {
-        // When no email is provided, only check existing session lockout
-        if ($email === null) {
+        // When no identifier is provided, only check existing session lockout
+        if ($identifier === null) {
             $timeout = SessionController::get('lockout-timeout');
 
             // Check if there is an active lockout in the session
@@ -52,8 +52,8 @@ class LoginPage
             return false;
         }
 
-        // Check lockout status for the provided email and current IP address
-        $lockOut = $this->lockOutTime($email, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        // Check lockout status for the provided identifier and current IP address
+        $lockOut = $this->lockOutTime($identifier, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
 
         if ($lockOut['seconds'] > 0) {
             // Set the timeout in the session
@@ -75,14 +75,14 @@ class LoginPage
     /**
      * Calculates lockout time based on failed login attempts for both user and IP address.
      *
-     * @param string $email User's email address
+     * @param string $identifier Username or email
      * @param string $ip User's IP address
      *
      * @return array Array with 'seconds' until unlock and 'type' of lock ('user', 'ip', or 'none')
      */
-    private function lockOutTime(string $email, string $ip): array
+    private function lockOutTime(string $identifier, string $ip): array
     {
-        $userId = AuthController::getUserIdByEmail($email);
+        $userId = AuthController::getUserIdByIdentifier($identifier);
 
         // Check if the user is locked out based on user ID
         if ($userId !== null) {
@@ -150,55 +150,58 @@ class LoginPage
     {
         // Validate the form fields
         if (
-            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+            !FormController::validate('identifier', ['required', 'maxLength' => 100]) ||
             !FormController::validate('password', ['required', 'maxLength' => 50])
         ) return;
 
         // Sanitize the form data
-        $_POST['email'] = FormController::sanitize($_POST['email']);
+        $_POST['identifier'] = FormController::sanitize($_POST['identifier']);
 
         // Check if the user is locked out
-        if ($this->checkLockedOut($_POST['email'])) return;
+        if ($this->checkLockedOut($_POST['identifier'])) return;
 
-        // Check if email exists AND password is correct
-        if (!AuthController::checkEmail($_POST['email']) || !AuthController::checkPassword($_POST['email'], $_POST['password'])) {
+        // Check if identifier exists AND password is correct
+        if (!AuthController::checkIdentifier($_POST['identifier']) || !AuthController::checkPasswordByIdentifier($_POST['identifier'], $_POST['password'])) {
             // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'incorrect');
+            $this->recordLoginAttempt($_POST['identifier'], false, 'incorrect');
 
             // Check if the user is now locked out
-            if ($this->checkLockedOut($_POST['email'])) return;
+            if ($this->checkLockedOut($_POST['identifier'])) return;
 
-            $_POST['email'] = '';
+            $_POST['identifier'] = '';
             $_POST['password'] = '';
 
-            FormController::addAlert('Invalid email or password. Please try again.', AlertType::WARNING);
+            FormController::addAlert('Invalid username/email or password. Please try again.', AlertType::WARNING);
             return;
         }
 
         // Check if the user is inactive
-        if (!AuthController::isActive($_POST['email'])) {
+        if (!AuthController::isActiveByIdentifier($_POST['identifier'])) {
             // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'inactive');
+            $this->recordLoginAttempt($_POST['identifier'], false, 'inactive');
 
             // Check if the user is now locked out
-            if ($this->checkLockedOut($_POST['email'])) return;
+            if ($this->checkLockedOut($_POST['identifier'])) return;
 
-            $_POST['email'] = '';
+            $_POST['identifier'] = '';
             $_POST['password'] = '';
 
             FormController::addAlert('Your account is inactive! Contant an administrator for more information!', AlertType::ERROR);
             return;
         }
 
+        // Get the email from the identifier
+        $email = AuthController::getEmailByIdentifier($_POST['identifier']);
+
         // Check if the user has not yet verified their account
-        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified(null, $_POST['email'])) {
+        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified(null, $email)) {
             // Record failed login attempt
-            $this->recordLoginAttempt($_POST['email'], false, 'unverified');
+            $this->recordLoginAttempt($_POST['identifier'], false, 'unverified');
 
             // Check if the user is now locked out
-            if ($this->checkLockedOut($_POST['email'])) return;
+            if ($this->checkLockedOut($_POST['identifier'])) return;
 
-            $_POST['email'] = '';
+            $_POST['identifier'] = '';
             $_POST['password'] = '';
 
             FormController::addAlert('Your account has not been verified! Check your email for the verification link!', AlertType::ERROR);
@@ -206,23 +209,23 @@ class LoginPage
         }
 
         // Login the user
-        $this->login($_POST['email']);
+        $this->login($email);
     }
 
     /**
      * Records a user's login attempt in the database.
      *
-     * @param string $email User's email address
+     * @param string $identifier Username or email
      * @param bool $success Whether the login attempt was successful
      * @param string|null $failedReason Reason the login failed (e.g., 'incorrect', 'inactive' or 'unverified')
      */
-    private function recordLoginAttempt(string $email, bool $success, string|null $failedReason = null): void
+    private function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null): void
     {
         // Insert the login attempt into the database
         DB::insert(
             'login_attempts',
             [
-                'user_id' => AuthController::getUserIdByEmail($email),
+                'user_id' => AuthController::getUserIdByIdentifier($identifier),
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
                 'success' => $success ? 1 : 0,

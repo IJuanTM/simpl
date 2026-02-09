@@ -35,10 +35,17 @@ class ProfilePage
         // Validate the form fields
         if (
             !FormController::validate('username', ['maxLength' => 100]) ||
+            !FormController::validate('first_name', ['maxLength' => 100]) ||
+            !FormController::validate('infix', ['maxLength' => 50]) ||
+            !FormController::validate('last_name', ['maxLength' => 100]) ||
             !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])
         ) return;
 
-        // Sanitize the email
+        // Sanitize the form data
+        $_POST['username'] = FormController::sanitize($_POST['username']);
+        $_POST['first_name'] = FormController::sanitize($_POST['first_name']);
+        $_POST['infix'] = FormController::sanitize($_POST['infix']);
+        $_POST['last_name'] = FormController::sanitize($_POST['last_name']);
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
         // Check if the email is changed and if it is already in use by another user
@@ -52,7 +59,10 @@ class ProfilePage
         // Update the user
         $this->update(
             SessionController::get('user')['id'],
-            FormController::sanitize($_POST['username']),
+            $_POST['username'],
+            $_POST['first_name'],
+            $_POST['infix'],
+            $_POST['last_name'],
             $_POST['email']
         );
     }
@@ -62,14 +72,25 @@ class ProfilePage
      *
      * @param int $id User ID
      * @param string $username New username
+     * @param string $first_name New first name
+     * @param string $infix New infix
+     * @param string $last_name New last name
      * @param string $email New email address
      */
-    private function update(int $id, string $username, string $email): void
+    private function update(int $id, string $username, string $first_name, string $infix, string $last_name, string $email): void
     {
-        // Update the username in the database
+        // Prepare update data (filter out empty strings to allow NULL for optional fields)
+        $updateData = [
+            'username' => !empty($username) ? $username : null,
+            'first_name' => !empty($first_name) ? $first_name : null,
+            'infix' => !empty($infix) ? $infix : null,
+            'last_name' => !empty($last_name) ? $last_name : null
+        ];
+
+        // Update the user profile fields in the database
         DB::update(
             'users',
-            compact('username'),
+            $updateData,
             compact('id')
         );
 
@@ -160,15 +181,13 @@ class ProfilePage
     final public function api(Page $page): void
     {
         // Check if the user is trying to perform an action related to the profile image
-        if (isset($page->urlArr['subpages'][0])) {
-            switch ($page->urlArr['subpages'][0]) {
-                case 'update-profile-image':
-                    self::updateProfileImage();
-                    break;
-                case 'delete-profile-image':
-                    self::deleteProfileImage();
-                    break;
-            }
+        if (isset($page->urlArr['subpages'][0])) switch ($page->urlArr['subpages'][0]) {
+            case 'update-profile-image':
+                self::updateProfileImage();
+                break;
+            case 'delete-profile-image':
+                self::deleteProfileImage();
+                break;
         }
     }
 

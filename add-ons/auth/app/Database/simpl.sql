@@ -13,6 +13,9 @@ CREATE TABLE simpl.users
 (
     id                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username             VARCHAR(100)    NULL     DEFAULT NULL,
+    first_name           VARCHAR(100)    NULL     DEFAULT NULL,
+    infix                VARCHAR(50)     NULL     DEFAULT NULL,
+    last_name            VARCHAR(100)    NULL     DEFAULT NULL,
     email                VARCHAR(100)    NOT NULL UNIQUE,
     password             VARCHAR(255)    NOT NULL,
     profile_img          VARCHAR(50)     NULL     DEFAULT NULL,

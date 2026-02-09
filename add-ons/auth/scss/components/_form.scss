@@ -74,6 +74,29 @@ form {
     @include breakpoint-down(md) {
       flex-direction: column;
     }
+
+    &.connected-row > :is(.row, .col) {
+      &:not(:first-child) .input-group {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+
+        :is(input, textarea, select) {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+        }
+      }
+
+      &:not(:last-child) .input-group {
+        border-right: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+
+        :is(input, textarea, select) {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+      }
+    }
   }
 
   p.form-details {

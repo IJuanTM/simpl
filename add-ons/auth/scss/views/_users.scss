@@ -48,16 +48,6 @@ section.users {
         }
       }
     }
-
-    td.create-row {
-      padding: unset !important;
-      border-top: .125rem solid var(--border-muted) !important;
-
-      a.create-user {
-        padding: .75rem 1.5rem;
-        border-radius: unset;
-      }
-    }
   }
 
   form button {

@@ -99,11 +99,18 @@ class UsersPage
             // Validate the form fields
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
+                !FormController::validate('first_name', ['maxLength' => 100]) ||
+                !FormController::validate('infix', ['maxLength' => 50]) ||
+                !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
-            // Sanitize the email
+            // Sanitize the form data
+            $_POST['username'] = FormController::sanitize($_POST['username']);
+            $_POST['first_name'] = FormController::sanitize($_POST['first_name']);
+            $_POST['infix'] = FormController::sanitize($_POST['infix']);
+            $_POST['last_name'] = FormController::sanitize($_POST['last_name']);
             $_POST['email'] = FormController::sanitize($_POST['email']);
 
             // Check if the email is changed and if it is already in use by another user
@@ -119,7 +126,10 @@ class UsersPage
                 $_POST['email'],
                 $this->generatedPassword,
                 $_POST['role'],
-                FormController::sanitize($_POST['username'])
+                $_POST['username'],
+                $_POST['first_name'],
+                $_POST['infix'],
+                $_POST['last_name']
             );
         }
 
@@ -128,11 +138,18 @@ class UsersPage
             // Validate the form fields
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
+                !FormController::validate('first_name', ['maxLength' => 100]) ||
+                !FormController::validate('infix', ['maxLength' => 50]) ||
+                !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
-            // Sanitize the email
+            // Sanitize the form data
+            $_POST['username'] = FormController::sanitize($_POST['username']);
+            $_POST['first_name'] = FormController::sanitize($_POST['first_name']);
+            $_POST['infix'] = FormController::sanitize($_POST['infix']);
+            $_POST['last_name'] = FormController::sanitize($_POST['last_name']);
             $_POST['email'] = FormController::sanitize($_POST['email']);
 
             // Check if the email is changed and if it is already in use by another user
@@ -146,7 +163,10 @@ class UsersPage
             // Update the user
             self::update(
                 $_POST['id'],
-                FormController::sanitize($_POST['username']),
+                $_POST['username'],
+                $_POST['first_name'],
+                $_POST['infix'],
+                $_POST['last_name'],
                 $_POST['email'],
                 $_POST['role']
             );
@@ -171,22 +191,22 @@ class UsersPage
      * @param string $rawPassword
      * @param int $role
      * @param string|null $username
+     * @param string|null $first_name
+     * @param string|null $infix
+     * @param string|null $last_name
      */
-    private static function create(string $email, string $rawPassword, int $role, string|null $username = null): void
+    private static function create(string $email, string $rawPassword, int $role, string|null $username = null, string|null $first_name = null, string|null $infix = null, string|null $last_name = null): void
     {
-        // Hash the password
-        $password = password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
-
         // Insert the new user into the database
-        DB::insert(
-            'users',
-            [
-                'username' => $username,
-                'email' => $email,
-                'password' => $password,
-                'must_change_password' => 1
-            ]
-        );
+        DB::insert('users', [
+            'username' => $username ?? null,
+            'first_name' => $first_name ?? null,
+            'infix' => $infix ?? null,
+            'last_name' => $last_name ?? null,
+            'email' => $email,
+            'password' => password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+            'must_change_password' => 1
+        ]);
 
         // Get the id of the new user
         $id = DB::single(
@@ -204,7 +224,7 @@ class UsersPage
             ]
         );
 
-        // Send an email to the new user with their credentials
+        // Email the new user with their credentials
         AuthController::sendCreatedUserMail($email, $rawPassword);
 
         // Redirect to the users page with a success message
@@ -217,16 +237,25 @@ class UsersPage
      * An administrator can update the user's name, email, and role.
      *
      * @param int $id
-     * @param string $username
+     * @param string|null $username
+     * @param string|null $first_name
+     * @param string|null $infix
+     * @param string|null $last_name
      * @param string $email
      * @param int $role
      */
-    private static function update(int $id, string $username, string $email, int $role): void
+    private static function update(int $id, string|null $username, string|null $first_name, string|null $infix, string|null $last_name, string $email, int $role): void
     {
         // Update the user in the database
         DB::update(
             'users',
-            compact('email', 'username'),
+            [
+                'username' => $username ?? null,
+                'first_name' => $first_name ?? null,
+                'infix' => $infix ?? null,
+                'last_name' => $last_name ?? null,
+                'email' => $email
+            ],
             compact('id')
         );
 
