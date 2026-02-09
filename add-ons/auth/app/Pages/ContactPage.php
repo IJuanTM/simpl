@@ -73,7 +73,7 @@ class ContactPage
         PageController::redirect(REDIRECT);
 
         // Show appropriate alert based on email sending result
-        if ($result) AlertController::alert('Your message has been sent!', AlertType::SUCCESS, 4);
-        else AlertController::alert('There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
+        if ($result) AlertController::globalAlert('Your message has been sent!', AlertType::SUCCESS, 4);
+        else AlertController::globalAlert('There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }
 }

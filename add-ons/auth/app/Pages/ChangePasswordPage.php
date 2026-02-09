@@ -71,17 +71,23 @@ class ChangePasswordPage
      */
     private function changePassword(int $id, string $password): void
     {
-        // Update the password in the database for the user
+        // Update the password in the database for the user and clear the must_change_password flag
         DB::update(
             'users',
             [
-                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'must_change_password' => 0
             ],
             compact('id')
         );
 
+        // Update the session to reflect the change
+        $user = SessionController::get('user');
+        $user['must_change_password'] = 0;
+        SessionController::set('user', $user);
+
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
-        AlertController::alert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
     }
 }

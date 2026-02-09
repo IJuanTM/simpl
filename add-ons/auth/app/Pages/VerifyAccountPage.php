@@ -86,7 +86,7 @@ class VerifyAccountPage
 
         // Redirect the user to the login page and show a success message
         PageController::redirect('login');
-        AlertController::alert('Success! Your account has been verified!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Success! Your account has been verified!', AlertType::SUCCESS, 4);
     }
 
     /**

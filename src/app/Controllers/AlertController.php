@@ -22,7 +22,7 @@ class AlertController
      * @param AlertType $type Alert type (success, warning, error, info)
      * @param int $timeout Duration in seconds before auto-dismissal (0 = no auto-dismiss)
      */
-    public static function alert(string $message, AlertType $type, int $timeout = 0): void
+    public static function globalAlert(string $message, AlertType $type, int $timeout = 0): void
     {
         // Set the alert in the session
         SessionController::set('alert', [

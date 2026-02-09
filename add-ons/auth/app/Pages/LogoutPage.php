@@ -25,6 +25,6 @@ class LogoutPage
 
         // Redirect the user to the redirect page with a success message
         PageController::redirect(REDIRECT);
-        AlertController::alert('You have been logged out.', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('You have been logged out.', AlertType::SUCCESS, 4);
     }
 }

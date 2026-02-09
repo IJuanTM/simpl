@@ -180,7 +180,12 @@ class UsersPage
         // Insert the new user into the database
         DB::insert(
             'users',
-            compact('username', 'email', 'password')
+            [
+                'username' => $username,
+                'email' => $email,
+                'password' => $password,
+                'must_change_password' => 1
+            ]
         );
 
         // Get the id of the new user
@@ -204,7 +209,7 @@ class UsersPage
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
-        AlertController::alert('Success! The user has been created!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Success! The user has been created!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -238,7 +243,7 @@ class UsersPage
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
-        AlertController::alert('Success! The user has been updated!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -260,7 +265,7 @@ class UsersPage
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
-        AlertController::alert('User successfully deleted!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('User successfully deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -282,6 +287,6 @@ class UsersPage
 
         // Redirect to the users page with a success message
         PageController::redirect('users');
-        AlertController::alert('User successfully restored!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('User successfully restored!', AlertType::SUCCESS, 4);
     }
 }

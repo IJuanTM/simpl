@@ -11,15 +11,16 @@ CREATE SCHEMA simpl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci;
 
 CREATE TABLE simpl.users
 (
-    id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    username    VARCHAR(100)    NULL     DEFAULT NULL,
-    email       VARCHAR(100)    NOT NULL UNIQUE,
-    password    VARCHAR(255)    NOT NULL,
-    profile_img VARCHAR(50)     NULL     DEFAULT NULL,
-    created_at  TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_update TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_active   TINYINT         NOT NULL DEFAULT 1,
-    deleted_at  TIMESTAMP                DEFAULT NULL
+    id                   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    username             VARCHAR(100)    NULL     DEFAULT NULL,
+    email                VARCHAR(100)    NOT NULL UNIQUE,
+    password             VARCHAR(255)    NOT NULL,
+    profile_img          VARCHAR(50)     NULL     DEFAULT NULL,
+    must_change_password TINYINT         NOT NULL DEFAULT 0,
+    created_at           TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_update          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active            TINYINT         NOT NULL DEFAULT 1,
+    deleted_at           TIMESTAMP                DEFAULT NULL
 ) ENGINE = InnoDB;
 
 INSERT INTO simpl.users (email, password)

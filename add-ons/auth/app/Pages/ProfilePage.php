@@ -121,7 +121,7 @@ class ProfilePage
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
-        AlertController::alert('Success! Your profile has been updated!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Success! Your profile has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -152,7 +152,7 @@ class ProfilePage
         if ($result) {
             // Redirect to the logout page with a success message
             PageController::redirect('api/logout');
-            AlertController::alert('Success! Your profile has been updated! Please verify your new email address!', AlertType::SUCCESS, 4);
+            AlertController::globalAlert('Success! Your profile has been updated! Please verify your new email address!', AlertType::SUCCESS, 4);
         } else FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
     }
 
@@ -185,7 +185,7 @@ class ProfilePage
         if (!isset($_FILES['new_img']) || $_FILES['new_img']['error'] !== UPLOAD_ERR_OK) {
             // Redirect to the profile page with an error message
             PageController::redirect('profile');
-            AlertController::alert('Image upload failed. Please try again.', AlertType::ERROR, 4);
+            AlertController::globalAlert('Image upload failed. Please try again.', AlertType::ERROR, 4);
             return;
         }
 
@@ -200,14 +200,14 @@ class ProfilePage
         // Validate if the file is an image by checking the mime type
         if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true)) {
             PageController::redirect('profile');
-            AlertController::alert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
+            AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
             return;
         }
 
         // Validate if the file is an image by checking the image size
         if (getimagesize($file['tmp_name']) === false) {
             PageController::redirect('profile');
-            AlertController::alert('The uploaded file is not a valid image.', AlertType::ERROR, 4);
+            AlertController::globalAlert('The uploaded file is not a valid image.', AlertType::ERROR, 4);
             return;
         }
 
@@ -215,7 +215,7 @@ class ProfilePage
         if ($file['size'] > 2 * 1024 * 1024) {
             // Redirect to the profile page with an error message
             PageController::redirect('profile');
-            AlertController::alert('The image size is too large. Please choose an image that is less than 2MB.', AlertType::ERROR, 4);
+            AlertController::globalAlert('The image size is too large. Please choose an image that is less than 2MB.', AlertType::ERROR, 4);
             return;
         }
 
@@ -253,7 +253,7 @@ class ProfilePage
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
-        AlertController::alert('Profile image updated successfully!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Profile image updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -289,6 +289,6 @@ class ProfilePage
 
         // Redirect to the profile page with a success message
         PageController::redirect('profile');
-        AlertController::alert('Profile image deleted successfully!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Profile image deleted successfully!', AlertType::SUCCESS, 4);
     }
 }

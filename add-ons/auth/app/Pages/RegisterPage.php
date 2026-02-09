@@ -109,7 +109,7 @@ class RegisterPage
         } else {
             // If no email verification is required, redirect the user to the login page with a success message
             PageController::redirect('login');
-            AlertController::alert('Success! Your account has been created!', AlertType::SUCCESS, 4);
+            AlertController::globalAlert('Success! Your account has been created!', AlertType::SUCCESS, 4);
         }
     }
 }

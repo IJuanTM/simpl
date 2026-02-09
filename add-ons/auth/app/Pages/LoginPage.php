@@ -257,6 +257,14 @@ class LoginPage
             return;
         }
 
+        // Check if user must change password
+        if ($user['must_change_password'] === 1) {
+            // Redirect to the change password page with a warning message
+            PageController::redirect('change-password');
+            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            return;
+        }
+
         // Check if the user has the remember me checkbox checked
         if (isset($_POST['remember'])) {
             // Generate a 'remember' token
@@ -274,7 +282,7 @@ class LoginPage
 
         // Redirect the user to the profile page with a success message
         PageController::redirect('profile');
-        AlertController::alert('Login successful! Welcome!', AlertType::SUCCESS, 4);
+        AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
     }
 
     /**

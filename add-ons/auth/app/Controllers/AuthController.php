@@ -440,12 +440,12 @@ class AuthController
             $message = $isResend
                 ? 'Success! A new verification email has been sent!'
                 : 'Success! Your account has been created! A verification email has been sent!';
-            AlertController::alert($message, AlertType::SUCCESS, 4);
+            AlertController::globalAlert($message, AlertType::SUCCESS, 4);
         } else {
             $message = $isResend
                 ? 'An error occurred while sending your verification email! Please contact support.'
                 : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
-            AlertController::alert($message, AlertType::ERROR, 8);
+            AlertController::globalAlert($message, AlertType::ERROR, 8);
         }
     }
 
@@ -477,7 +477,7 @@ class AuthController
         PageController::redirect('users');
 
         // Show appropriate alert based on the email sending result
-        if ($result) AlertController::alert('Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
-        else AlertController::alert('The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
+        if ($result) AlertController::globalAlert('Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
+        else AlertController::globalAlert('The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
     }
 }
