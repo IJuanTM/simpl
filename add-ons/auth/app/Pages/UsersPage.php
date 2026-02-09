@@ -26,8 +26,8 @@ class UsersPage
 
     public function __construct(Page $page)
     {
-        // Only allow admins to access this page
-        AuthController::access([1]);
+        // Check if the user is authenticated and if the user has the admin role
+        AuthController::requireAuth([1]);
 
         // Get the page number from the url
         if (isset($page->urlArr['params']['page'])) $this->page = (int)$page->urlArr['params']['page'];

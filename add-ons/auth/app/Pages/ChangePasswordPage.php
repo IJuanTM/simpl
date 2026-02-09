@@ -17,6 +17,9 @@ class ChangePasswordPage
 {
     public function __construct()
     {
+        // Check if the user is authenticated but allow access if the user is required to change their password
+        AuthController::requireAuth(null, true);
+
         // Check if the change password form is submitted
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }

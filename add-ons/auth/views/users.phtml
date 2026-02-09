@@ -27,6 +27,7 @@ use app\Models\Url;
                   <th>Email</th>
                   <th>Role</th>
                   <th>Verified</th>
+                  <th>Temp password</th>
                   <th>Created at</th>
                   <th>Last updated</th>
                   <th>Is active</th>
@@ -45,6 +46,7 @@ use app\Models\Url;
                     <td><?= $user['email'] ?></td>
                     <td><?= $user['role'] === 1 ? 'Admin' : 'User' ?></td>
                     <td><?= AuthController::isVerified($user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
+                    <td><?= $user['must_change_password'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
                     <td><?= $user['created_at'] ?></td>
                     <td><?= $user['last_update'] ?></td>
                     <td><?= !$user['is_active'] ? '<i class="fas fa-times"></i>' : '<i class="fas fa-check"></i>' ?></td>

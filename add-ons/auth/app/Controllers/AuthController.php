@@ -285,16 +285,44 @@ class AuthController
     }
 
     /**
-     * Restricts page access to users with specific roles.
+     * Requires user to be authenticated and optionally checks role access.
+     * Also checks if account is active and if password change is required.
      *
-     * @param array $roles Allowed role IDs
+     * @param array|null $roles Allowed role IDs (null = any authenticated user)
+     * @param bool $allowWithTempPassword If true, allows access even if must_change_password is set
      */
-    public static function access(array $roles): void
+    public static function requireAuth(array|null $roles = null, bool $allowWithTempPassword = false): void
     {
-        // If the current user role is not in the array, redirect to error page
-        if (SessionController::get('user')['role'] !== null && in_array(SessionController::get('user')['role'], $roles, true)) return;
-        else {
-            // Redirect to error page
+        // Check if user is logged in
+        if (!SessionController::get('user')) {
+            PageController::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
+        $user = SessionController::get('user');
+
+        // Check if account is active
+        if (isset($user['is_active']) && $user['is_active'] !== 1) {
+            // Log the user out
+            SessionController::remove('user');
+
+            // Redirect to login page with an error message
+            PageController::redirect('login');
+            AlertController::globalAlert('Your account is inactive. Please contact an administrator.', AlertType::ERROR, 4);
+            exit;
+        }
+
+        // Check if user must change password (unless the page explicitly allows it)
+        if (!$allowWithTempPassword && isset($user['must_change_password']) && $user['must_change_password'] === 1) {
+            // Redirect to change password page with a warning message
+            PageController::redirect('change-password');
+            AlertController::globalAlert('You must change your password before continuing.', AlertType::WARNING, 4);
+            exit;
+        }
+
+        // Check role access if roles are specified
+        if ($roles !== null && (!isset($user['role']) || !in_array($user['role'], $roles, true))) {
+            // Redirect to error page with forbidden error code
             PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }

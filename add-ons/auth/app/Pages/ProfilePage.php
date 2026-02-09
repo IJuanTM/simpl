@@ -10,7 +10,6 @@ use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
-use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Models\Url;
 
@@ -21,11 +20,8 @@ class ProfilePage
 {
     public function __construct()
     {
-        // Check if the user is logged in
-        if (!SessionController::get('user')) {
-            PageController::error(ErrorCode::FORBIDDEN);
-            exit;
-        }
+        // Check if the user is authenticated
+        AuthController::requireAuth();
 
         // Check if the profile form is submitted
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
