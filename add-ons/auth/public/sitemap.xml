@@ -1,39 +1,39 @@
 <urlset>
   <!-- @addon-insert:before('</urlset>') -->
   <url>
-    <loc>http://simpl.local/login/</loc>
+    <loc>@app-url/login/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/register/</loc>
+    <loc>@app-url/register/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/contact/</loc>
+    <loc>@app-url/contact/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/profile/</loc>
+    <loc>@app-url/profile/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/verify-account/</loc>
+    <loc>@app-url/verify-account/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/change-password/</loc>
+    <loc>@app-url/change-password/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/forgot-password/</loc>
+    <loc>@app-url/forgot-password/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/reset-password/</loc>
+    <loc>@app-url/reset-password/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <url>
-    <loc>http://simpl.local/users/</loc>
+    <loc>@app-url/users/</loc>
     <lastmod>2025-12-31</lastmod>
   </url>
   <!-- @addon-end -->
