@@ -17,6 +17,7 @@ CREATE TABLE simpl.users
     password             VARCHAR(255)    NOT NULL,
     profile_img          VARCHAR(50)     NULL     DEFAULT NULL,
     must_change_password TINYINT         NOT NULL DEFAULT 0,
+    last_login           TIMESTAMP       NULL     DEFAULT NULL,
     created_at           TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_update          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     is_active            TINYINT         NOT NULL DEFAULT 1,

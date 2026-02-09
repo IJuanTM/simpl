@@ -28,6 +28,7 @@ use app\Models\Url;
                   <th>Role</th>
                   <th>Verified</th>
                   <th>Temp password</th>
+                  <th>Last login</th>
                   <th>Created at</th>
                   <th>Last updated</th>
                   <th>Is active</th>
@@ -47,6 +48,7 @@ use app\Models\Url;
                     <td><?= $user['role'] === 1 ? 'Admin' : 'User' ?></td>
                     <td><?= AuthController::isVerified($user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
                     <td><?= $user['must_change_password'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></td>
+                    <td><?= $user['last_login'] ?: '-' ?></td>
                     <td><?= $user['created_at'] ?></td>
                     <td><?= $user['last_update'] ?></td>
                     <td><?= !$user['is_active'] ? '<i class="fas fa-times"></i>' : '<i class="fas fa-check"></i>' ?></td>
@@ -68,7 +70,7 @@ use app\Models\Url;
                 <?php endforeach ?>
 
                 <tr>
-                  <td class="row create-row" colspan="10">
+                  <td class="row create-row" colspan="12">
                     <a class="col button create-user g-col-0.5 center" href="<?= Url::to('users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
                   </td>
                 </tr>

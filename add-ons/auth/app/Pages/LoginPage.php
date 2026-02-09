@@ -241,6 +241,13 @@ class LoginPage
         // Record successful login attempt
         $this->recordLoginAttempt($email, true);
 
+        // Update last login timestamp
+        DB::update(
+            'users',
+            ['last_login' => date('Y-m-d H:i:s')],
+            compact('email')
+        );
+
         // Get the user from the database
         $user = DB::single(
             '*',
