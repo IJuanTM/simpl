@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // Environment configuration
 define('DEV', $_ENV['DEV']);
 

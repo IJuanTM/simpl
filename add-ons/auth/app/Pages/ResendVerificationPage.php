@@ -1,84 +1,72 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
 /**
- * Handles resending verification emails to users.
+ * ResendVerificationPage
+ *
+ * Generates and sends a new verification token for a user identified by the
+ * URL parameter and redirects the user with appropriate feedback.
  */
 class ResendVerificationPage
 {
-    /**
-     * Validates user ID and initiates a verification email resend process.
-     *
-     * @param Page $page Page object containing URL parameters
-     */
     public function __construct(Page $page)
     {
-        // Get the user id from the url and sanitize it
+        // Get and sanitize user ID from URL
         $id = FormController::sanitize($page->urlArr['subpages'][0] ?? '');
 
-        // Check if the user id is not empty and is numeric
+        // Validate user ID
         if (empty($id) || !is_numeric($id)) {
             FormController::addAlert('Undefined user id! Please contact an administrator.', AlertType::ERROR);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Check if the user exists in the database
+        // Check if user exists
         if (!AuthController::exists($id)) {
             FormController::addAlert('We could not find your account! Please contact an administrator.', AlertType::ERROR);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Check if the user is trying to verify their account
+        // Check if account still needs verification
         if (AuthController::isVerified($id)) {
             FormController::addAlert('Your account is currently not being verified!', AlertType::INFO);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Resend the verification code
+        // Resend verification email
         $this->resendVerification($id);
     }
 
     /**
-     * Generates a new verification token and updates the database.
+     * Generates new verification token and sends verification email.
      *
      * @param int $id User ID
+     *
+     * @return void
      */
     private function resendVerification(int $id): void
     {
-        // Generate a new verification token
+        // Generate new verification token
         $token = AuthController::generateToken(8);
 
-        // Update the code in the database for the user
-        DB::update(
-            'tokens',
-            compact('token'),
-            [
-                'user_id' => $id,
-                'type' => 'verification'
-            ]
-        );
+        // Get user email
+        $email = AuthController::getUserById($id)['email'];
 
-        // Send a verification email to the user
-        AuthController::sendVerificationMail(
-            $id,
-            DB::single(
-                'email',
-                'users',
-                compact('id')
-            )['email'],
-            $token,
-            true
-        );
+        // Update token in database
+        AuthController::createToken($id, $token, 'verification');
+
+        // Send verification email
+        AuthController::sendVerificationMail($id, $email, $token, true);
     }
 }

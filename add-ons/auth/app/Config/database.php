@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // Database configuration
 define('DB_SERVER', $_ENV['DB_SERVER']);
 define('DB_NAME', $_ENV['DB_NAME']);

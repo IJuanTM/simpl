@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 // Auth configuration
 const MIN_PASSWORD_LENGTH = 8;
 const REQUIRE_UPPERCASE = true;

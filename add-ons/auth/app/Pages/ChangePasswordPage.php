@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -7,89 +9,75 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
- * Handles password change functionality for authenticated users.
+ * ChangePasswordPage
+ *
+ * Allows authenticated users to change their password and clears the
+ * must_change_password flag on success.
  */
 class ChangePasswordPage
 {
     public function __construct()
     {
-        // Check if the user is authenticated but allow access if the user is required to change their password
+        // Require authentication, allow access even if password change is required
         AuthController::requireAuth(null, true);
 
-        // Check if the change password form is submitted
+        // Process password change form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
      * Processes password change form submission.
+     *
+     * @return void
      */
     private function post(): void
     {
-        // Validate the form fields
+        // Validate form fields
         if (
             !FormController::validate('old-password', ['required', 'maxLength' => 50]) ||
             !FormController::validate('new-password', ['required', 'maxLength' => 50]) ||
             !FormController::validate('new-password-check', ['required', 'maxLength' => 50])
         ) return;
 
-        // Check if the old password is correct
+        // Verify old password is correct
         if (!AuthController::checkPassword(SessionController::get('user')['email'], $_POST['old-password'])) {
             $_POST['old-password'] = '';
-
             FormController::addAlert('The old password is incorrect!', AlertType::WARNING);
             return;
         }
 
-        // Validate the new password against the password policy
+        // Validate new password against policy
         if (!AuthController::validatePassword($_POST['new-password'])) {
             $_POST['new-password'] = '';
             $_POST['new-password-check'] = '';
             return;
         }
 
-        // Check if the new password is the same as the old password
+        // Check if new password is same as old
         if ($_POST['old-password'] === $_POST['new-password']) {
             FormController::addAlert('The new password is the same as the old password!', AlertType::WARNING);
             return;
         }
 
-        // Check if the new passwords match
+        // Check if new passwords match
         if ($_POST['new-password'] !== $_POST['new-password-check']) {
             FormController::addAlert('The newly entered passwords do not match!', AlertType::WARNING);
             return;
         }
 
-        $this->changePassword(SessionController::get('user')['id'], $_POST['new-password']);
-    }
+        // Update password
+        $userId = SessionController::get('user')['id'];
+        AuthController::updatePassword($userId, $_POST['new-password']);
 
-    /**
-     * Updates user's password in the database.
-     *
-     * @param int $id User ID
-     * @param string $password New password (will be hashed)
-     */
-    private function changePassword(int $id, string $password): void
-    {
-        // Update the password in the database for the user and clear the must_change_password flag
-        DB::update(
-            'users',
-            [
-                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
-                'must_change_password' => 0
-            ],
-            compact('id')
-        );
-
-        // Update the session to reflect the change
+        // Update session to clear must_change_password flag
         $user = SessionController::get('user');
         $user['must_change_password'] = 0;
         SessionController::set('user', $user);
 
-        // Redirect to the profile page with a success message
+        // Redirect with success message
         PageController::redirect('profile');
         AlertController::globalAlert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
     }

@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Enums;
 
 /**
- * The AlertType enum is used for defining the types of alerts that can be shown.
+ * AlertType enum
+ *
+ * Represents CSS classes / semantic types for user-facing alert messages.
  */
 enum AlertType: string
 {

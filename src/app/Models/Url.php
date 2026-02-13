@@ -1,48 +1,50 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Models;
 
 use app\Utils\Log;
 
+/**
+ * URL helper
+ *
+ * Provides helpers to build URLs for assets and application routes. Caches the
+ * computed base URL and root directory for the lifetime of the request.
+ */
 class Url
 {
-    private static string|null $baseUrl = null;
-    private static string|null $rootDir = null;
+    private static ?string $baseUrl = null;
+    private static ?string $rootDir = null;
 
     /**
-     * Method to generate a full URL for a file. Adds a version query string to the URL based on the file's last modification time.
+     * Generate a public URL for an asset and append a version query based on
+     * the file modification time to aid caching.
      *
-     * @param string $subUrl
+     * @param string $subUrl Path relative to public/ (e.g. 'css/main.css')
      *
      * @return string
      */
     public static function file(string $subUrl = ''): string
     {
-        // Generate the URL for the file
         $url = self::to($subUrl);
 
         if (!self::$rootDir) self::baseUrl();
 
-        // Construct the full file path
         $filePath = self::$rootDir . '/public/' . ltrim($subUrl, '/');
 
-        // Check if the file exists
         if (!is_file($filePath)) {
-            // Log a warning if the file does not exist
             Log::warning("Could not find file \"$filePath\"");
-
             return $url;
         }
 
-        // Split the URL into the base URL and fragment
+        // Ensure we always get two parts when exploding on fragment (#)
         [$url, $fragment] = explode('#', $url . '#', 2);
-
-        // Return the URL with the version query string based on the file's last modification time
         return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($filePath) . ($fragment ? "#$fragment" : '');
     }
 
     /**
-     * Method to generate a full URL for the given sub URL.
+     * Build a full URL for the given subpath based on the application's base URL.
      *
      * @param string $subUrl
      *
@@ -50,31 +52,26 @@ class Url
      */
     public static function to(string $subUrl = ''): string
     {
-        // Return the base URL with the sub URL appended
         return self::baseUrl() . '/' . ltrim($subUrl, '/');
     }
 
     /**
-     * Method for generating the base URL for the application.
+     * Compute and cache the application's base URL using server globals.
      *
      * @return string
      */
     private static function baseUrl(): string
     {
         if (!self::$baseUrl) {
-            // Set the root directory to the BASEDIR constant
             self::$rootDir = rtrim(BASEDIR, '/');
 
-            // Construct the base URL using the server variables
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'];
             $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
 
-            // Set the base URL
             self::$baseUrl = "$protocol://$host$scriptDir";
         }
 
-        // Return the base URL
         return self::$baseUrl;
     }
 }

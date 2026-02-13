@@ -1,14 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Models;
 
+/**
+ * Alias model
+ *
+ * Represents a URL alias mapping to a target page, optional subpages and
+ * parameter defaults. Parameter defaults may contain callables which will be
+ * executed when resolving the alias.
+ */
 class Alias
 {
     public string $page;
+
+    /** @var array<int,string> */
     public array $subpages;
+
+    /** @var array<string,mixed> */
     public array $params;
 
-    final public function __construct(string $page, array|null $subpages = [], array|null $params = [])
+    final public function __construct(string $page, array $subpages = [], array $params = [])
     {
         $this->page = $page;
         $this->subpages = $subpages;
@@ -16,15 +29,14 @@ class Alias
     }
 
     /**
-     * Evaluate the parameters of the alias. If the parameter is a callable, call it and return the result, otherwise return the parameter.
+     * Resolve alias parameters by invoking callables and applying defaults.
      *
-     * @param array $params
+     * @param array<string,mixed> $params Incoming request params
      *
-     * @return array
+     * @return array<string,mixed> Resolved params
      */
     final public function evaluate(array $params): array
     {
-        // For each value in the params array, if the value is a callable, call it and return the result, otherwise return the value
         return array_map(static fn($value, $key) => is_callable($value) ? $value() : ($params[$key] ?? $value), $this->params, array_keys($this->params));
     }
 }

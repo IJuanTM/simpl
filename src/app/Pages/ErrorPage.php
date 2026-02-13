@@ -1,11 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\PageController;
 use app\Enums\ErrorCode;
 use app\Models\Page;
 
+/**
+ * ErrorPage
+ *
+ * Displays an error page based on an ErrorCode passed in the route. The page
+ * may optionally redirect back to a provided page after a short delay when
+ * `ERROR_AUTO_REDIRECT` is enabled.
+ */
 class ErrorPage
 {
     public string $message;
@@ -16,22 +25,19 @@ class ErrorPage
     {
         $errorCode = ErrorCode::tryFrom((int)($page->urlArr['subpages'][0] ?? 0));
 
-        // Check if the code is set in the URL and is valid
+        // If no valid error code, return a 404
         if (!$errorCode) {
-            // Redirect to the 404 page if the subpage is not set or is invalid
             PageController::error(ErrorCode::NOT_FOUND);
             exit;
         }
 
-        // Set the error code and message
-        $this->code = $errorCode->value;
+        // $errorCode->value is an int backed enum value; cast to string for storage
+        $this->code = (string)$errorCode->value;
         $this->message = $errorCode->message();
         $this->redirectPage = $page->urlArr['params']['redirect'] ?? REDIRECT;
 
-        // Set the page subtitle
         $page->subtitle = "Error $this->code";
 
-        // Redirect to the homepage if auto-redirect is enabled
         if (ERROR_AUTO_REDIRECT) PageController::redirect($this->redirectPage, 2);
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -10,104 +12,91 @@ use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
- * Handles user registration functionality.
+ * RegisterPage
+ *
+ * Handles new account creation and optional email verification flow.
  */
 class RegisterPage
 {
     public function __construct()
     {
-        // Check if the register form is submitted
+        // Process registration form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
      * Processes registration form submission.
+     *
+     * @return void
      */
     private function post(): void
     {
-        // Validate the form fields
+        // Validate form fields
         if (
             !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
             !FormController::validate('password', ['required', 'maxLength' => 50]) ||
             !FormController::validate('password-check', ['required', 'maxLength' => 50])
         ) return;
 
-        // Sanitize the email
+        // Sanitize email
         $_POST['email'] = FormController::sanitize($_POST['email']);
 
-        // Check if the email is already in use
+        // Check if email already exists
         if (AuthController::checkEmail($_POST['email'])) {
             $_POST['email'] = '';
-
             FormController::addAlert('An account with this email already exists! Try logging in!', AlertType::WARNING);
             return;
         }
 
-        // Validate the password against the password policy
-        if (!AuthController::validatePassword($_POST['password'])) {
-            $_POST['password'] = '';
-            $_POST['password-check'] = '';
-            return;
-        }
+        // Validate password against policy
+        if (!FormController::validatePasswords('password', 'password-check')) return;
 
-        // Check if passwords match
-        if ($_POST['password'] !== $_POST['password-check']) {
-            FormController::addAlert('The entered passwords do not match!', AlertType::WARNING);
-            return;
-        }
-
-        // Register the user
+        // Create account
         $this->register($_POST['email'], $_POST['password']);
     }
 
     /**
-     * Creates a new user account and sends verification email.
+     * Creates new user account and sends verification email if required.
      *
-     * @param string $email User's email address
-     * @param string $password User's password (will be hashed)
+     * @param string $email User email
+     * @param string $password User password (will be hashed)
+     *
+     * @return void
      */
     private function register(string $email, string $password): void
     {
-        // Hash the password
-        $password = password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
-
-        // Push the new user to the database
+        // Insert new user into database
         DB::insert(
             'users',
-            compact('email', 'password')
+            [
+                'email' => $email,
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+            ]
         );
 
-        // Get the id of the new user
-        $id = DB::single(
-            'id',
-            'users',
-            compact('email')
-        )['id'];
+        // Get new user ID
+        $id = AuthController::getUserIdByEmail($email);
 
-        // Set the user role
+        // Assign default user role
         DB::insert(
             'user_roles',
-            ['user_id' => $id]
+            [
+                'user_id' => $id
+            ]
         );
 
+        // Handle email verification if required
         if (EMAIL_VERIFICATION_REQUIRED) {
-            // Generate a verification token
+            // Generate verification token
             $token = AuthController::generateToken(8);
 
-            // Set the verification token in the database
-            DB::insert(
-                'tokens',
-                [
-                    'user_id' => $id,
-                    'token' => $token,
-                    'type' => 'verification'
-                ]
-            );
+            // Store token in database
+            AuthController::createToken($id, $token, 'verification');
 
-            // Send a verification email to the user
+            // Send verification email
             AuthController::sendVerificationMail($id, $email, $token);
         } else {
-            // If no email verification is required, redirect the user to the login page with a success message
+            // No verification required, redirect to login
             PageController::redirect('login');
             AlertController::globalAlert('Success! Your account has been created!', AlertType::SUCCESS, 4);
         }

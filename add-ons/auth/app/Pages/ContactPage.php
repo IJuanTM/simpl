@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -9,22 +11,27 @@ use app\Controllers\PageController;
 use app\Enums\AlertType;
 
 /**
- * Handles contact form submissions and email notifications.
+ * ContactPage
+ *
+ * Processes submissions from the site's contact form and forwards messages to
+ * the configured site mail address.
  */
 class ContactPage
 {
     public function __construct()
     {
-        // Check if the contact form is submitted
+        // Process contact form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
      * Processes contact form submission.
+     *
+     * @return void
      */
     private function post(): void
     {
-        // Validate the form fields
+        // Validate form fields
         if (
             !FormController::validate('name', ['required', 'maxLength' => 100]) ||
             !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
@@ -32,7 +39,7 @@ class ContactPage
             !FormController::validate('message', ['required', 'maxLength' => 1000])
         ) return;
 
-        // Send the contact email
+        // Send contact email
         $this->contactMail(
             FormController::sanitize($_POST['name']),
             FormController::sanitize($_POST['email']),
@@ -48,10 +55,12 @@ class ContactPage
      * @param string $sender Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
+     *
+     * @return void
      */
     private function contactMail(string $from, string $sender, string $subject, string $message): void
     {
-        // Get the template from the views/parts/mails folder
+        // Get email template
         $contents = MailController::template('contact', [
             'title' => 'New Contact Form Submission',
             'from' => $from,
@@ -60,19 +69,19 @@ class ContactPage
             'contents' => nl2br($message)
         ]);
 
-        // Check if template was loaded successfully
+        // Check if template loaded successfully
         if ($contents === false) {
             FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
             return;
         }
 
-        // Send the message
+        // Send email
         $result = MailController::send($from, SITE_MAIL, $sender, $subject, $contents);
 
-        // Redirect the user to the redirect page
+        // Redirect to home
         PageController::redirect(REDIRECT);
 
-        // Show appropriate alert based on email sending result
+        // Show appropriate alert
         if ($result) AlertController::globalAlert('Your message has been sent!', AlertType::SUCCESS, 4);
         else AlertController::globalAlert('There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }

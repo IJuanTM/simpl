@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -12,35 +14,34 @@ use app\Enums\AlertType;
 use app\Models\Page;
 
 /**
- * The UsersPage class is the controller for the users page.
- * It checks if the user is an admin when accessing this page.
- * It shows all the users in the database and allows the admin to edit, delete, or restore a user.
+ * UsersPage
+ *
+ * Administrative user management including create/edit/delete/restore and
+ * password generation. Requires admin role to access.
  */
 class UsersPage
 {
     public int $page = 0;
     public array $user;
     public array $users;
-
     public string $generatedPassword = '';
 
     public function __construct(Page $page)
     {
-        // Check if the user is authenticated and if the user has the admin role
+        // Require admin authentication (role ID 1)
         AuthController::requireAuth([1]);
 
-        // Get the page number from the url
+        // Get pagination page number
         if (isset($page->urlArr['params']['page'])) $this->page = (int)$page->urlArr['params']['page'];
 
-        // Get all users from the database
+        // Get all users from database
         $this->users = DB::select(
             '*',
             'users'
         );
 
-        // Get the user roles for each user
+        // Get role for each user
         foreach ($this->users as $key => $user) {
-            // Get the role id from the user_roles table and store it in the users array
             $this->users[$key]['role'] = DB::single(
                 'role_id',
                 'user_roles',
@@ -50,53 +51,51 @@ class UsersPage
             )['role_id'];
         }
 
-        // Check if the user wants to perform a specific action
+        // Handle specific actions
         if (isset($page->urlArr['subpages'][0])) {
-            // Check if the user wants to create a new user
-            if ($page->urlArr['subpages'][0] === 'create') {
-                // Generate a random password for the new user
-                $this->generatedPassword = AuthController::generatePassword();
-            }
+            // Generate password for user creation
+            if ($page->urlArr['subpages'][0] === 'create') $this->generatedPassword = AuthController::generatePassword();
 
-            // Check if the user wants to edit a user, delete a user or restore a user
+            // Load user data for edit/delete/restore actions
             if (in_array($page->urlArr['subpages'][0], ['edit', 'delete', 'restore'])) {
-                // Check if the user id is not given in the url
+                // Validate user ID parameter
                 if (!isset($page->urlArr['params']['id'])) {
                     PageController::redirect('users', 2);
                     return;
                 }
 
-                // Get the index of the user in the users array
+                // Find user in users array
                 $index = array_search((int)$page->urlArr['params']['id'], array_column($this->users, 'id'), true);
 
-                // Check if the user exists in the users array
+                // Check if user exists
                 if ($index === false) {
                     PageController::redirect('users', 2);
                     return;
                 }
 
-                // Store the user in a variable
                 $this->user = $this->users[$index];
 
-                // Check if the user is the same as the logged-in user
+                // Prevent admin from modifying their own account
                 if ($this->user['id'] === SessionController::get('user')['id']) PageController::redirect('users', 2);
             }
 
-            // Check if a form is submitted
+            // Process form submission
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($page);
         }
     }
 
     /**
-     * This method is for handling the POST request of the users page.
+     * Processes user management form submissions.
      *
-     * @param Page $page
+     * @param Page $page Page object with URL parameters
+     *
+     * @return void
      */
     private function post(Page $page): void
     {
-        // Check if the user wants to create a new user
+        // Handle user creation
         if ($page->urlArr['subpages'][0] === 'create') {
-            // Validate the form fields
+            // Validate form fields
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
@@ -106,22 +105,17 @@ class UsersPage
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
-            // Sanitize the form data
-            $_POST['username'] = FormController::sanitize($_POST['username']);
-            $_POST['first_name'] = FormController::sanitize($_POST['first_name']);
-            $_POST['infix'] = FormController::sanitize($_POST['infix']);
-            $_POST['last_name'] = FormController::sanitize($_POST['last_name']);
-            $_POST['email'] = FormController::sanitize($_POST['email']);
+            // Sanitize inputs
+            FormController::sanitizeFields(['username', 'first_name', 'infix', 'last_name', 'email']);
 
-            // Check if the email is changed and if it is already in use by another user
+            // Check if email already exists
             if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
                 $_POST['email'] = '';
-
                 FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 return;
             }
 
-            // Create the user
+            // Create user
             self::create(
                 $_POST['email'],
                 $this->generatedPassword,
@@ -133,9 +127,9 @@ class UsersPage
             );
         }
 
-        // Check if the user wants to edit a user and if the form is submitted
+        // Handle user editing
         if ($page->urlArr['subpages'][0] === 'edit') {
-            // Validate the form fields
+            // Validate form fields
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
@@ -145,22 +139,17 @@ class UsersPage
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
-            // Sanitize the form data
-            $_POST['username'] = FormController::sanitize($_POST['username']);
-            $_POST['first_name'] = FormController::sanitize($_POST['first_name']);
-            $_POST['infix'] = FormController::sanitize($_POST['infix']);
-            $_POST['last_name'] = FormController::sanitize($_POST['last_name']);
-            $_POST['email'] = FormController::sanitize($_POST['email']);
+            // Sanitize inputs
+            FormController::sanitizeFields(['username', 'first_name', 'infix', 'last_name', 'email']);
 
-            // Check if the email is changed and if it is already in use by another user
+            // Check if email already in use by another user
             if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
                 $_POST['email'] = SessionController::get('user')['email'];
-
                 FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 return;
             }
 
-            // Update the user
+            // Update user
             self::update(
                 $_POST['id'],
                 $_POST['username'],
@@ -172,50 +161,50 @@ class UsersPage
             );
         }
 
-        // Check if the user wants to delete a user and if the form is submitted
+        // Handle user deletion
         if ($page->urlArr['subpages'][0] === 'delete') $this->delete($_POST['id']);
 
-        // Check if the user wants to restore a user
+        // Handle user restoration
         if ($page->urlArr['subpages'][0] === 'restore') {
-            // Check if the user is deleted or not
+            // Only restore if user is actually inactive
             if (isset($this->user) && !$this->user['is_active']) $this->restore($_POST['id']);
             else PageController::redirect('users', 2);
         }
     }
 
     /**
-     * This method is for creating a new user.
-     * An administrator can create a new user with a username, email, password, and role.
+     * Creates new user account with generated password.
      *
-     * @param string $email
-     * @param string $rawPassword
-     * @param int $role
-     * @param string|null $username
-     * @param string|null $first_name
-     * @param string|null $infix
-     * @param string|null $last_name
+     * @param string $email Email address
+     * @param string $rawPassword Temporary password (will be hashed)
+     * @param int $role Role ID
+     * @param string|null $username Username
+     * @param string|null $first_name First name
+     * @param string|null $infix Name infix
+     * @param string|null $last_name Last name
+     *
+     * @return void
      */
     private static function create(string $email, string $rawPassword, int $role, string|null $username = null, string|null $first_name = null, string|null $infix = null, string|null $last_name = null): void
     {
-        // Insert the new user into the database
-        DB::insert('users', [
-            'username' => $username ?? null,
-            'first_name' => $first_name ?? null,
-            'infix' => $infix ?? null,
-            'last_name' => $last_name ?? null,
-            'email' => $email,
-            'password' => password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
-            'must_change_password' => 1
-        ]);
-
-        // Get the id of the new user
-        $id = DB::single(
-            'id',
+        // Insert new user
+        DB::insert(
             'users',
-            compact('email')
-        )['id'];
+            [
+                'username' => $username ?? null,
+                'first_name' => $first_name ?? null,
+                'infix' => $infix ?? null,
+                'last_name' => $last_name ?? null,
+                'email' => $email,
+                'password' => password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'must_change_password' => 1
+            ]
+        );
 
-        // Insert the user role into the database
+        // Get new user ID
+        $id = AuthController::getUserIdByEmail($email);
+
+        // Assign role
         DB::insert(
             'user_roles',
             [
@@ -224,29 +213,30 @@ class UsersPage
             ]
         );
 
-        // Email the new user with their credentials
+        // Send account creation email
         AuthController::sendCreatedUserMail($email, $rawPassword);
 
-        // Redirect to the users page with a success message
+        // Redirect with success message
         PageController::redirect('users');
         AlertController::globalAlert('Success! The user has been created!', AlertType::SUCCESS, 4);
     }
 
     /**
-     * This method is for updating a user's profile.
-     * An administrator can update the user's name, email, and role.
+     * Updates existing user profile and role.
      *
-     * @param int $id
-     * @param string|null $username
-     * @param string|null $first_name
-     * @param string|null $infix
-     * @param string|null $last_name
-     * @param string $email
-     * @param int $role
+     * @param int $id User ID
+     * @param string|null $username Username
+     * @param string|null $first_name First name
+     * @param string|null $infix Name infix
+     * @param string|null $last_name Last name
+     * @param string $email Email address
+     * @param int $role Role ID
+     *
+     * @return void
      */
     private static function update(int $id, string|null $username, string|null $first_name, string|null $infix, string|null $last_name, string $email, int $role): void
     {
-        // Update the user in the database
+        // Update user profile
         DB::update(
             'users',
             [
@@ -259,7 +249,7 @@ class UsersPage
             compact('id')
         );
 
-        // Update the user role in the database
+        // Update user role
         DB::update(
             'user_roles',
             [
@@ -270,19 +260,21 @@ class UsersPage
             ]
         );
 
-        // Redirect to the users page with a success message
+        // Redirect with success message
         PageController::redirect('users');
         AlertController::globalAlert('Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
-     * This method is for soft-deleting a user in the database.
+     * Soft-deletes user account (sets inactive flag and deletion timestamp).
      *
-     * @param int $id
+     * @param int $id User ID
+     *
+     * @return void
      */
     private function delete(int $id): void
     {
-        // Soft delete the user in the database
+        // Soft delete user
         DB::update(
             'users',
             [
@@ -292,19 +284,21 @@ class UsersPage
             compact('id')
         );
 
-        // Redirect to the users page with a success message
+        // Redirect with success message
         PageController::redirect('users');
         AlertController::globalAlert('User successfully deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
-     * This method is for restoring the user after it has been deleted.
+     * Restores previously deleted user account.
      *
-     * @param int $id
+     * @param int $id User ID
+     *
+     * @return void
      */
     private function restore(int $id): void
     {
-        // Restore the user in the database
+        // Restore user
         DB::update(
             'users',
             [
@@ -314,7 +308,7 @@ class UsersPage
             compact('id')
         );
 
-        // Redirect to the users page with a success message
+        // Redirect with success message
         PageController::redirect('users');
         AlertController::globalAlert('User successfully restored!', AlertType::SUCCESS, 4);
     }

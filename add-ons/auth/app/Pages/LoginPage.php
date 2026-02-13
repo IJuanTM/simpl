@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -11,38 +13,39 @@ use app\Database\DB;
 use app\Enums\AlertType;
 
 /**
- * Handles user authentication and login process.
+ * LoginPage
+ *
+ * Handles the login form flow including lockout checks, credential
+ * verification, and optional remember-me token creation.
  */
 class LoginPage
 {
     public function __construct()
     {
-        // Check if the user is locked out
-        $this->checkLockedOut();
+        // Check if user is currently locked out
+        if ($this->checkLockedOut()) return;
 
-        // Check if the login form is submitted
+        // Process login form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
-     * Checks if a user account or IP address is locked out and adds an alert to the form if so.
+     * Checks if user or IP address is locked out due to failed login attempts.
      *
-     * @param string|null $identifier Username or email for fresh check (optional)
+     * @param string|null $identifier Username/email for fresh lockout check
      *
-     * @return bool True if locked out, false otherwise
+     * @return bool True if locked out
      */
     private function checkLockedOut(string|null $identifier = null): bool
     {
-        // When no identifier is provided, only check existing session lockout
+        // When no identifier provided, check existing session lockout
         if ($identifier === null) {
             $timeout = SessionController::get('lockout-timeout');
 
-            // Check if there is an active lockout in the session
+            // Check if there is an active lockout
             if ($timeout && $timeout > time()) {
                 $seconds = $timeout - time();
                 $minutes = (int)ceil($seconds / 60);
-
-                // Show the message in the form
                 FormController::addAlert("You are still locked out due to too many failed login attempts. Please wait $minutes minute(s) before trying again.", AlertType::ERROR, $seconds * 1000);
                 return true;
             }
@@ -52,19 +55,18 @@ class LoginPage
             return false;
         }
 
-        // Check lockout status for the provided identifier and current IP address
+        // Check lockout status for provided identifier and IP
         $lockOut = $this->lockOutTime($identifier, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
 
         if ($lockOut['seconds'] > 0) {
-            // Set the timeout in the session
+            // Set lockout timeout in session
             SessionController::set('lockout-timeout', time() + $lockOut['seconds']);
 
-            // Show lockout message according to the type of lockout
+            // Show appropriate lockout message
             $message = $lockOut['type'] === 'user'
                 ? "Your account is locked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again."
                 : "Access from your IP address is temporarily blocked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again.";
 
-            // Show the message in the form
             FormController::addAlert($message, AlertType::ERROR, $lockOut['seconds'] * 1000);
             return true;
         }
@@ -73,47 +75,47 @@ class LoginPage
     }
 
     /**
-     * Calculates lockout time based on failed login attempts for both user and IP address.
+     * Calculates lockout duration for user and IP address.
      *
      * @param string $identifier Username or email
-     * @param string $ip User's IP address
+     * @param string $ip IP address
      *
-     * @return array Array with 'seconds' until unlock and 'type' of lock ('user', 'ip', or 'none')
+     * @return array [seconds, minutes, type] lockout information
      */
     private function lockOutTime(string $identifier, string $ip): array
     {
         $userId = AuthController::getUserIdByIdentifier($identifier);
 
-        // Check if the user is locked out based on user ID
+        // Check user-based lockout first
         if ($userId !== null) {
             $seconds = max(0, ($this->calculateLockout('user_id', $userId, USER_LOGIN_ATTEMPTS, MIN_USER_LOCKOUT_DURATION, MAX_USER_LOCKOUT_DURATION, USER_LOCKOUT_WINDOW) ?? 0) - time());
-            $minutes = (int)ceil($seconds / 60); // Round up to nearest minute for display
+            $minutes = (int)ceil($seconds / 60);
             if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'user'];
         }
 
-        // Check if the user is locked out based on IP address
+        // Check IP-based lockout
         $seconds = max(0, ($this->calculateLockout('ip_address', $ip, IP_LOGIN_ATTEMPTS, MIN_IP_LOCKOUT_DURATION, MAX_IP_LOCKOUT_DURATION, IP_LOCKOUT_WINDOW) ?? 0) - time());
-        $minutes = (int)ceil($seconds / 60); // Round up to nearest minute for display
+        $minutes = (int)ceil($seconds / 60);
         if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'ip'];
 
         return ['seconds' => 0, 'minutes' => 0, 'type' => 'none'];
     }
 
     /**
-     * Calculates lockout end time for a given target (user or IP)
+     * Calculates lockout end timestamp based on failed attempts.
      *
-     * @param string $column Column to query ('user_id' or 'ip_address')
-     * @param mixed $value Value to bind
-     * @param int $threshold Failed attempts threshold
+     * @param string $column Database column to query (user_id or ip_address)
+     * @param mixed $value Value to match
+     * @param int $threshold Number of attempts before lockout
      * @param int $base Base lockout duration in minutes
      * @param int $max Maximum lockout duration in minutes
-     * @param int $window Time window in minutes
+     * @param int $window Time window in minutes to count attempts
      *
      * @return int|null Lockout end timestamp or null if not locked
      */
     private function calculateLockout(string $column, mixed $value, int $threshold, int $base, int $max, int $window): ?int
     {
-        // Fetch failed login attempts within the time window
+        // Fetch failed login attempts within time window
         $rows = DB::select(
             "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
             'login_attempts',
@@ -124,204 +126,140 @@ class LoginPage
             ORDER_BY: 'attempt_time DESC'
         );
 
-        // If no failed attempts, return null
         if (!$rows) return null;
 
-        // Extract timestamps and calculate lockout
+        // Extract timestamps
         $timestamps = array_map(static fn($r) => (int)$r['ts'], $rows);
         $newest = $timestamps[0];
 
-        // Count attempts within the time window
+        // Count attempts within time window
         $count = 0;
         foreach ($timestamps as $ts) {
             if (($newest - $ts) <= $window * 60) $count++;
             else break;
         }
 
-        // Calculate lockout duration
+        // Calculate number of lockout blocks
         $blocks = (int)floor($count / $threshold);
         if ($blocks === 0) return null;
 
-        // Return lockout end time
+        // Calculate lockout end time with exponential backoff
         return $newest + (min($base * (2 ** ($blocks - 1)), $max) * 60);
     }
 
+    /**
+     * Processes login form submission.
+     *
+     * @return void
+     */
     private function post(): void
     {
-        // Validate the form fields
+        // Validate form fields
         if (
             !FormController::validate('identifier', ['required', 'maxLength' => 100]) ||
             !FormController::validate('password', ['required', 'maxLength' => 50])
         ) return;
 
-        // Sanitize the form data
+        // Sanitize identifier input
         $_POST['identifier'] = FormController::sanitize($_POST['identifier']);
 
-        // Check if the user is locked out
+        // Check lockout status for this identifier
         if ($this->checkLockedOut($_POST['identifier'])) return;
 
-        // Check if identifier exists AND password is correct
+        // Verify credentials
         if (!AuthController::checkIdentifier($_POST['identifier']) || !AuthController::checkPasswordByIdentifier($_POST['identifier'], $_POST['password'])) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['identifier'], false, 'incorrect');
+            // Record failed attempt
+            AuthController::recordLoginAttempt($_POST['identifier'], false, 'incorrect');
 
-            // Check if the user is now locked out
+            // Check if now locked out
             if ($this->checkLockedOut($_POST['identifier'])) return;
 
             $_POST['identifier'] = '';
             $_POST['password'] = '';
-
             FormController::addAlert('Invalid username/email or password. Please try again.', AlertType::WARNING);
             return;
         }
 
-        // Check if the user is inactive
+        // Check if account is active
         if (!AuthController::isActiveByIdentifier($_POST['identifier'])) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['identifier'], false, 'inactive');
+            // Record failed attempt
+            AuthController::recordLoginAttempt($_POST['identifier'], false, 'inactive');
 
-            // Check if the user is now locked out
+            // Check if now locked out
             if ($this->checkLockedOut($_POST['identifier'])) return;
 
             $_POST['identifier'] = '';
             $_POST['password'] = '';
-
             FormController::addAlert('Your account is inactive! Contant an administrator for more information!', AlertType::ERROR);
             return;
         }
 
-        // Get the email from the identifier
+        // Get email from identifier
         $email = AuthController::getEmailByIdentifier($_POST['identifier']);
 
-        // Check if the user has not yet verified their account
+        // Check if account is verified
         if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified(null, $email)) {
-            // Record failed login attempt
-            $this->recordLoginAttempt($_POST['identifier'], false, 'unverified');
+            // Record failed attempt
+            AuthController::recordLoginAttempt($_POST['identifier'], false, 'unverified');
 
-            // Check if the user is now locked out
+            // Check if now locked out
             if ($this->checkLockedOut($_POST['identifier'])) return;
 
             $_POST['identifier'] = '';
             $_POST['password'] = '';
-
             FormController::addAlert('Your account has not been verified! Check your email for the verification link!', AlertType::ERROR);
             return;
         }
 
-        // Login the user
+        // Proceed with login
         $this->login($email);
     }
 
     /**
-     * Records a user's login attempt in the database.
+     * Creates user session and handles remember-me cookie.
      *
-     * @param string $identifier Username or email
-     * @param bool $success Whether the login attempt was successful
-     * @param string|null $failedReason Reason the login failed (e.g., 'incorrect', 'inactive' or 'unverified')
-     */
-    private function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null): void
-    {
-        // Insert the login attempt into the database
-        DB::insert(
-            'login_attempts',
-            [
-                'user_id' => AuthController::getUserIdByIdentifier($identifier),
-                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
-                'success' => $success ? 1 : 0,
-                'failed_reason' => $failedReason
-            ]
-        );
-    }
-
-    /**
-     * Authenticates user and creates session.
+     * @param string $email User email
      *
-     * @param string $email User's email address
+     * @return void
      */
     private function login(string $email): void
     {
         // Record successful login attempt
-        $this->recordLoginAttempt($email, true);
+        AuthController::recordLoginAttempt($email, true);
 
         // Update last login timestamp
-        DB::update(
-            'users',
-            ['last_login' => date('Y-m-d H:i:s')],
-            compact('email')
-        );
+        AuthController::updateLastLogin($email);
 
-        // Get the user from the database
-        $user = DB::single(
-            '*',
-            'users',
-            compact('email')
-        );
+        // Get user data
+        $user = AuthController::getUserByEmail($email);
 
-        // Remove the password from the user array
-        unset($user['password']);
-
-        // Set the user in the session
+        // Set user session
         if (!AuthController::setUserSession($user)) {
             FormController::addAlert('An error occurred while trying to log you in! Please try again!', AlertType::ERROR);
             return;
         }
 
         // Check if user must change password
-        if ($user['must_change_password'] === 1) {
-            // Redirect to the change password page with a warning message
+        if (($user['must_change_password'] ?? 0) === 1) {
             PageController::redirect('change-password');
             AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
             return;
         }
 
-        // Check if the user has the remember me checkbox checked
+        // Handle remember-me checkbox
         if (isset($_POST['remember'])) {
-            // Generate a 'remember' token
             $token = AuthController::generateToken();
-
-            // Timestamp for the cookie expiration
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
-            // Set the cookie
+            // Set cookie
             setcookie('remember', $token, $timestamp, '/');
 
-            // Set the token in the database
-            $this->setRememberToken($user['id'], $token, $timestamp);
+            // Store token in database
+            AuthController::createToken($user['id'], $token, 'remember', date('Y-m-d H:i:s', $timestamp));
         }
 
-        // Redirect the user to the profile page with a success message
+        // Redirect to profile
         PageController::redirect('profile');
         AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
-    }
-
-    /**
-     * Stores remember-me token in the database.
-     *
-     * @param int $id User ID
-     * @param string $token Remember token
-     * @param int $timestamp Expiration timestamp
-     */
-    private function setRememberToken(int $id, string $token, int $timestamp): void
-    {
-        // Delete the old token(s) from the database
-        DB::delete(
-            'tokens',
-            [
-                'user_id' => $id,
-                'type' => 'remember'
-            ]
-        );
-
-        // Set the token in the database
-        DB::insert(
-            'tokens',
-            [
-                'user_id' => $id,
-                'token' => $token,
-                'type' => 'remember',
-                'expires' => date('Y-m-d H:i:s', $timestamp)
-            ]
-        );
     }
 }

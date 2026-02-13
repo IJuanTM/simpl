@@ -1,21 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Controllers;
 
 use app\Utils\Log;
 
 /**
- * The ApplicationController class is the base class for all controllers.
- * It contains methods that are used by all controllers. It also contains the autoloader.
+ * Application bootstrap controller
+ *
+ * Responsible for early application initialization tasks such as starting the
+ * output buffer and creating essential helper controllers. This controller is
+ * lightweight and intentionally uses side-effects in the constructor to ensure
+ * the environment is ready for subsequent request handling.
  */
 class AppController
 {
     public function __construct()
     {
-        // Start the output buffer
+        // Start output buffering to allow content capture and late header changes
         ob_start();
 
-        // Initialize controllers
+        // Initialize essential controllers
         new SessionController();
         new AlertController();
         new AliasController();
@@ -23,24 +29,24 @@ class AppController
     }
 
     /**
-     * Method for loading a svg file and returning it as a string.
+     * Load an SVG file and return its contents or a fallback string.
      *
-     * @param string $name
+     * Note: `file_get_contents()` will return false on failure; the method
+     * preserves the original behaviour by returning a string in normal
+     * circumstances (file contents or HTML comment) or the raw false value when
+     * PHP fails to read the file.
      *
-     * @return bool|string
+     * @param string $name SVG filename (without extension)
+     *
+     * @return bool|string File contents, HTML comment fallback, or false if read fails
      */
     public static function svg(string $name): bool|string
     {
-        // Get the full path to the svg file
         $file = BASEDIR . "/public/img/svg/$name.svg";
 
-        // Check if the file exists
         if (!file_exists($file)) {
             $message = "SVG \"$name\" not found";
-
-            // Log the warning
             Log::warning($message);
-
             return DEV ? $message : "<!-- $message -->";
         }
 

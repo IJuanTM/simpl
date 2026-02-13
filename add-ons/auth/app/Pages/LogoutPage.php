@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
@@ -8,22 +10,26 @@ use app\Controllers\SessionController;
 use app\Enums\AlertType;
 
 /**
- * Handles user logout functionality.
+ * LogoutPage
+ *
+ * API endpoint to log the current user out by clearing session and remember cookie.
  */
 class LogoutPage
 {
     /**
-     * Processes logout request, clears session and redirects user.
+     * Logs out user by clearing session and remember cookie.
+     *
+     * @return void
      */
     final public function api(): void
     {
-        // Unset the user session
+        // Remove user from session
         SessionController::remove('user');
 
-        // Unset the remember cookie
+        // Clear remember cookie
         setcookie('remember', '', time() - 3600, '/');
 
-        // Redirect the user to the redirect page with a success message
+        // Redirect to home with logout message
         PageController::redirect(REDIRECT);
         AlertController::globalAlert('You have been logged out.', AlertType::SUCCESS, 4);
     }

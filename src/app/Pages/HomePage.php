@@ -1,17 +1,22 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Models\Page;
 
 /**
- * Page specific code goes here, look at it as a controller for the page
+ * HomePage
+ *
+ * Simple page handler for the site home. Mutates the supplied Page model to
+ * set a human-friendly subtitle.
  */
 class HomePage
 {
     public function __construct(Page $page)
     {
-        // Override the subtitle
+        // Provide a friendly subtitle for the homepage
         $page->subtitle = 'Welcome';
     }
 }

@@ -1,22 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Utils;
 
 use app\Enums\LogLevel;
 use JsonException;
 use RuntimeException;
 
-/**
- * Handles logging of messages to log files with different severity levels.
- * Logs are stored in the 'app/Logs' directory.
- */
 class Log
 {
+    /**
+     * Log an error-level message.
+     *
+     * @param string $message Message template
+     * @param array $context Context values for interpolation
+     *
+     * @return void
+     */
     public static function error(string $message, array $context = []): void
     {
         self::log(LogLevel::ERROR, $message, $context);
     }
 
+    /**
+     * Write a log entry to the appropriate level file, optionally including a trace.
+     *
+     * @param LogLevel $level Log severity
+     * @param string $message Message template
+     * @param array $context Context values for interpolation
+     * @param bool $includeTrace Whether to include a filtered stack trace
+     *
+     * @return void
+     */
     private static function log(LogLevel $level, string $message, array $context = [], bool $includeTrace = true): void
     {
         $dir = BASEDIR . '/app/Logs';
@@ -62,6 +78,14 @@ class Log
         file_put_contents("$dir/$level->value.log", $logLine . PHP_EOL . PHP_EOL, FILE_APPEND | LOCK_EX);
     }
 
+    /**
+     * Interpolate context values into a message template.
+     *
+     * @param string $message Message template with {placeholders}
+     * @param array $context Context data to insert
+     *
+     * @return string
+     */
     private static function interpolate(string $message, array $context): string
     {
         if (!$context) return $message;
@@ -72,16 +96,41 @@ class Log
         return strtr($message, $replace);
     }
 
+    /**
+     * Log a warning-level message.
+     *
+     * @param string $message
+     * @param array $context
+     *
+     * @return void
+     */
     public static function warning(string $message, array $context = []): void
     {
         self::log(LogLevel::WARNING, $message, $context);
     }
 
+    /**
+     * Log an info-level message.
+     *
+     * @param string $message
+     * @param array $context
+     *
+     * @return void
+     */
     public static function info(string $message, array $context = []): void
     {
         self::log(LogLevel::INFO, $message, $context);
     }
 
+    /**
+     * Log a debug-level message, optionally including a stack trace.
+     *
+     * @param string $message
+     * @param array $context
+     * @param bool $includeTrace
+     *
+     * @return void
+     */
     public static function debug(string $message, array $context = [], bool $includeTrace = true): void
     {
         self::log(LogLevel::DEBUG, $message, $context, $includeTrace);

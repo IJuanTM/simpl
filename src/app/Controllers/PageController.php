@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Controllers;
 
 use app\Enums\ErrorCode;
@@ -8,137 +10,141 @@ use app\Models\Url;
 use app\Utils\Log;
 
 /**
- * The PageController class is the controller for the pages. It parses the URL and loads the page.
- * It also contains the methods for loading the needed HTML parts.
+ * PageController
+ *
+ * Responsible for parsing the incoming request URI, resolving routes and
+ * aliases, instantiating page handler classes and dispatching requests to them
+ * (including API endpoints). Inherits from the Page model which stores route
+ * information and history.
+ *
+ * Notes:
+ * - The constructor uses several superglobals ($_SERVER, $_GET) and an
+ *   external $ROUTES map. Consider refactoring to inject a Request/Router in
+ *   the future to improve testability.
  */
 class PageController extends Page
 {
     public function __construct()
     {
-        // Split the url route into an array and get the page and parameters
+        // Split the request URI into components and extract query parameters
         $urlArr = explode('/', strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')) ?: REDIRECT, '?'));
 
         $page = array_shift($urlArr);
         $params = $_GET;
 
-        // Check if the page is a special route, if so call the route method
+        // Check for special route handlers (external $ROUTES)
+        global $ROUTES;
         if (isset($ROUTES[$page])) {
             $ROUTES[$page]();
             return;
         }
 
-        // Check if the page is an alias, if so set the page to the alias
+        // Resolve alias if present; alias may override page, subpages and params
         if ($alias = AliasController::resolve($page, $params)) [$page, $urlArr, $params] = [$alias['page'], $alias['subpages'], array_merge($params, $alias['params'])];
 
-        // Check if the page is an API page, if so take the second part of the url as the page name
+        // Detect API calls (first segment 'api') and set page accordingly
         $api = $page === 'api';
         if ($api) $page = array_shift($urlArr);
 
-        // Create a page object from the current url, with the page name, subpages and parameters
+        // Initialize Page model with resolved route data
         parent::__construct($page, $urlArr, $params);
 
-        // Get the Page class that corresponds with the current page and create an object from it. Pass this object to the Page model if it exists.
-        $class = 'app\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
+        // Instantiate the page handler class if it exists
+        $class = 'app\\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
         if (class_exists($class)) $this->pageObj = new $class($this);
 
-        // Check if the page is called as an API endpoint
+        // If called as API, dispatch to the page object's api() method
         if ($api) {
-            // Check if the page object exists and the API method exists
             if (!$this->pageObj || !method_exists($this->pageObj, 'api')) {
-                // Log the error if the environment is development
                 if (DEV) Log::error("Page \"$page\" was called as an API endpoint, but no page object or API method was found");
-
-                // Redirect to the 404 page
                 self::error(ErrorCode::NOT_FOUND);
                 return;
             }
 
-            // Call the API method
             $this->pageObj->api($this);
             return;
         }
 
-        // Render the page
+        // Render the page normally
         $this->render();
     }
 
     /**
-     * Redirect to a specific error page with the given error code and optional redirect URL.
+     * Redirect to an error page based on an ErrorCode value.
      *
-     * @param ErrorCode $code The error code
-     * @param string|null $redirect The optional redirect URL
+     * @param ErrorCode $code Error enumeration value
+     * @param string|null $redirect Optional redirect URL to include
+     *
+     * @return void
      */
-    public static function error(ErrorCode $code, string|null $redirect = null): void
+    public static function error(ErrorCode $code, ?string $redirect = null): void
     {
-        // Redirect to the error page with the given code and optional redirect parameter
+        // Build error URL and redirect
         self::redirect("error/$code->value" . ($redirect ? '?redirect=' . urlencode($redirect) : ''));
     }
 
     /**
-     * Redirect to the given location with the given delay.
+     * Send a refresh header to redirect the client after an optional delay.
      *
-     * @param string $location The location to redirect to
-     * @param int|null $refresh The time to wait before redirecting
+     * @param string $location Destination path or URL
+     * @param int|null $refresh Delay in seconds before redirect (0 = immediate)
+     *
+     * @return void
      */
-    public static function redirect(string $location, int|null $refresh = 0): void
+    public static function redirect(string $location, ?int $refresh = 0): void
     {
-        // Redirect to the given location after the given refresh time.
         header("refresh: $refresh; url=" . Url::to($location));
     }
 
     /**
-     * Render the page by loading the HTML parts and the content of the page. If the page does not exist, redirect to the 404 page.
+     * Render the page: include top, page view, and bottom parts.
+     * Shows 404 if view file is missing.
+     *
+     * @return void
      */
     private function render(): void
     {
-        // Get start of HTML and the HEAD
+        // Output top HTML part (head, header)
         $this->part('top');
 
-        // Get the page name and subpage
         $page = $this->urlArr['page'];
         $subpage = $this->urlArr['subpages'][0] ?? null;
 
-        // Get the file from the views folder, check for subpage first
+        // Prefer subpage view when present
         $file = $subpage && is_file(BASEDIR . "/views/$page/$subpage.phtml")
             ? BASEDIR . "/views/$page/$subpage.phtml"
             : BASEDIR . "/views/$page.phtml";
 
-        // Check if the file exists, if not, redirect to the 404 page
         if (!is_file($file)) {
-            // Log the error if the environment is development
             if (DEV) Log::error("Could not find view \"$page\"" . ($subpage ? "/$subpage" : ''));
-
-            // Redirect to the 404 page
             self::error(ErrorCode::NOT_FOUND);
             return;
         }
 
-        // Get the content of the BODY -> SECTION
+        // Include page content
         require_once $file;
 
-        // Get the footer part and end of HTML
+        // Output bottom HTML part (footer, scripts)
         $this->part('bottom');
     }
 
     /**
-     * Load the HTML parts. It takes a name as input and loads the corresponding part from the 'parts' folder.
+     * Include a reusable part from views/parts (e.g. header, footer).
      *
-     * @param string $name The name of the part to load
+     * @param string $name Part name (file without extension)
+     *
+     * @return void
      */
-    private function part(string $name): void
+    final protected function part(string $name): void
     {
-        // Get the file from the parts folder
         $file = BASEDIR . "/views/parts/$name.phtml";
 
-        // Check if the file exists, if so, require it
         if (is_file($file)) {
             require_once $file;
             return;
         }
 
         $message = "Part \"$name\" not found";
-
-        // Log the warning
         Log::warning($message);
 
         if (DEV) echo $message;
@@ -146,30 +152,25 @@ class PageController extends Page
     }
 
     /**
-     * Return the previous page URL from session history.
+     * Get the previous page URL from session history.
      *
      * @return string
      */
     public static function prev(): string
     {
-        $history = self::history();
-
-        // Return the previous page URL or a default redirect URL
+        $history = Page::history();
         return Url::to($history[count($history) - 2] ?? REDIRECT);
     }
 
     /**
-     * Redirect to the previous page.
+     * Go back to the previous page and update session history.
+     *
+     * @return void
      */
     public static function back(): void
     {
-        // Get the current history
-        $updated = array_slice(self::history(), 0, -2);
-
-        // Update the session history
+        $updated = array_slice(Page::history(), 0, -2);
         SessionController::set('history', $updated);
-
-        // Redirect to the previous page
         self::redirect(end($updated) ?: REDIRECT);
     }
 }

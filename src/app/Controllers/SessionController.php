@@ -1,28 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Controllers;
 
 /**
- * The SessionController class is the controller for accessing session variables.
- * It contains methods for setting, getting, checking, and removing session variables.
+ * SessionController
+ *
+ * Lightweight wrapper around PHP sessions. This class centralises session
+ * configuration and provides convenient static helpers for reading and
+ * writing session values.
+ *
+ * Notes:
+ * - Session must be available (this constructor starts it if not already active).
+ * - Methods operate directly on the $_SESSION superglobal.
  */
 class SessionController
 {
     public function __construct()
     {
-        // Set session lifetime
-        ini_set('session.gc_maxlifetime', 86400 * SESSION_LIFETIME);
+        // Configure session lifetime according to SESSION_LIFETIME constant
+        ini_set('session.gc_maxlifetime', (string)(86400 * SESSION_LIFETIME));
         session_set_cookie_params(86400 * SESSION_LIFETIME);
 
-        // Start the session
-        session_start();
+        // Start the session if not already started
+        if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     }
 
     /**
-     * Method for setting a session variable.
+     * Set a session value.
      *
      * @param string $key
      * @param mixed $value
+     *
+     * @return void
      */
     public static function set(string $key, mixed $value): void
     {
@@ -30,11 +41,11 @@ class SessionController
     }
 
     /**
-     * Method for getting a session variable.
+     * Get a session value or null when not set.
      *
      * @param string $key
      *
-     * @return mixed
+     * @return mixed|null Returns the stored value or null when the key is not present.
      */
     public static function get(string $key): mixed
     {
@@ -42,7 +53,7 @@ class SessionController
     }
 
     /**
-     * Method for checking if a session variable exists.
+     * Check whether a session key exists.
      *
      * @param string $key
      *
@@ -54,9 +65,11 @@ class SessionController
     }
 
     /**
-     * Method for removing a session variable.
+     * Remove a session key.
      *
      * @param string $key
+     *
+     * @return void
      */
     public static function remove(string $key): void
     {

@@ -1,40 +1,51 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Models;
 
 use app\Controllers\SessionController;
 
 /**
- * The Page class is the model for a page.
- * It contains properties for the page, such as the page object, the url parts, the title and the subtitle.
+ * Page model
+ *
+ * Holds routing information for the current request and maintains a simple
+ * navigation history stored in the session. Designed to be extended by page
+ * controller classes which provide rendering and API handling.
  */
 class Page
 {
+    /** @var array{page:string,subpages:array,params:array} Route data */
     public array $urlArr;
+
+    /** @var object|null Optional page handler object instantiated by PageController */
     public ?object $pageObj = null;
+
+    /** @var string Site title (defaults to APP_NAME) */
     public string $title;
+
+    /** @var string Readable subtitle generated from the page slug */
     public string $subtitle;
 
     public function __construct(string $page, array $subpages = [], array $params = [])
     {
-        // Combine the page, subpages and params into an array
+        // Store routing data
         $this->urlArr = compact('page', 'subpages', 'params');
 
         $history = self::history();
         $subUrl = $this->subUrl();
 
-        // If the history is empty or the last element is not the current subUrl, add the current subUrl to the history
+        // Push current subUrl to history and keep last 5 entries
         if (end($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -5));
 
-        // Set the title to the APP_NAME constant and the subtitle to the page name
         $this->title = APP_NAME;
         $this->subtitle = $this->getSubtitle();
     }
 
     /**
-     * Get the history of visited pages from session.
+     * Retrieve navigation history from session.
      *
-     * @return array
+     * @return array<int,string>
      */
     public static function history(): array
     {
@@ -42,29 +53,26 @@ class Page
     }
 
     /**
-     * Get the sub URL of the page as a string by combining the page, subpages and parameters.
+     * Return the sub-URL string composed of page, subpages and query params.
      *
      * @return string
      */
     final public function subUrl(): string
     {
-        // Set the page, subpages and parameters from the urlArr
         $page = $this->urlArr['page'];
         $subpages = implode('/', $this->urlArr['subpages']);
         $query = $this->urlArr['params'] ? '?' . http_build_query($this->urlArr['params']) : '';
 
-        // Return the sub URL as a string
         return "/$page/$subpages$query";
     }
 
     /**
-     * Generate the subtitle from the page name.
+     * Build a readable subtitle from the page slug.
      *
      * @return string
      */
     private function getSubtitle(): string
     {
-        // Return the page name with the first letter of each word capitalized
         return ucwords(str_replace('-', ' ', $this->urlArr['page']));
     }
 }

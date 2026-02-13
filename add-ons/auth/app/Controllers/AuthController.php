@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Controllers;
 
 use app\Database\DB;
@@ -10,24 +12,36 @@ use app\Utils\Log;
 use Exception;
 
 /**
- * Base class for authentication-related functionality.
+ * Authentication controller (add-on)
+ *
+ * Provides user authentication helpers used by the auth add-on: session
+ * management, token creation/validation, password handling, and email
+ * notifications. The class uses direct DB access and several PHP superglobals
+ * (e.g. $_COOKIE, $_SERVER) which makes unit testing harder; consider
+ * refactoring into smaller services (UserRepository, TokenService, Mailer)
+ * and injecting them for improved testability in the future.
  */
 class AuthController
 {
     public function __construct()
     {
-        // Log in the user if the 'remember' cookie is set
+        // If a "remember" cookie is present and no user session exists,
+        // attempt to rehydrate the session from the persistent token.
         if (isset($_COOKIE['remember']) && !SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
     }
 
     /**
-     * Automatically logs in a user using a 'remember' token.
+     * Try to automatically log a user in using a persistent "remember" token.
+     * If token is missing, expired or invalid the cookie and database token
+     * are cleaned up.
      *
-     * @param string $rememberToken Token stored in the 'remember' cookie
+     * @param string $rememberToken Token value read from the user's cookie
+     *
+     * @return void
      */
     public static function rememberLogin(string $rememberToken): void
     {
-        // Get the 'remember' token from the database
+        // Fetch token record for the supplied value and type "remember".
         $token = DB::single(
             '*',
             'tokens',
@@ -37,16 +51,14 @@ class AuthController
             ]
         );
 
-        // Check if the token exists
+        // No matching token — clear cookie and stop.
         if (!$token) {
-            // Delete the cookie
-            setcookie('remember', '', time() - 3600, '/');
+            self::clearRememberCookie();
             return;
         }
 
-        // Check if the token is expired
+        // If token expired: remove DB record and clear cookie.
         if ($token['expires'] < time()) {
-            // Delete the token from the database
             DB::delete(
                 'tokens',
                 [
@@ -54,27 +66,17 @@ class AuthController
                 ]
             );
 
-            // Delete the cookie
-            setcookie('remember', '', time() - 3600, '/');
+            self::clearRememberCookie();
             return;
         }
 
-        // Get the user from the database
-        $user = DB::single(
-            '*',
-            'users',
-            [
-                'id' => $token['user_id']
-            ]
-        );
+        // Load the associated user and set session; abort on failure.
+        $user = self::getUserById($token['user_id']);
+        if (!$user || !self::setUserSession($user)) return;
 
-        // Set the user in the session
-        self::setUserSession($user);
-
-        // Calculate new expiration timestamp
+        // Refresh expiration for token and cookie (uses REMEMBER_ME_DURATION days).
         $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
-        // Refresh the token's expiration date
         DB::update(
             'tokens',
             [
@@ -85,63 +87,126 @@ class AuthController
             ]
         );
 
-        // Refresh the 'remember' cookie
+        // Update the cookie to match the refreshed expiration.
         setcookie('remember', $rememberToken, $timestamp, '/');
     }
 
     /**
-     * Sets user data in the session after successful authentication.
+     * Remove the remember cookie from the client (sets past expiry).
      *
-     * @param array $user User data from database
+     * @return void
+     */
+    private static function clearRememberCookie(): void
+    {
+        setcookie('remember', '', time() - 3600, '/');
+    }
+
+    /**
+     * Retrieve a user row by id.
      *
-     * @return bool Success status
+     * @param int $id User primary key
+     *
+     * @return array|null Database row as associative array or null if missing
+     */
+    public static function getUserById(int $id): array|null
+    {
+        return DB::single(
+            '*',
+            'users',
+            compact('id')
+        ) ?: null;
+    }
+
+    /**
+     * Create the session entry for an authenticated user and ensure a role
+     * is attached. Removes the password field before storing user data in
+     * the session.
+     *
+     * @param array $user Associative user row from DB (expects 'id' present)
+     *
+     * @return bool True on success, false on failure (no role found)
      */
     public static function setUserSession(array $user): bool
     {
-        // Get the user role from the database
+        // Resolve the user's assigned role id from the user_roles table.
         $role = DB::single(
             'role_id',
             'user_roles',
             [
                 'user_id' => $user['id']
             ]
-        )['role_id'];
+        )['role_id'] ?? null;
 
-        // Check if the user role is set
+        // If the account has no role assigned, log an error, clear session,
+        // notify user and redirect.
         if (!$role) {
-            // Log an error message
-            Log::error("No user role is set for user with id \"" . $user['id'] . "\"");
-
-            // Unset the session user
+            Log::error("No user role is set for user with id \"{$user['id']}\"");
             SessionController::remove('user');
-
-            // Redirect the user to the redirect page
             FormController::addAlert('Error! No user role is set for this account! Please contact an admin!', AlertType::ERROR);
             PageController::redirect(REDIRECT);
             return false;
         }
 
-        // Add the role to the user array
-        $user += compact('role');
+        // Remove sensitive password hash before storing user in session.
+        unset($user['password']);
 
-        // Set the session user
-        SessionController::set('user', $user);
+        // Store user row plus role in session.
+        SessionController::set('user', $user + compact('role'));
         return true;
     }
 
     /**
-     * Validates the password against defined security rules, see the auth config to change them.
+     * Ensure the current request is performed by an authenticated user and
+     * optionally enforce role-based access.
      *
-     * @param string $password The password to validate
+     * If the user is unauthenticated, an unauthorized error is rendered.
+     * If password change is required and not explicitly allowed this will
+     * redirect the user to the change-password flow.
      *
-     * @return bool Whether the password is valid
+     * @param array|null $allowedRoles Array of role ids that are allowed, or null to allow any authenticated user
+     * @param bool $allowPasswordChange If true, allow access even when the user must change password
+     *
+     * @return void (will redirect/exit on access denial)
+     */
+    public static function requireAuth(array|null $allowedRoles = null, bool $allowPasswordChange = false): void
+    {
+        $user = SessionController::get('user');
+
+        if (!$user) {
+            // Not authenticated — render 401 with requested URI for context.
+            PageController::error(ErrorCode::UNAUTHORIZED, $_SERVER['REQUEST_URI']);
+            exit;
+        }
+
+        // If the account requires a password change and this route doesn't
+        // explicitly allow that, force a redirect to the change-password page.
+        if (!$allowPasswordChange && ($user['must_change_password'] ?? 0) === 1) {
+            PageController::redirect('change-password');
+            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            exit;
+        }
+
+        // If allowedRoles is provided, ensure the user's role is in the list.
+        if ($allowedRoles !== null && !in_array($user['role'], $allowedRoles, true)) {
+            PageController::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+    }
+
+    /**
+     * Validate a plaintext password against configured password rules.
+     * On failure an appropriate user-visible alert is added.
+     *
+     * @param string $password Plain password to validate
+     *
+     * @return bool True if valid, false otherwise
      */
     public static function validatePassword(string $password): bool
     {
         [$pattern, $message] = self::getPasswordRules();
 
-        // Validate the password against the pattern
         if (!preg_match($pattern, $password)) {
+            // Provide a human friendly explanation of the requirements.
             FormController::addAlert($message, AlertType::WARNING);
             return false;
         }
@@ -150,17 +215,18 @@ class AuthController
     }
 
     /**
-     * Returns a message detailing the password requirements based on the current configuration.
+     * Build and cache the regular expression used to validate passwords
+     * according to the app configuration constants (e.g. REQUIRE_UPPERCASE,
+     * MIN_PASSWORD_LENGTH). Returns an array with [pattern, humanMessage].
      *
-     * @return array An array containing the regex pattern and the error message
+     * @return array{0:string,1:string} [regex pattern, error message]
      */
     private static function getPasswordRules(): array
     {
         static $cache = null;
-
-        // Return the cached result if available
         if ($cache !== null) return $cache;
 
+        // Compose required pattern fragments based on configuration.
         $rules = array_filter([
             REQUIRE_LOWERCASE ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
             REQUIRE_UPPERCASE ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
@@ -168,24 +234,22 @@ class AuthController
             REQUIRE_SPECIAL_CHARACTER ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
         ]);
 
-        // Build the regex pattern
+        // Anchored regex that enforces all required character classes and
+        // the minimum length.
         $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . MIN_PASSWORD_LENGTH . ',}$/';
 
-        // Create an error message based on the rules
+        // Build a human readable message listing the requirements.
         $messages = array_column($rules, 1);
         array_unshift($messages, "at least " . MIN_PASSWORD_LENGTH . " characters");
         $message = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . ".";
 
-        // Cache the result
-        $cache = [$pattern, $message];
-
-        return $cache;
+        return $cache = [$pattern, $message];
     }
 
     /**
-     * Returns a user-friendly string detailing the password requirements.
+     * Return the user-facing password requirements message.
      *
-     * @return string Password requirements message
+     * @return string
      */
     public static function getPasswordRequirements(): string
     {
@@ -193,75 +257,67 @@ class AuthController
     }
 
     /**
-     * Gets the path to a user's profile image.
+     * Get the relative path to a user's profile image if set.
+     * Returns null when no profile image is configured.
      *
-     * @param string $id User ID
+     * @param string $id User id
      *
-     * @return string|null Path to image or null if none exists
+     * @return string|null Path relative to public root (e.g. 'img/profile/...') or null
      */
     public static function getProfileImage(string $id): string|null
     {
-        // Get the profile image from the database
         $profile_img = DB::single(
             'profile_img',
             'users',
             compact('id')
-        )['profile_img'];
+        )['profile_img'] ?? null;
 
-        // Return the path to the profile image
-        if ($profile_img) return 'img/profile/' . $profile_img;
-        else return null;
+        return $profile_img ? 'img/profile/' . $profile_img : null;
     }
 
     /**
-     * Generates a random password.
+     * Convenience: generate a random password using the token generator.
      *
-     * @param int $length Desired character length of output
+     * @param int $length Desired password length
      *
      * @return string|null Generated password or null on failure
      */
     public static function generatePassword(int $length = 12): string|null
     {
-        return self::generateToken($length);
+        return self::generateToken($length, false);
     }
 
     /**
-     * Generates a random token or password.
+     * Generate a cryptographically secure random token (hex characters).
+     * The token length is trimmed to $length. If $uppercase is true the
+     * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int $length Desired character length of output
-     * @param bool $uppercase Convert to uppercase (for tokens)
+     * @param int $length Number of characters to return
+     * @param bool $uppercase Uppercase the resulting token
      *
-     * @return string|null Generated string or null on failure
+     * @return string|null Token string or null when secure random generation fails
      */
     public static function generateToken(int $length = 32, bool $uppercase = true): string|null
     {
         try {
-            // Generate a random token of the specified length
-            $token = substr(bin2hex(random_bytes(min((int)ceil($length / 2), 16))), 0, $length);
-
-            // Return the token in the desired case
+            $bytes = random_bytes((int)ceil($length / 2));
+            $token = substr(bin2hex($bytes), 0, $length);
             return $uppercase ? strtoupper($token) : $token;
         } catch (Exception $e) {
-            // Log the error
-            Log::error($e->getMessage());
-
-            // Return an error message
-            FormController::addAlert('Error! Something went wrong! Please try again or contact an admin.', AlertType::ERROR);
-            PageController::redirect(REDIRECT, 2);
+            Log::error("Could not generate token: {$e->getMessage()}");
             return null;
         }
     }
 
     /**
-     * Checks if an email exists in the database.
+     * Check whether an email address is already registered.
      *
-     * @param string $email Email to check
+     * @param string $email
      *
-     * @return bool Whether the email exists
+     * @return bool
      */
     public static function checkEmail(string $email): bool
     {
-        // Check if the email exists in the database
         return DB::exists(
             'users',
             compact('email')
@@ -269,15 +325,14 @@ class AuthController
     }
 
     /**
-     * Checks if a user exists in the database.
+     * Determine whether a user exists by id.
      *
-     * @param int $id User ID
+     * @param int $id
      *
-     * @return bool Whether the user exists
+     * @return bool
      */
     public static function exists(int $id): bool
     {
-        // Check if the user exists in the database
         return DB::exists(
             'users',
             compact('id')
@@ -285,325 +340,435 @@ class AuthController
     }
 
     /**
-     * Requires user to be authenticated and optionally checks role access.
-     * Also checks if account is active and if password change is required.
+     * Return whether the account is verified (no pending verification token).
+     * Either provide $id or $email (email will be resolved to id).
      *
-     * @param array|null $roles Allowed role IDs (null = any authenticated user)
-     * @param bool $allowWithTempPassword If true, allows access even if must_change_password is set
-     */
-    public static function requireAuth(array|null $roles = null, bool $allowWithTempPassword = false): void
-    {
-        // Check if user is logged in
-        if (!SessionController::get('user')) {
-            PageController::error(ErrorCode::FORBIDDEN);
-            exit;
-        }
-
-        $user = SessionController::get('user');
-
-        // Check if account is active
-        if (isset($user['is_active']) && $user['is_active'] !== 1) {
-            // Log the user out
-            SessionController::remove('user');
-
-            // Redirect to login page with an error message
-            PageController::redirect('login');
-            AlertController::globalAlert('Your account is inactive. Please contact an administrator.', AlertType::ERROR, 4);
-            exit;
-        }
-
-        // Check if user must change password (unless the page explicitly allows it)
-        if (!$allowWithTempPassword && isset($user['must_change_password']) && $user['must_change_password'] === 1) {
-            // Redirect to change password page with a warning message
-            PageController::redirect('change-password');
-            AlertController::globalAlert('You must change your password before continuing.', AlertType::WARNING, 4);
-            exit;
-        }
-
-        // Check role access if roles are specified
-        if ($roles !== null && (!isset($user['role']) || !in_array($user['role'], $roles, true))) {
-            // Redirect to error page with forbidden error code
-            PageController::error(ErrorCode::FORBIDDEN);
-            exit;
-        }
-    }
-
-    /**
-     * Checks if a user's email is verified.
+     * @param int|null $id
+     * @param string|null $email
      *
-     * @param int|null $id User ID (optional if email provided)
-     * @param string|null $email User email (optional if ID provided)
-     *
-     * @return bool Whether the user is verified
+     * @return bool True when verified, false otherwise
      */
     public static function isVerified(int|null $id = null, string|null $email = null): bool
     {
-        if ($email !== null) {
-            // Get the user id from the database
-            $id = DB::single(
-                'id',
-                'users',
-                compact('email')
-            )['id'];
+        if ($id === null && $email !== null) {
+            $id = self::getUserIdByEmail($email);
+            if (!$id) return false;
         }
 
-        // Check if there are any verification tokens for the user
-        return DB::count(
-                'tokens',
-                [
-                    'user_id' => $id,
-                    'type' => 'verification'
-                ]
-            ) === 0;
+        if ($id === null) return false;
+
+        // Account considered verified when there is no verification token row.
+        return !DB::exists(
+            'tokens',
+            [
+                'user_id' => $id,
+                'type' => 'verification'
+            ]
+        );
     }
 
     /**
-     * Validates a token against the database.
+     * Resolve a user's id by their email address.
      *
-     * @param int $id User ID
-     * @param string $token Token to check
-     * @param string $type Token type (verification, reset, etc.)
+     * @param string $email
      *
-     * @return bool Whether the token is valid
-     */
-    public static function checkToken(int $id, string $token, string $type): bool
-    {
-        // Get the token from the database and compare it
-        return strcasecmp(DB::single(
-                'token',
-                'tokens',
-                [
-                    'user_id' => $id,
-                    'type' => $type
-                ]
-            )['token'], $token) === 0;
-    }
-
-    /**
-     * Verifies a password against the stored hash.
-     *
-     * @param string $email User email
-     * @param string $password Password to check
-     *
-     * @return bool Whether the password is correct
-     */
-    public static function checkPassword(string $email, string $password): bool
-    {
-        // Verify the password against the hash in the database
-        return password_verify($password, DB::single(
-            'password',
-            'users',
-            compact('email')
-        )['password']);
-    }
-
-    /**
-     * Checks if a user account is active (not deleted).
-     *
-     * @param string $email User email
-     *
-     * @return bool Whether the account is active
-     */
-    public static function isActive(string $email): bool
-    {
-        // Check if the user is active in the database
-        return DB::single(
-                'is_active',
-                'users',
-                compact('email')
-            )['is_active'] === 1;
-    }
-
-    /**
-     * Retrieves a user's ID based on their email address.
-     *
-     * @param string $email User email
-     *
-     * @return int|null User ID or null if not found
+     * @return int|null Id or null when not found
      */
     public static function getUserIdByEmail(string $email): int|null
     {
-        // Get the user from the database
         $user = DB::single(
             'id',
             'users',
             compact('email')
         );
 
-        // Return the user id or null if not found
         return $user ? (int)$user['id'] : null;
     }
 
     /**
-     * Retrieves a user's ID based on their username or email address.
+     * Verify that a provided token matches the stored token for the given
+     * user id and token type. Comparison is case-insensitive.
      *
-     * @param string $identifier Username or email
+     * @param int $id User id
+     * @param string $token Token to check
+     * @param string $type Token type (e.g. 'verification', 'reset', 'remember')
      *
-     * @return int|null User ID or null if not found
+     * @return bool True if tokens match
      */
-    public static function getUserIdByIdentifier(string $identifier): int|null
+    public static function checkToken(int $id, string $token, string $type): bool
     {
-        // Try to get user by email first
-        $user = DB::single('id', 'users', ['email' => $identifier]);
+        $dbToken = DB::single(
+            'token',
+            'tokens',
+            [
+                'user_id' => $id,
+                'type' => $type
+            ]
+        )['token'] ?? null;
 
-        // If not found by email, try username
-        if (!$user) {
-            $user = DB::single('id', 'users', ['username' => $identifier]);
-        }
-
-        // Return the user id or null if not found
-        return $user ? (int)$user['id'] : null;
+        // Use case-insensitive comparison so tokens are not bound to casing.
+        return $dbToken && strcasecmp($dbToken, $token) === 0;
     }
 
     /**
-     * Checks if a username or email exists in the database.
+     * Given a username or email (identifier) return the associated email.
      *
-     * @param string $identifier Username or email to check
+     * @param string $identifier Username or email
      *
-     * @return bool Whether the identifier exists
+     * @return string|null Email or null when not found
      */
-    public static function checkIdentifier(string $identifier): bool
+    public static function getEmailByIdentifier(string $identifier): string|null
     {
-        // Check if the identifier exists as email or username
-        return DB::exists('users', ['email' => $identifier]) ||
-            DB::exists('users', ['username' => $identifier]);
+        $user = self::getUserByIdentifier($identifier);
+        return $user['email'] ?? null;
     }
 
     /**
-     * Verifies a password against the stored hash using username or email.
+     * Find a user by either email or username. Email is tried first.
      *
-     * @param string $identifier Username or email
-     * @param string $password Password to check
+     * @param string $identifier
      *
-     * @return bool Whether the password is correct
+     * @return array|null DB row or null
+     */
+    public static function getUserByIdentifier(string $identifier): array|null
+    {
+        // Prefer resolving by email first (identifier may already be an email).
+        $user = self::getUserByEmail($identifier);
+        if ($user) return $user;
+
+        // Fall back to username lookup.
+        return DB::single(
+            '*',
+            'users',
+            [
+                'username' => $identifier
+            ]
+        ) ?: null;
+    }
+
+    /**
+     * Fetch a user record by email.
+     *
+     * @param string $email
+     *
+     * @return array|null
+     */
+    public static function getUserByEmail(string $email): array|null
+    {
+        return DB::single(
+            '*',
+            'users',
+            compact('email')
+        ) ?: null;
+    }
+
+    /**
+     * Check provided plaintext password against the stored hash for the
+     * user identified by email.
+     *
+     * @param string $email
+     * @param string $password Plaintext password to verify
+     *
+     * @return bool True when the password matches
+     */
+    public static function checkPassword(string $email, string $password): bool
+    {
+        $hash = DB::single(
+            'password',
+            'users',
+            compact('email')
+        )['password'] ?? null;
+
+        return $hash && password_verify($password, $hash);
+    }
+
+    /**
+     * Check password for an identifier that may be an email or username.
+     *
+     * @param string $identifier
+     * @param string $password
+     *
+     * @return bool
      */
     public static function checkPasswordByIdentifier(string $identifier, string $password): bool
     {
-        // Try to get user by email first
-        $user = DB::single('password', 'users', ['email' => $identifier]);
-
-        // If not found by email, try username
-        if (!$user) {
-            $user = DB::single('password', 'users', ['username' => $identifier]);
-        }
-
-        // Verify the password if user was found
+        $user = self::getUserByIdentifier($identifier);
         return $user && password_verify($password, $user['password']);
     }
 
     /**
-     * Checks if a user account is active using username or email.
+     * Determine whether an email or username exists in the database.
      *
-     * @param string $identifier Username or email
+     * @param string $identifier Email or username
      *
-     * @return bool Whether the account is active
+     * @return bool
+     */
+    public static function checkIdentifier(string $identifier): bool
+    {
+        return DB::exists(
+                'users',
+                [
+                    'email' => $identifier
+                ]
+            ) || DB::exists(
+                'users',
+                [
+                    'username' => $identifier
+                ]
+            );
+    }
+
+    /**
+     * Is the account active (is_active === 1) for the user with this email?
+     *
+     * @param string $email
+     *
+     * @return bool
+     */
+    public static function isActive(string $email): bool
+    {
+        return (DB::single(
+                'is_active',
+                'users',
+                compact('email')
+            )['is_active'] ?? 0) === 1;
+    }
+
+    /**
+     * Is the account active for a user located by username or email?
+     *
+     * @param string $identifier
+     *
+     * @return bool
      */
     public static function isActiveByIdentifier(string $identifier): bool
     {
-        // Try to get user by email first
-        $user = DB::single('is_active', 'users', ['email' => $identifier]);
-
-        // If not found by email, try username
-        if (!$user) {
-            $user = DB::single('is_active', 'users', ['username' => $identifier]);
-        }
-
-        // Check if the user is active
-        return $user && $user['is_active'] === 1;
+        $user = self::getUserByIdentifier($identifier);
+        return $user && ($user['is_active'] ?? 0) === 1;
     }
 
     /**
-     * Retrieves user email based on their username or email identifier.
+     * Update a user's password and clear the "must_change_password" flag.
+     * Password is hashed with configured algorithm/options constants.
      *
-     * @param string $identifier Username or email
+     * @param int $id
+     * @param string $password Plaintext new password (will be hashed)
      *
-     * @return string|null User email or null if not found
+     * @return void
      */
-    public static function getEmailByIdentifier(string $identifier): string|null
+    public static function updatePassword(int $id, string $password): void
     {
-        // Try to get user by email first
-        $user = DB::single('email', 'users', ['email' => $identifier]);
-
-        // If not found by email, try username
-        if (!$user) {
-            $user = DB::single('email', 'users', ['username' => $identifier]);
-        }
-
-        // Return the email or null if not found
-        return $user ? $user['email'] : null;
+        DB::update(
+            'users',
+            [
+                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'must_change_password' => 0
+            ],
+            compact('id')
+        );
     }
 
     /**
-     * Sends a verification email to the user and redirects them to the verification page.
+     * Create or replace a token of the given type for a user. Existing tokens
+     * of the same type for that user are removed before insertion.
      *
-     * @param int $id User ID
-     * @param string $to User's email address
-     * @param string $code Verification code
-     * @param bool $isResend Whether this is a resend of the verification email
+     * @param int $userId
+     * @param string $token
+     * @param string $type
+     * @param string|null $expires Optional expiry timestamp value
+     *
+     * @return void
+     */
+    public static function createToken(int $userId, string $token, string $type, string|null $expires = null): void
+    {
+        DB::delete(
+            'tokens',
+            [
+                'user_id' => $userId,
+                'type' => $type
+            ]
+        );
+
+        $data = [
+            'user_id' => $userId,
+            'token' => $token,
+            'type' => $type
+        ];
+        if ($expires) $data['expires'] = $expires;
+
+        DB::insert(
+            'tokens',
+            $data
+        );
+    }
+
+    /**
+     * Remove a token record for a user by type.
+     *
+     * @param int $userId
+     * @param string $type
+     *
+     * @return void
+     */
+    public static function deleteToken(int $userId, string $type): void
+    {
+        DB::delete(
+            'tokens',
+            [
+                'user_id' => $userId,
+                'type' => $type
+            ]
+        );
+    }
+
+    /**
+     * Persist a login attempt record including IP, user agent and whether it
+     * succeeded. The user_id will be resolved from the provided identifier
+     * (email or username) when possible.
+     *
+     * @param string $identifier
+     * @param bool $success
+     * @param string|null $failedReason
+     *
+     * @return void
+     */
+    public static function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null): void
+    {
+        DB::insert(
+            'login_attempts',
+            [
+                'user_id' => self::getUserIdByIdentifier($identifier),
+                'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
+                'success' => $success ? 1 : 0,
+                'failed_reason' => $failedReason
+            ]
+        );
+    }
+
+    /**
+     * Resolve a user id from a username or email identifier.
+     *
+     * @param string $identifier
+     *
+     * @return int|null
+     */
+    public static function getUserIdByIdentifier(string $identifier): int|null
+    {
+        $user = self::getUserByIdentifier($identifier);
+        return $user ? (int)$user['id'] : null;
+    }
+
+    /**
+     * Update the last_login timestamp for the user identified by email.
+     *
+     * @param string $email
+     *
+     * @return void
+     */
+    public static function updateLastLogin(string $email): void
+    {
+        DB::update(
+            'users',
+            [
+                'last_login' => date('Y-m-d H:i:s')
+            ],
+            compact('email')
+        );
+    }
+
+    /**
+     * Send a verification email containing a one-time code/link and redirect
+     * the user to the verification page. Displays user feedback alerts
+     * depending on the mailer result.
+     *
+     * @param int $id
+     * @param string $to
+     * @param string $code
+     * @param bool $isResend
+     *
+     * @return void
      */
     public static function sendVerificationMail(int $id, string $to, string $code, bool $isResend = false): void
     {
-        // Get the template from the views/parts/mails folder
         $contents = MailController::template('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
             'link' => Url::to("verify-account/$id/$code"),
             'code' => $code
         ]);
 
-        // Check if the template was loaded successfully
         if ($contents === false) {
             FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
             return;
         }
 
-        // Send the email and handle the result
         $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
 
-        // Redirect the user to the verification page
+        // Redirect to the verification page regardless of email sending result.
         PageController::redirect("verify-account/$id");
 
-        // Show appropriate alert based on the email sending result
         if ($result) {
-            $message = $isResend
-                ? 'Success! A new verification email has been sent!'
-                : 'Success! Your account has been created! A verification email has been sent!';
+            $message = $isResend ? 'Success! A new verification email has been sent!' : 'Success! Your account has been created! A verification email has been sent!';
             AlertController::globalAlert($message, AlertType::SUCCESS, 4);
         } else {
-            $message = $isResend
-                ? 'An error occurred while sending your verification email! Please contact support.'
-                : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
+            $message = $isResend ? 'An error occurred while sending your verification email! Please contact support.' : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
             AlertController::globalAlert($message, AlertType::ERROR, 8);
         }
     }
 
     /**
-     * Sends an account creation email to the newly created user. This is called after an admin creates a new user.
+     * Send a password reset email with a tokenized link to the reset form.
      *
-     * @param string $to User's email address
-     * @param string $password Generated password
+     * @param int $id
+     * @param string $to
+     * @param string $token
+     *
+     * @return void
+     */
+    public static function sendPasswordResetMail(int $id, string $to, string $token): void
+    {
+        $contents = MailController::template('reset-password', [
+            'title' => 'Password Reset Request - ' . APP_NAME,
+            'link' => Url::to("reset-password/$id/$token")
+        ]);
+
+        if ($contents === false) {
+            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            return;
+        }
+
+        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Reset password', $contents);
+
+        if ($result) FormController::addAlert('Success! A reset link has been sent to your email!', AlertType::SUCCESS);
+        else FormController::addAlert('An error occurred while sending the reset link. Please contact support.', AlertType::ERROR);
+    }
+
+    /**
+     * Notify a newly-created user by email with a temporary password and
+     * redirect to the users listing. Shows feedback about mail delivery.
+     *
+     * @param string $to
+     * @param string $password Temporary plaintext password
+     *
+     * @return void
      */
     public static function sendCreatedUserMail(string $to, string $password): void
     {
-        // Get the template from the views/parts/mails folder
         $contents = MailController::template('account-created', [
             'title' => 'Account Created - ' . APP_NAME,
             'link' => Url::to('login'),
             'password' => $password
         ]);
 
-        // Check if the template was loaded successfully
         if ($contents === false) {
             FormController::addAlert('An error occurred while sending the account creation email! Please contact support.', AlertType::ERROR);
             return;
         }
 
-        // Send the email and handle the result
         $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'An account has been created', $contents);
 
-        // Redirect to the users page
         PageController::redirect('users');
 
-        // Show appropriate alert based on the email sending result
         if ($result) AlertController::globalAlert('Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
         else AlertController::globalAlert('The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
     }

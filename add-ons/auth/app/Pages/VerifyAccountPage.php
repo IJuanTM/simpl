@@ -1,120 +1,120 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Pages;
 
 use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
 
 /**
- * The VerifyPage class is the controller for the verify page.
- * It is used to verify a new registered user.
+ * VerifyAccountPage
+ *
+ * Handles account verification using a token supplied in the URL or via a
+ * manual form. Validates input and provides user-facing feedback via alerts.
  */
 class VerifyAccountPage
 {
     public function __construct(Page $page)
     {
-        // Get the user id from the url and sanitize it
+        // Get and sanitize user ID from URL
         $id = FormController::sanitize($page->urlArr['subpages'][0] ?? '');
 
-        // Check if the user id is not empty and is numeric
+        // Validate user ID
         if (empty($id) || !is_numeric($id)) {
             FormController::addAlert('Undefined user id! Please check your mail.', AlertType::ERROR);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Check if the user exists in the database
+        // Check if user exists
         if (!AuthController::exists($id)) {
             FormController::addAlert('We could not find your account! Please check your mail.', AlertType::ERROR);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Check if the user has already been verified
+        // Check if already verified
         if (AuthController::isVerified($id)) {
             FormController::addAlert('Your account has already been verified!', AlertType::INFO);
             PageController::redirect('login', 2);
             return;
         }
 
-        // Sanitize the code send with the url
+        // Get verification code from URL
         $code = FormController::sanitize($page->urlArr['subpages'][1] ?? '');
 
-        // Check if the code is not empty and if it is, check if the code is sent with the form
+        // If code provided in URL, verify immediately
         if (!empty($code)) {
-            // Check if the code field is not too long
+            // Validate code length
             if (strlen($code) > 8) {
                 FormController::addAlert('The verification code given in the url is too long!', AlertType::WARNING);
                 return;
             }
 
-            // Check if the code is correct
+            // Verify code is correct
             if (!AuthController::checkToken($id, $code, 'verification')) {
                 FormController::addAlert('The verification code given in the url is incorrect! Please check your mail.', AlertType::ERROR);
                 return;
             }
 
-            // Verify the user
-            $this->verify($id);
+            // Verify account
+            $this->verify((int)$id);
         }
 
-        // Check if the form is submitted
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
+        // Process manual verification form submission
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post((int)$id);
     }
 
     /**
-     * This method is for verifying the user's account. It is called after all checks are done.
-     * Here the system removes the verification token from the database and redirects the user to the login page.
+     * Completes account verification by deleting verification token.
      *
-     * @param int $id
+     * @param int $id User ID
+     *
+     * @return void
      */
     private function verify(int $id): void
     {
-        // Empty the code in the database for the user
-        DB::delete(
-            'tokens',
-            [
-                'user_id' => $id,
-                'type' => 'verification'
-            ]
-        );
+        // Remove verification token from database to mark account as verified
+        AuthController::deleteToken($id, 'verification');
 
-        // Redirect the user to the login page and show a success message
+        // Redirect to login with success message
         PageController::redirect('login');
         AlertController::globalAlert('Success! Your account has been verified!', AlertType::SUCCESS, 4);
     }
 
     /**
-     * This method is for handling the POST request of the verify account form.
+     * Handles manual verification code submission from a form.
      *
-     * @param int $userId
+     * @param int $userId User ID
+     *
+     * @return void
      */
     private function post(int $userId): void
     {
-        // Check if the token field is entered
+        // Ensure a code was entered
         if (empty($_POST['code'])) {
             FormController::addAlert('Please enter the verification code received in your mail!', AlertType::WARNING);
             return;
         }
 
-        // Check if the token field is not too long
+        // Validate code length
         if (strlen($_POST['code']) > 8) {
             FormController::addAlert('The verification code is too long!', AlertType::WARNING);
             return;
         }
 
-        // Check if the token is correct
+        // Verify code is correct
         if (!AuthController::checkToken($userId, $_POST['code'], 'verification')) {
             FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
             return;
         }
 
-        // Verify the user
+        // Complete verification
         $this->verify($userId);
     }
 }

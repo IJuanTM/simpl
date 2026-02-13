@@ -1,7 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace app\Enums;
 
+/**
+ * ErrorCode enum
+ *
+ * HTTP-like error codes used across the application to select error pages and
+ * messages.
+ */
 enum ErrorCode: int
 {
     /** Invalid request syntax, malformed parameters, or validation failure */
@@ -61,6 +69,11 @@ enum ErrorCode: int
     /** Upstream server failed to respond in time */
     case GATEWAY_TIMEOUT = 504;
 
+    /**
+     * Return a short human-readable message for this error code.
+     *
+     * @return string
+     */
     public function message(): string
     {
         return match ($this) {
