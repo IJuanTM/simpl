@@ -78,7 +78,7 @@ use app\Models\Url;
 
         <div class="row form-row connected-row">
           <div class="row">
-            <div class="col form-group g-row-0.5 f-g-2">
+            <div class="col form-group g-row-0.5">
               <div class="row">
                 <label class="col" for="first_name">First name:</label>
               </div>
@@ -86,15 +86,6 @@ use app\Models\Url;
                 <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
                 <input class="col" id="first_name" type="text" name="first_name" maxlength="100" placeholder="Enter first name:" value="<?= $_POST['first_name'] ?? SessionController::get('user')['first_name'] ?>" autocomplete="given-name" aria-label="First name input field">
               </div>
-            </div>
-          </div>
-
-          <div class="col form-group g-row-0.5">
-            <div class="row">
-              <label class="col" for="infix">Infix:</label>
-            </div>
-            <div class="row input-group">
-              <input class="col" id="infix" type="text" name="infix" maxlength="50" placeholder="Enter infix:" value="<?= $_POST['infix'] ?? SessionController::get('user')['infix'] ?>" autocomplete="additional-name" aria-label="Infix input field">
             </div>
           </div>
 

@@ -99,14 +99,13 @@ class UsersPage
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
-                !FormController::validate('infix', ['maxLength' => 50]) ||
                 !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
             // Sanitize inputs
-            FormController::sanitizeFields(['username', 'first_name', 'infix', 'last_name', 'email']);
+            FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
             // Check if email already exists
             if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
@@ -122,7 +121,6 @@ class UsersPage
                 $_POST['role'],
                 $_POST['username'],
                 $_POST['first_name'],
-                $_POST['infix'],
                 $_POST['last_name']
             );
         }
@@ -133,14 +131,13 @@ class UsersPage
             if (
                 !FormController::validate('username', ['maxLength' => 100]) ||
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
-                !FormController::validate('infix', ['maxLength' => 50]) ||
                 !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
                 !FormController::validate('role', ['required', 'type' => 'number'])
             ) return;
 
             // Sanitize inputs
-            FormController::sanitizeFields(['username', 'first_name', 'infix', 'last_name', 'email']);
+            FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
             // Check if email already in use by another user
             if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
@@ -154,7 +151,6 @@ class UsersPage
                 $_POST['id'],
                 $_POST['username'],
                 $_POST['first_name'],
-                $_POST['infix'],
                 $_POST['last_name'],
                 $_POST['email'],
                 $_POST['role']
@@ -180,12 +176,11 @@ class UsersPage
      * @param int $role Role ID
      * @param string|null $username Username
      * @param string|null $first_name First name
-     * @param string|null $infix Name infix
      * @param string|null $last_name Last name
      *
      * @return void
      */
-    private static function create(string $email, string $rawPassword, int $role, string|null $username = null, string|null $first_name = null, string|null $infix = null, string|null $last_name = null): void
+    private static function create(string $email, string $rawPassword, int $role, string|null $username = null, string|null $first_name = null, string|null $last_name = null): void
     {
         // Insert new user
         DB::insert(
@@ -193,7 +188,6 @@ class UsersPage
             [
                 'username' => $username ?? null,
                 'first_name' => $first_name ?? null,
-                'infix' => $infix ?? null,
                 'last_name' => $last_name ?? null,
                 'email' => $email,
                 'password' => password_hash($rawPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
@@ -227,14 +221,13 @@ class UsersPage
      * @param int $id User ID
      * @param string|null $username Username
      * @param string|null $first_name First name
-     * @param string|null $infix Name infix
      * @param string|null $last_name Last name
      * @param string $email Email address
      * @param int $role Role ID
      *
      * @return void
      */
-    private static function update(int $id, string|null $username, string|null $first_name, string|null $infix, string|null $last_name, string $email, int $role): void
+    private static function update(int $id, string|null $username, string|null $first_name, string|null $last_name, string $email, int $role): void
     {
         // Update user profile
         DB::update(
@@ -242,7 +235,6 @@ class UsersPage
             [
                 'username' => $username ?? null,
                 'first_name' => $first_name ?? null,
-                'infix' => $infix ?? null,
                 'last_name' => $last_name ?? null,
                 'email' => $email
             ],

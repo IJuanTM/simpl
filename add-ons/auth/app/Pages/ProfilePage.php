@@ -43,13 +43,12 @@ class ProfilePage
         if (
             !FormController::validate('username', ['maxLength' => 100]) ||
             !FormController::validate('first_name', ['maxLength' => 100]) ||
-            !FormController::validate('infix', ['maxLength' => 50]) ||
             !FormController::validate('last_name', ['maxLength' => 100]) ||
             !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])
         ) return;
 
         // Sanitize all inputs
-        FormController::sanitizeFields(['username', 'first_name', 'infix', 'last_name', 'email']);
+        FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
         // Check if email changed and is already in use
         if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
@@ -63,7 +62,6 @@ class ProfilePage
             SessionController::get('user')['id'],
             $_POST['username'],
             $_POST['first_name'],
-            $_POST['infix'],
             $_POST['last_name'],
             $_POST['email']
         );
@@ -75,19 +73,17 @@ class ProfilePage
      * @param int $id User ID
      * @param string $username Username
      * @param string $first_name First name
-     * @param string $infix Name infix (e.g., "van", "de")
      * @param string $last_name Last name
      * @param string $email Email address
      *
      * @return void
      */
-    private function update(int $id, string $username, string $first_name, string $infix, string $last_name, string $email): void
+    private function update(int $id, string $username, string $first_name, string $last_name, string $email): void
     {
         // Prepare update data (convert empty strings to null)
         $updateData = [
             'username' => !empty($username) ? $username : null,
             'first_name' => !empty($first_name) ? $first_name : null,
-            'infix' => !empty($infix) ? $infix : null,
             'last_name' => !empty($last_name) ? $last_name : null
         ];
 
