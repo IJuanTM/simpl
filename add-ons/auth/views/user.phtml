@@ -1,0 +1,104 @@
+<?php
+use app\Controllers\AuthController;
+use app\Controllers\SessionController;
+use app\Models\Url;
+?>
+
+<section class="row user center-x">
+  <div class="col user-profile-card f-col g-row-2">
+    <div class="row profile-image-row">
+      <div class="col center-x f-0">
+
+        <?php if (SessionController::has('user') && SessionController::get('user')['id'] === $this->pageObj->user['id']) : ?>
+
+          <form class="profile-image h-100" method="POST" action="" enctype="multipart/form-data">
+            <?php if ($this->pageObj->profileImage) : ?>
+              <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
+            <?php else : ?>
+              <i class="fas fa-circle-user"></i>
+            <?php endif ?>
+
+            <input id="id" type="hidden" name="id" value="<?= $this->pageObj->user['id'] ?>">
+
+            <input id="image" type="file" name="image" accept="image/*" hidden>
+
+            <div class="profile-image-menu center g-col-1 w-100 h-100">
+              <?php if ($this->pageObj->profileImage) : ?>
+                <button class="col profile-action edit f-0" type="button"><i class="fas fa-pen"></i></button>
+                <a class="col profile-action delete f-0" href="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i></a>
+              <?php else : ?>
+                <button class="col profile-action edit f-0" type="button"><i class="fas fa-plus"></i></button>
+              <?php endif ?>
+            </div>
+          </form>
+
+        <?php else : ?>
+
+          <div class="profile-image h-100">
+            <?php if ($this->pageObj->profileImage) : ?>
+              <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
+            <?php else : ?>
+              <i class="fas fa-circle-user"></i>
+            <?php endif ?>
+          </div>
+
+        <?php endif ?>
+
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2"><?= htmlspecialchars($this->pageObj->user['username'] ?? ($this->pageObj->user['email'] ?? 'User')) ?></h1>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
+          <div class="col user-details-label center-y end-x f-0">Name:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= isset($this->pageObj->user['firstname']) || isset($this->pageObj->user['lastname']) ? trim(($this->pageObj->user['firstname'] ?? '') . ' ' . ($this->pageObj->user['lastname'] ?? '')) : '-' ?></div>
+        </div>
+
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
+          <div class="col user-details-label center-y end-x f-0">Email:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['email'] ?? '-' ?></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-check"></i></div>
+          <div class="col user-details-label center-y end-x f-0">Active:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_active'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-x"></i>' ?></div>
+        </div>
+
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-user-check"></i></div>
+          <div class="col user-details-label center-y end-x f-0">Verified:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= AuthController::isVerified($this->pageObj->user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-x"></i>' ?></div>
+        </div>
+
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
+          <div class="col user-details-label center-y end-x f-0">Last login:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['last_login'] ?? '-' ?></div>
+        </div>
+      </div>
+    </div>
+
+    <?php if (SessionController::has('user') && SessionController::get('user')['id'] === $this->pageObj->user['id']) : ?>
+
+      <div class="row g-2 center-x">
+        <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('edit-profile') ?>"><i class="fas fa-user-edit"></i>Edit profile</a>
+      </div>
+
+    <?php endif ?>
+
+  </div>
+</section>

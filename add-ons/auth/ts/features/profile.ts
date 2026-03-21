@@ -69,7 +69,7 @@ export const profileModule = {
     formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
 
     try {
-      const response = await fetch('/api/profile/update-profile-image', {
+      const response = await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {
         method: 'POST',
         body: formData
       });

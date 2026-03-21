@@ -1,0 +1,143 @@
+@use "../config/abstracts/mixins" as *;
+@use "../config/vars/colors" as *;
+
+section.user {
+  padding-top: 4rem;
+
+  div.user-profile-card {
+    position: relative;
+    padding: 9rem 2rem 1rem 2rem;
+    border: .125rem solid var(--border-muted);
+    border-radius: .5rem;
+    background-color: var(--bg-section);
+
+    @include breakpoint-up(sm) {
+      max-width: 48rem !important;
+      padding: 11rem 4rem 3rem 4rem;
+    }
+
+    div.profile-image-row {
+      position: absolute;
+      top: -4rem;
+      left: 50%;
+      overflow: hidden;
+      transform: translateX(-50%);
+      border: .125rem solid var(--border-muted);
+      border-radius: 50%;
+      background-color: var(--bg-section);
+
+      *.profile-image {
+        position: relative;
+
+        > img {
+          max-width: 12rem;
+        }
+
+        > i {
+          font-size: 12rem;
+          width: auto;
+        }
+
+        > div.profile-image-menu {
+          position: absolute;
+          display: none;
+          border-radius: 50%;
+          background-color: rgba(#000, .5);
+
+          > *.profile-action {
+            font-size: 1.5rem;
+            cursor: pointer;
+
+            &.edit {
+              color: #FFF;
+
+              &:has(i.fa-plus) {
+                font-size: 2rem;
+              }
+
+              &:hover {
+                color: rgba(#FFF, .75);
+              }
+            }
+
+            &.delete {
+              color: $red;
+
+              &:hover {
+                color: $red-dark;
+              }
+            }
+          }
+        }
+
+        &.loading {
+          pointer-events: none;
+
+          &::after {
+            font-family: "Font Awesome 7 Free", sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            content: "\f110";
+            animation: spin 1s linear infinite;
+            pointer-events: none;
+            color: #FFF;
+            border-radius: 50%;
+            background-color: rgba(#000, .5);
+          }
+        }
+
+        &:hover {
+          > div.profile-image-menu {
+            display: flex;
+          }
+
+          &::after {
+            display: flex;
+            background-color: rgba(#000, .5);
+          }
+        }
+      }
+    }
+
+    h1 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    div.user-details {
+      flex-wrap: nowrap;
+
+      > * {
+        line-height: 1.8;
+      }
+
+      div.user-details-label {
+        width: 6rem;
+        color: var(--text-muted);
+      }
+
+      div.user-details-value {
+        overflow: auto;
+        white-space: nowrap;
+      }
+    }
+
+    a.button.change-password {
+      color: #FFF;
+      background-color: $red;
+
+      @include shimmer(true, rgba(#FFF, .25));
+
+      @include hover-focus {
+        color: rgba(#FFF, .75);
+        background-color: $red-dark;
+      }
+    }
+  }
+}

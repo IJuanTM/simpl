@@ -260,11 +260,11 @@ class AuthController
      * Get the relative path to a user's profile image if set.
      * Returns null when no profile image is configured.
      *
-     * @param string $id User id
+     * @param int $id User id
      *
      * @return string|null Path relative to public root (e.g. 'img/profile/...') or null
      */
-    public static function getProfileImage(string $id): string|null
+    public static function getProfileImage(int $id): string|null
     {
         $profile_img = DB::single(
             'profile_img',

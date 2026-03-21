@@ -1,6 +1,6 @@
 // @addon-insert:after('// VIEWS')
+@use "views/user";
 @use "views/users";
-@use "views/profile";
 @use "views/verify-account";
 // @addon-end
 
