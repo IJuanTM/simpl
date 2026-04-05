@@ -10,17 +10,13 @@ use app\Models\Url;
 use app\Utils\Log;
 
 /**
- * PageController
+ * Represents the controller responsible for handling incoming page requests, routing,
+ * and rendering the appropriate page or response.
  *
- * Responsible for parsing the incoming request URI, resolving routes and
- * aliases, instantiating page handler classes and dispatching requests to them
- * (including API endpoints). Inherits from the Page model which stores route
- * information and history.
- *
- * Notes:
- * - The constructor uses several superglobals ($_SERVER, $_GET) and an
- *   external $ROUTES map. Consider refactoring to inject a Request/Router in
- *   the future to improve testability.
+ * This class interprets the request URI, identifies the intended page or API endpoint,
+ * initializes the required page handler or model, and manages the lifecycle of the request.
+ * For API calls, it invokes specific API methods. For standard pages, it renders
+ * the corresponding view.
  */
 class PageController extends Page
 {
@@ -70,11 +66,13 @@ class PageController extends Page
     }
 
     /**
-     * Redirect to an error page based on an ErrorCode value.
+     * Handles errors by redirecting to an appropriate error page.
      *
-     * @param ErrorCode $code Error enumeration value
-     * @param string|null $redirect Optional redirect URL to include
+     * This method constructs an error URL based on the provided error code and an optional
+     * redirect URL. The user is then redirected to the generated error page.
      *
+     * @param ErrorCode $code The specific error code used to determine the error page.
+     * @param string|null $redirect An optional URL to redirect back to after handling the error.
      * @return void
      */
     public static function error(ErrorCode $code, ?string $redirect = null): void
@@ -84,11 +82,13 @@ class PageController extends Page
     }
 
     /**
-     * Send a refresh header to redirect the client after an optional delay.
+     * Redirects the user to the specified location with an optional refresh delay.
      *
-     * @param string $location Destination path or URL
-     * @param int|null $refresh Delay in seconds before redirect (0 = immediate)
+     * This method sends a header to redirect the user's browser to a given URL.
+     * An optional refresh delay can be specified to control the time before the redirection occurs.
      *
+     * @param string $location The target location URL for the redirect.
+     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      * @return void
      */
     public static function redirect(string $location, ?int $refresh = 0): void
@@ -97,8 +97,13 @@ class PageController extends Page
     }
 
     /**
-     * Render the page: include top, page view, and bottom parts.
-     * Shows 404 if view file is missing.
+     * Renders the current page by including the corresponding view file and surrounding HTML parts.
+     *
+     * This method determines the appropriate view file based on the requested page and subpage.
+     * If a subpage is specified and its view file exists, it will be preferred over the main page view.
+     * The method outputs the top HTML part (e.g., header) before including the view file,
+     * and concludes with the bottom HTML part (e.g., footer). If the view file cannot be located,
+     * it logs an error (in development mode) and triggers a "Not Found" error response.
      *
      * @return void
      */
@@ -116,7 +121,7 @@ class PageController extends Page
             : BASEDIR . "/views/$page.phtml";
 
         if (!is_file($file)) {
-            if (DEV) Log::error("Could not find view \"$page\"" . ($subpage ? "/$subpage" : ''));
+            if (DEV) Log::error("Could not find view \"$page" . ($subpage ? "/$subpage" : '') . "\"");
             self::error(ErrorCode::NOT_FOUND);
             return;
         }
@@ -129,9 +134,14 @@ class PageController extends Page
     }
 
     /**
-     * Include a reusable part from views/parts (e.g. header, footer).
+     * Loads and includes a view part file based on the given name.
      *
-     * @param string $name Part name (file without extension)
+     * This method attempts to locate the corresponding partial view file within the predefined
+     * directory. If the file exists, it is included. If the file is not found, a warning message
+     * is logged, and feedback is provided either visibly or as a hidden comment depending on
+     * the environment configuration.
+     *
+     * @param string $name The name of the view part to load.
      *
      * @return void
      */
@@ -152,9 +162,12 @@ class PageController extends Page
     }
 
     /**
-     * Get the previous page URL from session history.
+     * Retrieves the URL of the previous page in the user's navigation history.
      *
-     * @return string
+     * This method accesses the user's navigation history and returns the URL of the
+     * second-to-last entry. If no valid previous entry exists, it returns a default URL.
+     *
+     * @return string The URL of the previous page or a default fallback URL.
      */
     public static function prev(): string
     {
@@ -163,7 +176,11 @@ class PageController extends Page
     }
 
     /**
-     * Go back to the previous page and update session history.
+     * Navigates back to the previous page in the user's navigation history.
+     *
+     * This method updates the user's navigation history by removing the last two entries
+     * and redirects the user to the new last entry in the history. If no history is available,
+     * it redirects to a default location.
      *
      * @return void
      */

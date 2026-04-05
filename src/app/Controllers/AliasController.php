@@ -7,15 +7,12 @@ namespace app\Controllers;
 use app\Models\Alias;
 
 /**
- * AliasController
- *
- * Maintains a registry of URL aliases and resolves them into concrete page
- * targets and parameters. Aliases are stored in a private static map and are
- * resolved using the Alias model which performs parameter merging/evaluation.
+ * Handles the creation and management of aliases within the application.
+ * Aliases can be registered and resolved to map them to specific pages,
+ * subpages, and associated parameters.
  */
 class AliasController
 {
-    /** @var array<string, Alias> Registered aliases */
     private static array $aliases = [];
 
     public function __construct()
@@ -25,11 +22,10 @@ class AliasController
     }
 
     /**
-     * Register a page alias.
+     * Registers a new alias by associating it with the specified alias object.
      *
-     * @param string $alias URL alias (key)
-     * @param Alias $aliasObj Alias model describing target mapping
-     *
+     * @param string $alias The name of the alias to register.
+     * @param Alias $aliasObj The alias object to associate with the given alias.
      * @return void
      */
     public static function register(string $alias, Alias $aliasObj): void
@@ -38,17 +34,12 @@ class AliasController
     }
 
     /**
-     * Resolve an alias to its page mapping and merged params.
+     * Resolves the specified alias to retrieve associated information, including
+     * the page, subpages, and evaluated parameters.
      *
-     * Returns an associative array with keys:
-     * - 'page' => string target page name
-     * - 'subpages' => array list of subpage segments
-     * - 'params' => array merged request parameters
-     *
-     * @param string $alias Alias name to resolve
-     * @param array<string,mixed> $params Incoming request params to evaluate against
-     *
-     * @return array<string,mixed>|null ['page'=>string,'subpages'=>array,'params'=>array] or null when not found
+     * @param string $alias The alias to resolve.
+     * @param array $params An array of parameters to evaluate with the alias.
+     * @return array|null Returns an associative array with the resolved information or null if the alias cannot be resolved.
      */
     public static function resolve(string $alias, array $params): array|null
     {

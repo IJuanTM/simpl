@@ -7,10 +7,9 @@ namespace app\Models;
 use app\Utils\Log;
 
 /**
- * URL helper
- *
- * Provides helpers to build URLs for assets and application routes. Caches the
- * computed base URL and root directory for the lifetime of the request.
+ * Provides utility methods for generating and managing URLs within the application.
+ * Includes functionalities for resolving URLs to public files, constructing normalized paths,
+ * and retrieving the application's base URL.
  */
 class Url
 {
@@ -18,12 +17,11 @@ class Url
     private static ?string $rootDir = null;
 
     /**
-     * Generate a public URL for an asset and append a version query based on
-     * the file modification time to aid caching.
+     * Generates a URL to a file within the public directory, appending a version query parameter based on the file's modification time.
+     * Logs a warning if the specified file does not exist.
      *
-     * @param string $subUrl Path relative to public/ (e.g. 'css/main.css')
-     *
-     * @return string
+     * @param string $subUrl The sub-path to the file, optionally starting with a slash.
+     * @return string The URL to the file with a version query parameter for cache busting, or the base URL if the file is missing.
      */
     public static function file(string $subUrl = ''): string
     {
@@ -44,23 +42,23 @@ class Url
     }
 
     /**
-     * Build a full URL for the given subpath based on the application's base URL.
+     * Constructs a normalized URL by ensuring it starts with a single forward slash.
      *
-     * @param string $subUrl
-     *
-     * @return string
+     * @param string $subUrl The sub-path to be appended, optionally starting with a slash.
+     * @return string The resulting URL starting with a single forward slash.
      */
     public static function to(string $subUrl = ''): string
     {
-        return self::baseUrl() . '/' . ltrim($subUrl, '/');
+        return '/' . ltrim($subUrl, '/');
     }
 
     /**
-     * Compute and cache the application's base URL using server globals.
+     * Initializes the base URL for the application if it is not already set.
+     * The base URL is constructed using the server's protocol, host, and script directory.
      *
-     * @return string
+     * @return void
      */
-    private static function baseUrl(): string
+    private static function baseUrl(): void
     {
         if (!self::$baseUrl) {
             self::$rootDir = rtrim(BASEDIR, '/');
@@ -71,7 +69,5 @@ class Url
 
             self::$baseUrl = "$protocol://$host$scriptDir";
         }
-
-        return self::$baseUrl;
     }
 }

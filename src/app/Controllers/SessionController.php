@@ -5,15 +5,7 @@ declare(strict_types=1);
 namespace app\Controllers;
 
 /**
- * SessionController
- *
- * Lightweight wrapper around PHP sessions. This class centralises session
- * configuration and provides convenient static helpers for reading and
- * writing session values.
- *
- * Notes:
- * - Session must be available (this constructor starts it if not already active).
- * - Methods operate directly on the $_SESSION superglobal.
+ * Controls session management operations including setting, getting, checking, and removing session data.
  */
 class SessionController
 {
@@ -28,11 +20,10 @@ class SessionController
     }
 
     /**
-     * Set a session value.
+     * Stores a value in the session associated with the specified key.
      *
-     * @param string $key
-     * @param mixed $value
-     *
+     * @param string $key The key to associate the value with.
+     * @param mixed $value The value to store in the session.
      * @return void
      */
     public static function set(string $key, mixed $value): void
@@ -41,11 +32,10 @@ class SessionController
     }
 
     /**
-     * Get a session value or null when not set.
+     * Retrieves the value associated with the specified key from the session.
      *
-     * @param string $key
-     *
-     * @return mixed|null Returns the stored value or null when the key is not present.
+     * @param string $key The key to retrieve the value for.
+     * @return mixed Returns the value associated with the key if it exists, or null otherwise.
      */
     public static function get(string $key): mixed
     {
@@ -53,11 +43,11 @@ class SessionController
     }
 
     /**
-     * Check whether a session key exists.
+     * Check if a session key is set.
      *
-     * @param string $key
+     * @param string $key The session key to check.
      *
-     * @return bool
+     * @return bool Returns true if the session key is set, false otherwise.
      */
     public static function has(string $key): bool
     {
@@ -65,9 +55,9 @@ class SessionController
     }
 
     /**
-     * Remove a session key.
+     * Remove a session value by its key.
      *
-     * @param string $key
+     * @param string $key The key identifying the session value to remove.
      *
      * @return void
      */

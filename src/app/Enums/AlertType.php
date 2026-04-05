@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace app\Enums;
 
 /**
- * AlertType enum
- *
- * Represents CSS classes / semantic types for user-facing alert messages.
+ * Represents the types of alerts that can be used to categorize a message or notification.
  */
 enum AlertType: string
 {

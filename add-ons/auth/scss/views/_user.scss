@@ -9,7 +9,7 @@ section.user {
     padding: 9rem 2rem 1rem 2rem;
     border: .125rem solid var(--border-muted);
     border-radius: .5rem;
-    background-color: var(--bg-section);
+    background-color: var(--bg-accent);
 
     @include breakpoint-up(sm) {
       max-width: 48rem !important;
@@ -24,7 +24,7 @@ section.user {
       transform: translateX(-50%);
       border: .125rem solid var(--border-muted);
       border-radius: 50%;
-      background-color: var(--bg-section);
+      background-color: var(--bg-accent);
 
       *.profile-image {
         position: relative;

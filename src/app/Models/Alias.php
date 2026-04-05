@@ -5,20 +5,12 @@ declare(strict_types=1);
 namespace app\Models;
 
 /**
- * Alias model
- *
- * Represents a URL alias mapping to a target page, optional subpages and
- * parameter defaults. Parameter defaults may contain callables which will be
- * executed when resolving the alias.
+ * Represents an alias with associated page information, subpages, and parameters.
  */
 class Alias
 {
     public string $page;
-
-    /** @var array<int,string> */
     public array $subpages;
-
-    /** @var array<string,mixed> */
     public array $params;
 
     final public function __construct(string $page, array $subpages = [], array $params = [])
@@ -29,11 +21,10 @@ class Alias
     }
 
     /**
-     * Resolve alias parameters by invoking callables and applying defaults.
+     * Evaluates and processes the parameters by applying provided callback functions or default values.
      *
-     * @param array<string,mixed> $params Incoming request params
-     *
-     * @return array<string,mixed> Resolved params
+     * @param array $params An associative array of input parameters to be evaluated.
+     * @return array The resulting array after processing each parameter with its associated logic.
      */
     final public function evaluate(array $params): array
     {

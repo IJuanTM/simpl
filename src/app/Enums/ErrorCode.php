@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace app\Enums;
 
 /**
- * ErrorCode enum
- *
- * HTTP-like error codes used across the application to select error pages and
- * messages.
+ * Enum representing various HTTP error codes with their corresponding meanings.
  */
 enum ErrorCode: int
 {

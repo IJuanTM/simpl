@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace app\Enums;
 
 /**
- * LogLevel enum
- *
- * Semantic log levels used by the application's logging utility.
+ * Represents the severity levels of logging.
  */
 enum LogLevel: string
 {

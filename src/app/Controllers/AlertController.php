@@ -7,24 +7,16 @@ namespace app\Controllers;
 use app\Enums\AlertType;
 
 /**
- * AlertController
- *
- * Responsible for creating and maintaining global alert messages stored in the
- * session. Alerts are intended for short-lived user notifications (flash
- * messages) that survive redirects.
- *
- * Notes:
- * - Uses `SessionController` (session must be started by the caller/framework).
- * - The stored alert shape is: ['message' => string, 'type' => string, 'timeout' => int]
+ * Handles the creation, management, and expiration of alert messages stored in the session.
  */
 class AlertController
 {
     /**
-     * Clean up expired alert stored in session.
+     * Initializes the class by checking and removing expired alert messages from the session storage.
      *
-     * This constructor performs a lightweight maintenance task: if a previously
-     * stored alert has expired it will be removed from the session. No other
-     * side effects are performed.
+     * Removes the alert if it exists in the session and its timeout has expired.
+     *
+     * @return void
      */
     public function __construct()
     {
@@ -33,12 +25,11 @@ class AlertController
     }
 
     /**
-     * Store a global alert in session to display after redirects.
+     * Sets a global alert message in the session with a specified type and optional timeout.
      *
-     * @param string $message Alert message text
-     * @param AlertType $type Alert severity/type (uses enum value for CSS class)
-     * @param int $timeout Duration in seconds the alert should remain visible (0 = persistent)
-     *
+     * @param string $message The alert message to be displayed.
+     * @param AlertType $type The type of the alert, indicating its severity or nature.
+     * @param int $timeout Optional timeout in seconds after which the alert will expire. Defaults to 0, indicating no timeout.
      * @return void
      */
     public static function globalAlert(string $message, AlertType $type, int $timeout = 0): void

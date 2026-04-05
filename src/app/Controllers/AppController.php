@@ -7,12 +7,9 @@ namespace app\Controllers;
 use app\Utils\Log;
 
 /**
- * Application bootstrap controller
- *
- * Responsible for early application initialization tasks such as starting the
- * output buffer and creating essential helper controllers. This controller is
- * lightweight and intentionally uses side-effects in the constructor to ensure
- * the environment is ready for subsequent request handling.
+ * The AppController class serves as the main application controller.
+ * It initializes essential controllers needed for core functionality
+ * and provides utility methods for application-specific operations.
  */
 class AppController
 {
@@ -29,16 +26,10 @@ class AppController
     }
 
     /**
-     * Load an SVG file and return its contents or a fallback string.
+     * Retrieves the contents of an SVG file by its name.
      *
-     * Note: `file_get_contents()` will return false on failure; the method
-     * preserves the original behaviour by returning a string in normal
-     * circumstances (file contents or HTML comment) or the raw false value when
-     * PHP fails to read the file.
-     *
-     * @param string $name SVG filename (without extension)
-     *
-     * @return bool|string File contents, HTML comment fallback, or false if read fails
+     * @param string $name The name of the SVG file (without the .svg extension).
+     * @return bool|string The SVG file contents as a string, or a boolean false if the file does not exist.
      */
     public static function svg(string $name): bool|string
     {

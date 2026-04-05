@@ -7,24 +7,13 @@ namespace app\Models;
 use app\Controllers\SessionController;
 
 /**
- * Page model
- *
- * Holds routing information for the current request and maintains a simple
- * navigation history stored in the session. Designed to be extended by page
- * controller classes which provide rendering and API handling.
+ * Represents a webpage with properties for routing, title management, and navigation history.
  */
 class Page
 {
-    /** @var array{page:string,subpages:array,params:array} Route data */
     public array $urlArr;
-
-    /** @var object|null Optional page handler object instantiated by PageController */
     public ?object $pageObj = null;
-
-    /** @var string Site title (defaults to APP_NAME) */
     public string $title;
-
-    /** @var string Readable subtitle generated from the page slug */
     public string $subtitle;
 
     public function __construct(string $page, array $subpages = [], array $params = [])
@@ -43,9 +32,9 @@ class Page
     }
 
     /**
-     * Retrieve navigation history from session.
+     * Retrieves and returns the browsing history from the session.
      *
-     * @return array<int,string>
+     * @return array The history data stored in the session, or an empty array if no history exists.
      */
     public static function history(): array
     {
@@ -53,9 +42,9 @@ class Page
     }
 
     /**
-     * Return the sub-URL string composed of page, subpages and query params.
+     * Constructs and returns a formatted URL string composed of the page, subpages, and query parameters.
      *
-     * @return string
+     * @return string The generated URL derived from the URL components.
      */
     final public function subUrl(): string
     {
@@ -67,9 +56,9 @@ class Page
     }
 
     /**
-     * Build a readable subtitle from the page slug.
+     * Constructs and returns the subtitle by transforming the page value.
      *
-     * @return string
+     * @return string The formatted subtitle derived from the page URL segment.
      */
     private function getSubtitle(): string
     {

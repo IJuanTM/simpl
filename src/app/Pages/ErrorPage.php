@@ -8,13 +8,6 @@ use app\Controllers\PageController;
 use app\Enums\ErrorCode;
 use app\Models\Page;
 
-/**
- * ErrorPage
- *
- * Displays an error page based on an ErrorCode passed in the route. The page
- * may optionally redirect back to a provided page after a short delay when
- * `ERROR_AUTO_REDIRECT` is enabled.
- */
 class ErrorPage
 {
     public string $message;
