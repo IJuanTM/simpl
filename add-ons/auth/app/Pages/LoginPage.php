@@ -105,11 +105,11 @@ class LoginPage
      * Calculates lockout end timestamp based on failed attempts.
      *
      * @param string $column Database column to query (user_id or ip_address)
-     * @param mixed $value Value to match
-     * @param int $threshold Number of attempts before lockout
-     * @param int $base Base lockout duration in minutes
-     * @param int $max Maximum lockout duration in minutes
-     * @param int $window Time window in minutes to count attempts
+     * @param mixed  $value Value to match
+     * @param int    $threshold Number of attempts before lockout
+     * @param int    $base Base lockout duration in minutes
+     * @param int    $max Maximum lockout duration in minutes
+     * @param int    $window Time window in minutes to count attempts
      *
      * @return int|null Lockout end timestamp or null if not locked
      */

@@ -20,6 +20,8 @@ class LogoutPage
      * Logs out user by clearing session and remember cookie.
      *
      * @return void
+     *
+     * @api
      */
     final public function api(): void
     {
