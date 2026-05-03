@@ -14,7 +14,7 @@ class Log
      * Log an error-level message.
      *
      * @param string $message Message template
-     * @param array $context Context values for interpolation
+     * @param array  $context Context values for interpolation
      *
      * @return void
      */
@@ -27,9 +27,9 @@ class Log
      * Write a log entry to the appropriate level file, optionally including a trace.
      *
      * @param LogLevel $level Log severity
-     * @param string $message Message template
-     * @param array $context Context values for interpolation
-     * @param bool $includeTrace Whether to include a filtered stack trace
+     * @param string   $message Message template
+     * @param array    $context Context values for interpolation
+     * @param bool     $includeTrace Whether to include a filtered stack trace
      *
      * @return void
      */
@@ -82,7 +82,7 @@ class Log
      * Interpolate context values into a message template.
      *
      * @param string $message Message template with {placeholders}
-     * @param array $context Context data to insert
+     * @param array  $context Context data to insert
      *
      * @return string
      */
@@ -100,7 +100,7 @@ class Log
      * Log a warning-level message.
      *
      * @param string $message
-     * @param array $context
+     * @param array  $context
      *
      * @return void
      */
@@ -113,7 +113,7 @@ class Log
      * Log an info-level message.
      *
      * @param string $message
-     * @param array $context
+     * @param array  $context
      *
      * @return void
      */
@@ -126,8 +126,8 @@ class Log
      * Log a debug-level message, optionally including a stack trace.
      *
      * @param string $message
-     * @param array $context
-     * @param bool $includeTrace
+     * @param array  $context
+     * @param bool   $includeTrace
      *
      * @return void
      */
