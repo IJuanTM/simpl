@@ -26,12 +26,6 @@ CREATE TABLE simpl.users
   deleted_at           TIMESTAMP                DEFAULT NULL
 ) ENGINE = InnoDB;
 
-INSERT INTO simpl.users (email, password)
-VALUES ('admin@example.com', '$2y$12$WEOZKzM9JmXBLDcBMbRJfunNuu9OKYbkWaXOp34noadW2IWH36x0a'),
-       ('user@example.com', '$2y$12$KiJxiUKSmlp1OTohZmNqIOs3tGF7W1XLUh42zE8qpBnFuK7hggTH2');
-
--- passwords are 'admin' and 'user'
-
 -- --------------------------------------------------------------------------------------------------------------------------------
 
 --
@@ -83,10 +77,6 @@ CREATE TABLE simpl.roles
 ) ENGINE = InnoDB,
   AUTO_INCREMENT = 3;
 
-INSERT INTO simpl.roles (id, name)
-VALUES (1, 'admin'),
-       (2, 'user');
-
 -- --------------------------------------------------------------------------------------------------------------------------------
 
 --
@@ -102,10 +92,6 @@ CREATE TABLE simpl.user_roles
   FOREIGN KEY (role_id) REFERENCES simpl.roles (id) ON DELETE CASCADE,
   INDEX idx_role_user (role_id, user_id)
 ) ENGINE = InnoDB;
-
-INSERT INTO simpl.user_roles (user_id, role_id)
-VALUES (1, 1),
-       (2, 2);
 
 -- --------------------------------------------------------------------------------------------------------------------------------
 
