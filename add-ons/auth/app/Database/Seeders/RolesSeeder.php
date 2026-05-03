@@ -10,7 +10,22 @@ class RolesSeeder
 {
     public static function run(): void
     {
-        DB::insert('roles', ['id' => 1, 'name' => 'admin']);
-        DB::insert('roles', ['id' => 2, 'name' => 'user']);
+        // Admin role
+        DB::insert(
+            'roles',
+            [
+                'id' => 1,
+                'name' => 'admin'
+            ]
+        );
+
+        // User role
+        DB::insert(
+            'roles',
+            [
+                'id' => 2,
+                'name' => 'user'
+            ]
+        );
     }
 }
