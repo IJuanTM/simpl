@@ -8,7 +8,7 @@ use app\Controllers\FormController;
   <?php if (!$this->pageObj->user['is_active']) : ?>
 
     <section class="row users center-x">
-      <form class="col g-row-2" method="POST" action="">
+      <form class="col g-row-1" method="POST" action="">
         <div class="row">
           <div class="col center-x">
             <h3>Restore user</h3>
@@ -18,7 +18,7 @@ use app\Controllers\FormController;
         <?= FormController::formAlerts() ?>
 
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="id">Id:</label>
             </div>
@@ -28,7 +28,7 @@ use app\Controllers\FormController;
             </div>
           </div>
 
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="last_update">Last update:</label>
             </div>
@@ -40,7 +40,7 @@ use app\Controllers\FormController;
         </div>
 
         <div class="row">
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="username">Username:</label>
             </div>
@@ -53,7 +53,7 @@ use app\Controllers\FormController;
 
         <div class="row form-row connected-row">
           <div class="row">
-            <div class="col form-group g-row-0.5" inert>
+            <div class="col form-group g-row-0.25" inert>
               <div class="row">
                 <label class="col" for="first_name">First name:</label>
               </div>
@@ -64,7 +64,7 @@ use app\Controllers\FormController;
             </div>
           </div>
 
-          <div class="col form-group g-row-0.5 f-g-2" inert>
+          <div class="col form-group g-row-0.25 f-g-2" inert>
             <div class="row">
               <label class="col" for="last_name">Last name:</label>
             </div>
@@ -75,7 +75,7 @@ use app\Controllers\FormController;
         </div>
 
         <div class="row">
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="email">Email:</label>
             </div>
@@ -87,7 +87,7 @@ use app\Controllers\FormController;
         </div>
 
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="role">User role:</label>
             </div>
@@ -100,7 +100,7 @@ use app\Controllers\FormController;
             </div>
           </div>
 
-          <div class="col form-group g-row-0.5" inert>
+          <div class="col form-group g-row-0.25" inert>
             <div class="row">
               <label class="col" for="verified">Verified:</label>
             </div>
@@ -112,7 +112,7 @@ use app\Controllers\FormController;
         </div>
 
         <div class="row g-2 center-x">
-          <a class="col link g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+          <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
           <button class="col button restore-user g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-wrench"></i>Restore</button>
         </div>
       </form>
