@@ -10,7 +10,9 @@ div.table-container {
 
     table {
       display: table;
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
+      border-spacing: 0;
       border-collapse: separate;
 
       tr {
@@ -19,9 +21,11 @@ div.table-container {
         th, td {
           line-height: 1;
           display: table-cell;
+          overflow: hidden;
           padding: .625rem .5rem;
           vertical-align: middle;
           white-space: nowrap;
+          text-overflow: ellipsis;
         }
       }
 
@@ -30,11 +34,80 @@ div.table-container {
 
         th {
           font-weight: 700;
+          position: relative;
+          overflow: visible;
           border-bottom: .125rem solid var(--border-muted);
           background-color: var(--table-header);
 
+          .table-header-label {
+            display: block;
+            overflow: hidden;
+            min-width: 0;
+            max-width: 100%;
+            margin: 0;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
+          a.table-sort-link {
+            display: block;
+            overflow: hidden;
+            width: 100%;
+            padding: .625rem 1.5rem .625rem .5rem;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
           &:not(:last-child) {
             border-right: .0625rem solid var(--border-muted);
+          }
+
+          &.sortable {
+            padding: 0;
+            cursor: pointer;
+            user-select: none;
+
+            &::after {
+              font-family: "Font Awesome 7 Free", sans-serif;
+              font-size: .625rem;
+              font-weight: 900;
+              position: absolute;
+              top: 0;
+              right: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 1.5rem;
+              height: 100%;
+              content: "\f0dc";
+              pointer-events: none;
+              color: var(--text-muted);
+              background-color: var(--table-header);
+            }
+
+            &.sort-asc::after {
+              content: "\f0de";
+              color: var(--text);
+            }
+
+            &.sort-desc::after {
+              content: "\f0dd";
+              color: var(--text);
+            }
+          }
+
+          span.col-resize-handle {
+            position: absolute;
+            z-index: 2;
+            top: 0;
+            right: -.125rem;
+            bottom: 0;
+            width: .1875rem;
+            cursor: col-resize;
+
+            &:hover, &:active {
+              background-color: var(--border-50);
+            }
           }
         }
       }

@@ -1,5 +1,6 @@
 @use "../abstracts/mixins" as *;
 @use "../vars/fonts" as *;
+@use "sass:math";
 
 h1, [data-typo="h1"],
 h2, [data-typo="h2"],
@@ -47,7 +48,8 @@ pre, code {
 
 // ---------------------------------------------------------------- //
 
-a.link, [data-typo="a"].link {
+a.link,
+[data-typo="a"].link {
   &.underline {
     text-decoration: underline;
   }
@@ -66,6 +68,26 @@ a.link, [data-typo="a"].link {
   }
 }
 
+$lh-min: 10;
+$lh-max: 40;
+$lh-step: 2;
+
+@for $i from math.div($lh-min, $lh-step) through math.div($lh-max, $lh-step) {
+  $value: $i * math.div($lh-step, 10);
+  $floor: math.floor($value);
+  $decimal: ($value - $floor) * 10;
+
+  @if $decimal == 0 {
+    *.lh-#{$floor} {
+      line-height: #{$value} !important;
+    }
+  } @else {
+    *.lh-#{$floor}\.#{$decimal} {
+      line-height: #{$value} !important;
+    }
+  }
+}
+
 // ---------------------------------------------------------------- //
 
 *.text-center {
@@ -80,4 +102,10 @@ a.link, [data-typo="a"].link {
 
 *.text-muted {
   color: var(--text-muted) !important;
+}
+
+// ---------------------------------------------------------------- //
+
+*.no-wrap {
+  white-space: nowrap;
 }

@@ -9,6 +9,7 @@ a.button {
   padding: 1rem 2rem;
   cursor: pointer;
   transition: background-color .15s ease-in-out;
+  white-space: nowrap;
   text-decoration: none;
   border-radius: .5rem;
   background-color: var(--button);
@@ -23,7 +24,16 @@ a.button {
     background-color: var(--button-hover);
   }
 
-  &.simpl {
+  &.button-border {
+    border: .125rem solid var(--border-muted);
+  }
+
+  &.button-sm {
+    font-size: .875rem;
+    padding: .75rem 1.125rem;
+  }
+
+  &.button-simpl {
     color: #FFF;
     background-color: $simpl;
 
@@ -32,5 +42,15 @@ a.button {
     @include hover-focus {
       background-color: $simpl-dark;
     }
+  }
+}
+
+button.link {
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+
+  @include hover-focus {
+    color: var(--text-75);
   }
 }

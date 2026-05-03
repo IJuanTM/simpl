@@ -13,6 +13,10 @@ form {
     display: flex;
     flex-direction: column;
 
+    label {
+      white-space: nowrap;
+    }
+
     span.required {
       color: $red;
     }
@@ -30,7 +34,7 @@ form {
         width: 2.5rem;
         background-color: var(--input-prepend-append);
 
-        > i.password-toggle {
+        > i.input-icon-clickable {
           cursor: pointer;
           user-select: none;
 

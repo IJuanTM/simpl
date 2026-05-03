@@ -7,6 +7,7 @@ div.alert {
   padding: 1rem;
   transition: visibility .15s ease-out, opacity .15s ease-out, max-height .3s ease-out, margin-bottom .3s ease-out;
   color: #FFF;
+  border: .125rem solid var(--border-muted);
   border-radius: .5rem;
 
   @include shimmer(false, rgba(#FFF, .25));

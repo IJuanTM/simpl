@@ -11,12 +11,12 @@
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 html {
-  font-size: clamp(.875rem, .25vw + .75rem, 1.125rem);
+  font-size: clamp(.75rem, .25vw + .75rem, 1rem);
   line-height: 1.6;
   scroll-behavior: smooth;
 
   @media (max-height: map.get($breakpoints, lg)) {
-    font-size: clamp(.75rem, .25vw + .75rem, 1rem);
+    font-size: clamp(.675rem, .25vw + .75rem, .875rem);
   }
 }
 

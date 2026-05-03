@@ -133,11 +133,11 @@ $maxShrink: 4;
 
 // ---------------------------------------------------------------- //
 
-$max: 10;
-$step: 5;
+$max: 8;
+$step: 25;
 
-@for $i from 0 through math.div($max * 10, $step) {
-  $value: $i * math.div($step, 10);
+@for $i from 0 through math.div($max * 100, $step) {
+  $value: math.div($i * $step, 100);
 
   @if $value % 1 == 0 {
     *.g-#{$value} {
@@ -153,16 +153,18 @@ $step: 5;
     }
   } @else {
     $floor: math.floor($value);
+    $fraction: math.round(($value - $floor) * 100);
+    $suffix: if($fraction == 50, "5", #{$fraction});
 
-    *.g-#{$floor}\.#{($value - $floor) * 10} {
+    *.g-#{$floor}\.#{ $suffix } {
       gap: #{$value}rem !important;
     }
 
-    *.g-row-#{$floor}\.#{($value - $floor) * 10} {
+    *.g-row-#{$floor}\.#{ $suffix } {
       row-gap: #{$value}rem !important;
     }
 
-    *.g-col-#{$floor}\.#{($value - $floor) * 10} {
+    *.g-col-#{$floor}\.#{ $suffix } {
       column-gap: #{$value}rem !important;
     }
   }
