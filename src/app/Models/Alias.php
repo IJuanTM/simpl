@@ -24,6 +24,7 @@ class Alias
      * Evaluates and processes the parameters by applying provided callback functions or default values.
      *
      * @param array $params An associative array of input parameters to be evaluated.
+     *
      * @return array The resulting array after processing each parameter with its associated logic.
      */
     final public function evaluate(array $params): array

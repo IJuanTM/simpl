@@ -21,6 +21,7 @@ class Url
      * Logs a warning if the specified file does not exist.
      *
      * @param string $subUrl The sub-path to the file, optionally starting with a slash.
+     *
      * @return string The URL to the file with a version query parameter for cache busting, or the base URL if the file is missing.
      */
     public static function file(string $subUrl = ''): string
@@ -45,6 +46,7 @@ class Url
      * Constructs a normalized URL by ensuring it starts with a single forward slash.
      *
      * @param string $subUrl The sub-path to be appended, optionally starting with a slash.
+     *
      * @return string The resulting URL starting with a single forward slash.
      */
     public static function to(string $subUrl = ''): string
