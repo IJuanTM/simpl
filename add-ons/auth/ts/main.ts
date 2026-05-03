@@ -3,6 +3,7 @@ import {inputModule} from './features/input.ts';
 import {messageModule} from './features/message.ts';
 import {formTrackingModule} from './features/form-tracking.ts';
 import {profileModule} from './features/profile.ts';
+import {tableModule} from './features/table.ts';
 import {verificationModule} from './features/verification-code.ts';
 // @addon-end
 
@@ -11,5 +12,6 @@ inputModule.init();
 messageModule.init();
 formTrackingModule.init();
 profileModule.init();
+tableModule.init();
 verificationModule.init();
 // @addon-end
