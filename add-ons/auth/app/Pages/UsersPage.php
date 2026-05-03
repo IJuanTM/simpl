@@ -323,7 +323,7 @@ class UsersPage
             FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
             // Check if email already exists
-            if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
+            if (AuthController::checkEmail($_POST['email'])) {
                 $_POST['email'] = '';
                 FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 return;
@@ -355,8 +355,8 @@ class UsersPage
             FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
             // Check if email already in use by another user
-            if (SessionController::get('user')['email'] !== $_POST['email'] && AuthController::checkEmail($_POST['email'])) {
-                $_POST['email'] = SessionController::get('user')['email'];
+            if (AuthController::checkEmail($_POST['email']) && AuthController::getUserIdByEmail($_POST['email']) !== $this->user['id']) {
+                $_POST['email'] = $this->user['email'];
                 FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
                 return;
             }
