@@ -11,7 +11,24 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-// Run the database seeder
-DatabaseSeeder::run();
+// If --fresh flag is provided, truncate existing data
+if (in_array('--fresh', $argv, true)) {
+    echo "🗑️  Dropping existing data...\n";
 
-echo "Database seeded successfully.\n";
+    DatabaseSeeder::truncate();
+
+    echo "✓ Data dropped successfully.\n\n";
+}
+
+echo "🌱 Seeding database...\n";
+
+try {
+    // Run the database seeder
+    DatabaseSeeder::run();
+} catch (Exception $e) {
+    // Handle seeding errors
+    echo "❌ Seeding failed: " . $e->getMessage() . "\n";
+    exit(1);
+}
+
+echo "✓ Database seeded successfully.\n";

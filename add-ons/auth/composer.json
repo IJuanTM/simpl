@@ -1,0 +1,6 @@
+@addon-insert:before('"keywords": [')
+"scripts": {
+"seed": "php app/Scripts/seed.php",
+"seed:fresh": "php app/Scripts/seed.php --fresh"
+},
+@addon-end

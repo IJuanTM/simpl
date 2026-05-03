@@ -11,8 +11,6 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-//$db = new Database();
-
 /*
  * Cron job to deactivate users that have not verified their email address for more than a day.
  */
