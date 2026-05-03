@@ -22,7 +22,7 @@ class MailController
      * Variables in $vars are extracted into the template scope and may be
      * referenced using the template's variable names.
      *
-     * @param string $name Template filename without extension (e.g. 'verification')
+     * @param string              $name Template filename without extension (e.g. 'verification')
      * @param array<string,mixed> $vars Associative array of variables to expose to the template
      *
      * @return string|false Rendered HTML content or false when template not found
