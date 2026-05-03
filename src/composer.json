@@ -8,6 +8,7 @@
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
     "ext-fileinfo": "*",
+    "ext-mbstring": "*",
     "vlucas/phpdotenv": "^v5.6.3"
   },
   "require-dev": {
@@ -20,6 +21,9 @@
   },
   "config": {
     "optimize-autoloader": true
+  },
+  "scripts": {
+    "cron:test": "php app/Scripts/scheduler.php --test"
   },
   "keywords": [
     "php",

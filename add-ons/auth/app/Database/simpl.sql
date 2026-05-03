@@ -95,4 +95,20 @@ CREATE TABLE simpl.user_roles
 
 -- --------------------------------------------------------------------------------------------------------------------------------
 
+--
+-- scheduler_runs
+--
+
+CREATE TABLE simpl.scheduler_runs
+(
+  id               BIGINT UNSIGNED            NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  task_name        VARCHAR(100)               NOT NULL UNIQUE,
+  last_run         TIMESTAMP                  NULL DEFAULT NULL,
+  last_duration_ms INT UNSIGNED               NULL DEFAULT NULL,
+  last_status      ENUM ('success', 'failed') NULL DEFAULT NULL,
+  last_error       TEXT                       NULL DEFAULT NULL
+) ENGINE = InnoDB;
+
+-- --------------------------------------------------------------------------------------------------------------------------------
+
 COMMIT;

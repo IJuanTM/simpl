@@ -3,32 +3,44 @@
 declare(strict_types=1);
 
 use app\Database\Seeders\DatabaseSeeder;
+use app\Utils\Console;
 
 /* ---------------------------------------------------------------- */
 
-// Execute the start script
 require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-// If --fresh flag is provided, truncate existing data
+Console::box('Simpl Database Seeder');
+Console::line();
+
 if (in_array('--fresh', $argv, true)) {
-    echo "🗑️  Dropping existing data...\n";
+    Console::task("🗑️ Dropping existing data...");
 
-    DatabaseSeeder::truncate();
+    try {
+        DatabaseSeeder::truncate();
+    } catch (Exception $e) {
+        Console::line();
+        Console::error("Failed to drop data: " . $e->getMessage());
+        Console::line();
+        exit(1);
+    }
 
-    echo "✓ Data dropped successfully.\n\n";
+    Console::success("Existing data dropped");
+    Console::line();
 }
 
-echo "🌱 Seeding database...\n";
+Console::task("🌱 Seeding database...");
 
 try {
-    // Run the database seeder
     DatabaseSeeder::run();
 } catch (Exception $e) {
-    // Handle seeding errors
-    echo "❌ Seeding failed: " . $e->getMessage() . "\n";
+    Console::line();
+    Console::error("Seeding failed: " . $e->getMessage());
+    Console::line();
     exit(1);
 }
 
-echo "✓ Database seeded successfully.\n";
+Console::divider();
+Console::successBold("Database seeded successfully!");
+Console::line();
