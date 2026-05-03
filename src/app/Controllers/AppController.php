@@ -29,6 +29,7 @@ class AppController
      * Retrieves the contents of an SVG file by its name.
      *
      * @param string $name The name of the SVG file (without the .svg extension).
+     *
      * @return bool|string The SVG file contents as a string, or a boolean false if the file does not exist.
      */
     public static function svg(string $name): bool|string

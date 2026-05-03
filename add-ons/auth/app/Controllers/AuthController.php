@@ -164,7 +164,7 @@ class AuthController
      * redirect the user to the change-password flow.
      *
      * @param array|null $allowedRoles Array of role ids that are allowed, or null to allow any authenticated user
-     * @param bool $allowPasswordChange If true, allow access even when the user must change password
+     * @param bool       $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
      */
@@ -292,7 +292,7 @@ class AuthController
      * The token length is trimmed to $length. If $uppercase is true the
      * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int $length Number of characters to return
+     * @param int  $length Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
@@ -343,7 +343,7 @@ class AuthController
      * Return whether the account is verified (no pending verification token).
      * Either provide $id or $email (email will be resolved to id).
      *
-     * @param int|null $id
+     * @param int|null    $id
      * @param string|null $email
      *
      * @return bool True when verified, false otherwise
@@ -389,7 +389,7 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type. Comparison is case-insensitive.
      *
-     * @param int $id User id
+     * @param int    $id User id
      * @param string $token Token to check
      * @param string $type Token type (e.g. 'verification', 'reset', 'remember')
      *
@@ -551,7 +551,7 @@ class AuthController
      * Update a user's password and clear the "must_change_password" flag.
      * Password is hashed with configured algorithm/options constants.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $password Plaintext new password (will be hashed)
      *
      * @return void
@@ -572,9 +572,9 @@ class AuthController
      * Create or replace a token of the given type for a user. Existing tokens
      * of the same type for that user are removed before insertion.
      *
-     * @param int $userId
-     * @param string $token
-     * @param string $type
+     * @param int         $userId
+     * @param string      $token
+     * @param string      $type
      * @param string|null $expires Optional expiry timestamp value
      *
      * @return void
@@ -605,7 +605,7 @@ class AuthController
     /**
      * Remove a token record for a user by type.
      *
-     * @param int $userId
+     * @param int    $userId
      * @param string $type
      *
      * @return void
@@ -626,8 +626,8 @@ class AuthController
      * succeeded. The user_id will be resolved from the provided identifier
      * (email or username) when possible.
      *
-     * @param string $identifier
-     * @param bool $success
+     * @param string      $identifier
+     * @param bool        $success
      * @param string|null $failedReason
      *
      * @return void
@@ -682,10 +682,10 @@ class AuthController
      * the user to the verification page. Displays user feedback alerts
      * depending on the mailer result.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $to
      * @param string $code
-     * @param bool $isResend
+     * @param bool   $isResend
      *
      * @return void
      */
@@ -719,7 +719,7 @@ class AuthController
     /**
      * Send a password reset email with a tokenized link to the reset form.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $to
      * @param string $token
      *

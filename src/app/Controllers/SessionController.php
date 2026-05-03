@@ -23,7 +23,8 @@ class SessionController
      * Stores a value in the session associated with the specified key.
      *
      * @param string $key The key to associate the value with.
-     * @param mixed $value The value to store in the session.
+     * @param mixed  $value The value to store in the session.
+     *
      * @return void
      */
     public static function set(string $key, mixed $value): void
@@ -35,6 +36,7 @@ class SessionController
      * Retrieves the value associated with the specified key from the session.
      *
      * @param string $key The key to retrieve the value for.
+     *
      * @return mixed Returns the value associated with the key if it exists, or null otherwise.
      */
     public static function get(string $key): mixed

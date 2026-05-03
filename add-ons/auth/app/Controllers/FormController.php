@@ -25,7 +25,7 @@ class FormController
      *
      * Supported rules (examples): 'required', 'minLength', 'maxLength', 'minValue', 'maxValue', 'type' (number|email).
      *
-     * @param string $field Field name expected in $_POST
+     * @param string              $field Field name expected in $_POST
      * @param array<string,mixed> $rules Validation rules and parameters
      *
      * @return bool True when validation passes, false on first failure
@@ -93,9 +93,9 @@ class FormController
      * by calling formAlerts(). The method accepts an optional timeout
      * attribute that front-end code may use to auto-dismiss the alert.
      *
-     * @param string $message The message text to show
+     * @param string    $message The message text to show
      * @param AlertType $type Visual type/style for the alert
-     * @param int|null $timeout Optional auto-dismiss timeout in milliseconds
+     * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void
      */
