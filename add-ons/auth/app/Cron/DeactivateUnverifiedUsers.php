@@ -23,6 +23,7 @@ class DeactivateUnverifiedUsers
         $deactivated = 0;
 
         foreach ($users as $user) {
+            // Check if the user has a verification token that was created within the last 24 hours
             $token = DB::single(
                 '*',
                 'tokens',
@@ -34,6 +35,7 @@ class DeactivateUnverifiedUsers
 
             if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime('-1 day'))) continue;
 
+            // Deactivate the user
             DB::update(
                 'users',
                 [
