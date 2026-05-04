@@ -23,7 +23,8 @@
     "optimize-autoloader": true
   },
   "scripts": {
-    "cron:test": "php app/Scripts/scheduler.php --test"
+    "cron:test": "php app/Scripts/scheduler.php --test",
+    "@addon-placeholder": "auth"
   },
   "keywords": [
     "php",
