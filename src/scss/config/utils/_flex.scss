@@ -133,39 +133,39 @@ $maxShrink: 4;
 
 // ---------------------------------------------------------------- //
 
-$max: 8;
-$step: 25;
+$max: 8; // rem
+$step: 25; // x.25, x.5, x.75, x.1
+
+@mixin gap-classes($suffix, $value) {
+  *.g-#{$suffix} {
+    gap: #{$value}rem !important;
+  }
+
+  *.g-row-#{$suffix} {
+    row-gap: #{$value}rem !important;
+  }
+
+  *.g-col-#{$suffix} {
+    column-gap: #{$value}rem !important;
+  }
+}
 
 @for $i from 0 through math.div($max * 100, $step) {
   $value: math.div($i * $step, 100);
+  $floor: math.floor($value);
 
-  @if $value % 1 == 0 {
-    *.g-#{$value} {
-      gap: #{$value}rem !important;
+  $suffix: '#{$floor}';
+
+  $frac: math.round(($value - $floor) * 100);
+  @if $frac != 0 {
+    $frac-str: '#{$frac}';
+
+    @if $frac == 50 {
+      $frac-str: '5';
     }
 
-    *.g-row-#{$value} {
-      row-gap: #{$value}rem !important;
-    }
-
-    *.g-col-#{$value} {
-      column-gap: #{$value}rem !important;
-    }
-  } @else {
-    $floor: math.floor($value);
-    $fraction: math.round(($value - $floor) * 100);
-    $suffix: if($fraction == 50, "5", #{$fraction});
-
-    *.g-#{$floor}\.#{ $suffix } {
-      gap: #{$value}rem !important;
-    }
-
-    *.g-row-#{$floor}\.#{ $suffix } {
-      row-gap: #{$value}rem !important;
-    }
-
-    *.g-col-#{$floor}\.#{ $suffix } {
-      column-gap: #{$value}rem !important;
-    }
+    $suffix: '#{$floor}\.#{$frac-str}';
   }
+
+  @include gap-classes($suffix, $value);
 }
