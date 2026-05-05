@@ -12,8 +12,6 @@ class Scheduler
     /** @var ScheduledTask[] */
     private static array $tasks = [];
 
-    /* ---------------------------------------------------------------- */
-
     public static function run(bool $test = false): void
     {
         $title = 'Scheduler — ' . date('Y-m-d H:i:s');
@@ -30,7 +28,7 @@ class Scheduler
 
             if (!$test && !$task->isDue($lastRun)) continue;
 
-            Console::task("⚙️ Running: {$task->name}...");
+            Console::task("⚙️ Running: $task->name...");
 
             $start = microtime(true);
             $error = null;
@@ -85,7 +83,7 @@ class Scheduler
         }
 
         Console::divider();
-        Console::successBold("Scheduler completed!");
+        Console::success("Scheduler completed!", true);
         Console::line();
     }
 

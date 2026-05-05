@@ -38,7 +38,7 @@ class ScheduledTask
 
     public function hourly(): static
     {
-        return $this->everyHours(1);
+        return $this->everyHours();
     }
 
     public function everyHours(int $n = 1): static
@@ -48,7 +48,7 @@ class ScheduledTask
 
     public function daily(): static
     {
-        return $this->everyDays(1);
+        return $this->everyDays();
     }
 
     public function everyDays(int $n = 1): static
@@ -58,7 +58,7 @@ class ScheduledTask
 
     public function weekly(): static
     {
-        return $this->everyWeeks(1);
+        return $this->everyWeeks();
     }
 
     public function everyWeeks(int $n = 1): static
@@ -106,7 +106,9 @@ class ScheduledTask
             return $current >= (int)$from && $current <= (int)$to;
         }
 
-        if (str_contains($field, ',')) return in_array($current, array_map('intval', explode(',', $field)), true);
+        if (str_contains($field, ',')) return explode(',', $field)
+                |> (static fn($x) => array_map('intval', $x))
+                |> (static fn($x) => in_array($current, $x, true));
 
         return $current === (int)$field;
     }

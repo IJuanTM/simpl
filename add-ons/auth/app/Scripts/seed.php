@@ -42,5 +42,5 @@ try {
 }
 
 Console::divider();
-Console::successBold("Database seeded successfully!");
+Console::success("Database seeded successfully!", true);
 Console::line();
