@@ -51,7 +51,9 @@ class DeactivateUnverifiedUsers
             $deactivated++;
         }
 
+        Console::line();
         if ($deactivated > 0) Console::info("Deactivated $deactivated unverified user" . ($deactivated !== 1 ? 's' : ''));
         else Console::info("No unverified users to deactivate");
+        Console::line();
     }
 }

@@ -11,10 +11,10 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-Console::box('Simpl Database Seeder');
+Console::box('Seed Database');
+Console::line();
 
 if (in_array('--fresh', $argv, true)) {
-    Console::line();
     Console::task("🗑️ Dropping existing data...");
 
     try {
@@ -30,7 +30,6 @@ if (in_array('--fresh', $argv, true)) {
     Console::line();
 }
 
-Console::line();
 Console::task("🌱 Seeding database...");
 
 try {
@@ -38,10 +37,10 @@ try {
 } catch (Exception $e) {
     Console::line();
     Console::error("Seeding failed: " . $e->getMessage());
-    Console::line();
     exit(1);
 }
 
 Console::divider();
+Console::line();
 Console::success("Database seeded successfully!", true);
 Console::line();

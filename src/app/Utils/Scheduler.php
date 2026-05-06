@@ -18,17 +18,24 @@ class Scheduler
         if ($test) $title .= ' [TEST]';
 
         Console::box($title);
+        Console::line();
 
         $ran = 0;
 
         foreach (self::$tasks as $task) {
-            $record = DB::single('*', 'scheduler_runs', ['task_name' => $task->name]);
+            $record = DB::single(
+                '*',
+                'scheduler_runs',
+                [
+                    'task_name' => $task->name
+                ]
+            );
             $lastRun = $record['last_run'] ?? null;
 
             if (!$test && !$task->isDue($lastRun)) continue;
 
-            Console::line();
             Console::task("⚙️ Running: $task->name...");
+            Console::line();
 
             $start = microtime(true);
             $error = null;
@@ -45,42 +52,39 @@ class Scheduler
             $duration = (int)round((microtime(true) - $start) * 1000);
             $now = date('Y-m-d H:i:s');
 
-            if ($record) {
-                DB::update(
-                    'scheduler_runs',
-                    [
-                        'last_run' => $now,
-                        'last_duration_ms' => $duration,
-                        'last_status' => $status,
-                        'last_error' => $error,
-                    ],
-                    [
-                        'task_name' => $task->name
-                    ]
-                );
-            } else {
-                DB::insert(
-                    'scheduler_runs',
-                    [
-                        'task_name' => $task->name,
-                        'last_run' => $now,
-                        'last_duration_ms' => $duration,
-                        'last_status' => $status,
-                        'last_error' => $error,
-                    ]
-                );
-            }
+            if ($record) DB::update(
+                'scheduler_runs',
+                [
+                    'last_run' => $now,
+                    'last_duration_ms' => $duration,
+                    'last_status' => $status,
+                    'last_error' => $error,
+                ],
+                [
+                    'task_name' => $task->name
+                ]
+            );
+            else DB::insert(
+                'scheduler_runs',
+                [
+                    'task_name' => $task->name,
+                    'last_run' => $now,
+                    'last_duration_ms' => $duration,
+                    'last_status' => $status,
+                    'last_error' => $error,
+                ]
+            );
 
+            Console::line();
             if ($status === 'success') Console::success("Completed in {$duration}ms");
+            Console::line();
             $ran++;
         }
 
-        if ($ran === 0) {
-            Console::line();
-            Console::info("No tasks due");
-        }
+        if ($ran === 0) Console::info("No tasks due");
 
         Console::divider();
+        Console::line();
         Console::success("Scheduler completed!", true);
         Console::line();
     }

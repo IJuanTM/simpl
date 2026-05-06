@@ -4,21 +4,12 @@ declare(strict_types=1);
 
 namespace app\Utils;
 
+use app\Enums\Ansi;
+
 class Console
 {
     private const int LEFT_PADDING = 2;
     private const int BOX_WIDTH = 62;
-    private static array $ansi = [
-        'reset' => "\x1b[0m",
-        'green' => "\x1b[32m",
-        'yellow' => "\x1b[33m",
-        'red' => "\x1b[31m",
-        'cyan' => "\x1b[36m",
-        'blue' => "\x1b[34m",
-        'gray' => "\x1b[90m",
-        'bold' => "\x1b[1m",
-        'dim' => "\x1b[2m",
-    ];
 
     public static function box(string $title): void
     {
@@ -27,7 +18,7 @@ class Console
         $spaces = str_repeat(' ', self::BOX_WIDTH - self::LEFT_PADDING - mb_strlen($title));
         self::line();
         self::out($pad . '╭' . str_repeat('─', self::BOX_WIDTH) . '╮');
-        self::out($pad . '│' . $pad . self::styled($title, 'bold') . $spaces . '│');
+        self::out($pad . '│' . $pad . self::styled($title, Ansi::BOLD) . $spaces . '│');
         self::out($pad . '╰' . str_repeat('─', self::BOX_WIDTH) . '╯');
     }
 
@@ -46,57 +37,45 @@ class Console
         echo $message . "\n";
     }
 
-    public static function out(string $message, ?string $color = null): void
+    public static function out(string $message, ?Ansi $color = null): void
     {
-        echo ($color !== null ? $color . $message . self::ansi('reset') : $message) . "\n";
+        echo ($color !== null ? Ansi::wrap($message, $color) : $message) . "\n";
     }
 
-    private static function ansi(string $name): string
+    public static function styled(string $message, Ansi ...$styles): string
     {
-        return self::$ansi[$name];
-    }
-
-    public static function styled(string $message, string ...$styles): string
-    {
-        if (empty($styles)) return $message;
-        return implode('', array_map(fn($s) => self::ansi($s), $styles)) . $message . self::ansi('reset');
+        return Ansi::wrap($message, ...$styles);
     }
 
     public static function divider(): void
     {
         self::line();
-        self::out(self::pad() . str_repeat('─', 16), self::ansi('dim'));
-        self::line();
-    }
-
-    public static function answer(string $question, string $value): void
-    {
-        self::out($question . ': ' . self::styled($value, 'cyan'));
+        self::out(self::pad() . str_repeat('─', 16), Ansi::DIM);
     }
 
     public static function success(string $message, bool $bold = false): void
     {
-        self::prefixed('✓', 'green', $message, bold: $bold);
+        self::prefixed('✓', Ansi::GREEN, $message, bold: $bold);
     }
 
-    private static function prefixed(string $symbol, string $color, string $message, bool $bold = false, bool $dim = false): void
+    private static function prefixed(string $symbol, Ansi $color, string $message, bool $bold = false, bool $dim = false): void
     {
-        self::out(self::pad() . self::ansi($color) . $symbol . self::ansi('reset') . ' ' . ($bold ? self::styled($message, 'bold') : ($dim ? self::styled($message, 'dim') : $message)));
+        self::out(self::pad() . Ansi::wrap($symbol, $color) . ' ' . ($bold ? self::styled($message, Ansi::BOLD) : ($dim ? self::styled($message, Ansi::DIM) : $message)));
     }
 
     public static function error(string $message, bool $bold = false): void
     {
-        self::prefixed('✕', 'red', $message, bold: $bold);
+        self::prefixed('✕', Ansi::RED, $message, bold: $bold);
     }
 
     public static function warn(string $message, bool $bold = false): void
     {
-        self::prefixed('⚠', 'yellow', $message, bold: $bold);
+        self::prefixed('⚠', Ansi::YELLOW, $message, bold: $bold);
     }
 
     public static function info(string $message): void
     {
-        self::prefixed('◌', 'cyan', $message, dim: true);
+        self::prefixed('◌', Ansi::CYAN, $message, dim: true);
     }
 
     public static function task(string $message): void
@@ -106,6 +85,6 @@ class Console
 
     public static function item(string $message, bool $dim = false): void
     {
-        self::out(self::pad() . self::ansi('cyan') . '•' . self::ansi('reset') . ' ' . ($dim ? self::styled($message, 'dim') : $message));
+        self::out(self::pad() . Ansi::wrap('•', Ansi::CYAN) . ' ' . ($dim ? self::styled($message, Ansi::DIM) : $message));
     }
 }
