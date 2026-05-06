@@ -30,7 +30,7 @@ class DeleteInactiveUsers
                 ]
             );
 
-            Console::info("Deleted $pending  inactive user" . ($pending !== 1 ? 's' : ''));
+            Console::info("Deleted $pending inactive user" . ($pending !== 1 ? 's' : ''));
         } else Console::info("No users pending deletion");
     }
 }

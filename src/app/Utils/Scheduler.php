@@ -18,7 +18,6 @@ class Scheduler
         if ($test) $title .= ' [TEST]';
 
         Console::box($title);
-        Console::line();
 
         $ran = 0;
 
@@ -28,6 +27,7 @@ class Scheduler
 
             if (!$test && !$task->isDue($lastRun)) continue;
 
+            Console::line();
             Console::task("⚙️ Running: $task->name...");
 
             $start = microtime(true);
@@ -72,14 +72,12 @@ class Scheduler
             }
 
             if ($status === 'success') Console::success("Completed in {$duration}ms");
-
-            Console::line();
             $ran++;
         }
 
         if ($ran === 0) {
-            Console::info("No tasks due");
             Console::line();
+            Console::info("No tasks due");
         }
 
         Console::divider();

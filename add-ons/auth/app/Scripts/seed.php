@@ -12,9 +12,9 @@ require_once 'start.php';
 /* ---------------------------------------------------------------- */
 
 Console::box('Simpl Database Seeder');
-Console::line();
 
 if (in_array('--fresh', $argv, true)) {
+    Console::line();
     Console::task("🗑️ Dropping existing data...");
 
     try {
@@ -30,6 +30,7 @@ if (in_array('--fresh', $argv, true)) {
     Console::line();
 }
 
+Console::line();
 Console::task("🌱 Seeding database...");
 
 try {
