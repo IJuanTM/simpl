@@ -134,9 +134,20 @@ $maxShrink: 4;
 // ---------------------------------------------------------------- //
 
 $max: 8; // rem
-$step: 25; // x.25, x.5, x.75, x.1
+$step: 25; // x.25, x.5, x.75
 
-@mixin gap-classes($suffix, $value) {
+@for $i from 0 through math.div($max * 100, $step) {
+  $value: math.div($i * $step, 100);
+  $floor: math.floor($value);
+  $frac: math.round(($value - $floor) * 100);
+
+  $suffix: "#{$floor}";
+  @if $frac == 50 {
+    $suffix: "#{$floor}\\\.5";
+  } @else if $frac != 0 {
+    $suffix: "#{$floor}\\\.#{$frac}";
+  }
+
   *.g-#{$suffix} {
     gap: #{$value}rem !important;
   }
@@ -148,24 +159,4 @@ $step: 25; // x.25, x.5, x.75, x.1
   *.g-col-#{$suffix} {
     column-gap: #{$value}rem !important;
   }
-}
-
-@for $i from 0 through math.div($max * 100, $step) {
-  $value: math.div($i * $step, 100);
-  $floor: math.floor($value);
-
-  $suffix: '#{$floor}';
-
-  $frac: math.round(($value - $floor) * 100);
-  @if $frac != 0 {
-    $frac-str: '#{$frac}';
-
-    @if $frac == 50 {
-      $frac-str: '5';
-    }
-
-    $suffix: '#{$floor}\.#{$frac-str}';
-  }
-
-  @include gap-classes($suffix, $value);
 }
