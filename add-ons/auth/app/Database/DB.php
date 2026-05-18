@@ -208,10 +208,13 @@ class DB
 
     /**
      * This method is for establishing a database connection using PDO.
+     * When $withDatabase is false, no schema is selected (used during migrations).
+     *
+     * @param bool $withDatabase
      *
      * @return PDO
      */
-    private static function connect(): PDO
+    private static function connect(bool $withDatabase = true): PDO
     {
         // Return existing connection if already established
         if (self::$pdo !== null) return self::$pdo;
@@ -219,7 +222,7 @@ class DB
         try {
             // Create a new PDO instance with persistent connection and error handling
             self::$pdo = new PDO(
-                'mysql:host=' . DB_SERVER . ';dbname=' . DB_NAME,
+                'mysql:host=' . DB_SERVER . ($withDatabase ? ';dbname=' . DB_NAME : ''),
                 DB_USERNAME,
                 DB_PASSWORD,
                 [
@@ -409,6 +412,40 @@ class DB
 
         // Execute and return the count of groups
         return (int)self::execute($query, $params)->fetch()['count'];
+    }
+
+    /**
+     * This method is for executing a raw DDL statement (no user input — migration use only).
+     *
+     * @param string $sql
+     *
+     * @return void
+     */
+    public static function raw(string $sql): void
+    {
+        try {
+            if (self::$pdo === null) self::connect(false);
+            self::$pdo->exec($sql);
+        } catch (PDOException $e) {
+            throw new PDOException("Raw query failed: " . $e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    /**
+     * This method is for switching the active database on the current connection.
+     *
+     * @param string $name
+     *
+     * @return void
+     */
+    public static function useDatabase(string $name): void
+    {
+        try {
+            if (self::$pdo === null) self::connect(false);
+            self::$pdo->exec("USE `$name`");
+        } catch (PDOException $e) {
+            throw new PDOException("Failed to select database '$name': " . $e->getMessage(), (int)$e->getCode(), $e);
+        }
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use app\Database\DatabaseSeeder;
+use app\Database\DatabaseMigrator;
 use app\Utils\Console;
 
 /* ---------------------------------------------------------------- */
@@ -11,36 +11,36 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-Console::box('Seed Database');
+Console::box('Migrate Database');
 Console::line();
 
 if (in_array('--fresh', $argv, true)) {
-    Console::task("🗑️ Dropping existing data...");
+    Console::task("🗑️ Dropping existing database...");
 
     try {
-        DatabaseSeeder::truncate();
+        DatabaseMigrator::drop();
     } catch (Exception $e) {
         Console::line();
-        Console::error("Failed to drop data: " . $e->getMessage());
+        Console::error("Failed to drop database: " . $e->getMessage());
         Console::line();
         exit(1);
     }
 
-    Console::success("Existing data dropped");
+    Console::success("Existing database dropped");
     Console::line();
 }
 
-Console::task("🌱 Seeding database...");
+Console::task("🏗️ Running migrations...");
 
 try {
-    DatabaseSeeder::run();
+    DatabaseMigrator::run();
 } catch (Exception $e) {
     Console::line();
-    Console::error("Seeding failed: " . $e->getMessage());
+    Console::error("Migration failed: " . $e->getMessage());
     exit(1);
 }
 
 Console::divider();
 Console::line();
-Console::success("Database seeded successfully!", true);
+Console::success("Database migrated successfully!", true);
 Console::line();
