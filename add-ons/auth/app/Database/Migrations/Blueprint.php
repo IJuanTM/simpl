@@ -124,8 +124,7 @@ class Blueprint
 
     public function primary(string ...$columns): static
     {
-        $cols = implode(', ', array_map(static fn($c) => "`$c`", $columns));
-        $this->primaryKey = count($columns) === 1 ? "`$columns[0]`" : "($cols)";
+        $this->primaryKey = implode(', ', array_map(static fn($c) => "`$c`", $columns));
         return $this;
     }
 

@@ -11,7 +11,17 @@ class RolesSeeder
 {
     public static function run(): void
     {
-        DB::insert('roles', ['name' => Role::Admin->value]);
-        DB::insert('roles', ['name' => Role::User->value]);
+        DB::insert(
+            'roles',
+            [
+                'name' => Role::Admin->value
+            ]
+        );
+        DB::insert(
+            'roles',
+            [
+                'name' => Role::User->value
+            ]
+        );
     }
 }
