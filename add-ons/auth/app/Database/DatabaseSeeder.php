@@ -31,6 +31,8 @@ class DatabaseSeeder
      */
     public static function truncate(): void
     {
+        DB::useDatabase(DB_NAME);
+
         try {
             Schema::disableForeignKeys();
 
@@ -53,6 +55,8 @@ class DatabaseSeeder
      */
     public static function run(): void
     {
+        DB::useDatabase(DB_NAME);
+
         foreach (self::$seeders as $seeder) $seeder::run();
     }
 }

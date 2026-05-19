@@ -11,16 +11,16 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-Console::box('Seed Database');
+Console::box('Seeding Database: ' . DB_NAME);
 Console::line();
 
 if (in_array('--fresh', $argv, true)) {
     Console::task("🗑️ Dropping existing data...");
+    Console::line();
 
     try {
         DatabaseSeeder::truncate();
     } catch (Exception $e) {
-        Console::line();
         Console::error("Failed to drop data: " . $e->getMessage());
         Console::line();
         exit(1);
@@ -31,11 +31,11 @@ if (in_array('--fresh', $argv, true)) {
 }
 
 Console::task("🌱 Seeding database...");
+Console::line();
 
 try {
     DatabaseSeeder::run();
 } catch (Exception $e) {
-    Console::line();
     Console::error("Seeding failed: " . $e->getMessage());
     exit(1);
 }
