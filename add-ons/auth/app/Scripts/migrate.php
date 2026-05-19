@@ -14,6 +14,32 @@ require_once 'start.php';
 Console::box('Migrate Database');
 Console::line();
 
+if (in_array('--rollback', $argv, true)) {
+    Console::task("⏪ Rolling back last batch...");
+
+    try {
+        $rolled = DatabaseMigrator::rollback();
+    } catch (Exception $e) {
+        Console::line();
+        Console::error("Rollback failed: " . $e->getMessage());
+        Console::line();
+        exit(1);
+    }
+
+    Console::divider();
+    Console::line();
+
+    if (empty($rolled)) Console::info("Nothing to roll back.");
+    else {
+        foreach ($rolled as $migration) Console::warn("↩ $migration");
+        Console::line();
+        Console::success("Rolled back " . count($rolled) . " migration(s)!", true);
+    }
+
+    Console::line();
+    exit(0);
+}
+
 if (in_array('--fresh', $argv, true)) {
     Console::task("🗑️ Dropping existing database...");
 
@@ -33,14 +59,22 @@ if (in_array('--fresh', $argv, true)) {
 Console::task("🏗️ Running migrations...");
 
 try {
-    DatabaseMigrator::run();
+    $applied = DatabaseMigrator::run();
 } catch (Exception $e) {
     Console::line();
     Console::error("Migration failed: " . $e->getMessage());
+    Console::line();
     exit(1);
 }
 
 Console::divider();
 Console::line();
-Console::success("Database migrated successfully!", true);
+
+if (empty($applied)) Console::info("Nothing to migrate.");
+else {
+    foreach ($applied as $migration) Console::success($migration);
+    Console::line();
+    Console::success("Migrated " . count($applied) . " migration(s)!", true);
+}
+
 Console::line();

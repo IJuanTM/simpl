@@ -9,7 +9,7 @@ use app\Database\Migrations\Schema;
 
 class CreateSchedulerRunsTable
 {
-    public static function run(): void
+    public static function up(): void
     {
         Schema::create('scheduler_runs', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
@@ -20,5 +20,10 @@ class CreateSchedulerRunsTable
             $t->text('last_error');
         })
             ->primary('id');
+    }
+
+    public static function down(): void
+    {
+        Schema::drop('scheduler_runs');
     }
 }

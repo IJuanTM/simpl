@@ -7,6 +7,7 @@ namespace app\Controllers;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\ErrorCode;
+use app\Enums\Role;
 use app\Models\Url;
 use app\Utils\Log;
 use Exception;
@@ -128,14 +129,12 @@ class AuthController
      */
     public static function setUserSession(array $user): bool
     {
-        // Resolve the user's assigned role id from the user_roles table.
-        $role = DB::single(
-            'role_id',
-            'user_roles',
-            [
-                'user_id' => $user['id']
-            ]
-        )['role_id'] ?? null;
+        // Resolve the user's role name via a join on user_roles + roles.
+        $rows = DB::query(
+            "SELECT r.name FROM roles r INNER JOIN user_roles ur ON ur.role_id = r.id WHERE ur.user_id = :user_id LIMIT 1",
+            [':user_id' => $user['id']]
+        );
+        $role = $rows[0]['name'] ?? null;
 
         // If the account has no role assigned, log an error, clear session,
         // notify user and redirect.
@@ -163,8 +162,8 @@ class AuthController
      * If password change is required and not explicitly allowed this will
      * redirect the user to the change-password flow.
      *
-     * @param array|null $allowedRoles Array of role ids that are allowed, or null to allow any authenticated user
-     * @param bool       $allowPasswordChange If true, allow access even when the user must change password
+     * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
+     * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
      */
@@ -187,7 +186,7 @@ class AuthController
         }
 
         // If allowedRoles is provided, ensure the user's role is in the list.
-        if ($allowedRoles !== null && !in_array($user['role'], $allowedRoles, true)) {
+        if ($allowedRoles !== null && !in_array($user['role'], array_map(static fn(Role $r) => $r->value, $allowedRoles), true)) {
             PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }

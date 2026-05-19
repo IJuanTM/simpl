@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace app\Database\Migrations;
 
 use app\Database\DB;
-use Throwable;
 
 class Blueprint
 {
@@ -14,7 +13,6 @@ class Blueprint
     private array $foreigns = [];
     private ?string $primaryKey = null;
     private ?int $startAt = null;
-    private bool $executed = false;
 
     public function __construct(private readonly string $table)
     {
@@ -22,18 +20,11 @@ class Blueprint
 
     public function __destruct()
     {
-        if ($this->executed) return;
-        try {
-            $this->execute();
-        } catch (Throwable) {
-            // Swallow — if a migration failed, the transaction rollback in DatabaseMigrator is the handler
-        }
+        $this->execute();
     }
 
     private function execute(): void
     {
-        $this->executed = true;
-
         $parts = $this->columns;
 
         if ($this->primaryKey !== null) $parts[] = "PRIMARY KEY ($this->primaryKey)";
@@ -111,9 +102,10 @@ class Blueprint
         return $this->addColumn("`$name` ENUM($list)", $notNull, $default);
     }
 
-    public function autoIncrement(): static
+    public function autoIncrement(int $startAt = 1): static
     {
         $this->columns[array_key_last($this->columns)] .= ' AUTO_INCREMENT';
+        if ($startAt > 1) $this->startAt = $startAt;
         return $this;
     }
 
@@ -147,12 +139,6 @@ class Blueprint
     {
         $cols = implode(', ', array_map(static fn($c) => "`$c`", $columns));
         $this->indexes[] = "INDEX `$name` ($cols)";
-        return $this;
-    }
-
-    public function startAt(int $value): static
-    {
-        $this->startAt = $value;
         return $this;
     }
 }

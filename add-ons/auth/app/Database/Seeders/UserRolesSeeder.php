@@ -5,37 +5,21 @@ declare(strict_types=1);
 namespace app\Database\Seeders;
 
 use app\Database\DB;
+use app\Enums\Role;
 
 class UserRolesSeeder
 {
     public static function run(): void
     {
+        $adminRoleId = DB::single('id', 'roles', ['name' => Role::Admin->value])['id'];
+        $userRoleId = DB::single('id', 'roles', ['name' => Role::User->value])['id'];
+
         // Assign admin role to the admin user
         $admin = DB::single('id', 'users', ['email' => 'admin@example.com']);
-        DB::insert(
-            'user_roles',
-            [
-                'user_id' => $admin['id'],
-                'role_id' => 1
-            ]
-        );
+        DB::insert('user_roles', ['user_id' => $admin['id'], 'role_id' => $adminRoleId]);
 
-        // Get all users except the admin
-        $users = DB::select(
-            'id',
-            'users',
-            [
-                'email' => ['!=', 'admin@example.com']
-            ]
-        );
-
-        // Assign user role to all users except the admin
-        foreach ($users as $user) DB::insert(
-            'user_roles',
-            [
-                'user_id' => $user['id'],
-                'role_id' => 2
-            ]
-        );
+        // Assign user role to all other users
+        $users = DB::select('id', 'users', ['email' => ['!=', 'admin@example.com']]);
+        foreach ($users as $user) DB::insert('user_roles', ['user_id' => $user['id'], 'role_id' => $userRoleId]);
     }
 }

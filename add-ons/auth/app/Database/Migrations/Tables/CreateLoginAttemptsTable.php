@@ -9,7 +9,7 @@ use app\Database\Migrations\Schema;
 
 class CreateLoginAttemptsTable
 {
-    public static function run(): void
+    public static function up(): void
     {
         Schema::create('login_attempts', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
@@ -24,5 +24,10 @@ class CreateLoginAttemptsTable
             ->foreign('user_id', 'users')
             ->index('idx_user_success_time', ['user_id', 'success', 'attempt_time'])
             ->index('idx_ip_success_time', ['ip_address', 'success', 'attempt_time']);
+    }
+
+    public static function down(): void
+    {
+        Schema::drop('login_attempts');
     }
 }

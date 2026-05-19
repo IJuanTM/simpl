@@ -9,7 +9,7 @@ use app\Database\Migrations\Schema;
 
 class CreateUsersTable
 {
-    public static function run(): void
+    public static function up(): void
     {
         Schema::create('users', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
@@ -27,5 +27,10 @@ class CreateUsersTable
             $t->timestamp('deleted_at');
         })
             ->primary('id');
+    }
+
+    public static function down(): void
+    {
+        Schema::drop('users');
     }
 }

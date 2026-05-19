@@ -11,6 +11,7 @@ use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\Role;
 use app\Models\Page;
 use JsonException;
 
@@ -58,8 +59,7 @@ class UsersPage
 
     public function __construct(Page $page)
     {
-        // Require admin authentication (role ID 1)
-        AuthController::requireAuth([1]);
+        AuthController::requireAuth([Role::Admin]);
 
         $this->tableColumns = self::getTableColumns();
         $this->visibleColumns = $this->tableColumns;

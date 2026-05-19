@@ -1,4 +1,6 @@
 @addon-insert:replace('"@addon-placeholder": "auth"')
+"migrate": "php app/Scripts/migrate.php",
+"migrate:fresh": "php app/Scripts/migrate.php --fresh",
 "seed": "php app/Scripts/seed.php",
 "seed:fresh": "php app/Scripts/seed.php --fresh"
 @addon-end

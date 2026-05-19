@@ -11,7 +11,6 @@ use app\Database\Migrations\Tables\CreateSchedulerRunsTable;
 use app\Database\Migrations\Tables\CreateTokensTable;
 use app\Database\Migrations\Tables\CreateUserRolesTable;
 use app\Database\Migrations\Tables\CreateUsersTable;
-use PDOException;
 
 /**
  * Handles the execution of database migration operations.
@@ -40,27 +39,116 @@ class DatabaseMigrator
     }
 
     /**
-     * Executes the database migration operations.
-     * This method creates the schema and all tables in dependency order.
+     * Runs all pending migrations and returns the names of those applied.
      *
-     * @throws PDOException
+     * @return string[]
      */
-    public static function run(): void
+    public static function run(): array
     {
         Schema::createDatabase(DB_NAME);
-
-        // Switch the connection to the newly created database
         DB::useDatabase(DB_NAME);
+        self::ensureMigrationsTable();
 
-        try {
-            DB::beginTransaction();
+        $ran = self::getRanMigrations();
+        $pending = array_filter(self::$migrations, static fn($m) => !in_array(self::name($m), $ran, true));
 
-            foreach (self::$migrations as $migration) $migration::run();
+        if (empty($pending)) return [];
 
-            DB::commit();
-        } catch (PDOException $e) {
-            DB::rollback();
-            throw $e;
+        $batch = self::nextBatch();
+        $applied = [];
+
+        foreach ($pending as $migration) {
+            $migration::up();
+            self::record(self::name($migration), $batch);
+            $applied[] = self::name($migration);
         }
+
+        return $applied;
+    }
+
+    private static function ensureMigrationsTable(): void
+    {
+        DB::raw(
+            "CREATE TABLE IF NOT EXISTS `migrations` (\n" .
+            "  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,\n" .
+            "  `migration` VARCHAR(255) NOT NULL,\n" .
+            "  `batch` INT UNSIGNED NOT NULL,\n" .
+            "  `ran_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n" .
+            "  PRIMARY KEY (`id`)\n" .
+            ") ENGINE = " . DB_ENGINE
+        );
+    }
+
+    private static function getRanMigrations(): array
+    {
+        $rows = DB::query("SELECT migration FROM migrations ORDER BY id");
+        return array_column($rows, 'migration');
+    }
+
+    private static function name(string $class): string
+    {
+        $parts = explode('\\', $class);
+        return end($parts);
+    }
+
+    private static function nextBatch(): int
+    {
+        $row = DB::query("SELECT COALESCE(MAX(batch), 0) + 1 AS next FROM migrations");
+        return (int)$row[0]['next'];
+    }
+
+    private static function record(string $name, int $batch): void
+    {
+        DB::insert('migrations', ['migration' => $name, 'batch' => $batch]);
+    }
+
+    /**
+     * Rolls back the last batch of migrations and returns the names of those reversed.
+     *
+     * @return string[]
+     */
+    public static function rollback(): array
+    {
+        DB::useDatabase(DB_NAME);
+        self::ensureMigrationsTable();
+
+        $batch = self::lastBatch();
+        if ($batch === null) return [];
+
+        $names = self::batchMigrations($batch);
+        $map = array_combine(
+            array_map(static fn($m) => self::name($m), self::$migrations),
+            self::$migrations
+        );
+
+        $rolled = [];
+
+        foreach (array_reverse($names) as $name) {
+            if (isset($map[$name])) {
+                $map[$name]::down();
+                self::remove($name);
+                $rolled[] = $name;
+            }
+        }
+
+        return $rolled;
+    }
+
+    private static function lastBatch(): ?int
+    {
+        $row = DB::query("SELECT MAX(batch) AS last FROM migrations");
+        $val = $row[0]['last'] ?? null;
+        return $val !== null ? (int)$val : null;
+    }
+
+    private static function batchMigrations(int $batch): array
+    {
+        $rows = DB::query("SELECT migration FROM migrations WHERE batch = :batch ORDER BY id", [':batch' => $batch]);
+        return array_column($rows, 'migration');
+    }
+
+    private static function remove(string $name): void
+    {
+        DB::delete('migrations', ['migration' => $name]);
     }
 }

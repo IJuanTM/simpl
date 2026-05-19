@@ -9,7 +9,7 @@ use app\Database\Migrations\Schema;
 
 class CreateTokensTable
 {
-    public static function run(): void
+    public static function up(): void
     {
         Schema::create('tokens', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
@@ -22,5 +22,10 @@ class CreateTokensTable
             ->primary('id')
             ->foreign('user_id', 'users')
             ->index('idx_user_type_expires', ['user_id', 'type', 'expires']);
+    }
+
+    public static function down(): void
+    {
+        Schema::drop('tokens');
     }
 }
