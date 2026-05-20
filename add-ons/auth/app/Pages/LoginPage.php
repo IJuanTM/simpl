@@ -240,7 +240,7 @@ class LoginPage
         }
 
         // Check if user must change password
-        if (($user['must_change_password'] ?? 0) === 1) {
+        if ($user['must_change_password']) {
             PageController::redirect('change-password');
             AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
             return;

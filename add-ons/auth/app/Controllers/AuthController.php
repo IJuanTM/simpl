@@ -226,7 +226,7 @@ class AuthController
 
         // If the account requires a password change and this route doesn't
         // explicitly allow that, force a redirect to the change-password page.
-        if (!$allowPasswordChange && ($user['must_change_password'] ?? 0) === 1) {
+        if (!$allowPasswordChange && $user['must_change_password']) {
             PageController::redirect('change-password');
             AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
             exit;
@@ -465,8 +465,7 @@ class AuthController
      */
     public static function getEmailByIdentifier(string $identifier): string|null
     {
-        $user = self::getUserByIdentifier($identifier);
-        return $user['email'] ?? null;
+        return self::getUserByIdentifier($identifier)['email'] ?? null;
     }
 
     /**
@@ -538,8 +537,7 @@ class AuthController
      */
     public static function checkPasswordByIdentifier(string $identifier, string $password): bool
     {
-        $user = self::getUserByIdentifier($identifier);
-        return $user && password_verify($password, $user['password']);
+        return ($user = self::getUserByIdentifier($identifier)) && password_verify($password, $user['password']);
     }
 
     /**
@@ -573,11 +571,10 @@ class AuthController
      */
     public static function isActive(string $email): bool
     {
-        return (DB::single(
-                'is_active',
-                'users',
-                compact('email')
-            )['is_active'] ?? 0) === 1;
+        return (bool)DB::single(
+            'is_active',
+            'users', compact('email')
+        )['is_active'];
     }
 
     /**
@@ -589,8 +586,7 @@ class AuthController
      */
     public static function isActiveByIdentifier(string $identifier): bool
     {
-        $user = self::getUserByIdentifier($identifier);
-        return $user && ($user['is_active'] ?? 0) === 1;
+        return ($user = self::getUserByIdentifier($identifier)) && $user['is_active'];
     }
 
     /**
