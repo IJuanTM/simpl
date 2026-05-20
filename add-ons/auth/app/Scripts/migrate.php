@@ -16,11 +16,11 @@ Console::line();
 
 if (in_array('--rollback', $argv, true)) {
     Console::task("⏪ Rolling back last batch...");
-    Console::line();
 
     try {
         $rolled = DatabaseMigrator::rollback();
     } catch (Exception $e) {
+        Console::line();
         Console::error("Rollback failed: " . $e->getMessage());
         Console::line();
         exit(1);
@@ -58,11 +58,11 @@ if (in_array('--fresh', $argv, true)) {
 }
 
 Console::task("🏗️ Running migrations...");
-Console::line();
 
 try {
     $applied = DatabaseMigrator::run();
 } catch (Exception $e) {
+    Console::line();
     Console::error("Migration failed: " . $e->getMessage());
     Console::line();
     exit(1);

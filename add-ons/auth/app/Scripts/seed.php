@@ -31,12 +31,13 @@ if (in_array('--fresh', $argv, true)) {
 }
 
 Console::task("🌱 Seeding database...");
-Console::line();
 
 try {
     DatabaseSeeder::run();
 } catch (Exception $e) {
+    Console::line();
     Console::error("Seeding failed: " . $e->getMessage());
+    Console::line();
     exit(1);
 }
 
