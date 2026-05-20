@@ -2,6 +2,7 @@
 // @addon-insert:before('use app\Controllers\AppController;');
 use app\Controllers\AuthController;
 use app\Controllers\SessionController;
+use app\Enums\Role;
 // @addon-end
 ?>
 
@@ -16,7 +17,7 @@ use app\Controllers\SessionController;
 
         <?php if (isset(SessionController::get('user')['id'])) : ?>
 
-          <?php if (SessionController::get('user')['role'] === 1) : ?>
+          <?php if (SessionController::get('user')['role'] === Role::ADMIN->value) : ?>
             <a class="col nav-item button users center f-0" href="<?= Url::to('users') ?>" aria-label="Link to registered users overview">
               <i class="fas fa-users"></i><span class="center h-100">Users</span>
             </a>

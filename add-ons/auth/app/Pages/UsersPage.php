@@ -59,7 +59,7 @@ class UsersPage
 
     public function __construct(Page $page)
     {
-        AuthController::requireAuth([Role::Admin]);
+        AuthController::requireAuth([Role::ADMIN]);
 
         $this->tableColumns = self::getTableColumns();
         $this->visibleColumns = $this->tableColumns;
@@ -170,13 +170,23 @@ class UsersPage
         // Enrich user data with role and verification status
         foreach ($this->allUsers as $key => $user) {
             // Get user role
-            $this->allUsers[$key]['role'] = DB::single(
+            $roleId = DB::single(
                 'role_id',
                 'user_roles',
                 [
                     'user_id' => $user['id']
                 ]
-            )['role_id'];
+            )['role_id'] ?? null;
+
+            $roleName = $roleId ? DB::single(
+                'name',
+                'roles',
+                [
+                    'id' => $roleId
+                ]
+            )['name'] ?? null : null;
+
+            $this->allUsers[$key]['role'] = $roleName ? Role::from($roleName) : null;
 
             // Check if user is verified
             $this->allUsers[$key]['is_verified'] = AuthController::isVerified($user['id']) ? 1 : 0;
@@ -249,7 +259,7 @@ class UsersPage
             'email' => strtolower((string)$user['email']),
             'first_name' => strtolower((string)($user['first_name'] ?? '')),
             'last_name' => strtolower((string)($user['last_name'] ?? '')),
-            'role' => (int)$user['role'],
+            'role' => $user['role']?->value ?? '',
             'is_verified' => (int)($user['is_verified'] ?? 0),
             'must_change_password' => (int)$user['must_change_password'],
             'last_login' => $user['last_login'] ? (int)strtotime((string)$user['last_login']) : 0,
@@ -316,7 +326,7 @@ class UsersPage
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
                 !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
-                !FormController::validate('role', ['required', 'type' => 'number'])
+                !FormController::validate('role', ['required'])
             ) return;
 
             // Sanitize inputs
@@ -348,7 +358,7 @@ class UsersPage
                 !FormController::validate('first_name', ['maxLength' => 100]) ||
                 !FormController::validate('last_name', ['maxLength' => 100]) ||
                 !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
-                !FormController::validate('role', ['required', 'type' => 'number'])
+                !FormController::validate('role', ['required'])
             ) return;
 
             // Sanitize inputs
@@ -389,14 +399,14 @@ class UsersPage
      *
      * @param string      $email The email address of the new user.
      * @param string      $rawPassword The raw password for the new user, which will be hashed before storing.
-     * @param int         $role The role ID to be assigned to the user.
+     * @param string      $role The role name to assign to the new user.
      * @param string|null $username An optional username for the new user. Default is null.
      * @param string|null $first_name An optional first name for the new user. Default is null.
      * @param string|null $last_name An optional last name for the new user. Default is null.
      *
      * @return void
      */
-    private static function create(string $email, string $rawPassword, int $role, string|null $username = null, string|null $first_name = null, string|null $last_name = null): void
+    private static function create(string $email, string $rawPassword, string $role, string|null $username = null, string|null $first_name = null, string|null $last_name = null): void
     {
         // Insert new user
         DB::insert(
@@ -419,7 +429,13 @@ class UsersPage
             'user_roles',
             [
                 'user_id' => $id,
-                'role_id' => $role
+                'role_id' => DB::single(
+                    'id',
+                    'roles',
+                    [
+                        'name' => $role
+                    ]
+                )['id']
             ]
         );
 
@@ -439,11 +455,11 @@ class UsersPage
      * @param string|null $first_name The updated first name, or null to leave unchanged.
      * @param string|null $last_name The updated last name, or null to leave unchanged.
      * @param string      $email The updated email address.
-     * @param int         $role The ID of the updated role.
+     * @param string      $role The updated role name to assign to the user.
      *
      * @return void
      */
-    private static function update(int $id, string|null $username, string|null $first_name, string|null $last_name, string $email, int $role): void
+    private static function update(int $id, string|null $username, string|null $first_name, string|null $last_name, string $email, string $role): void
     {
         // Update user profile
         DB::update(
@@ -461,7 +477,13 @@ class UsersPage
         DB::update(
             'user_roles',
             [
-                'role_id' => $role
+                'role_id' => DB::single(
+                    'id',
+                    'roles',
+                    [
+                        'name' => $role
+                    ]
+                )['id']
             ],
             [
                 'user_id' => $id
@@ -646,7 +668,7 @@ class UsersPage
             'email' => $user['email'],
             'first_name' => $muted($user['first_name'] ?? ''),
             'last_name' => $muted($user['last_name'] ?? ''),
-            'role' => $user['role'] === 1 ? 'Admin' : 'User',
+            'role' => $user['role']->value,
             'is_verified' => !empty($user['is_verified']) ? $check : $times,
             'must_change_password' => $user['must_change_password'] ? $check : $times,
             'last_login' => $muted($user['last_login'] ?? ''),

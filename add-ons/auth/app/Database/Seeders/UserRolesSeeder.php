@@ -15,14 +15,14 @@ class UserRolesSeeder
             'id',
             'roles',
             [
-                'name' => Role::Admin->value
+                'name' => Role::ADMIN->value
             ]
         )['id'];
         $userRoleId = DB::single(
             'id',
             'roles',
             [
-                'name' => Role::User->value
+                'name' => Role::USER->value
             ]
         )['id'];
 

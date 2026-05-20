@@ -2,6 +2,7 @@
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\SessionController;
+use app\Enums\Role;
 ?>
 
 <?php if (isset($this->pageObj->user)) : ?>
@@ -95,8 +96,8 @@ use app\Controllers\SessionController;
             <div class="row input-group">
               <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
               <select class="col edit-user-role" id="role" name="role">
-                <option value="1" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 1 ? 'selected' : '' ?>>Admin</option>
-                <option value="2" <?= ($_POST['role'] ?? $this->pageObj->user['role']) === 2 ? 'selected' : '' ?>>User</option>
+                <option value="<?= Role::ADMIN->value ?>" <?= ($_POST['role'] ?? $this->pageObj->user['role']->value) === Role::ADMIN->value ? 'selected' : '' ?>><?= Role::ADMIN->value ?></option>
+                <option value="<?= Role::USER->value ?>" <?= ($_POST['role'] ?? $this->pageObj->user['role']->value) === Role::USER->value ? 'selected' : '' ?>><?= Role::USER->value ?></option>
               </select>
             </div>
           </div>

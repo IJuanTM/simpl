@@ -14,13 +14,13 @@ class RolesSeeder
         DB::insert(
             'roles',
             [
-                'name' => Role::Admin->value
+                'name' => Role::ADMIN->value
             ]
         );
         DB::insert(
             'roles',
             [
-                'name' => Role::User->value
+                'name' => Role::USER->value
             ]
         );
     }
