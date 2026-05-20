@@ -11,6 +11,7 @@ a.button {
   transition: background-color .15s ease-in-out;
   white-space: nowrap;
   text-decoration: none;
+  border: .125rem solid var(--border-muted);
   border-radius: .5rem;
   background-color: var(--button);
 
@@ -22,10 +23,6 @@ a.button {
 
   @include hover-focus {
     background-color: var(--button-hover);
-  }
-
-  &.button-border {
-    border: .125rem solid var(--border-muted);
   }
 
   &.button-sm {

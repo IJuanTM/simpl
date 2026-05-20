@@ -373,7 +373,7 @@ class UsersPage
 
             // Update user
             self::update(
-                $_POST['id'],
+                $this->user['id'],
                 $_POST['username'],
                 $_POST['first_name'],
                 $_POST['last_name'],
@@ -383,12 +383,12 @@ class UsersPage
         }
 
         // Handle user deletion
-        if ($subpage === 'delete') $this->delete($_POST['id']);
+        if ($subpage === 'delete') $this->delete($this->user['id']);
 
         // Handle user restoration
         if ($subpage === 'restore') {
             // Only restore if user is actually inactive
-            if (isset($this->user) && !$this->user['is_active']) $this->restore($_POST['id']);
+            if (isset($this->user) && !$this->user['is_active']) $this->restore($this->user['id']);
             else PageController::redirect('users', 2);
         }
     }

@@ -10,6 +10,7 @@ section.cookie {
   margin: 1rem;
   padding: 2rem;
   transition: visibility .15s ease-out, opacity .15s ease-out;
+  border: .125rem solid var(--border-muted);
   border-radius: .5rem;
   background-color: var(--bg-accent);
 
