@@ -89,7 +89,13 @@ class AuthController
         );
 
         // Update the cookie to match the refreshed expiration.
-        setcookie('remember', $rememberToken, $timestamp, '/');
+        setcookie('remember', $rememberToken, [
+            'expires' => $timestamp,
+            'path' => '/',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
     }
 
     /**
@@ -99,7 +105,13 @@ class AuthController
      */
     private static function clearRememberCookie(): void
     {
-        setcookie('remember', '', time() - 3600, '/');
+        setcookie('remember', '', [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
     }
 
     /**
@@ -129,12 +141,7 @@ class AuthController
      */
     public static function setUserSession(array $user): bool
     {
-        // Resolve the user's role name via a join on user_roles + roles.
-        $rows = DB::query(
-            "SELECT r.name FROM roles r INNER JOIN user_roles ur ON ur.role_id = r.id WHERE ur.user_id = :user_id LIMIT 1",
-            [':user_id' => $user['id']]
-        );
-        $role = $rows[0]['name'] ?? null;
+        $role = self::getUserRole($user['id']);
 
         // If the account has no role assigned, log an error, clear session,
         // notify user and redirect.
@@ -149,9 +156,25 @@ class AuthController
         // Remove sensitive password hash before storing user in session.
         unset($user['password']);
 
+        // Regenerate session ID to prevent session fixation attacks.
+        session_regenerate_id(true);
+
         // Store user row plus role in session.
         SessionController::set('user', $user + compact('role'));
         return true;
+    }
+
+    /**
+     * Resolve the role name for a user by looking up user_roles then roles.
+     *
+     * @param int $userId
+     *
+     * @return string|null Role name or null when no role is assigned
+     */
+    private static function getUserRole(int $userId): ?string
+    {
+        $roleId = DB::single('role_id', 'user_roles', ['user_id' => $userId])['role_id'] ?? null;
+        return $roleId ? DB::single('name', 'roles', ['id' => $roleId])['name'] ?? null : null;
     }
 
     /**
@@ -175,6 +198,30 @@ class AuthController
             // Not authenticated — render 401 with requested URI for context.
             PageController::error(ErrorCode::UNAUTHORIZED, $_SERVER['REQUEST_URI']);
             exit;
+        }
+
+        // Re-validate user status and role from the database on every protected request so that deactivations and role changes take effect immediately.
+        $fresh = self::getUserById((int)$user['id']);
+        if (!$fresh || !$fresh['is_active']) {
+            SessionController::remove('user');
+            AlertController::globalAlert('Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
+            PageController::redirect(REDIRECT);
+            exit;
+        }
+
+        $freshRole = self::getUserRole($fresh['id']);
+
+        if (!$freshRole) {
+            SessionController::remove('user');
+            PageController::redirect(REDIRECT);
+            exit;
+        }
+
+        // Sync session when role has changed in the database.
+        if ($freshRole !== $user['role']) {
+            unset($fresh['password']);
+            SessionController::set('user', $fresh + ['role' => $freshRole]);
+            $user = SessionController::get('user');
         }
 
         // If the account requires a password change and this route doesn't

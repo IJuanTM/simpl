@@ -13,7 +13,13 @@ class SessionController
     {
         // Configure session lifetime according to SESSION_LIFETIME constant
         ini_set('session.gc_maxlifetime', (string)(86400 * SESSION_LIFETIME));
-        session_set_cookie_params(86400 * SESSION_LIFETIME);
+        session_set_cookie_params([
+            'lifetime' => 86400 * SESSION_LIFETIME,
+            'path' => '/',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ]);
 
         // Start the session if not already started
         if (session_status() !== PHP_SESSION_ACTIVE) session_start();

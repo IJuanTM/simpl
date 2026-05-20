@@ -252,7 +252,13 @@ class LoginPage
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
             // Set cookie
-            setcookie('remember', $token, $timestamp, '/');
+            setcookie('remember', $token, [
+                'expires' => $timestamp,
+                'path' => '/',
+                'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+                'httponly' => true,
+                'samesite' => 'Strict',
+            ]);
 
             // Store token in database
             AuthController::createToken($user['id'], $token, 'remember', date('Y-m-d H:i:s', $timestamp));

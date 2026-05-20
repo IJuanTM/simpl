@@ -45,6 +45,12 @@ class PageController extends Page
         // Initialize Page model with resolved route data
         parent::__construct($page, $urlArr, $params);
 
+        // Reject non-API POST requests that fail CSRF validation
+        if (!$api && $_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
+            self::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
         // Instantiate the page handler class if it exists
         $class = 'app\\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
         if (class_exists($class)) $this->pageObj = new $class($this);
