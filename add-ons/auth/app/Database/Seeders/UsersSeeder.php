@@ -56,7 +56,7 @@ class UsersSeeder
         DB::insert(
             'users',
             [
-                'username' => 'admin',
+                'username' => 'Admin',
                 'email' => 'admin@example.com',
                 'password' => password_hash('admin', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
                 'is_active' => 1
@@ -66,7 +66,7 @@ class UsersSeeder
         DB::insert(
             'users',
             [
-                'username' => 'user',
+                'username' => 'User',
                 'email' => 'user@example.com',
                 'password' => password_hash('user', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
                 'is_active' => 1
