@@ -17,8 +17,8 @@ public/js/
 # Logs
 app/Logs/
 
-# Database .sql files
-app/Database/**/*.sql
+# AI tools
+.claude/
 
 # Profile images
 public/img/profile/
