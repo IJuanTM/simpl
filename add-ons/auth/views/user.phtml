@@ -1,15 +1,16 @@
 <?php
-use app\Controllers\AuthController;
-use app\Controllers\SessionController;
+use app\Controllers\FormController;
 use app\Models\Url;
 ?>
 
 <section class="row user center-x">
   <div class="col user-profile-card f-col g-row-2">
+
+    <!-- Profile image: upload/delete controls visible to owner only -->
     <div class="row profile-image-row">
       <div class="col center-x f-0">
 
-        <?php if (SessionController::has('user') && SessionController::get('user')['id'] === $this->pageObj->user['id']) : ?>
+        <?php if ($this->pageObj->isOwner) : ?>
 
           <form class="profile-image h-100" method="POST" action="" enctype="multipart/form-data">
             <?php if ($this->pageObj->profileImage) : ?>
@@ -18,9 +19,7 @@ use app\Models\Url;
               <i class="fas fa-circle-user"></i>
             <?php endif ?>
 
-            <input id="id" type="hidden" name="id" value="<?= $this->pageObj->user['id'] ?>">
-
-            <input id="image" type="file" name="image" accept="image/*" hidden>
+            <input id="image" type="file" name="new_img" accept="image/*" hidden>
 
             <div class="profile-image-menu center g-col-1 w-100 h-100">
               <?php if ($this->pageObj->profileImage) : ?>
@@ -47,55 +46,123 @@ use app\Models\Url;
       </div>
     </div>
 
+    <!-- Username: visible to everyone -->
     <div class="row">
       <div class="col center-x">
-        <h1 data-typo="h2"><?= htmlspecialchars($this->pageObj->user['username'] ?? ($this->pageObj->user['email'] ?? 'User')) ?></h1>
+        <h1 data-typo="h2"><?= htmlspecialchars($this->pageObj->user['username'] ?? $this->pageObj->user['email'] ?? 'User') ?></h1>
       </div>
     </div>
 
-    <div class="row">
-      <div class="col">
-        <div class="row user-details g-col-0.5">
-          <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
-          <div class="col user-details-label center-y end-x f-0">Name:</div>
-          <div class="col user-details-value scrollbar-thin center-y"><?= isset($this->pageObj->user['firstname']) || isset($this->pageObj->user['lastname']) ? trim(($this->pageObj->user['firstname'] ?? '') . ' ' . ($this->pageObj->user['lastname'] ?? '')) : '-' ?></div>
+    <?php if ($this->pageObj->isOwner) : ?>
+
+      <!-- Owner: inline edit form for their own profile -->
+      <form class="col f-col g-row-1" method="POST" action="" data-track-form>
+
+        <?= FormController::formAlerts() ?>
+
+        <div class="row form-row">
+          <div class="col form-group g-row-0.25">
+            <div class="row">
+              <label class="col" for="username">Username:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
+              <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username" value="<?= htmlspecialchars($_POST['username'] ?? $this->pageObj->user['username'] ?? '') ?>">
+            </div>
+          </div>
         </div>
 
-        <div class="row user-details g-col-0.5">
-          <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
-          <div class="col user-details-label center-y end-x f-0">Email:</div>
-          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['email'] ?? '-' ?></div>
+        <div class="row form-row connected-row">
+          <div class="row">
+            <div class="col form-group g-row-0.25">
+              <div class="row">
+                <label class="col" for="first_name">First name:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
+                <input class="col" id="first_name" type="text" name="first_name" maxlength="100" placeholder="Enter first name" value="<?= htmlspecialchars($_POST['first_name'] ?? $this->pageObj->user['first_name'] ?? '') ?>">
+              </div>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25 f-g-2">
+            <div class="row">
+              <label class="col" for="last_name">Last name:</label>
+            </div>
+            <div class="row input-group">
+              <input class="col" id="last_name" type="text" name="last_name" maxlength="100" placeholder="Enter last name" value="<?= htmlspecialchars($_POST['last_name'] ?? $this->pageObj->user['last_name'] ?? '') ?>">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col form-group g-row-0.25">
+            <div class="row">
+              <label class="col" for="email">Email: <span class="required">*</span></label>
+            </div>
+            <div class="row input-group <?= isset($_POST['submit']) && empty($_POST['email']) ? 'error' : '' ?>">
+              <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
+              <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email" value="<?= htmlspecialchars($_POST['email'] ?? $this->pageObj->user['email'] ?? '') ?>">
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 center-x">
+          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-save"></i>Save changes</button>
+          <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
+        </div>
+
+      </form>
+
+    <?php elseif ($this->pageObj->isAdmin) : ?>
+
+      <!-- Admin: read-only extended details + link to the admin edit page -->
+      <div class="row">
+        <div class="col">
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Name:</div>
+            <div class="col user-details-value scrollbar-thin center-y">
+              <?= htmlspecialchars(trim(($this->pageObj->user['first_name'] ?? '') . ' ' . ($this->pageObj->user['last_name'] ?? '')) ?: '-') ?>
+            </div>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Email:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['email'] ?? '-') ?></div>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-user-group"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Role:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['role']?->value ?? '-') ?></div>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-circle-check"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Active:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_active'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></div>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-user-check"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Verified:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_verified'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></div>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
+            <div class="col user-details-label center-y end-x f-0">Last login:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['last_login'] ?? '-') ?></div>
+          </div>
+
         </div>
       </div>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <div class="row user-details g-col-0.5">
-          <div class="col user-details-icon center-y f-0"><i class="fas fa-check"></i></div>
-          <div class="col user-details-label center-y end-x f-0">Active:</div>
-          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_active'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-x"></i>' ?></div>
-        </div>
-
-        <div class="row user-details g-col-0.5">
-          <div class="col user-details-icon center-y f-0"><i class="fas fa-user-check"></i></div>
-          <div class="col user-details-label center-y end-x f-0">Verified:</div>
-          <div class="col user-details-value scrollbar-thin center-y"><?= AuthController::isVerified($this->pageObj->user['id']) ? '<i class="fas fa-check"></i>' : '<i class="fas fa-x"></i>' ?></div>
-        </div>
-
-        <div class="row user-details g-col-0.5">
-          <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
-          <div class="col user-details-label center-y end-x f-0">Last login:</div>
-          <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['last_login'] ?? '-' ?></div>
-        </div>
-      </div>
-    </div>
-
-    <?php if (SessionController::has('user') && SessionController::get('user')['id'] === $this->pageObj->user['id']) : ?>
 
       <div class="row g-2 center-x">
-        <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('change-password') ?>"><i class="fas fa-key"></i>Change password</a>
-        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('edit-profile') ?>"><i class="fas fa-user-edit"></i>Edit profile</a>
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('users/edit?id=' . $this->pageObj->user['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
       </div>
 
     <?php endif ?>
