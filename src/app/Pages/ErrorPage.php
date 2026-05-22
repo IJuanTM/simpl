@@ -16,7 +16,7 @@ class ErrorPage
 
     public function __construct(Page $page)
     {
-        $errorCode = ErrorCode::tryFrom((int)($page->urlArr['subpages'][0] ?? 0));
+        $errorCode = ErrorCode::tryFrom((int)($page->subpage() ?? 0));
 
         // If no valid error code, return a 404
         if (!$errorCode) {
@@ -27,7 +27,7 @@ class ErrorPage
         // $errorCode->value is an int backed enum value; cast to string for storage
         $this->code = (string)$errorCode->value;
         $this->message = $errorCode->message();
-        $this->redirectPage = $page->urlArr['params']['redirect'] ?? REDIRECT;
+        $this->redirectPage = $page->param('redirect') ?? REDIRECT;
 
         $page->subtitle = "Error $this->code";
 

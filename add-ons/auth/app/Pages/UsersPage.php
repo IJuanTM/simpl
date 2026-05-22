@@ -65,21 +65,19 @@ class UsersPage
         $this->visibleColumns = $this->tableColumns;
 
         // Get parameters from URL
-        $params = $page->urlArr['params'] ?? [];
-        if (isset($params['page'])) $this->page = (int)$params['page'];
-        if (isset($params['per_page']) && in_array((int)$params['per_page'], self::PER_PAGE_OPTIONS, true)) $this->perPage = (int)$params['per_page'];
-        if (isset($params['search'])) $this->search = trim((string)$params['search']);
+        if ($page->param('page') !== null) $this->page = (int)$page->param('page');
+        if ($page->param('per_page') !== null && in_array((int)$page->param('per_page'), self::PER_PAGE_OPTIONS, true)) $this->perPage = (int)$page->param('per_page');
+        if ($page->param('search') !== null) $this->search = trim((string)$page->param('search'));
 
-        $this->resolveSort($params);
+        $this->resolveSort($page->params);
         $this->loadUsers();
         $this->filterUsers();
         $this->sortUsers();
         $this->buildPagedUsers();
         $this->prepareViewData();
 
-        if (!isset($page->urlArr['subpages'][0])) return;
-
-        $subpage = $page->urlArr['subpages'][0];
+        $subpage = $page->subpage();
+        if ($subpage === null) return;
 
         if ($subpage === 'create') $this->generatedPassword = AuthController::generatePassword();
 
@@ -316,7 +314,7 @@ class UsersPage
     private function post(Page $page): void
     {
         // Get subpage type from URL
-        $subpage = $page->urlArr['subpages'][0];
+        $subpage = $page->subpage();
 
         // Handle user creation
         if ($subpage === 'create') {

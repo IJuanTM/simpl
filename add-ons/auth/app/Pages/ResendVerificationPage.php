@@ -21,7 +21,7 @@ class ResendVerificationPage
     public function __construct(Page $page)
     {
         // Get and sanitize user ID from URL
-        $id = FormController::sanitize($page->urlArr['subpages'][0] ?? '');
+        $id = FormController::sanitize($page->subpage() ?? '');
 
         // Validate user ID
         if (empty($id) || !is_numeric($id)) {

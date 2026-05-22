@@ -120,8 +120,8 @@ class PageController extends Page
         // Output top HTML part (head, header)
         $this->part('top');
 
-        $page = $this->urlArr['page'];
-        $subpage = $this->urlArr['subpages'][0] ?? null;
+        $page = $this->page;
+        $subpage = $this->subpage();
 
         // Prefer subpage view when present
         $file = $subpage && is_file(BASEDIR . "/views/$page/$subpage.phtml")

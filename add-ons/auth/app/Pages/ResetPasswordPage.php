@@ -23,14 +23,14 @@ class ResetPasswordPage
     public function __construct(Page $page)
     {
         // Validate URL parameters
-        if (!isset($page->urlArr['subpages'][0], $page->urlArr['subpages'][1]) || !is_numeric($page->urlArr['subpages'][0])) {
+        if ($page->subpage() === null || $page->subpage(1) === null || !is_numeric($page->subpage())) {
             $this->disableForm = true;
 
             // Check if reset request exists
             if (!DB::exists(
                 'tokens',
                 [
-                    'user_id' => $page->urlArr['subpages'][0],
+                    'user_id' => $page->subpage(),
                     'type' => 'reset'
                 ]
             )) {
@@ -40,7 +40,7 @@ class ResetPasswordPage
             }
 
             // Validate reset token
-            if (!AuthController::checkToken($page->urlArr['subpages'][0], $page->urlArr['subpages'][1], 'reset')) {
+            if (!AuthController::checkToken($page->subpage(), $page->subpage(1), 'reset')) {
                 FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
                 return;
             }
@@ -69,7 +69,7 @@ class ResetPasswordPage
         if (!FormController::validatePasswords('new-password', 'new-password-check')) return;
 
         // Reset password
-        $this->resetPassword($page->urlArr['subpages'][0], $_POST['new-password']);
+        $this->resetPassword($page->subpage(), $_POST['new-password']);
     }
 
     /**

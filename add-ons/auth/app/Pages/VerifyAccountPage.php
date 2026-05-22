@@ -22,7 +22,7 @@ class VerifyAccountPage
     public function __construct(Page $page)
     {
         // Get and sanitize user ID from URL
-        $id = FormController::sanitize($page->urlArr['subpages'][0] ?? '');
+        $id = FormController::sanitize($page->subpage() ?? '');
 
         // Validate user ID
         if (empty($id) || !is_numeric($id)) {
@@ -46,7 +46,7 @@ class VerifyAccountPage
         }
 
         // Get verification code from URL
-        $code = FormController::sanitize($page->urlArr['subpages'][1] ?? '');
+        $code = FormController::sanitize($page->subpage(1) ?? '');
 
         // If code provided in URL, verify immediately
         if (!empty($code)) {

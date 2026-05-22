@@ -11,15 +11,18 @@ use app\Controllers\SessionController;
  */
 class Page
 {
-    public array $urlArr;
+    public string $page;
+    public array $subpages;
+    public array $params;
     public ?object $pageObj = null;
     public string $title;
     public string $subtitle;
 
     public function __construct(string $page, array $subpages = [], array $params = [])
     {
-        // Store routing data
-        $this->urlArr = compact('page', 'subpages', 'params');
+        $this->page = $page;
+        $this->subpages = $subpages;
+        $this->params = $params;
 
         $history = self::history();
         $subUrl = $this->subUrl();
@@ -48,11 +51,10 @@ class Page
      */
     final public function subUrl(): string
     {
-        $page = $this->urlArr['page'];
-        $subpages = implode('/', $this->urlArr['subpages']);
-        $query = $this->urlArr['params'] ? '?' . http_build_query($this->urlArr['params']) : '';
+        $subpages = implode('/', $this->subpages);
+        $query = $this->params ? '?' . http_build_query($this->params) : '';
 
-        return "/$page/$subpages$query";
+        return "/$this->page/$subpages$query";
     }
 
     /**
@@ -62,6 +64,22 @@ class Page
      */
     private function getSubtitle(): string
     {
-        return ucwords(str_replace('-', ' ', $this->urlArr['page']));
+        return ucwords(str_replace('-', ' ', $this->page));
+    }
+
+    /**
+     * Returns the nth URL subpage segment, or null if it doesn't exist.
+     */
+    public function subpage(int $n = 0): ?string
+    {
+        return $this->subpages[$n] ?? null;
+    }
+
+    /**
+     * Returns a query parameter value, or $default if the key is absent.
+     */
+    public function param(string $key, mixed $default = null): mixed
+    {
+        return $this->params[$key] ?? $default;
     }
 }
