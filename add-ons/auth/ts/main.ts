@@ -2,7 +2,7 @@
 import {inputModule} from './features/input.ts';
 import {messageModule} from './features/message.ts';
 import {formTrackingModule} from './features/form-tracking.ts';
-import {profileModule} from './features/profile.ts';
+import {profileImageModule} from './features/profile-image.ts';
 import {tableModule} from './features/table.ts';
 import {verificationModule} from './features/verification-code.ts';
 // @addon-end
@@ -11,7 +11,7 @@ import {verificationModule} from './features/verification-code.ts';
 inputModule.init();
 messageModule.init();
 formTrackingModule.init();
-profileModule.init();
+profileImageModule.init();
 tableModule.init();
 verificationModule.init();
 // @addon-end

@@ -2,7 +2,7 @@ const profileImage = document.querySelector('form.profile-image') as HTMLFormEle
 const editProfileImage = document.querySelector('button.profile-action.edit') as HTMLButtonElement | null;
 const profileImageInput = profileImage?.querySelector('input[type="file"]') as HTMLInputElement | null;
 
-export const profileModule = {
+export const profileImageModule = {
   processImage: async (file: File): Promise<Blob | null> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -57,7 +57,7 @@ export const profileModule = {
       return;
     }
 
-    const blob = await profileModule.processImage(file);
+    const blob = await profileImageModule.processImage(file);
 
     if (!blob) {
       profileImage.classList.remove('loading');
@@ -86,6 +86,6 @@ export const profileModule = {
     if (!editProfileImage || !profileImageInput) return;
 
     editProfileImage.addEventListener('click', () => profileImageInput.click());
-    profileImageInput.addEventListener('change', profileModule.uploadImage);
+    profileImageInput.addEventListener('change', profileImageModule.uploadImage);
   }
 };

@@ -6,7 +6,6 @@ use app\Models\Url;
 <section class="row user center-x">
   <div class="col user-profile-card f-col g-row-2">
 
-    <!-- Profile image: upload/delete controls visible to owner only -->
     <div class="row profile-image-row">
       <div class="col center-x f-0">
 
@@ -19,7 +18,7 @@ use app\Models\Url;
               <i class="fas fa-circle-user"></i>
             <?php endif ?>
 
-            <input id="image" type="file" name="new_img" accept="image/*" hidden>
+            <input id="image" type="file" name="image" accept="image/*" hidden>
 
             <div class="profile-image-menu center g-col-1 w-100 h-100">
               <?php if ($this->pageObj->profileImage) : ?>
@@ -46,7 +45,6 @@ use app\Models\Url;
       </div>
     </div>
 
-    <!-- Username: visible to everyone -->
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2"><?= htmlspecialchars($this->pageObj->user['username'] ?? $this->pageObj->user['email'] ?? 'User') ?></h1>
@@ -55,7 +53,6 @@ use app\Models\Url;
 
     <?php if ($this->pageObj->isOwner) : ?>
 
-      <!-- Owner: inline edit form for their own profile -->
       <form class="col f-col g-row-1" method="POST" action="" data-track-form>
 
         <?= FormController::formAlerts() ?>
@@ -116,7 +113,6 @@ use app\Models\Url;
 
     <?php elseif ($this->pageObj->isAdmin) : ?>
 
-      <!-- Admin: read-only extended details + link to the admin edit page -->
       <div class="row">
         <div class="col">
 
