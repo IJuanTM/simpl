@@ -72,7 +72,7 @@ class Page
      */
     public function subpage(int $n = 0): ?string
     {
-        return $this->subpages[$n] ?? null;
+        return isset($this->subpages[$n]) ? (string)$this->subpages[$n] : null;
     }
 
     /**
