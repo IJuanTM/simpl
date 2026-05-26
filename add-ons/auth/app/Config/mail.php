@@ -2,12 +2,10 @@
 
 declare(strict_types=1);
 
-// Mail configuration
 define('SITE_MAIL', $_ENV['SITE_MAIL'] ?? 'support@example.com');
 define('NO_REPLY_MAIL', $_ENV['NO_REPLY_MAIL'] ?? 'noreply@example.com');
 
-// SMTP configuration
-define("SMTP_CONFIG", [
+define('SMTP_CONFIG', [
     'development' => [
         'host' => 'localhost',
         'port' => 25,

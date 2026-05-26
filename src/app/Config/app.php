@@ -2,23 +2,19 @@
 
 declare(strict_types=1);
 
-// Environment configuration
 define('DEV', $_ENV['DEV']);
-
-// Timezone configuration
-const TIMEZONE = 'UTC'; // Change to your desired timezone, see https://www.php.net/manual/en/timezones.php
-
-// App configuration
 define('APP_NAME', $_ENV['APP_NAME']);
 define('APP_URL', $_ENV['APP_URL']);
 
-// Session configuration
-const SESSION_LIFETIME = 3; // in days
+// See https://www.php.net/manual/en/timezones.php
+const TIMEZONE = 'UTC';
 
-// Redirect configuration
-const REDIRECT = 'home';
+const SESSION_LIFETIME = 3;      // days
+const REDIRECT = 'home';         // page name
 const ERROR_AUTO_REDIRECT = true;
 
-// Simpl variables
+// ---------------------------------------------------------------- //
+
+// Framework version info (set in .env)
 define('SIMPL_VERSION', $_ENV['SIMPL_VERSION']);
 define('SIMPL_LAST_UPDATE', $_ENV['SIMPL_LAST_UPDATE']);

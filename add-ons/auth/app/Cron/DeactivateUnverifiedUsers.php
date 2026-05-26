@@ -33,7 +33,7 @@ class DeactivateUnverifiedUsers
                 ]
             );
 
-            if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime(UNVERIFIED_USER_DEACTIVATION_AFTER))) continue;
+            if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime('-' . UNVERIFIED_USER_DEACTIVATION_AFTER . ' days'))) continue;
 
             // Deactivate the user
             DB::update(

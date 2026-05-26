@@ -2,46 +2,33 @@
 
 declare(strict_types=1);
 
-// Auth configuration
+// Password policy
 const MIN_PASSWORD_LENGTH = 8;
 const REQUIRE_UPPERCASE = true;
 const REQUIRE_LOWERCASE = true;
 const REQUIRE_NUMBER = true;
 const REQUIRE_SPECIAL_CHARACTER = false;
 
-const EMAIL_VERIFICATION_REQUIRED = true;
-
-// User lockout settings
-const USER_LOGIN_ATTEMPTS = 5;
-const MIN_USER_LOCKOUT_DURATION = 5; // in minutes
-const MAX_USER_LOCKOUT_DURATION = 60; // in minutes
-const USER_LOCKOUT_WINDOW = 5; // in minutes
-
-// IP lockout settings
-const IP_LOGIN_ATTEMPTS = 20;
-const MIN_IP_LOCKOUT_DURATION = 15; // in minutes
-const MAX_IP_LOCKOUT_DURATION = 180; // in minutes
-const IP_LOCKOUT_WINDOW = 15; // in minutes
-
-// Remember me settings
-const REMEMBER_ME_DURATION = 30; // in days
-
-// Token length settings
-const VERIFICATION_TOKEN_LENGTH = 8;
-const RESET_TOKEN_LENGTH = 32;
-const GENERATED_PASSWORD_LENGTH = 12;
-
-// Resend timeout (in seconds) for forgot-password requests
-const PASSWORD_RESET_RESEND_TIMEOUT = 60;
-
-// Inactive user cleanup windows (strtotime-compatible strings)
-const UNVERIFIED_USER_DEACTIVATION_AFTER = '-1 day';
-const INACTIVE_USER_DELETION_AFTER = '-1 week';
-
-// Password hashing settings
+// Password hashing, use PASSWORD_BCRYPT for bcrypt
 const PASSWORD_HASH_ALGO = PASSWORD_ARGON2ID;
 const PASSWORD_HASH_OPTIONS = [
-    'memory_cost' => 65536,
-    'time_cost' => 4,
+    'memory_cost' => 65536, // KiB
+    'time_cost' => 4,     // iterations
     'threads' => 3
 ];
+
+// Email verification
+const EMAIL_VERIFICATION_REQUIRED = true;
+const VERIFICATION_TOKEN_LENGTH = 8; // characters
+
+// Remember me
+const REMEMBER_ME_DURATION = 30; // days
+
+// Password reset
+const RESET_TOKEN_LENGTH = 32;            // characters
+const GENERATED_PASSWORD_LENGTH = 12;     // characters; for admin-created accounts
+const PASSWORD_RESET_RESEND_TIMEOUT = 60; // seconds
+
+// Inactive user cleanup
+const UNVERIFIED_USER_DEACTIVATION_AFTER = 1; // days
+const INACTIVE_USER_DELETION_AFTER = 7;       // days; counts from deactivation date
