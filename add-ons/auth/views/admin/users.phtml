@@ -1,4 +1,5 @@
 <?php
+
 use app\Models\Url;
 
 $sub = $this->pageObj->subAction;
@@ -11,6 +12,7 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
   include BASEDIR . '/views/admin/users/edit.phtml';
   return;
 }
+
 ?>
 
 <section class="row users">
@@ -54,13 +56,17 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
                 <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
                 <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button"><i class="fas fa-columns"></i>Columns</button>
                 <div class="col col-toggle-panel">
+
                   <?php foreach ($this->pageObj->visibleColumns as $index => $column) : ?>
+
                     <div class="row">
                       <label class="col center-y g-col-0.5 f-0">
                         <input id="users-col-<?= $index ?>" type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
                       </label>
                     </div>
+
                   <?php endforeach ?>
+
                 </div>
               </div>
             </div>
@@ -71,7 +77,9 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
               <table class="data-table" data-table-id="users" data-hidden-cols="<?= htmlspecialchars(json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible'])))), ENT_QUOTES) ?>">
                 <thead>
                 <tr>
+
                   <?php foreach ($this->pageObj->tableColumns as $column) : ?>
+
                     <?php $sortParams = array_merge($this->pageObj->activeFilterParams, $this->pageObj->getNextSortParams($column)) ?>
                     <th class="<?= !empty($column['sortable']) ? 'sortable ' . $this->pageObj->getColumnSortClass($column) : '' ?>"<?= $column['width'] ? ' data-width="' . (int)$column['width'] . '"' : '' ?>>
                       <?php if (!empty($column['sortable'])) : ?>
@@ -80,18 +88,28 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
                         <p class="table-header-label"><?= $column['label'] ?></p>
                       <?php endif ?>
                     </th>
+
                   <?php endforeach ?>
+
                 </tr>
                 </thead>
                 <tbody>
+
                 <?php foreach ($this->pageObj->pagedUsers as $user) : ?>
+
                   <tr class="<?= !$user['is_active'] ? 'deleted' : '' ?>">
+
                     <?php foreach ($this->pageObj->tableColumns as $column) : ?>
+
                       <?php if ($column['key'] === 'actions') : ?>
+
                         <?php if ($user['id'] !== $this->pageObj->currentUserId) : ?>
+
                           <td class="table-actions">
                             <div class="row g-col-0.5 center-y">
+
                               <?php if ($user['is_active']) : ?>
+
                                 <a class="col table-action f-0" href="<?= Url::to('admin/users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
                                 <button class="col table-action delete f-0" type="button"
                                         data-modal-delete
@@ -102,7 +120,9 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
                                         aria-label="Delete user <?= htmlspecialchars($user['email'], ENT_QUOTES) ?>">
                                   <i class="fas fa-trash"></i>
                                 </button>
+
                               <?php else : ?>
+
                                 <button class="col table-action restore f-0" type="button"
                                         data-modal-restore
                                         data-user-id="<?= $user['id'] ?>"
@@ -119,18 +139,26 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
                                         aria-label="Permanently delete user <?= htmlspecialchars($user['email'], ENT_QUOTES) ?>">
                                   <i class="fas fa-skull"></i>
                                 </button>
+
                               <?php endif ?>
+
                             </div>
                           </td>
+
                         <?php else : ?>
                           <td><span class="text-muted">-</span></td>
                         <?php endif ?>
+
                       <?php else : ?>
                         <td><?= $this->pageObj->renderCell($column, $user) ?></td>
                       <?php endif ?>
+
                     <?php endforeach ?>
+
                   </tr>
+
                 <?php endforeach ?>
+
                 </tbody>
               </table>
             </div>

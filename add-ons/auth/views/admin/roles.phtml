@@ -1,4 +1,5 @@
 <?php
+
 use app\Models\Url;
 
 $sub = $this->pageObj->subAction;
@@ -11,6 +12,7 @@ if ($sub === 'edit' && isset($this->pageObj->role)) {
   include BASEDIR . '/views/admin/roles/edit.phtml';
   return;
 }
+
 ?>
 
 <section class="row roles">
@@ -38,7 +40,9 @@ if ($sub === 'edit' && isset($this->pageObj->role)) {
                 </tr>
                 </thead>
                 <tbody>
+
                 <?php foreach ($this->pageObj->roles as $role) : ?>
+
                   <tr>
                     <td><?= $role['id'] ?></td>
                     <td><?= htmlspecialchars($role['name']) ?></td>
@@ -56,7 +60,9 @@ if ($sub === 'edit' && isset($this->pageObj->role)) {
                       </div>
                     </td>
                   </tr>
+
                 <?php endforeach ?>
+
                 </tbody>
               </table>
             </div>
