@@ -1,56 +1,54 @@
 <?php
-
 use app\Controllers\FormController;
-
 ?>
 
 <?php if (isset($this->pageObj->role)) : ?>
 
-    <section class="row roles center-x">
-        <form class="col g-row-1" method="POST" action="" data-track-form>
-            <div class="row">
-                <div class="col center-x">
-                    <h3>Edit role</h3>
-                </div>
-            </div>
+  <section class="row roles center-x">
+    <form class="col g-row-1" method="POST" action="" data-track-form>
+      <div class="row">
+        <div class="col center-x">
+          <h3>Edit role</h3>
+        </div>
+      </div>
 
-            <?= FormController::formAlerts() ?>
+      <?= FormController::formAlerts() ?>
 
-            <div class="row form-group g-row-0.25" inert>
-                <div class="row">
-                    <label class="col" for="id">Id:</label>
-                </div>
-                <div class="row input-group">
-                    <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
-                    <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->role['id'] ?>" readonly>
-                </div>
-            </div>
+      <div class="row form-group g-row-0.25" inert>
+        <div class="row">
+          <label class="col" for="id">Id:</label>
+        </div>
+        <div class="row input-group">
+          <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
+          <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->role['id'] ?>" readonly>
+        </div>
+      </div>
 
-            <div class="row">
-                <div class="col form-group g-row-0.25">
-                    <div class="row">
-                        <label class="col" for="name">Name: <span class="required">*</span></label>
-                    </div>
-                    <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
-                        <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-                        <input class="col" id="name" type="text" name="name" maxlength="50" placeholder="Enter role name:" value="<?= htmlspecialchars($_POST['name'] ?? $this->pageObj->role['name']) ?>">
-                    </div>
-                </div>
-            </div>
+      <div class="row">
+        <div class="col form-group g-row-0.25">
+          <div class="row">
+            <label class="col" for="name">Name: <span class="required">*</span></label>
+          </div>
+          <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
+            <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
+            <input class="col" id="name" type="text" name="name" maxlength="50" placeholder="Enter role name:" value="<?= htmlspecialchars($_POST['name'] ?? $this->pageObj->role['name']) ?>">
+          </div>
+        </div>
+      </div>
 
-            <div class="row g-2 center-x">
-                <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-                <button class="col button edit-role g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-pen"></i>Save changes</button>
-            </div>
-        </form>
-    </section>
+      <div class="row g-2 center-x">
+        <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+        <button class="col button edit-role g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-pen"></i>Save changes</button>
+      </div>
+    </form>
+  </section>
 
 <?php else : ?>
 
-    <section class="row roles min-h-content center-y">
-        <div class="col center-x">
-            <h5>Could not find role.</h5>
-        </div>
-    </section>
+  <section class="row roles min-h-content center-y">
+    <div class="col center-x">
+      <h5>Could not find role.</h5>
+    </div>
+  </section>
 
 <?php endif ?>

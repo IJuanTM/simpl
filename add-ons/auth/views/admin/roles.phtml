@@ -1,85 +1,85 @@
 <?php
-
 use app\Models\Url;
 
 $sub = $this->pageObj->subAction;
 if ($sub === 'create') {
-    include BASEDIR . '/views/admin/roles/create.phtml';
-    return;
+  include BASEDIR . '/views/admin/roles/create.phtml';
+  return;
 }
+
 if ($sub === 'edit' && isset($this->pageObj->role)) {
-    include BASEDIR . '/views/admin/roles/edit.phtml';
-    return;
+  include BASEDIR . '/views/admin/roles/edit.phtml';
+  return;
 }
 ?>
 
 <section class="row roles">
-    <div class="col f-col g-row-2">
-        <div class="row">
-            <div class="col center-x">
-                <h1 data-typo="h2">Roles</h1>
-            </div>
-        </div>
-
-        <div class="row center-x">
-            <div class="col roles-table f-col g-row-1 w-100">
-
-                <?php if (count($this->pageObj->roles) > 0) : ?>
-
-                    <div class="row table-container">
-                        <div class="col">
-                            <table class="data-table">
-                                <thead>
-                                <tr>
-                                    <th><p class="table-header-label">Id</p></th>
-                                    <th><p class="table-header-label">Name</p></th>
-                                    <th><p class="table-header-label">Users</p></th>
-                                    <th><p class="table-header-label">Actions</p></th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <?php foreach ($this->pageObj->roles as $role) : ?>
-                                    <tr>
-                                        <td><?= $role['id'] ?></td>
-                                        <td><?= htmlspecialchars($role['name']) ?></td>
-                                        <td><?= $role['user_count'] ?></td>
-                                        <td class="table-actions">
-                                            <div class="row g-col-0.5 center-y">
-                                                <a class="col table-action f-0" href="<?= Url::to('admin/roles/edit?id=' . $role['id']) ?>"><i class="fas fa-pen"></i></a>
-                                                <button class="col table-action delete f-0" type="button"
-                                                        data-modal-role-delete
-                                                        data-role-id="<?= $role['id'] ?>"
-                                                        data-role-name="<?= htmlspecialchars($role['name'], ENT_QUOTES) ?>"
-                                                        data-role-user-count="<?= $role['user_count'] ?>">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                <?php else : ?>
-
-                    <div class="row">
-                        <div class="col">
-                            <p>No roles found.</p>
-                        </div>
-                    </div>
-
-                <?php endif ?>
-
-            </div>
-        </div>
-
-        <div class="row g-col-1 center-x">
-            <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/roles/create') ?>"><i class="fas fa-plus"></i>Create new role</a>
-            <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users') ?>"><i class="fas fa-users"></i>Manage users</a>
-        </div>
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Roles</h1>
+      </div>
     </div>
+
+    <div class="row center-x">
+      <div class="col roles-table f-col g-row-1 w-100">
+
+        <?php if (count($this->pageObj->roles) > 0) : ?>
+
+          <div class="row table-container">
+            <div class="col">
+              <table class="data-table">
+                <thead>
+                <tr>
+                  <th><p class="table-header-label">Id</p></th>
+                  <th><p class="table-header-label">Name</p></th>
+                  <th><p class="table-header-label">Users</p></th>
+                  <th><p class="table-header-label">Actions</p></th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($this->pageObj->roles as $role) : ?>
+                  <tr>
+                    <td><?= $role['id'] ?></td>
+                    <td><?= htmlspecialchars($role['name']) ?></td>
+                    <td><?= $role['user_count'] ?></td>
+                    <td class="table-actions">
+                      <div class="row g-col-0.5 center-y">
+                        <a class="col table-action f-0" href="<?= Url::to('admin/roles/edit?id=' . $role['id']) ?>"><i class="fas fa-pen"></i></a>
+                        <button class="col table-action delete f-0" type="button"
+                                data-modal-role-delete
+                                data-role-id="<?= $role['id'] ?>"
+                                data-role-name="<?= htmlspecialchars($role['name'], ENT_QUOTES) ?>"
+                                data-role-user-count="<?= $role['user_count'] ?>">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach ?>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        <?php else : ?>
+
+          <div class="row">
+            <div class="col">
+              <p>No roles found.</p>
+            </div>
+          </div>
+
+        <?php endif ?>
+
+      </div>
+    </div>
+
+    <div class="row g-col-1 center-x">
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/roles/create') ?>"><i class="fas fa-plus"></i>Create new role</a>
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users') ?>"><i class="fas fa-users"></i>Manage users</a>
+    </div>
+  </div>
 </section>
 
 <?php $this->component('role-delete-modal') ?>

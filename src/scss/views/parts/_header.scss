@@ -101,7 +101,7 @@ header {
             border-radius: unset;
           }
 
-          &.login, &.logout, &.users {
+          &.login, &.logout, &.admin {
             color: #FFF;
 
             @include shimmer(true, rgba(#FFF, .25));
@@ -133,7 +133,7 @@ header {
             }
           }
 
-          &.users {
+          &.admin {
             background-color: $cyan;
 
             @include hover-focus {

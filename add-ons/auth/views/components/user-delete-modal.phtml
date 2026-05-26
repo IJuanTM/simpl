@@ -1,38 +1,38 @@
 <div class="modal-overlay invisible" data-user-delete-modal role="dialog" aria-modal="true" aria-label="Delete user">
-    <div class="modal">
-        <div class="row modal-header center-y g-col-1">
-            <h4 class="col modal-title">Delete user</h4>
-            <button class="col button button-sm modal-close f-0" type="button" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
-        </div>
-
-        <div class="row modal-body f-col g-row-1">
-            <p class="modal-description">Choose how to remove this user:</p>
-            <div class="modal-user-info f-col g-row-0.5">
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Id</span>
-                    <span class="col modal-user-id">-</span>
-                </div>
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Username</span>
-                    <span class="col modal-user-username">-</span>
-                </div>
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Email</span>
-                    <span class="col modal-user-email">-</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="row modal-footer g-col-1 f-wrap">
-            <form class="modal-soft-delete-form col f-0" method="POST" action="">
-                <input type="hidden" name="submit" value="1">
-                <button class="button delete-user" type="submit"><i class="fas fa-user-slash"></i>Soft delete</button>
-            </form>
-            <form class="modal-purge-form col f-0" method="POST" action="">
-                <input type="hidden" name="submit" value="1">
-                <button class="button purge-user" type="submit"><i class="fas fa-skull"></i>Permanently purge</button>
-            </form>
-            <button type="button" class="col button modal-close f-0"><i class="fas fa-xmark"></i>Cancel</button>
-        </div>
+  <div class="modal">
+    <div class="row modal-header center-y g-col-1">
+      <h4 class="col modal-title">Delete user</h4>
+      <button class="col button button-sm modal-close f-0" type="button" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
+
+    <div class="row modal-body f-col g-row-1">
+      <p class="modal-description">Choose how to remove this user:</p>
+      <div class="modal-user-info f-col g-row-0.5">
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Id</span>
+          <span class="col modal-user-id">-</span>
+        </div>
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Username</span>
+          <span class="col modal-user-username">-</span>
+        </div>
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Email</span>
+          <span class="col modal-user-email">-</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row modal-footer g-col-1 f-wrap">
+      <form class="modal-soft-delete-form col f-0" method="POST" action="">
+        <input type="hidden" name="submit" value="1">
+        <button class="button delete-user" type="submit"><i class="fas fa-user-slash"></i>Soft delete</button>
+      </form>
+      <form class="modal-purge-form col f-0" method="POST" action="">
+        <input type="hidden" name="submit" value="1">
+        <button class="button purge-user" type="submit"><i class="fas fa-skull"></i>Permanently purge</button>
+      </form>
+      <button type="button" class="col button modal-close f-0"><i class="fas fa-xmark"></i>Cancel</button>
+    </div>
+  </div>
 </div>

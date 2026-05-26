@@ -29,7 +29,7 @@ class SessionController
      * Stores a value in the session associated with the specified key.
      *
      * @param string $key The key to associate the value with.
-     * @param mixed  $value The value to store in the session.
+     * @param mixed $value The value to store in the session.
      *
      * @return void
      */

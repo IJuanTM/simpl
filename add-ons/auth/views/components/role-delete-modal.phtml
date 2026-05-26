@@ -1,35 +1,35 @@
 <div class="modal-overlay invisible" data-role-delete-modal role="dialog" aria-modal="true" aria-label="Delete role">
-    <div class="modal">
-        <div class="row modal-header center-y g-col-1">
-            <h4 class="col modal-title">Delete role</h4>
-            <button class="col button button-sm modal-close f-0" type="button" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
-        </div>
-
-        <div class="row modal-body f-col g-row-1">
-            <p class="modal-description">This will permanently delete the role.</p>
-            <div class="modal-user-info f-col g-row-0.5">
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Id</span>
-                    <span class="col modal-role-id">-</span>
-                </div>
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Name</span>
-                    <span class="col modal-role-name">-</span>
-                </div>
-                <div class="row g-col-0.5 center-y">
-                    <span class="col text-muted f-0">Users</span>
-                    <span class="col modal-role-user-count">-</span>
-                </div>
-            </div>
-            <p class="modal-warning form-details warning" style="display:none"><i class="fas fa-triangle-exclamation"></i> <span class="modal-warning-text"></span></p>
-        </div>
-
-        <div class="row modal-footer g-col-1 f-wrap">
-            <form class="modal-delete-role-form col f-0" method="POST" action="">
-                <input type="hidden" name="submit" value="1">
-                <button class="button delete-role" type="submit"><i class="fas fa-trash"></i>Delete role</button>
-            </form>
-            <button type="button" class="col button modal-close f-0"><i class="fas fa-xmark"></i>Cancel</button>
-        </div>
+  <div class="modal">
+    <div class="row modal-header center-y g-col-1">
+      <h4 class="col modal-title">Delete role</h4>
+      <button class="col button button-sm modal-close f-0" type="button" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
+
+    <div class="row modal-body f-col g-row-1">
+      <p class="modal-description">This will permanently delete the role.</p>
+      <div class="modal-user-info f-col g-row-0.5">
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Id</span>
+          <span class="col modal-role-id">-</span>
+        </div>
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Name</span>
+          <span class="col modal-role-name">-</span>
+        </div>
+        <div class="row g-col-0.5 center-y">
+          <span class="col text-muted f-0">Users</span>
+          <span class="col modal-role-user-count">-</span>
+        </div>
+      </div>
+      <p class="modal-warning form-details warning" style="display:none"><i class="fas fa-triangle-exclamation"></i> <span class="modal-warning-text"></span></p>
+    </div>
+
+    <div class="row modal-footer g-col-1 f-wrap">
+      <form class="modal-delete-role-form col f-0" method="POST" action="">
+        <input type="hidden" name="submit" value="1">
+        <button class="button delete-role" type="submit"><i class="fas fa-trash"></i>Delete role</button>
+      </form>
+      <button type="button" class="col button modal-close f-0"><i class="fas fa-xmark"></i>Cancel</button>
+    </div>
+  </div>
 </div>
