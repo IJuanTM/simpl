@@ -2,9 +2,11 @@
 @use "views/user";
 @use "views/users";
 @use "views/verify-account";
+@use "views/admin";
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')
 @use "components/form";
 @use "components/table";
+@use "components/modal";
 // @addon-end

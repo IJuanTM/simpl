@@ -1,0 +1,62 @@
+<?php use app\Models\Url; ?>
+
+<section class="row admin-dashboard">
+    <div class="col f-col g-row-2">
+        <div class="row">
+            <div class="col f-col g-row-0.5">
+                <div class="row">
+                    <div class="col">
+                        <h2 data-typo="h3">Admin panel</h2>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <p>Manage users, roles and other site settings.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-2">
+            <a class="col card center-y" href="<?= Url::to('admin/users') ?>" aria-label="Link to user management">
+                <div class="row g-col-2">
+                    <div class="col card-icon center f-0">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                    </div>
+                    <div class="col f-col g-row-1">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="card-title" data-typo="h4">Users</h2>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <p>Manage user accounts, assign roles and permissions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <a class="col card center-y" href="<?= Url::to('admin/roles') ?>" aria-label="Link to role management">
+                <div class="row g-col-2">
+                    <div class="col card-icon center f-0">
+                        <i class="fas fa-user-group" aria-hidden="true"></i>
+                    </div>
+                    <div class="col f-col g-row-1">
+                        <div class="row">
+                            <div class="col">
+                                <h2 class="card-title" data-typo="h4">Roles</h2>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col">
+                                <p>Create, edit and delete user roles.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
