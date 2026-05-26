@@ -243,7 +243,7 @@ class UsersPage
     /**
      * Retrieves the sort value for a user based on the specified column.
      *
-     * @param array  $user The user data as an associative array.
+     * @param array $user The user data as an associative array.
      * @param string $column The column name used to determine the sort value.
      *
      * @return int|string The value derived from the specified column in the user data.
@@ -320,10 +320,10 @@ class UsersPage
         if ($subpage === 'create') {
             // Validate form fields
             if (
-                !FormController::validate('username', ['maxLength' => 100]) ||
-                !FormController::validate('first_name', ['maxLength' => 100]) ||
-                !FormController::validate('last_name', ['maxLength' => 100]) ||
-                !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+                !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
+                !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+                !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+                !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
                 !FormController::validate('role', ['required'])
             ) return;
 
@@ -352,10 +352,10 @@ class UsersPage
         if ($subpage === 'edit') {
             // Validate form fields
             if (
-                !FormController::validate('username', ['maxLength' => 100]) ||
-                !FormController::validate('first_name', ['maxLength' => 100]) ||
-                !FormController::validate('last_name', ['maxLength' => 100]) ||
-                !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
+                !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
+                !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+                !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+                !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
                 !FormController::validate('role', ['required'])
             ) return;
 
@@ -395,9 +395,9 @@ class UsersPage
      * Creates a new user in the system by inserting user details into the database, assigning a role,
      * sending an account creation email, and redirecting to the users page with a success message.
      *
-     * @param string      $email The email address of the new user.
-     * @param string      $rawPassword The raw password for the new user, which will be hashed before storing.
-     * @param string      $role The role name to assign to the new user.
+     * @param string $email The email address of the new user.
+     * @param string $rawPassword The raw password for the new user, which will be hashed before storing.
+     * @param string $role The role name to assign to the new user.
      * @param string|null $username An optional username for the new user. Default is null.
      * @param string|null $first_name An optional first name for the new user. Default is null.
      * @param string|null $last_name An optional last name for the new user. Default is null.
@@ -448,12 +448,12 @@ class UsersPage
     /**
      * Updates a user's profile information, role, and redirects with a success message.
      *
-     * @param int         $id The ID of the user to update.
+     * @param int $id The ID of the user to update.
      * @param string|null $username The updated username, or null to leave unchanged.
      * @param string|null $first_name The updated first name, or null to leave unchanged.
      * @param string|null $last_name The updated last name, or null to leave unchanged.
-     * @param string      $email The updated email address.
-     * @param string      $role The updated role name to assign to the user.
+     * @param string $email The updated email address.
+     * @param string $role The updated role name to assign to the user.
      *
      * @return void
      */

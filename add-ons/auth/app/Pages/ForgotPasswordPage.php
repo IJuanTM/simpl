@@ -36,7 +36,7 @@ class ForgotPasswordPage
         }
 
         // Validate form fields
-        if (!FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])) return;
+        if (!FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])) return;
 
         // Sanitize email
         $_POST['email'] = FormController::sanitize($_POST['email']);
@@ -52,7 +52,7 @@ class ForgotPasswordPage
         $this->sendPasswordReset($_POST['email']);
 
         // Set timeout to prevent spam
-        SessionController::set('resend-timeout', time() + 60);
+        SessionController::set('resend-timeout', time() + PASSWORD_RESET_RESEND_TIMEOUT);
     }
 
     /**

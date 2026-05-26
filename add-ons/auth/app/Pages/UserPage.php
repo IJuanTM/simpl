@@ -87,10 +87,10 @@ class UserPage
     private function updateProfile(int $id): void
     {
         if (
-            !FormController::validate('username', ['maxLength' => 100]) ||
-            !FormController::validate('first_name', ['maxLength' => 100]) ||
-            !FormController::validate('last_name', ['maxLength' => 100]) ||
-            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email'])
+            !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
+            !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+            !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
+            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
         ) return;
 
         FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
@@ -159,7 +159,7 @@ class UserPage
         finfo_close($finfo);
 
         // Validate image mime type
-        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true)) {
+        if (!in_array($mimeType, PROFILE_IMAGE_ALLOWED_TYPES, true)) {
             PageController::redirect('profile');
             AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
             return;
@@ -172,15 +172,15 @@ class UserPage
             return;
         }
 
-        // Check file size (max 2MB)
-        if ($file['size'] > 2 * 1024 * 1024) {
+        // Check file size
+        if ($file['size'] > PROFILE_IMAGE_MAX_SIZE * 1024 * 1024) {
             PageController::redirect('profile');
-            AlertController::globalAlert('The image size is too large. Please choose an image that is less than 2MB.', AlertType::ERROR, 4);
+            AlertController::globalAlert('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_MAX_SIZE . 'MB.', AlertType::ERROR, 4);
             return;
         }
 
         $id = SessionController::get('user')['id'];
-        $path = $_SERVER['DOCUMENT_ROOT'] . '/img/profile/';
+        $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH;
 
         // Get old profile image
         $old = DB::single(
@@ -229,8 +229,8 @@ class UserPage
         )['profile_img'] ?? null;
 
         // Delete image file if exists
-        if ($old && is_file($_SERVER['DOCUMENT_ROOT'] . '/img/profile/' . $old)) {
-            unlink($_SERVER['DOCUMENT_ROOT'] . '/img/profile/' . $old);
+        if ($old && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH . $old)) {
+            unlink($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH . $old);
         }
 
         // Remove from database

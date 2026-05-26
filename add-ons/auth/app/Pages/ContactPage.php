@@ -33,10 +33,10 @@ class ContactPage
     {
         // Validate form fields
         if (
-            !FormController::validate('name', ['required', 'maxLength' => 100]) ||
-            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
-            !FormController::validate('subject', ['required', 'maxLength' => 100]) ||
-            !FormController::validate('message', ['required', 'maxLength' => 1000])
+            !FormController::validate('name', ['required', 'maxLength' => MAX_NAME_LENGTH]) ||
+            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
+            !FormController::validate('subject', ['required', 'maxLength' => MAX_CONTACT_SUBJECT_LENGTH]) ||
+            !FormController::validate('message', ['required', 'maxLength' => MAX_CONTACT_MESSAGE_LENGTH])
         ) return;
 
         // Send contact email

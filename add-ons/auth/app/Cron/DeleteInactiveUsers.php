@@ -11,7 +11,7 @@ class DeleteInactiveUsers
 {
     public static function run(): void
     {
-        $cutoff = date('Y-m-d H:i:s', strtotime('-1 week'));
+        $cutoff = date('Y-m-d H:i:s', strtotime(INACTIVE_USER_DELETION_AFTER));
 
         // Get all users pending deletion
         $pending = DB::count(

@@ -33,9 +33,9 @@ class RegisterPage
     {
         // Validate form fields
         if (
-            !FormController::validate('email', ['required', 'maxLength' => 100, 'type' => 'email']) ||
-            !FormController::validate('password', ['required', 'maxLength' => 50]) ||
-            !FormController::validate('password-check', ['required', 'maxLength' => 50])
+            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
+            !FormController::validate('password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
+            !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
         // Sanitize email
@@ -88,7 +88,7 @@ class RegisterPage
         // Handle email verification if required
         if (EMAIL_VERIFICATION_REQUIRED) {
             // Generate verification token
-            $token = AuthController::generateToken(8);
+            $token = AuthController::generateToken(VERIFICATION_TOKEN_LENGTH);
 
             // Store token in database
             AuthController::createToken($id, $token, 'verification');

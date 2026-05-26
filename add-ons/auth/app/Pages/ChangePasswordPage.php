@@ -37,9 +37,9 @@ class ChangePasswordPage
     {
         // Validate form fields
         if (
-            !FormController::validate('old-password', ['required', 'maxLength' => 50]) ||
-            !FormController::validate('new-password', ['required', 'maxLength' => 50]) ||
-            !FormController::validate('new-password-check', ['required', 'maxLength' => 50])
+            !FormController::validate('old-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
+            !FormController::validate('new-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
+            !FormController::validate('new-password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
         // Verify old password is correct

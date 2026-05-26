@@ -58,7 +58,7 @@ class ResendVerificationPage
     private function resendVerification(int $id): void
     {
         // Generate new verification token
-        $token = AuthController::generateToken(8);
+        $token = AuthController::generateToken(VERIFICATION_TOKEN_LENGTH);
 
         // Get user email
         $email = AuthController::getUserById($id)['email'];

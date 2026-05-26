@@ -26,6 +26,18 @@ const IP_LOCKOUT_WINDOW = 15; // in minutes
 // Remember me settings
 const REMEMBER_ME_DURATION = 30; // in days
 
+// Token length settings
+const VERIFICATION_TOKEN_LENGTH = 8;
+const RESET_TOKEN_LENGTH = 32;
+const GENERATED_PASSWORD_LENGTH = 12;
+
+// Resend timeout (in seconds) for forgot-password requests
+const PASSWORD_RESET_RESEND_TIMEOUT = 60;
+
+// Inactive user cleanup windows (strtotime-compatible strings)
+const UNVERIFIED_USER_DEACTIVATION_AFTER = '-1 day';
+const INACTIVE_USER_DELETION_AFTER = '-1 week';
+
 // Password hashing settings
 const PASSWORD_HASH_ALGO = PASSWORD_ARGON2ID;
 const PASSWORD_HASH_OPTIONS = [

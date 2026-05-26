@@ -3,21 +3,23 @@
 declare(strict_types=1);
 
 // Mail configuration
-const SITE_MAIL = 'support@example.com';
-const NO_REPLY_MAIL = 'noreply@example.com';
+define('SITE_MAIL', $_ENV['SITE_MAIL'] ?? 'support@example.com');
+define('NO_REPLY_MAIL', $_ENV['NO_REPLY_MAIL'] ?? 'noreply@example.com');
 
 // SMTP configuration
-const SMTP_CONFIG = [
+define("SMTP_CONFIG", [
     'development' => [
         'host' => 'localhost',
         'port' => 25,
-        'smtp_auth' => false
+        'smtp_auth' => false,
+        'encryption' => null
     ],
     'production' => [
-        'host' => 'smtp.example.com',
-        'port' => 587,
+        'host' => $_ENV['SMTP_HOST'],
+        'port' => $_ENV['SMTP_PORT'] ?? 587,
         'smtp_auth' => true,
-        'username' => 'username@example.com',
-        'password' => 'password'
+        'encryption' => 'tls', // null, 'tls', or 'ssl'
+        'username' => $_ENV['SMTP_USERNAME'],
+        'password' => $_ENV['SMTP_PASSWORD']
     ]
-];
+]);

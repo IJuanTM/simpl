@@ -61,8 +61,8 @@ class ResetPasswordPage
     {
         // Validate form fields
         if (
-            !FormController::validate('new-password', ['required', 'maxLength' => 50]) ||
-            !FormController::validate('new-password-check', ['required', 'maxLength' => 50])
+            !FormController::validate('new-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
+            !FormController::validate('new-password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
         // Validate password against policy
@@ -75,7 +75,7 @@ class ResetPasswordPage
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id User ID
+     * @param int $id User ID
      * @param string $password New password
      *
      * @return void
