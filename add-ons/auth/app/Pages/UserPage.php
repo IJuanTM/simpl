@@ -64,7 +64,7 @@ class UserPage
             ]
         )['name'] ?? null : null;
 
-        $user['role'] = $roleName ? Role::from($roleName) : null;
+        $user['role'] = $roleName ? Role::tryFrom($roleName) : null;
         $user['is_verified'] = AuthController::isVerified($user['id']);
 
         $this->user = $user;

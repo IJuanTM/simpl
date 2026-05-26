@@ -22,7 +22,7 @@ class MailController
      * Variables in $vars are extracted into the template scope and may be
      * referenced using the template's variable names.
      *
-     * @param string              $name Template filename without extension (e.g. 'verification')
+     * @param string $name Template filename without extension (e.g. 'verification')
      * @param array<string,mixed> $vars Associative array of variables to expose to the template
      *
      * @return string|false Rendered HTML content or false when template not found
@@ -69,8 +69,14 @@ class MailController
 
         // If FastCGI is available, queue the email and send it after response
         if (function_exists('fastcgi_finish_request')) {
-            $_SESSION['pending_email'] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
-            register_shutdown_function([self::class, 'sendEmailAsync']);
+            $_SESSION['pending_emails'][] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
+
+            static $registered = false;
+            if (!$registered) {
+                register_shutdown_function([self::class, 'sendEmailAsync']);
+                $registered = true;
+            }
+
             return true;
         }
 
@@ -117,18 +123,11 @@ class MailController
      */
     public static function sendEmailAsync(): void
     {
-        if (isset($_SESSION['pending_email'])) {
-            $email = $_SESSION['pending_email'];
-
-            self::sendEmail(
-                $email['senderName'],
-                $email['to'],
-                $email['senderEmail'],
-                $email['subject'],
-                $email['message']
-            );
-
-            unset($_SESSION['pending_email']);
+        if (!empty($_SESSION['pending_emails'])) {
+            foreach ($_SESSION['pending_emails'] as $email) {
+                self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message']);
+            }
+            unset($_SESSION['pending_emails']);
         }
     }
 }

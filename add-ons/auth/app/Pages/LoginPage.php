@@ -190,7 +190,7 @@ class LoginPage
 
             $_POST['identifier'] = '';
             $_POST['password'] = '';
-            FormController::addAlert('Your account is inactive! Contant an administrator for more information!', AlertType::ERROR);
+            FormController::addAlert('Your account is inactive! Contact an administrator for more information!', AlertType::ERROR);
             return;
         }
 
