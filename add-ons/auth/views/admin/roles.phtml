@@ -1,18 +1,5 @@
 <?php
-
 use app\Models\Url;
-
-$sub = $this->pageObj->subAction;
-if ($sub === 'create') {
-  include BASEDIR . '/views/admin/roles/create.phtml';
-  return;
-}
-
-if ($sub === 'edit' && isset($this->pageObj->role)) {
-  include BASEDIR . '/views/admin/roles/edit.phtml';
-  return;
-}
-
 ?>
 
 <section class="row roles">

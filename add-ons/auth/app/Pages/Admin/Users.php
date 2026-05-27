@@ -22,7 +22,7 @@ class Users
     private const array PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
     public ?string $subAction;
-    public array $user;
+    public array $user = [];
     public array $allUsers = [];
     public array $users = [];
     public array $pagedUsers = [];

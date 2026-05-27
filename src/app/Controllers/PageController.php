@@ -123,10 +123,22 @@ class PageController extends Page
         $page = $this->page;
         $subpage = $this->subpage();
 
-        // Prefer subpage view when present
-        $file = $subpage && is_file(BASEDIR . "/views/$page/$subpage.phtml")
-            ? BASEDIR . "/views/$page/$subpage.phtml"
-            : BASEDIR . "/views/$page.phtml";
+        // Attempt to find the most specific view file for the requested page and subpage
+        $parts = [$page, ...$this->subpages];
+        $file = null;
+
+        while (count($parts) > 1) {
+            $candidate = BASEDIR . '/views/' . implode('/', $parts) . '.phtml';
+
+            if (is_file($candidate)) {
+                $file = $candidate;
+                break;
+            }
+
+            array_pop($parts);
+        }
+
+        $file ??= BASEDIR . "/views/$page.phtml";
 
         if (!is_file($file)) {
             if (DEV) Log::error("Could not find view \"$page" . ($subpage ? "/$subpage" : '') . "\"");

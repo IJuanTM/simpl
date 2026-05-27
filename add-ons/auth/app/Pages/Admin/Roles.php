@@ -15,7 +15,7 @@ class Roles
 {
     public ?string $subAction;
     public array $roles = [];
-    public array $role;
+    public array $role = [];
 
     public function __construct(Page $page)
     {
@@ -115,7 +115,7 @@ class Roles
 
     private function deleteRole(int $id): void
     {
-        $userCount = (int)DB::count(
+        $userCount = DB::count(
             FROM: 'user_roles',
             WHERE: ['role_id' => $id]
         );

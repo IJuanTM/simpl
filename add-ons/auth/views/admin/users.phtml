@@ -1,18 +1,5 @@
 <?php
-
 use app\Models\Url;
-
-$sub = $this->pageObj->subAction;
-if ($sub === 'create') {
-  include BASEDIR . '/views/admin/users/create.phtml';
-  return;
-}
-
-if ($sub === 'edit' && isset($this->pageObj->user)) {
-  include BASEDIR . '/views/admin/users/edit.phtml';
-  return;
-}
-
 ?>
 
 <section class="row users">
