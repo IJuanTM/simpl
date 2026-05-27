@@ -12,31 +12,31 @@ class UserRolesSeeder
     public static function run(): void
     {
         $adminRoleId = DB::single(
-            'id',
-            'roles',
-            [
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
                 'name' => Role::ADMIN->value
             ]
         )['id'];
         $userRoleId = DB::single(
-            'id',
-            'roles',
-            [
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
                 'name' => Role::USER->value
             ]
         )['id'];
 
         // Assign admin role to the admin user
         $admin = DB::single(
-            'id',
-            'users',
-            [
+            SELECT: 'id',
+            FROM: 'users',
+            WHERE: [
                 'email' => 'admin@example.com'
             ]
         );
         DB::insert(
-            'user_roles',
-            [
+            INTO: 'user_roles',
+            VALUES: [
                 'user_id' => $admin['id'],
                 'role_id' => $adminRoleId
             ]
@@ -44,16 +44,16 @@ class UserRolesSeeder
 
         // Assign user role to all other users
         $users = DB::select(
-            'id',
-            'users',
-            [
+            SELECT: 'id',
+            FROM: 'users',
+            WHERE: [
                 'email' => ['!=', 'admin@example.com']
             ]
         );
 
         foreach ($users as $user) DB::insert(
-            'user_roles',
-            [
+            INTO: 'user_roles',
+            VALUES: [
                 'user_id' => $user['id'],
                 'role_id' => $userRoleId
             ]

@@ -49,17 +49,17 @@ class UserPage
 
         // Resolve role
         $roleId = DB::single(
-            'role_id',
-            'user_roles',
-            [
+            SELECT: 'role_id',
+            FROM: 'user_roles',
+            WHERE: [
                 'user_id' => $user['id']
             ]
         )['role_id'] ?? null;
 
         $roleName = $roleId ? DB::single(
-            'name',
-            'roles',
-            [
+            SELECT: 'name',
+            FROM: 'roles',
+            WHERE: [
                 'id' => $roleId
             ]
         )['name'] ?? null : null;
@@ -103,14 +103,14 @@ class UserPage
         }
 
         DB::update(
-            'users',
-            [
+            UPDATE: 'users',
+            SET: [
                 'username' => $_POST['username'] ?: null,
                 'first_name' => $_POST['first_name'] ?: null,
                 'last_name' => $_POST['last_name'] ?: null,
                 'email' => $_POST['email'],
             ],
-            compact('id')
+            WHERE: compact('id')
         );
 
         PageController::redirect('user/' . $id);
@@ -184,9 +184,9 @@ class UserPage
 
         // Get old profile image
         $old = DB::single(
-            'profile_img',
-            'users',
-            compact('id')
+            SELECT: 'profile_img',
+            FROM: 'users',
+            WHERE: compact('id')
         )['profile_img'] ?? null;
 
         // Delete old image if exists
@@ -200,11 +200,11 @@ class UserPage
 
         // Update database
         DB::update(
-            'users',
-            [
+            UPDATE: 'users',
+            SET: [
                 'profile_img' => $name
             ],
-            compact('id')
+            WHERE: compact('id')
         );
 
         // Redirect with success message
@@ -223,9 +223,9 @@ class UserPage
 
         // Get current profile image
         $old = DB::single(
-            'profile_img',
-            'users',
-            compact('id')
+            SELECT: 'profile_img',
+            FROM: 'users',
+            WHERE: compact('id')
         )['profile_img'] ?? null;
 
         // Delete image file if exists
@@ -235,11 +235,11 @@ class UserPage
 
         // Remove from database
         DB::update(
-            'users',
-            [
+            UPDATE: 'users',
+            SET: [
                 'profile_img' => null
             ],
-            compact('id')
+            WHERE: compact('id')
         );
 
         // Redirect with success message

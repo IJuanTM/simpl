@@ -24,9 +24,9 @@ class Scheduler
 
         foreach (self::$tasks as $task) {
             $record = DB::single(
-                '*',
-                'scheduler_runs',
-                [
+                SELECT: '*',
+                FROM: 'scheduler_runs',
+                WHERE: [
                     'task_name' => $task->name
                 ]
             );
@@ -53,20 +53,20 @@ class Scheduler
             $now = date('Y-m-d H:i:s');
 
             if ($record) DB::update(
-                'scheduler_runs',
-                [
+                UPDATE: 'scheduler_runs',
+                SET: [
                     'last_run' => $now,
                     'last_duration_ms' => $duration,
                     'last_status' => $status,
                     'last_error' => $error,
                 ],
-                [
+                WHERE: [
                     'task_name' => $task->name
                 ]
             );
             else DB::insert(
-                'scheduler_runs',
-                [
+                INTO: 'scheduler_runs',
+                VALUES: [
                     'task_name' => $task->name,
                     'last_run' => $now,
                     'last_duration_ms' => $duration,

@@ -117,9 +117,9 @@ class LoginPage
     {
         // Fetch failed login attempts within time window
         $rows = DB::select(
-            "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
-            'login_attempts',
-            [
+            SELECT: "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
+            FROM: 'login_attempts',
+            WHERE: [
                 $column => $value,
                 'success' => 0
             ],

@@ -43,6 +43,48 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
           </form>
         </div>
 
+        <div class="row users-filters g-col-1 center-y">
+          <div class="col form-group g-row-0.25 f-0">
+            <div class="row">
+              <label class="col" for="filter-role">Role:</label>
+            </div>
+            <div class="row input-group">
+              <select class="col" id="filter-role">
+                <option value="">All roles</option>
+                <?php foreach ($this->pageObj->availableRoles as $r) : ?>
+                  <option value="<?= htmlspecialchars($r['name'], ENT_QUOTES) ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= htmlspecialchars($r['name']) ?></option>
+                <?php endforeach ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25 f-0">
+            <div class="row">
+              <label class="col" for="filter-status">Status:</label>
+            </div>
+            <div class="row input-group">
+              <select class="col" id="filter-status">
+                <option value="">All statuses</option>
+                <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
+                <option value="inactive" <?= $this->pageObj->filterStatus === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25 f-0">
+            <div class="row">
+              <label class="col" for="filter-verified">Verified:</label>
+            </div>
+            <div class="row input-group">
+              <select class="col" id="filter-verified">
+                <option value="">All</option>
+                <option value="yes" <?= $this->pageObj->filterVerified === 'yes' ? 'selected' : '' ?>>Verified</option>
+                <option value="no" <?= $this->pageObj->filterVerified === 'no' ? 'selected' : '' ?>>Unverified</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <?php if ($this->pageObj->totalUsers > 0) : ?>
 
           <div class="row g-1">
@@ -74,7 +116,7 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
 
           <div class="row table-container">
             <div class="col">
-              <table class="data-table" data-table-id="users" data-hidden-cols="<?= htmlspecialchars(json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible'])))), ENT_QUOTES) ?>">
+              <table class="data-table" data-table-id="users" data-hidden-cols="<?= htmlspecialchars(json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible']))), JSON_THROW_ON_ERROR), ENT_QUOTES) ?>">
                 <thead>
                 <tr>
 
@@ -168,7 +210,7 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
             <div class="col f-0">
               <div class="row g-col-4">
                 <div class="col center-y g-col-1">
-                  <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->totalUsers ?><?= $this->pageObj->search !== '' ? ' / ' . $this->pageObj->totalAllUsers : '' ?> users</p>
+                  <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->totalUsers ?><?= $this->pageObj->hasActiveFilters ? ' / ' . $this->pageObj->totalAllUsers : '' ?> users</p>
                 </div>
                 <form class="col users-per-page-form g-col-0.5 center-y" novalidate>
                   <div class="row">
@@ -202,7 +244,7 @@ if ($sub === 'edit' && isset($this->pageObj->user)) {
 
           <div class="row">
             <div class="col">
-              <p><?= $this->pageObj->search !== '' ? 'No users match your search.' : 'No users found.' ?></p>
+              <p><?= $this->pageObj->hasActiveFilters ? 'No users match your filters.' : 'No users found.' ?></p>
             </div>
           </div>
 

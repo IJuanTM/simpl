@@ -99,7 +99,10 @@ class DatabaseMigrator
 
     private static function record(string $name, int $batch): void
     {
-        DB::insert('migrations', ['migration' => $name, 'batch' => $batch]);
+        DB::insert(
+            INTO: 'migrations',
+            VALUES: ['migration' => $name, 'batch' => $batch]
+        );
     }
 
     /**
@@ -149,6 +152,9 @@ class DatabaseMigrator
 
     private static function remove(string $name): void
     {
-        DB::delete('migrations', ['migration' => $name]);
+        DB::delete(
+            FROM: 'migrations',
+            WHERE: ['migration' => $name]
+        );
     }
 }

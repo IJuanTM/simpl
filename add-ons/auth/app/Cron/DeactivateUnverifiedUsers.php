@@ -13,9 +13,9 @@ class DeactivateUnverifiedUsers
     {
         // Get all active users
         $users = DB::select(
-            '*',
-            'users',
-            [
+            SELECT: '*',
+            FROM: 'users',
+            WHERE: [
                 'is_active' => 1
             ]
         );
@@ -25,9 +25,9 @@ class DeactivateUnverifiedUsers
         foreach ($users as $user) {
             // Check if the user has a verification token that was created within the last 24 hours
             $token = DB::single(
-                '*',
-                'tokens',
-                [
+                SELECT: '*',
+                FROM: 'tokens',
+                WHERE: [
                     'user_id' => $user['id'],
                     'type' => 'verification'
                 ]
@@ -37,12 +37,12 @@ class DeactivateUnverifiedUsers
 
             // Deactivate the user
             DB::update(
-                'users',
-                [
+                UPDATE: 'users',
+                SET: [
                     'is_active' => 0,
                     'deleted_at' => date('Y-m-d H:i:s')
                 ],
-                [
+                WHERE: [
                     'id' => $user['id']
                 ]
             );

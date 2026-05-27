@@ -323,6 +323,9 @@ function initFilters(): void {
   const searchClear = section.querySelector<HTMLElement>('.users-search-clear');
   const perPageSelect = section.querySelector<HTMLSelectElement>('#users-per-page');
   const filtersResetBtn = section.querySelector<HTMLButtonElement>('.filters-reset-btn');
+  const roleSelect = section.querySelector<HTMLSelectElement>('#filter-role');
+  const statusSelect = section.querySelector<HTMLSelectElement>('#filter-status');
+  const verifiedSelect = section.querySelector<HTMLSelectElement>('#filter-verified');
   const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
@@ -337,9 +340,17 @@ function initFilters(): void {
     hasCustomWidths = isDirty;
   };
 
+  const syncFiltersResetBtn = (): void => {
+    if (!filtersResetBtn) return;
+    const params = new URLSearchParams(window.location.search);
+    const hasFilters = !!(params.get('search')?.trim() || params.get('role') || params.get('status') || params.get('verified'));
+    filtersResetBtn.inert = !hasFilters;
+  };
+
   const navigate = (newParams: Record<string, string | number | null>): void => {
     const url = buildUrl(baseUrl, newParams);
     window.history.pushState(null, '', url.toString());
+    syncFiltersResetBtn();
     fetchTableData(section, table, defaultWidths, hiddenKey, syncState, onWidthChange, url.searchParams);
   };
 
@@ -372,6 +383,7 @@ function initFilters(): void {
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       window.history.replaceState(null, '', buildUrl(baseUrl, {search: searchInput.value || null, page: 0}).toString());
       syncClear();
+      syncFiltersResetBtn();
       timeoutId = window.setTimeout(() => navigate({search: searchInput.value || null, page: 0}), 250);
     });
 
@@ -396,10 +408,24 @@ function initFilters(): void {
 
   if (perPageSelect) perPageSelect.addEventListener('change', () => navigate({per_page: perPageSelect.value, page: 0}));
 
+  if (roleSelect) roleSelect.addEventListener('change', () => navigate({role: roleSelect.value || null, page: 0}));
+  if (statusSelect) statusSelect.addEventListener('change', () => navigate({status: statusSelect.value || null, page: 0}));
+  if (verifiedSelect) verifiedSelect.addEventListener('change', () => navigate({verified: verifiedSelect.value || null, page: 0}));
+
   if (filtersResetBtn) {
-    filtersResetBtn.inert = !new URLSearchParams(window.location.search).get('search')?.trim();
-    filtersResetBtn.addEventListener('click', () => navigate({search: null, page: 0}));
+    filtersResetBtn.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        if (searchClear) searchClear.inert = true;
+      }
+      if (roleSelect) roleSelect.value = '';
+      if (statusSelect) statusSelect.value = '';
+      if (verifiedSelect) verifiedSelect.value = '';
+      navigate({search: null, role: null, status: null, verified: null, page: 0});
+    });
   }
+
+  syncFiltersResetBtn();
 
   initSortLinks(section, table, defaultWidths, hiddenKey, syncState, onWidthChange);
 

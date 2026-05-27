@@ -18,27 +18,29 @@ class DB
     private static ?PDO $pdo = null;
 
     /**
-     * This method is for selecting records from a table with specific WHERE conditions.
+     * This method is for selecting records from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
      *
      * @param string|array $SELECT
      * @param string $FROM
+     * @param array $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
      * @param array $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
      *
      * @return array
      */
-    public static function select(string|array $SELECT, string $FROM, array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): array
+    public static function select(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): array
     {
         // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
+        $joinClause = self::buildJoin($table, $JOIN);
         [$whereClause, $params] = self::buildWhere($WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
 
         // Construct the final query
-        $query = "SELECT $cols FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '');
+        $query = "SELECT $cols FROM $table" . ($joinClause ? " $joinClause" : '') . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '');
 
         // Execute and fetch results
         return self::execute($query, $params)->fetchAll();
@@ -77,6 +79,31 @@ class DB
         // Ensure the identifier contains only valid characters (alphanumeric and underscores)
         if (!preg_match('/^\w+$/', $identifier)) throw new PDOException("Invalid identifier: $identifier");
         return $identifier;
+    }
+
+    /**
+     * Build LEFT JOIN clause(s) from a JOIN definition.
+     * Single join: ['from_col', ['join_table', 'join_col']]
+     * Multiple joins: array of the above format.
+     *
+     * @param string $table Sanitized main table name
+     * @param array $join
+     *
+     * @return string
+     */
+    private static function buildJoin(string $table, array $join): string
+    {
+        if (empty($join)) return '';
+
+        $joins = is_string($join[0]) ? [$join] : $join;
+        $clauses = [];
+
+        foreach ($joins as [$fromCol, [$joinTable, $joinCol]]) {
+            $joinTableSan = self::sanitize($joinTable);
+            $clauses[] = "LEFT JOIN $joinTableSan ON $table." . self::sanitize($fromCol) . " = $joinTableSan." . self::sanitize($joinCol);
+        }
+
+        return implode(' ', $clauses);
     }
 
     /**
@@ -262,25 +289,27 @@ class DB
     }
 
     /**
-     * This method is for selecting a single record from a table with specific WHERE conditions.
+     * This method is for selecting a single record from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
      *
      * @param string|array $SELECT
      * @param string $FROM
+     * @param array $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
      * @param array $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
      *
      * @return array|null
      */
-    public static function single(string|array $SELECT, string $FROM, array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): ?array
+    public static function single(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): ?array
     {
         // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
+        $joinClause = self::buildJoin($table, $JOIN);
         [$whereClause, $params] = self::buildWhere($WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
-        $query = "SELECT $cols FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '') . ' LIMIT 1';
+        $query = "SELECT $cols FROM $table" . ($joinClause ? " $joinClause" : '') . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '') . ' LIMIT 1';
 
         // Execute and fetch single result
         return self::execute($query, $params)->fetch() ?: null;

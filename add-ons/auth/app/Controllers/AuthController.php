@@ -44,9 +44,9 @@ class AuthController
     {
         // Fetch token record for the supplied value and type "remember".
         $token = DB::single(
-            '*',
-            'tokens',
-            [
+            SELECT: '*',
+            FROM: 'tokens',
+            WHERE: [
                 'token' => $rememberToken,
                 'type' => 'remember'
             ]
@@ -61,8 +61,8 @@ class AuthController
         // If token expired: remove DB record and clear cookie.
         if ($token['expires'] < time()) {
             DB::delete(
-                'tokens',
-                [
+                FROM: 'tokens',
+                WHERE: [
                     'token' => $token['token']
                 ]
             );
@@ -79,11 +79,11 @@ class AuthController
         $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
         DB::update(
-            'tokens',
-            [
+            UPDATE: 'tokens',
+            SET: [
                 'expires' => $timestamp
             ],
-            [
+            WHERE: [
                 'token' => $rememberToken
             ]
         );
@@ -124,9 +124,9 @@ class AuthController
     public static function getUserById(int $id): array|null
     {
         return DB::single(
-            '*',
-            'users',
-            compact('id')
+            SELECT: '*',
+            FROM: 'users',
+            WHERE: compact('id')
         ) ?: null;
     }
 
@@ -173,8 +173,17 @@ class AuthController
      */
     private static function getUserRole(int $userId): ?string
     {
-        $roleId = DB::single('role_id', 'user_roles', ['user_id' => $userId])['role_id'] ?? null;
-        return $roleId ? DB::single('name', 'roles', ['id' => $roleId])['name'] ?? null : null;
+        $roleId = DB::single(
+            SELECT: 'role_id',
+            FROM: 'user_roles',
+            WHERE: ['user_id' => $userId]
+        )['role_id'] ?? null;
+
+        return $roleId ? DB::single(
+            SELECT: 'name',
+            FROM: 'roles',
+            WHERE: ['id' => $roleId]
+        )['name'] ?? null : null;
     }
 
     /**
@@ -313,9 +322,9 @@ class AuthController
     public static function getProfileImage(int $id): string|null
     {
         $profile_img = DB::single(
-            'profile_img',
-            'users',
-            compact('id')
+            SELECT: 'profile_img',
+            FROM: 'users',
+            WHERE: compact('id')
         )['profile_img'] ?? null;
 
         return $profile_img ? PROFILE_IMAGE_PATH . $profile_img : null;
@@ -365,8 +374,8 @@ class AuthController
     public static function checkEmail(string $email): bool
     {
         return DB::exists(
-            'users',
-            compact('email')
+            FROM: 'users',
+            WHERE: compact('email')
         );
     }
 
@@ -380,8 +389,8 @@ class AuthController
     public static function exists(int $id): bool
     {
         return DB::exists(
-            'users',
-            compact('id')
+            FROM: 'users',
+            WHERE: compact('id')
         );
     }
 
@@ -405,8 +414,8 @@ class AuthController
 
         // Account considered verified when there is no verification token row.
         return !DB::exists(
-            'tokens',
-            [
+            FROM: 'tokens',
+            WHERE: [
                 'user_id' => $id,
                 'type' => 'verification'
             ]
@@ -423,9 +432,9 @@ class AuthController
     public static function getUserIdByEmail(string $email): int|null
     {
         $user = DB::single(
-            'id',
-            'users',
-            compact('email')
+            SELECT: 'id',
+            FROM: 'users',
+            WHERE: compact('email')
         );
 
         return $user ? (int)$user['id'] : null;
@@ -444,9 +453,9 @@ class AuthController
     public static function checkToken(int $id, string $token, string $type): bool
     {
         $dbToken = DB::single(
-            'token',
-            'tokens',
-            [
+            SELECT: 'token',
+            FROM: 'tokens',
+            WHERE: [
                 'user_id' => $id,
                 'type' => $type
             ]
@@ -483,9 +492,9 @@ class AuthController
 
         // Fall back to username lookup.
         return DB::single(
-            '*',
-            'users',
-            [
+            SELECT: '*',
+            FROM: 'users',
+            WHERE: [
                 'username' => $identifier
             ]
         ) ?: null;
@@ -501,9 +510,9 @@ class AuthController
     public static function getUserByEmail(string $email): array|null
     {
         return DB::single(
-            '*',
-            'users',
-            compact('email')
+            SELECT: '*',
+            FROM: 'users',
+            WHERE: compact('email')
         ) ?: null;
     }
 
@@ -519,9 +528,9 @@ class AuthController
     public static function checkPassword(string $email, string $password): bool
     {
         $hash = DB::single(
-            'password',
-            'users',
-            compact('email')
+            SELECT: 'password',
+            FROM: 'users',
+            WHERE: compact('email')
         )['password'] ?? null;
 
         return $hash && password_verify($password, $hash);
@@ -550,15 +559,11 @@ class AuthController
     public static function checkIdentifier(string $identifier): bool
     {
         return DB::exists(
-                'users',
-                [
-                    'email' => $identifier
-                ]
+                FROM: 'users',
+                WHERE: ['email' => $identifier]
             ) || DB::exists(
-                'users',
-                [
-                    'username' => $identifier
-                ]
+                FROM: 'users',
+                WHERE: ['username' => $identifier]
             );
     }
 
@@ -572,8 +577,9 @@ class AuthController
     public static function isActive(string $email): bool
     {
         return (bool)DB::single(
-            'is_active',
-            'users', compact('email')
+            SELECT: 'is_active',
+            FROM: 'users',
+            WHERE: compact('email')
         )['is_active'];
     }
 
@@ -601,12 +607,12 @@ class AuthController
     public static function updatePassword(int $id, string $password): void
     {
         DB::update(
-            'users',
-            [
+            UPDATE: 'users',
+            SET: [
                 'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
                 'must_change_password' => 0
             ],
-            compact('id')
+            WHERE: compact('id')
         );
     }
 
@@ -624,8 +630,8 @@ class AuthController
     public static function createToken(int $userId, string $token, string $type, string|null $expires = null): void
     {
         DB::delete(
-            'tokens',
-            [
+            FROM: 'tokens',
+            WHERE: [
                 'user_id' => $userId,
                 'type' => $type
             ]
@@ -639,8 +645,8 @@ class AuthController
         if ($expires) $data['expires'] = $expires;
 
         DB::insert(
-            'tokens',
-            $data
+            INTO: 'tokens',
+            VALUES: $data
         );
     }
 
@@ -655,8 +661,8 @@ class AuthController
     public static function deleteToken(int $userId, string $type): void
     {
         DB::delete(
-            'tokens',
-            [
+            FROM: 'tokens',
+            WHERE: [
                 'user_id' => $userId,
                 'type' => $type
             ]
@@ -677,8 +683,8 @@ class AuthController
     public static function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null): void
     {
         DB::insert(
-            'login_attempts',
-            [
+            INTO: 'login_attempts',
+            VALUES: [
                 'user_id' => self::getUserIdByIdentifier($identifier),
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
@@ -711,11 +717,11 @@ class AuthController
     public static function updateLastLogin(string $email): void
     {
         DB::update(
-            'users',
-            [
+            UPDATE: 'users',
+            SET: [
                 'last_login' => date('Y-m-d H:i:s')
             ],
-            compact('email')
+            WHERE: compact('email')
         );
     }
 
