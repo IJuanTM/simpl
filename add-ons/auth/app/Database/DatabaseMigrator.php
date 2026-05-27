@@ -81,8 +81,11 @@ class DatabaseMigrator
 
     private static function getRanMigrations(): array
     {
-        $rows = DB::query("SELECT migration FROM migrations ORDER BY id");
-        return array_column($rows, 'migration');
+        return array_column(DB::select(
+            SELECT: 'migration',
+            FROM: 'migrations',
+            ORDER_BY: 'id'
+        ), 'migration');
     }
 
     private static function name(string $class): string
@@ -93,8 +96,10 @@ class DatabaseMigrator
 
     private static function nextBatch(): int
     {
-        $row = DB::query("SELECT COALESCE(MAX(batch), 0) + 1 AS next FROM migrations");
-        return (int)$row[0]['next'];
+        return (int)DB::single(
+            SELECT: 'COALESCE(MAX(batch), 0) + 1 AS next',
+            FROM: 'migrations'
+        )['next'];
     }
 
     private static function record(string $name, int $batch): void
@@ -139,15 +144,21 @@ class DatabaseMigrator
 
     private static function lastBatch(): ?int
     {
-        $row = DB::query("SELECT MAX(batch) AS last FROM migrations");
-        $val = $row[0]['last'] ?? null;
+        $val = DB::single(
+            SELECT: 'MAX(batch) AS last',
+            FROM: 'migrations'
+        )['last'] ?? null;
         return $val !== null ? (int)$val : null;
     }
 
     private static function batchMigrations(int $batch): array
     {
-        $rows = DB::query("SELECT migration FROM migrations WHERE batch = :batch ORDER BY id", [':batch' => $batch]);
-        return array_column($rows, 'migration');
+        return array_column(DB::select(
+            SELECT: 'migration',
+            FROM: 'migrations',
+            WHERE: ['batch' => $batch],
+            ORDER_BY: 'id'
+        ), 'migration');
     }
 
     private static function remove(string $name): void
