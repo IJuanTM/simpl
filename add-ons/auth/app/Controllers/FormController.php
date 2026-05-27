@@ -9,10 +9,8 @@ use app\Enums\AlertType;
 /**
  * FormController (auth add-on)
  *
- * Utilities for validating and sanitizing form input. This controller mutates
- * the $_POST superglobal (clearing invalid fields) and queues alert markup for
- * display. Consider returning sanitized values instead of mutating globals in
- * a future refactor to improve testability.
+ * Utilities for validating form input and queuing alert markup for display.
+ * Clears invalid $_POST fields on validation failure to prevent reuse.
  */
 class FormController
 {
@@ -102,35 +100,6 @@ class FormController
     public static function addAlert(string $message, AlertType $type, ?int $timeout = null): void
     {
         static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">$message</div>";
-    }
-
-    /**
-     * Sanitize multiple form fields in $_POST.
-     *
-     * @param array<int,string> $fields List of field names to sanitize
-     *
-     * @return void
-     */
-    public static function sanitizeFields(array $fields): void
-    {
-        foreach ($fields as $field) {
-            if (isset($_POST[$field])) {
-                $_POST[$field] = static::sanitize($_POST[$field]);
-            }
-        }
-    }
-
-    /**
-     * Basic input sanitizer. Trims whitespace and escapes HTML special
-     * characters to reduce XSS risk when echoing user-provided values.
-     *
-     * @param string $data Raw user input
-     *
-     * @return string Sanitized value safe for insertion into HTML contexts
-     */
-    public static function sanitize(string $data): string
-    {
-        return htmlspecialchars(trim($data), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     }
 
     /**

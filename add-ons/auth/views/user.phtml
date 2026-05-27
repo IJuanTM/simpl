@@ -1,5 +1,6 @@
 <?php
 use app\Controllers\FormController;
+use app\Controllers\RequestController;
 use app\Models\Url;
 ?>
 
@@ -47,7 +48,7 @@ use app\Models\Url;
 
     <div class="row">
       <div class="col center-x">
-        <h1 data-typo="h2"><?= htmlspecialchars($this->pageObj->user['username'] ?? $this->pageObj->user['email'] ?? 'User') ?></h1>
+        <h1 data-typo="h2"><?= $this->pageObj->user['username'] ?? $this->pageObj->user['email'] ?? 'User' ?></h1>
       </div>
     </div>
 
@@ -64,7 +65,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group">
               <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-              <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username" value="<?= htmlspecialchars($_POST['username'] ?? $this->pageObj->user['username'] ?? '') ?>">
+              <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username" value="<?= RequestController::post('username') ?? $this->pageObj->user['username'] ?? '' ?>">
             </div>
           </div>
         </div>
@@ -77,7 +78,7 @@ use app\Models\Url;
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
-                <input class="col" id="first_name" type="text" name="first_name" maxlength="100" placeholder="Enter first name" value="<?= htmlspecialchars($_POST['first_name'] ?? $this->pageObj->user['first_name'] ?? '') ?>">
+                <input class="col" id="first_name" type="text" name="first_name" maxlength="100" placeholder="Enter first name" value="<?= RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '' ?>">
               </div>
             </div>
           </div>
@@ -87,7 +88,7 @@ use app\Models\Url;
               <label class="col" for="last_name">Last name:</label>
             </div>
             <div class="row input-group">
-              <input class="col" id="last_name" type="text" name="last_name" maxlength="100" placeholder="Enter last name" value="<?= htmlspecialchars($_POST['last_name'] ?? $this->pageObj->user['last_name'] ?? '') ?>">
+              <input class="col" id="last_name" type="text" name="last_name" maxlength="100" placeholder="Enter last name" value="<?= RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '' ?>">
             </div>
           </div>
         </div>
@@ -99,7 +100,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group <?= isset($_POST['submit']) && empty($_POST['email']) ? 'error' : '' ?>">
               <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-              <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email" value="<?= htmlspecialchars($_POST['email'] ?? $this->pageObj->user['email'] ?? '') ?>">
+              <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email" value="<?= RequestController::post('email') ?? $this->pageObj->user['email'] ?? '' ?>">
             </div>
           </div>
         </div>
@@ -120,20 +121,20 @@ use app\Models\Url;
             <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
             <div class="col user-details-label center-y end-x f-0">Name:</div>
             <div class="col user-details-value scrollbar-thin center-y">
-              <?= htmlspecialchars(trim(($this->pageObj->user['first_name'] ?? '') . ' ' . ($this->pageObj->user['last_name'] ?? '')) ?: '-') ?>
+              <?= trim(($this->pageObj->user['first_name'] ?? '') . ' ' . ($this->pageObj->user['last_name'] ?? '')) ?: '-' ?>
             </div>
           </div>
 
           <div class="row user-details g-col-0.5">
             <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
             <div class="col user-details-label center-y end-x f-0">Email:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['email'] ?? '-') ?></div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['email'] ?? '-' ?></div>
           </div>
 
           <div class="row user-details g-col-0.5">
             <div class="col user-details-icon center-y f-0"><i class="fas fa-user-group"></i></div>
             <div class="col user-details-label center-y end-x f-0">Role:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['role']?->value ?? '-') ?></div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['role']?->value ?? '-' ?></div>
           </div>
 
           <div class="row user-details g-col-0.5">
@@ -151,7 +152,7 @@ use app\Models\Url;
           <div class="row user-details g-col-0.5">
             <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
             <div class="col user-details-label center-y end-x f-0">Last login:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= htmlspecialchars($this->pageObj->user['last_login'] ?? '-') ?></div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['last_login'] ?? '-' ?></div>
           </div>
 
         </div>

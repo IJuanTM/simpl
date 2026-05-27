@@ -22,7 +22,7 @@ use app\Models\Url;
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
-                  <input class="col" id="users-search" type="text" value="<?= $this->pageObj->search ?>" placeholder="Search by: Id, Username, Email or First/Last name" autocomplete="off">
+                  <input class="col" id="users-search" type="text" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: Id, Username, Email or First/Last name" autocomplete="off">
                   <div class="col input-append center f-0"><i class="fas fa-xmark users-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
                 </div>
               </div>
@@ -39,7 +39,7 @@ use app\Models\Url;
               <select class="col" id="filter-role">
                 <option value="">All roles</option>
                 <?php foreach ($this->pageObj->availableRoles as $r) : ?>
-                  <option value="<?= htmlspecialchars($r['name'], ENT_QUOTES) ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= htmlspecialchars($r['name']) ?></option>
+                  <option value="<?= $r['name'] ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
                 <?php endforeach ?>
               </select>
             </div>
@@ -103,7 +103,7 @@ use app\Models\Url;
 
           <div class="row table-container">
             <div class="col">
-              <table class="data-table" data-table-id="users" data-hidden-cols="<?= htmlspecialchars(json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible']))), JSON_THROW_ON_ERROR), ENT_QUOTES) ?>">
+              <table class="data-table" data-table-id="users" data-hidden-cols="<?= json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible']))), JSON_THROW_ON_ERROR) ?>">
                 <thead>
                 <tr>
 
@@ -143,10 +143,10 @@ use app\Models\Url;
                                 <button class="col table-action delete f-0" type="button"
                                         data-modal-delete
                                         data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= htmlspecialchars($user['username'] ?? '-', ENT_QUOTES) ?>"
-                                        data-user-email="<?= htmlspecialchars($user['email'], ENT_QUOTES) ?>"
+                                        data-user-username="<?= $user['username'] ?? '-' ?>"
+                                        data-user-email="<?= $user['email'] ?>"
                                         data-user-active="1"
-                                        aria-label="Delete user <?= htmlspecialchars($user['email'], ENT_QUOTES) ?>">
+                                        aria-label="Delete user <?= $user['email'] ?>">
                                   <i class="fas fa-trash"></i>
                                 </button>
 
@@ -155,17 +155,17 @@ use app\Models\Url;
                                 <button class="col table-action restore f-0" type="button"
                                         data-modal-restore
                                         data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= htmlspecialchars($user['username'] ?? '-', ENT_QUOTES) ?>"
-                                        data-user-email="<?= htmlspecialchars($user['email'], ENT_QUOTES) ?>">
+                                        data-user-username="<?= $user['username'] ?? '-' ?>"
+                                        data-user-email="<?= $user['email'] ?>">
                                   <i class="fas fa-wrench"></i>
                                 </button>
                                 <button class="col table-action purge f-0" type="button"
                                         data-modal-delete
                                         data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= htmlspecialchars($user['username'] ?? '-', ENT_QUOTES) ?>"
-                                        data-user-email="<?= htmlspecialchars($user['email'], ENT_QUOTES) ?>"
+                                        data-user-username="<?= $user['username'] ?? '-' ?>"
+                                        data-user-email="<?= $user['email'] ?>"
                                         data-user-active="0"
-                                        aria-label="Permanently delete user <?= htmlspecialchars($user['email'], ENT_QUOTES) ?>">
+                                        aria-label="Permanently delete user <?= $user['email'] ?>">
                                   <i class="fas fa-skull"></i>
                                 </button>
 

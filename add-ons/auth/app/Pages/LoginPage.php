@@ -160,9 +160,6 @@ class LoginPage
             !FormController::validate('password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
-        // Sanitize identifier input
-        $_POST['identifier'] = FormController::sanitize($_POST['identifier']);
-
         // Check lockout status for this identifier
         if ($this->checkLockedOut($_POST['identifier'])) return;
 

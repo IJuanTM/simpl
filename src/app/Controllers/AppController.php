@@ -49,10 +49,14 @@ class AppController
     /**
      * Retrieves the contents of an SVG file by its name.
      *
-     * @param string $name The name of the SVG file (without the .svg extension).
-     *
-     * @return bool|string The SVG file contents as a string, or a boolean false if the file does not exist.
+     * @param string $data
+     * @return string The SVG file contents as a string, or a boolean false if the file does not exist.
      */
+    public static function sanitize(string $data): string
+    {
+        return htmlspecialchars(trim($data), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
     public static function svg(string $name): bool|string
     {
         $file = BASEDIR . "/public/img/svg/$name.svg";

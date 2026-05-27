@@ -32,7 +32,7 @@ use app\Models\Url;
 
                   <tr>
                     <td><?= $role['id'] ?></td>
-                    <td><?= htmlspecialchars($role['name']) ?></td>
+                    <td><?= $role['name'] ?></td>
                     <td><?= $role['user_count'] ?></td>
                     <td class="table-actions">
                       <div class="row g-col-0.5 center-y">
@@ -40,7 +40,7 @@ use app\Models\Url;
                         <button class="col table-action delete f-0" type="button"
                                 data-modal-role-delete
                                 data-role-id="<?= $role['id'] ?>"
-                                data-role-name="<?= htmlspecialchars($role['name'], ENT_QUOTES) ?>"
+                                data-role-name="<?= $role['name'] ?>"
                                 data-role-user-count="<?= $role['user_count'] ?>">
                           <i class="fas fa-trash"></i>
                         </button>

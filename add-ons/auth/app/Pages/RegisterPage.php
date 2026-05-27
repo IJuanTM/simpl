@@ -38,9 +38,6 @@ class RegisterPage
             !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
-        // Sanitize email
-        $_POST['email'] = FormController::sanitize($_POST['email']);
-
         // Check if email already exists
         if (AuthController::checkEmail($_POST['email'])) {
             $_POST['email'] = '';

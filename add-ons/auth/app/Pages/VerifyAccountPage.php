@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AlertController;
+use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
@@ -22,7 +23,7 @@ class VerifyAccountPage
     public function __construct(Page $page)
     {
         // Get and sanitize user ID from URL
-        $id = FormController::sanitize($page->subpage() ?? '');
+        $id = AppController::sanitize($page->subpage() ?? '');
 
         // Validate user ID
         if (empty($id) || !is_numeric($id)) {
@@ -46,7 +47,7 @@ class VerifyAccountPage
         }
 
         // Get verification code from URL
-        $code = FormController::sanitize($page->subpage(1) ?? '');
+        $code = AppController::sanitize($page->subpage(1) ?? '');
 
         // If code provided in URL, verify immediately
         if (!empty($code)) {

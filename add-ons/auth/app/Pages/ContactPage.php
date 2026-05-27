@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AlertController;
+use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
@@ -41,10 +42,10 @@ class ContactPage
 
         // Send contact email
         $this->contactMail(
-            FormController::sanitize($_POST['name']),
-            FormController::sanitize($_POST['email']),
-            FormController::sanitize($_POST['subject']),
-            FormController::sanitize($_POST['message'])
+            AppController::sanitize($_POST['name']),
+            AppController::sanitize($_POST['email']),
+            AppController::sanitize($_POST['subject']),
+            AppController::sanitize($_POST['message'])
         );
     }
 

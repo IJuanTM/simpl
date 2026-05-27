@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AlertController;
+use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
@@ -32,7 +33,7 @@ class UserPage
     public function __construct(Page $page)
     {
         // Get and sanitize user ID from URL
-        $id = (int)FormController::sanitize($page->subpage() ?? '');
+        $id = (int)AppController::sanitize($page->subpage() ?? '');
 
         if (empty($id)) {
             PageController::error(ErrorCode::NOT_FOUND);
@@ -67,6 +68,11 @@ class UserPage
         $user['role'] = $roleName ? Role::tryFrom($roleName) : null;
         $user['is_verified'] = AuthController::isVerified($user['id']);
 
+        if ($user['username'] !== null) $user['username'] = AppController::sanitize($user['username']);
+        if ($user['email'] !== null) $user['email'] = AppController::sanitize($user['email']);
+        if ($user['first_name'] !== null) $user['first_name'] = AppController::sanitize($user['first_name']);
+        if ($user['last_name'] !== null) $user['last_name'] = AppController::sanitize($user['last_name']);
+        if ($user['last_login'] !== null) $user['last_login'] = AppController::sanitize($user['last_login']);
         $this->user = $user;
         $this->profileImage = AuthController::getProfileImage($id);
 
@@ -92,8 +98,6 @@ class UserPage
             !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
         ) return;
-
-        FormController::sanitizeFields(['username', 'first_name', 'last_name', 'email']);
 
         // Reject the email if it belongs to a different account
         if (AuthController::checkEmail($_POST['email']) && AuthController::getUserIdByEmail($_POST['email']) !== $id) {
