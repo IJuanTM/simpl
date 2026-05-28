@@ -230,7 +230,7 @@ function initPaginationLinks(section: HTMLElement, container: Element, table: HT
 }
 
 async function fetchTableData(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void, params: URLSearchParams): Promise<void> {
-  const apiUrl = new URL('/api/users', window.location.origin);
+  const apiUrl = new URL('/api/admin/users', window.location.origin);
   apiUrl.search = params.toString();
 
   const tbody = table.tBodies[0];
@@ -354,7 +354,7 @@ function initFilters(): void {
     fetchTableData(section, table, defaultWidths, hiddenKey, syncState, onWidthChange, url.searchParams);
   };
 
-  section.querySelectorAll<HTMLFormElement>('form.users-search-form, form.users-per-page-form').forEach(form => {
+  section.querySelectorAll<HTMLFormElement>('form.users-search-form, form.users-per-page-form, form.users-filters').forEach(form => {
     form.addEventListener('submit', e => e.preventDefault());
   });
 

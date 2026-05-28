@@ -30,7 +30,7 @@ use app\Models\Url;
           </form>
         </div>
 
-        <div class="row users-filters g-col-1 center-y">
+        <form class="row users-filters g-col-1 center-y" novalidate>
           <div class="col form-group g-row-0.25 f-0">
             <div class="row">
               <label class="col" for="filter-role">Role:</label>
@@ -70,7 +70,7 @@ use app\Models\Url;
               </select>
             </div>
           </div>
-        </div>
+        </form>
 
         <?php if ($this->pageObj->totalUsers > 0) : ?>
 
