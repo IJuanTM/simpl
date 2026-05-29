@@ -1,5 +1,5 @@
-@use "../config/abstracts/mixins" as *;
-@use "../config/vars/colors" as *;
+@use "../../config/abstracts/mixins" as *;
+@use "../../config/vars/colors" as *;
 
 section.roles {
   div.roles-table {
@@ -52,42 +52,6 @@ section.roles {
 
       @include hover-focus {
         background-color: $red-dark !important;
-      }
-    }
-  }
-}
-
-section.users {
-  td.table-actions button.table-action {
-    line-height: 1;
-    padding: 0;
-    cursor: pointer;
-    border: none;
-    background: none;
-
-    > i {
-      font-size: .875rem;
-    }
-
-    @include hover-focus {
-      color: var(--text-75);
-    }
-
-    &.delete {
-      color: $red;
-
-      @include hover-focus {
-        color: $red-dark;
-      }
-    }
-
-    &.purge {
-      opacity: .65;
-      color: $red;
-
-      @include hover-focus {
-        opacity: 1;
-        color: $red-dark;
       }
     }
   }

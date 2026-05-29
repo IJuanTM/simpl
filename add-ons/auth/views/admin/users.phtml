@@ -13,8 +13,8 @@ use app\Models\Url;
     <div class="row center-x">
       <div class="col users-table f-col g-row-1 w-100">
 
-        <div class="row users-tools g-col-1 center-y">
-          <form class="col users-search-form g-row-0.5" novalidate>
+        <div class="row users-tools">
+          <form class="col users-search-form" novalidate>
             <div class="row">
               <div class="col form-group g-row-0.25">
                 <div class="row">
@@ -30,47 +30,51 @@ use app\Models\Url;
           </form>
         </div>
 
-        <form class="row users-filters g-col-1 center-y" novalidate>
-          <div class="col form-group g-row-0.25 f-0">
-            <div class="row">
-              <label class="col" for="filter-role">Role:</label>
-            </div>
-            <div class="row input-group">
-              <select class="col" id="filter-role">
-                <option value="">All roles</option>
-                <?php foreach ($this->pageObj->availableRoles as $r) : ?>
-                  <option value="<?= $r['name'] ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
-                <?php endforeach ?>
-              </select>
-            </div>
-          </div>
+        <div class="row users-tools">
+          <form class="col users-filters center-y" novalidate>
+            <div class="row g-col-1">
+              <div class="col form-group g-row-0.25 f-0">
+                <div class="row">
+                  <label class="col" for="filter-role">Role:</label>
+                </div>
+                <div class="row input-group">
+                  <select class="col" id="filter-role">
+                    <option value="">All roles</option>
+                    <?php foreach ($this->pageObj->availableRoles as $r) : ?>
+                      <option value="<?= $r['name'] ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
+                    <?php endforeach ?>
+                  </select>
+                </div>
+              </div>
 
-          <div class="col form-group g-row-0.25 f-0">
-            <div class="row">
-              <label class="col" for="filter-status">Status:</label>
-            </div>
-            <div class="row input-group">
-              <select class="col" id="filter-status">
-                <option value="">All statuses</option>
-                <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
-                <option value="inactive" <?= $this->pageObj->filterStatus === 'inactive' ? 'selected' : '' ?>>Inactive</option>
-              </select>
-            </div>
-          </div>
+              <div class="col form-group g-row-0.25 f-0">
+                <div class="row">
+                  <label class="col" for="filter-status">Status:</label>
+                </div>
+                <div class="row input-group">
+                  <select class="col" id="filter-status">
+                    <option value="">All statuses</option>
+                    <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="inactive" <?= $this->pageObj->filterStatus === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                  </select>
+                </div>
+              </div>
 
-          <div class="col form-group g-row-0.25 f-0">
-            <div class="row">
-              <label class="col" for="filter-verified">Verified:</label>
+              <div class="col form-group g-row-0.25 f-0">
+                <div class="row">
+                  <label class="col" for="filter-verified">Verified:</label>
+                </div>
+                <div class="row input-group">
+                  <select class="col" id="filter-verified">
+                    <option value="">All</option>
+                    <option value="yes" <?= $this->pageObj->filterVerified === 'yes' ? 'selected' : '' ?>>Verified</option>
+                    <option value="no" <?= $this->pageObj->filterVerified === 'no' ? 'selected' : '' ?>>Unverified</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="row input-group">
-              <select class="col" id="filter-verified">
-                <option value="">All</option>
-                <option value="yes" <?= $this->pageObj->filterVerified === 'yes' ? 'selected' : '' ?>>Verified</option>
-                <option value="no" <?= $this->pageObj->filterVerified === 'no' ? 'selected' : '' ?>>Unverified</option>
-              </select>
-            </div>
-          </div>
-        </form>
+          </form>
+        </div>
 
         <?php if ($this->pageObj->totalUsers > 0) : ?>
 

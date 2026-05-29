@@ -1,8 +1,8 @@
 // @addon-insert:after('// VIEWS')
 @use "views/user";
-@use "views/users";
+@use "views/admin/users";
+@use "views/admin/roles";
 @use "views/verify-account";
-@use "views/admin";
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')
