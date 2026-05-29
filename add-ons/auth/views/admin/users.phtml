@@ -32,12 +32,13 @@ use app\Models\Url;
 
         <div class="row users-tools">
           <form class="col users-filters center-y" novalidate>
-            <div class="row g-col-1">
-              <div class="col form-group g-row-0.25 f-0">
+            <div class="row g-col-1 w-100">
+              <div class="col form-group g-row-0.25">
                 <div class="row">
                   <label class="col" for="filter-role">Role:</label>
                 </div>
                 <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
                   <select class="col" id="filter-role">
                     <option value="">All roles</option>
                     <?php foreach ($this->pageObj->availableRoles as $r) : ?>
@@ -47,11 +48,12 @@ use app\Models\Url;
                 </div>
               </div>
 
-              <div class="col form-group g-row-0.25 f-0">
+              <div class="col form-group g-row-0.25">
                 <div class="row">
                   <label class="col" for="filter-status">Status:</label>
                 </div>
                 <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
                   <select class="col" id="filter-status">
                     <option value="">All statuses</option>
                     <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
@@ -60,11 +62,12 @@ use app\Models\Url;
                 </div>
               </div>
 
-              <div class="col form-group g-row-0.25 f-0">
+              <div class="col form-group g-row-0.25">
                 <div class="row">
                   <label class="col" for="filter-verified">Verified:</label>
                 </div>
                 <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-user-check"></i></div>
                   <select class="col" id="filter-verified">
                     <option value="">All</option>
                     <option value="yes" <?= $this->pageObj->filterVerified === 'yes' ? 'selected' : '' ?>>Verified</option>
@@ -149,7 +152,6 @@ use app\Models\Url;
                                         data-user-id="<?= $user['id'] ?>"
                                         data-user-username="<?= $user['username'] ?? '-' ?>"
                                         data-user-email="<?= $user['email'] ?>"
-                                        data-user-active="1"
                                         aria-label="Delete user <?= $user['email'] ?>">
                                   <i class="fas fa-trash"></i>
                                 </button>
@@ -164,11 +166,10 @@ use app\Models\Url;
                                   <i class="fas fa-wrench"></i>
                                 </button>
                                 <button class="col table-action purge f-0" type="button"
-                                        data-modal-delete
+                                        data-modal-purge
                                         data-user-id="<?= $user['id'] ?>"
                                         data-user-username="<?= $user['username'] ?? '-' ?>"
                                         data-user-email="<?= $user['email'] ?>"
-                                        data-user-active="0"
                                         aria-label="Permanently delete user <?= $user['email'] ?>">
                                   <i class="fas fa-skull"></i>
                                 </button>
@@ -252,4 +253,5 @@ use app\Models\Url;
 </section>
 
 <?php $this->component('user-delete-modal') ?>
+<?php $this->component('user-purge-modal') ?>
 <?php $this->component('user-restore-modal') ?>

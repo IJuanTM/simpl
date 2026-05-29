@@ -1,0 +1,36 @@
+@use "../config/vars/colors" as *;
+
+p.quote {
+  position: relative;
+  padding: .5rem .5rem .5rem 2rem;
+  color: var(--text-muted);
+  border-left: .25rem solid var(--border-muted);
+
+  &.warning {
+    color: $orange !important;
+    border-color: $orange;
+
+    &::before {
+      content: "\f071";
+    }
+  }
+
+  &.info {
+    color: $cyan !important;
+    border-color: $cyan;
+
+    &::before {
+      content: "\f05a";
+    }
+  }
+
+  &::before {
+    font-family: "Font Awesome 7 Free", sans-serif;
+    font-weight: 900;
+    position: absolute;
+    top: .5rem;
+    left: 0;
+    width: 2rem;
+    text-align: center;
+  }
+}

@@ -1,38 +1,57 @@
-<div class="modal-overlay invisible" data-user-delete-modal role="dialog" aria-modal="true" aria-label="Delete user">
-  <div class="modal">
-    <div class="row modal-header center-y g-col-1">
-      <h4 class="col modal-title">Delete user</h4>
-      <button class="col button button-sm modal-close f-0" type="button" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+<dialog class="row modal-overlay center invisible" data-user-delete-modal aria-modal="true" aria-label="Delete user">
+  <div class="col modal f-col g-row-2">
+    <div class="row center-y g-col-1">
+      <h3 class="col">Delete user</h3>
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
 
-    <div class="row modal-body f-col g-row-1">
-      <p class="modal-description">Choose how to remove this user:</p>
-      <div class="modal-user-info f-col g-row-0.5">
-        <div class="row g-col-0.5 center-y">
-          <span class="col text-muted f-0">Id</span>
-          <span class="col modal-user-id">-</span>
+    <div class="row modal-body">
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col">
+            <p>Are you sure you want to delete this user?</p>
+          </div>
         </div>
-        <div class="row g-col-0.5 center-y">
-          <span class="col text-muted f-0">Username</span>
-          <span class="col modal-user-username">-</span>
+
+        <div class="row">
+          <div class="col modal-user-info f-col g-row-0.5">
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Id:</span>
+              <span class="col modal-user-id">-</span>
+            </div>
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Username:</span>
+              <span class="col modal-user-username">-</span>
+            </div>
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Email:</span>
+              <span class="col modal-user-email">-</span>
+            </div>
+          </div>
         </div>
-        <div class="row g-col-0.5 center-y">
-          <span class="col text-muted f-0">Email</span>
-          <span class="col modal-user-email">-</span>
+
+        <div class="row">
+          <div class="col">
+            <p class="quote warning">Deleting a user will deactivate them for <?= INACTIVE_USER_DELETION_AFTER ?> days. After this period they will be permanently purged from the database!</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <p class="quote info">To purge immediately, first delete the user, then use the purge action.</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="row modal-footer g-col-1 f-wrap">
-      <form class="modal-soft-delete-form col f-0" method="POST" action="">
+    <div class="row g-2 center-x">
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Cancel</button>
+      <form class="col modal-soft-delete-form f-0" method="POST" action="">
         <input type="hidden" name="submit" value="1">
-        <button class="button delete-user" type="submit"><i class="fas fa-user-slash"></i>Soft delete</button>
+        <div class="row">
+          <button class="col button delete-user g-col-0.5 center-y f-0" type="submit"><i class="fas fa-user-slash"></i>Delete user</button>
+        </div>
       </form>
-      <form class="modal-purge-form col f-0" method="POST" action="">
-        <input type="hidden" name="submit" value="1">
-        <button class="button purge-user" type="submit"><i class="fas fa-skull"></i>Permanently purge</button>
-      </form>
-      <button type="button" class="col button modal-close f-0"><i class="fas fa-xmark"></i>Cancel</button>
     </div>
   </div>
-</div>
+</dialog>

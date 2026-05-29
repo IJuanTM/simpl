@@ -1,57 +1,64 @@
+const base = window.location.pathname.split('/').slice(0, 3).join('/');
+
+function openModal(modal: HTMLElement): void {
+  modal.classList.remove('invisible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modal: HTMLElement): void {
+  modal.classList.add('invisible');
+  document.body.style.overflow = '';
+}
+
+function bindClose(modal: HTMLElement): void {
+  modal.addEventListener('click', e => {
+    if (e.target === modal) closeModal(modal);
+  });
+  modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => closeModal(modal)));
+}
+
 function initUserDeleteModal(): void {
   const modal = document.querySelector<HTMLElement>('[data-user-delete-modal]');
   if (!modal) return;
 
   const softDeleteForm = modal.querySelector<HTMLFormElement>('.modal-soft-delete-form');
-  const purgeForm = modal.querySelector<HTMLFormElement>('.modal-purge-form');
-  const titleEl = modal.querySelector<HTMLElement>('.modal-title');
-  const descriptionEl = modal.querySelector<HTMLElement>('.modal-description');
   const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
   const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
   const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
 
-  const base = window.location.pathname.split('/').slice(0, 3).join('/');
-
-  function openModal(id: string, username: string, email: string, isActive: boolean): void {
-    if (userIdEl) userIdEl.textContent = '#' + id;
-    if (usernameEl) usernameEl.textContent = username;
-    if (emailEl) emailEl.textContent = email;
-
-    if (softDeleteForm) softDeleteForm.action = base + '/delete?id=' + id;
-    if (purgeForm) purgeForm.action = base + '/purge?id=' + id;
-
-    if (softDeleteForm) softDeleteForm.style.display = isActive ? '' : 'none';
-
-    const title = isActive ? 'Delete user' : 'Purge user';
-    if (titleEl) titleEl.textContent = title;
-    modal.setAttribute('aria-label', title);
-
-    if (descriptionEl) descriptionEl.textContent = isActive
-      ? 'Choose how to remove this user:'
-      : 'This user is already deactivated. Permanently remove them?';
-
-    modal.classList.remove('invisible');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(): void {
-    modal.classList.add('invisible');
-    document.body.style.overflow = '';
-  }
-
   document.querySelectorAll<HTMLElement>('[data-modal-delete]').forEach(btn => {
-    btn.addEventListener('click', () => openModal(
-      btn.dataset.userId ?? '',
-      btn.dataset.userUsername ?? '',
-      btn.dataset.userEmail ?? '',
-      btn.dataset.userActive === '1'
-    ));
+    btn.addEventListener('click', () => {
+      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
+      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
+      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
+      if (softDeleteForm) softDeleteForm.action = `${base}/delete?id=${btn.dataset.userId}`;
+      openModal(modal);
+    });
   });
 
-  modal.addEventListener('click', e => {
-    if (e.target === modal) closeModal();
+  bindClose(modal);
+}
+
+function initUserPurgeModal(): void {
+  const modal = document.querySelector<HTMLElement>('[data-user-purge-modal]');
+  if (!modal) return;
+
+  const purgeForm = modal.querySelector<HTMLFormElement>('.modal-purge-form');
+  const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
+  const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
+  const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
+
+  document.querySelectorAll<HTMLElement>('[data-modal-purge]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
+      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
+      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
+      if (purgeForm) purgeForm.action = `${base}/purge?id=${btn.dataset.userId}`;
+      openModal(modal);
+    });
   });
-  modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeModal));
+
+  bindClose(modal);
 }
 
 function initUserRestoreModal(): void {
@@ -63,35 +70,17 @@ function initUserRestoreModal(): void {
   const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
   const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
 
-  const base = window.location.pathname.split('/').slice(0, 3).join('/');
-
-  function openModal(id: string, username: string, email: string): void {
-    if (userIdEl) userIdEl.textContent = '#' + id;
-    if (usernameEl) usernameEl.textContent = username;
-    if (emailEl) emailEl.textContent = email;
-    if (restoreForm) restoreForm.action = base + '/restore?id=' + id;
-
-    modal.classList.remove('invisible');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(): void {
-    modal.classList.add('invisible');
-    document.body.style.overflow = '';
-  }
-
   document.querySelectorAll<HTMLElement>('[data-modal-restore]').forEach(btn => {
-    btn.addEventListener('click', () => openModal(
-      btn.dataset.userId ?? '',
-      btn.dataset.userUsername ?? '',
-      btn.dataset.userEmail ?? ''
-    ));
+    btn.addEventListener('click', () => {
+      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
+      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
+      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
+      if (restoreForm) restoreForm.action = `${base}/restore?id=${btn.dataset.userId}`;
+      openModal(modal);
+    });
   });
 
-  modal.addEventListener('click', e => {
-    if (e.target === modal) closeModal();
-  });
-  modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeModal));
+  bindClose(modal);
 }
 
 function initRoleDeleteModal(): void {
@@ -106,45 +95,29 @@ function initRoleDeleteModal(): void {
   const warningEl = modal.querySelector<HTMLElement>('.modal-warning');
   const warningTextEl = modal.querySelector<HTMLElement>('.modal-warning-text');
 
-  const base = window.location.pathname.split('/').slice(0, 3).join('/');
-
-  function openModal(id: string, name: string, userCount: number): void {
-    if (roleIdEl) roleIdEl.textContent = '#' + id;
-    if (roleNameEl) roleNameEl.textContent = name;
-    if (userCountEl) userCountEl.textContent = String(userCount);
-    if (deleteForm) deleteForm.action = base + '/delete?id=' + id;
-
-    const blocked = userCount > 0;
-    if (deleteBtn) deleteBtn.inert = blocked;
-    if (warningEl) warningEl.style.display = blocked ? '' : 'none';
-    if (warningTextEl) warningTextEl.textContent = userCount + ' user' + (userCount !== 1 ? 's are' : ' is') + ' assigned to this role. Reassign or remove them before deleting.';
-
-    modal.classList.remove('invisible');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(): void {
-    modal.classList.add('invisible');
-    document.body.style.overflow = '';
-  }
-
   document.querySelectorAll<HTMLElement>('[data-modal-role-delete]').forEach(btn => {
-    btn.addEventListener('click', () => openModal(
-      btn.dataset.roleId ?? '',
-      btn.dataset.roleName ?? '',
-      parseInt(btn.dataset.roleUserCount ?? '0', 10)
-    ));
+    btn.addEventListener('click', () => {
+      const userCount = parseInt(btn.dataset.roleUserCount ?? '0', 10);
+      const blocked = userCount > 0;
+
+      if (roleIdEl) roleIdEl.textContent = btn.dataset.roleId ?? '';
+      if (roleNameEl) roleNameEl.textContent = btn.dataset.roleName ?? '';
+      if (userCountEl) userCountEl.textContent = String(userCount);
+      if (deleteForm) deleteForm.action = `${base}/delete?id=${btn.dataset.roleId}`;
+      if (deleteBtn) deleteBtn.inert = blocked;
+      if (warningEl) warningEl.classList.toggle('hidden', !blocked);
+      if (warningTextEl) warningTextEl.textContent = `${userCount} user${userCount !== 1 ? 's are' : ' is'} assigned to this role. Reassign or remove them before deleting.`;
+      openModal(modal);
+    });
   });
 
-  modal.addEventListener('click', e => {
-    if (e.target === modal) closeModal();
-  });
-  modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeModal));
+  bindClose(modal);
 }
 
 export const modalModule = {
   init(): void {
     initUserDeleteModal();
+    initUserPurgeModal();
     initUserRestoreModal();
     initRoleDeleteModal();
   }

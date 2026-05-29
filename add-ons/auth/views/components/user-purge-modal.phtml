@@ -1,7 +1,7 @@
-<dialog class="row modal-overlay center invisible" data-user-restore-modal aria-modal="true" aria-label="Restore user">
+<dialog class="row modal-overlay center invisible" data-user-purge-modal aria-modal="true" aria-label="Purge user">
   <div class="col modal f-col g-row-2">
     <div class="row center-y g-col-1">
-      <h3 class="col">Restore user</h3>
+      <h3 class="col">Purge user</h3>
       <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
 
@@ -9,7 +9,7 @@
       <div class="col f-col g-row-1">
         <div class="row">
           <div class="col">
-            <p>Are you sure you want to restore this user?</p>
+            <p>Are you sure you want to permanently purge this user?</p>
           </div>
         </div>
 
@@ -32,7 +32,7 @@
 
         <div class="row">
           <div class="col">
-            <p class="quote info">Restoring a user will reinstate their account and will allow the user to log in again.</p>
+            <p class="quote warning">Purging a user will permanently remove them from the database, with no way of recovery! Make sure this is really what you want!</p>
           </div>
         </div>
       </div>
@@ -40,10 +40,10 @@
 
     <div class="row g-2 center-x">
       <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Cancel</button>
-      <form class="col modal-restore-form f-0" method="POST" action="">
+      <form class="col modal-purge-form f-0" method="POST" action="">
         <input type="hidden" name="submit" value="1">
         <div class="row">
-          <button class="col button restore-user g-col-0.5 center-y f-0" type="submit"><i class="fas fa-wrench"></i>Restore user</button>
+          <button class="col button purge-user g-col-0.5 center-y f-0" type="submit"><i class="fas fa-skull"></i>Purge user</button>
         </div>
       </form>
     </div>

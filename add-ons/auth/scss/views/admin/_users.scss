@@ -89,7 +89,10 @@ section.users {
       color: var(--text-25);
     }
 
-    td.table-actions button.table-action {
+    td.table-actions *.table-action {
+      line-height: 1;
+      cursor: pointer;
+
       > i {
         font-size: .875rem;
       }

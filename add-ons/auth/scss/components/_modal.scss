@@ -1,92 +1,79 @@
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
-div.modal-overlay {
+dialog.modal-overlay {
   position: fixed;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  z-index: 5;
+  padding: 2rem;
   transition: visibility .15s ease-out, opacity .15s ease-out;
-  background-color: rgba(0, 0, 0, .5);
+  background-color: rgba(#000, .5);
   inset: 0;
 
   div.modal {
-    display: flex;
-    flex-direction: column;
-    width: calc(100% - 2rem);
-    max-width: 32rem;
     padding: 2rem;
     border: .125rem solid var(--border-muted);
     border-radius: .5rem;
     background-color: var(--bg-section);
-    row-gap: 1.5rem;
 
-    div.modal-header {
-      h4 {
-        margin: 0;
-      }
-
-      button.modal-close {
-        margin-left: auto;
-      }
+    @include breakpoint-up(sm) {
+      max-width: 48rem !important;
     }
 
     div.modal-body {
-      display: flex;
-      flex-direction: column;
-      row-gap: .75rem;
-
       p {
         font-size: .875rem;
-        margin: 0;
         color: var(--text-muted);
       }
 
       div.modal-user-info {
         font-size: .875rem;
-        display: flex;
-        flex-direction: column;
         padding: .75rem 1rem;
         border: .125rem solid var(--border-muted);
         border-radius: .25rem;
         background-color: var(--bg-accent);
-        row-gap: .375rem;
 
         span.text-muted {
-          min-width: 5rem;
-          color: var(--text-muted);
+          min-width: 6rem;
         }
       }
     }
 
-    div.modal-footer {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .75rem;
+    button.delete-user,
+    button.delete-role {
+      color: #FFF;
+      background-color: $red;
 
-      form {
-        max-width: unset !important;
+      @include shimmer(true, rgba(#FFF, .25));
+
+      &[inert] {
+        color: rgba(#FFF, .5) !important;
+        background-color: rgba($red, .5) !important;
       }
 
-      button.restore-user {
-        @include shimmer(true);
+      @include hover-focus {
+        background-color: $red-dark !important;
       }
+    }
 
-      button.purge-user, button.delete-role {
-        color: #FFF;
-        background-color: $red !important;
+    button.restore-user {
+      color: #FFF;
+      background-color: $green;
 
-        @include shimmer(true, rgba(#FFF, .25));
+      @include shimmer(true, rgba(#FFF, .25));
 
-        &[inert] {
-          color: rgba(#FFF, .5) !important;
-          background-color: rgba($red, .5) !important;
-        }
+      @include hover-focus {
+        background-color: $green-dark !important;
+      }
+    }
 
-        @include hover-focus {
-          background-color: $red-dark !important;
-        }
+    button.purge-user {
+      color: #FFF;
+      background-color: $magenta;
+
+      @include shimmer(true, rgba(#FFF, .25));
+
+      @include hover-focus {
+        background-color: $magenta-dark !important;
       }
     }
   }
