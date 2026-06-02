@@ -105,11 +105,11 @@ class LoginPage
      * Calculates lockout end timestamp based on failed attempts.
      *
      * @param string $column Database column to query (user_id or ip_address)
-     * @param mixed $value Value to match
-     * @param int $threshold Number of attempts before lockout
-     * @param int $base Base lockout duration in minutes
-     * @param int $max Maximum lockout duration in minutes
-     * @param int $window Time window in minutes to count attempts
+     * @param mixed  $value Value to match
+     * @param int    $threshold Number of attempts before lockout
+     * @param int    $base Base lockout duration in minutes
+     * @param int    $max Maximum lockout duration in minutes
+     * @param int    $window Time window in minutes to count attempts
      *
      * @return int|null Lockout end timestamp or null if not locked
      */
@@ -257,8 +257,8 @@ class LoginPage
                 'samesite' => 'Strict',
             ]);
 
-            // Store token in database
-            AuthController::createToken($user['id'], $token, 'remember', date('Y-m-d H:i:s', $timestamp));
+            // Store SHA-256 hash of the token in the DB; the raw token stays only in the cookie.
+            AuthController::createToken($user['id'], hash('sha256', $token), 'remember', date('Y-m-d H:i:s', $timestamp));
         }
 
         // Redirect to profile

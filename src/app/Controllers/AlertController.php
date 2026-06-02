@@ -20,16 +20,19 @@ class AlertController
      */
     public function __construct()
     {
-        // Remove expired alert from session
-        if (SessionController::has('alert') && SessionController::get('alert')['timeout'] < time()) SessionController::remove('alert');
+        // Remove expired alert from session; timeout=0 means never expire.
+        if (SessionController::has('alert')) {
+            $alert = SessionController::get('alert');
+            if ($alert['timeout'] !== 0 && $alert['timeout'] < time()) SessionController::remove('alert');
+        }
     }
 
     /**
      * Sets a global alert message in the session with a specified type and optional timeout.
      *
-     * @param string $message The alert message to be displayed.
+     * @param string    $message The alert message to be displayed.
      * @param AlertType $type The type of the alert, indicating its severity or nature.
-     * @param int $timeout Optional timeout in seconds after which the alert will expire. Defaults to 0, indicating no timeout.
+     * @param int       $timeout Seconds until the alert expires. 0 (default) means the alert persists until the next page load.
      *
      * @return void
      */
@@ -38,7 +41,7 @@ class AlertController
         SessionController::set('alert', [
             'message' => $message,
             'type' => $type->value,
-            'timeout' => time() + $timeout
+            'timeout' => $timeout > 0 ? time() + $timeout : 0
         ]);
     }
 }

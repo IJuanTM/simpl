@@ -22,7 +22,7 @@ class MailController
      * Variables in $vars are extracted into the template scope and may be
      * referenced using the template's variable names.
      *
-     * @param string $name Template filename without extension (e.g. 'verification')
+     * @param string              $name Template filename without extension (e.g. 'verification')
      * @param array<string,mixed> $vars Associative array of variables to expose to the template
      *
      * @return string|false Rendered HTML content or false when template not found
@@ -37,11 +37,10 @@ class MailController
             return false;
         }
 
-        // Make variables available in template and capture output
+        // Capture only this template's output in its own buffer, leaving the outer request buffer intact.
+        ob_start();
         extract($vars, EXTR_SKIP);
         include $templatePath;
-
-        // Returns the captured buffer contents
         return ob_get_clean();
     }
 
@@ -69,7 +68,9 @@ class MailController
 
         // If FastCGI is available, queue the email and send it after response
         if (function_exists('fastcgi_finish_request')) {
-            $_SESSION['pending_emails'][] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
+            $pending = SessionController::get('pending_emails') ?? [];
+            $pending[] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
+            SessionController::set('pending_emails', $pending);
 
             static $registered = false;
             if (!$registered) {
@@ -123,11 +124,12 @@ class MailController
      */
     public static function sendEmailAsync(): void
     {
-        if (!empty($_SESSION['pending_emails'])) {
-            foreach ($_SESSION['pending_emails'] as $email) {
+        $pending = SessionController::get('pending_emails');
+        if (!empty($pending)) {
+            SessionController::remove('pending_emails');
+            foreach ($pending as $email) {
                 self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message']);
             }
-            unset($_SESSION['pending_emails']);
         }
     }
 }

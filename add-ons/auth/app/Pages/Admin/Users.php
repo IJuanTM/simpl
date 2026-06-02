@@ -175,27 +175,17 @@ class Users
      */
     private function loadUsers(): void
     {
-        $this->allUsers = DB::select(SELECT: '*', FROM: 'users');
+        $this->allUsers = DB::query(
+            'SELECT u.*, r.name AS role_name,
+                (CASE WHEN EXISTS (SELECT 1 FROM tokens t WHERE t.user_id = u.id AND t.type = \'verification\') THEN 0 ELSE 1 END) AS is_verified
+            FROM users u
+            LEFT JOIN user_roles ur ON ur.user_id = u.id
+            LEFT JOIN roles r ON r.id = ur.role_id'
+        );
 
         foreach ($this->allUsers as $key => $user) {
-            $roleId = DB::single(
-                SELECT: 'role_id',
-                FROM: 'user_roles',
-                WHERE: [
-                    'user_id' => $user['id']
-                ]
-            )['role_id'] ?? null;
-            $roleName = $roleId ? DB::single(
-                SELECT: 'name',
-                FROM: 'roles',
-                WHERE: [
-                    'id' => $roleId
-                ]
-            )['name'] ?? null : null;
-
-            $this->allUsers[$key]['role'] = $roleName ? Role::tryFrom($roleName) : null;
-            $this->allUsers[$key]['role_name'] = $roleName;
-            $this->allUsers[$key]['is_verified'] = AuthController::isVerified($user['id']) ? 1 : 0;
+            $this->allUsers[$key]['role'] = isset($user['role_name']) ? Role::tryFrom($user['role_name']) : null;
+            $this->allUsers[$key]['is_verified'] = (int)$user['is_verified'];
         }
 
         $this->users = $this->allUsers;
@@ -259,7 +249,7 @@ class Users
      * Returns a normalized sort value for the given user and column.
      *
      * @param array<string, mixed> $user User row
-     * @param string $column Column key
+     * @param string               $column Column key
      *
      * @return int|string
      */

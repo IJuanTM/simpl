@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AlertController;
-use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
+use app\Controllers\RequestController;
 use app\Enums\AlertType;
 
 /**
@@ -42,10 +42,10 @@ class ContactPage
 
         // Send contact email
         $this->contactMail(
-            AppController::sanitize($_POST['name']),
-            AppController::sanitize($_POST['email']),
-            AppController::sanitize($_POST['subject']),
-            AppController::sanitize($_POST['message'])
+            RequestController::post('name'),
+            RequestController::post('email'),
+            RequestController::post('subject'),
+            RequestController::post('message')
         );
     }
 

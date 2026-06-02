@@ -42,12 +42,14 @@ class AuthController
      */
     public static function rememberLogin(string $rememberToken): void
     {
-        // Fetch token record for the supplied value and type "remember".
+        // Hash the cookie value to look up the stored hash in the DB.
+        $tokenHash = hash('sha256', $rememberToken);
+
         $token = DB::single(
             SELECT: '*',
             FROM: 'tokens',
             WHERE: [
-                'token' => $rememberToken,
+                'token' => $tokenHash,
                 'type' => 'remember'
             ]
         );
@@ -63,7 +65,7 @@ class AuthController
             DB::delete(
                 FROM: 'tokens',
                 WHERE: [
-                    'token' => $token['token']
+                    'token' => $tokenHash
                 ]
             );
 
@@ -71,8 +73,8 @@ class AuthController
             return;
         }
 
-        // Load the associated user and set session; abort on failure.
-        $user = self::getUserById($token['user_id']);
+        // Load the associated user (with role) and set session; abort on failure.
+        $user = self::getUserWithRole($token['user_id']);
         if (!$user || !self::setUserSession($user)) return;
 
         // Refresh expiration for token and cookie (uses REMEMBER_ME_DURATION days).
@@ -84,7 +86,7 @@ class AuthController
                 'expires' => $timestamp
             ],
             WHERE: [
-                'token' => $rememberToken
+                'token' => $tokenHash
             ]
         );
 
@@ -115,19 +117,22 @@ class AuthController
     }
 
     /**
-     * Retrieve a user row by id.
+     * Fetch a user row joined with their role name in a single query.
+     * Returns the user array with an extra 'role' key (the role name string, or null).
      *
      * @param int $id User primary key
      *
-     * @return array|null Database row as associative array or null if missing
+     * @return array|null
      */
-    public static function getUserById(int $id): array|null
+    public static function getUserWithRole(int $id): array|null
     {
-        return DB::single(
-            SELECT: '*',
-            FROM: 'users',
-            WHERE: compact('id')
-        ) ?: null;
+        return DB::query(
+            'SELECT u.*, r.name AS role FROM users u
+            LEFT JOIN user_roles ur ON ur.user_id = u.id
+            LEFT JOIN roles r ON r.id = ur.role_id
+            WHERE u.id = :id LIMIT 1',
+            [':id' => $id]
+        )[0] ?? null;
     }
 
     /**
@@ -141,7 +146,8 @@ class AuthController
      */
     public static function setUserSession(array $user): bool
     {
-        $role = self::getUserRole($user['id']);
+        // Accept a role already embedded in the user array (e.g. from getUserWithRole) to avoid an extra query.
+        $role = $user['role'] ?? self::getUserRole($user['id']);
 
         // If the account has no role assigned, log an error, clear session,
         // notify user and redirect.
@@ -187,6 +193,22 @@ class AuthController
     }
 
     /**
+     * Retrieve a user row by id.
+     *
+     * @param int $id User primary key
+     *
+     * @return array|null Database row as associative array or null if missing
+     */
+    public static function getUserById(int $id): array|null
+    {
+        return DB::single(
+            SELECT: '*',
+            FROM: 'users',
+            WHERE: compact('id')
+        ) ?: null;
+    }
+
+    /**
      * Ensure the current request is performed by an authenticated user and
      * optionally enforce role-based access.
      *
@@ -195,7 +217,7 @@ class AuthController
      * redirect the user to the change-password flow.
      *
      * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
-     * @param bool $allowPasswordChange If true, allow access even when the user must change password
+     * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
      */
@@ -210,7 +232,7 @@ class AuthController
         }
 
         // Re-validate user status and role from the database on every protected request so that deactivations and role changes take effect immediately.
-        $fresh = self::getUserById((int)$user['id']);
+        $fresh = self::getUserWithRole((int)$user['id']);
         if (!$fresh || !$fresh['is_active']) {
             SessionController::remove('user');
             AlertController::globalAlert('Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
@@ -218,7 +240,7 @@ class AuthController
             exit;
         }
 
-        $freshRole = self::getUserRole($fresh['id']);
+        $freshRole = $fresh['role'] ?? null;
 
         if (!$freshRole) {
             SessionController::remove('user');
@@ -229,7 +251,7 @@ class AuthController
         // Sync session when role has changed in the database.
         if ($freshRole !== $user['role']) {
             unset($fresh['password']);
-            SessionController::set('user', $fresh + ['role' => $freshRole]);
+            SessionController::set('user', $fresh);
             $user = SessionController::get('user');
         }
 
@@ -347,7 +369,7 @@ class AuthController
      * The token length is trimmed to $length. If $uppercase is true the
      * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int $length Number of characters to return
+     * @param int  $length Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
@@ -398,7 +420,7 @@ class AuthController
      * Return whether the account is verified (no pending verification token).
      * Either provide $id or $email (email will be resolved to id).
      *
-     * @param int|null $id
+     * @param int|null    $id
      * @param string|null $email
      *
      * @return bool True when verified, false otherwise
@@ -444,7 +466,7 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type. Comparison is case-insensitive.
      *
-     * @param int $id User id
+     * @param int    $id User id
      * @param string $token Token to check
      * @param string $type Token type (e.g. 'verification', 'reset', 'remember')
      *
@@ -461,8 +483,8 @@ class AuthController
             ]
         )['token'] ?? null;
 
-        // Use case-insensitive comparison so tokens are not bound to casing.
-        return $dbToken && strcasecmp($dbToken, $token) === 0;
+        // Constant-time comparison to prevent timing attacks; case-insensitive for human-readable tokens.
+        return $dbToken !== null && hash_equals(strtolower($dbToken), strtolower($token));
     }
 
     /**
@@ -599,7 +621,7 @@ class AuthController
      * Update a user's password and clear the "must_change_password" flag.
      * Password is hashed with configured algorithm/options constants.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $password Plaintext new password (will be hashed)
      *
      * @return void
@@ -620,9 +642,9 @@ class AuthController
      * Create or replace a token of the given type for a user. Existing tokens
      * of the same type for that user are removed before insertion.
      *
-     * @param int $userId
-     * @param string $token
-     * @param string $type
+     * @param int         $userId
+     * @param string      $token
+     * @param string      $type
      * @param string|null $expires Optional expiry timestamp value
      *
      * @return void
@@ -653,7 +675,7 @@ class AuthController
     /**
      * Remove a token record for a user by type.
      *
-     * @param int $userId
+     * @param int    $userId
      * @param string $type
      *
      * @return void
@@ -674,8 +696,8 @@ class AuthController
      * succeeded. The user_id will be resolved from the provided identifier
      * (email or username) when possible.
      *
-     * @param string $identifier
-     * @param bool $success
+     * @param string      $identifier
+     * @param bool        $success
      * @param string|null $failedReason
      *
      * @return void
@@ -730,10 +752,10 @@ class AuthController
      * the user to the verification page. Displays user feedback alerts
      * depending on the mailer result.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $to
      * @param string $code
-     * @param bool $isResend
+     * @param bool   $isResend
      *
      * @return void
      */
@@ -767,7 +789,7 @@ class AuthController
     /**
      * Send a password reset email with a tokenized link to the reset form.
      *
-     * @param int $id
+     * @param int    $id
      * @param string $to
      * @param string $token
      *

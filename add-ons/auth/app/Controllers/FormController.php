@@ -10,7 +10,8 @@ use app\Enums\AlertType;
  * FormController (auth add-on)
  *
  * Utilities for validating form input and queuing alert markup for display.
- * Clears invalid $_POST fields on validation failure to prevent reuse.
+ * Reads raw POST values via RequestController::rawPost() for validation, but still
+ * writes directly to $_POST to clear invalid fields so views do not repopulate them.
  */
 class FormController
 {
@@ -21,62 +22,64 @@ class FormController
      * The method mutates $_POST[$field] to an empty string on validation
      * failures to avoid re-using invalid values later in request handling.
      *
-     * Supported rules (examples): 'required', 'minLength', 'maxLength', 'minValue', 'maxValue', 'type' (number|email).
+     * Positional rules: 'required'
+     * Keyed rules: 'minLength' => int, 'maxLength' => int, 'minValue' => mixed, 'maxValue' => mixed, 'type' => 'number'|'email'
      *
-     * @param string $field Field name expected in $_POST
-     * @param array<string,mixed> $rules Validation rules and parameters
+     * @param string                  $field Field name expected in $_POST
+     * @param array<int|string,mixed> $rules Validation rules and parameters
      *
      * @return bool True when validation passes, false on first failure
      */
     public static function validate(string $field, array $rules): bool
     {
+        $value = RequestController::rawPost($field);
+
         // Convert field identifier to a user-friendly label for messages.
         $fieldName = str_replace('-', ' ', $field);
 
         // Required check: field must be set and not empty.
-        if (empty($_POST[$field]) && in_array('required', $rules, true)) {
+        if (empty($value) && in_array('required', $rules, true)) {
             static::addAlert("Please enter an input in the $fieldName field!", AlertType::WARNING);
             return false;
         }
 
         // Minimum length for strings.
-        if (in_array('minLength', $rules, true) && strlen($_POST[$field]) < $rules['minLength']) {
-            // Clear invalid value to avoid reuse.
+        if (isset($rules['minLength']) && strlen((string)$value) < $rules['minLength']) {
             $_POST[$field] = '';
             static::addAlert("The input of the $fieldName field is too short!", AlertType::WARNING);
             return false;
         }
 
         // Maximum length for strings.
-        if (in_array('maxLength', $rules, true) && strlen($_POST[$field]) > $rules['maxLength']) {
+        if (isset($rules['maxLength']) && strlen((string)$value) > $rules['maxLength']) {
             $_POST[$field] = '';
             static::addAlert("The input of the $fieldName field is too long!", AlertType::WARNING);
             return false;
         }
 
         // Minimum numeric value.
-        if (in_array('minValue', $rules, true) && $_POST[$field] < $rules['minValue']) {
+        if (isset($rules['minValue']) && $value < $rules['minValue']) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is too low!", AlertType::WARNING);
             return false;
         }
 
         // Maximum numeric value.
-        if (in_array('maxValue', $rules, true) && $_POST[$field] > $rules['maxValue']) {
+        if (isset($rules['maxValue']) && $value > $rules['maxValue']) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is too high!", AlertType::WARNING);
             return false;
         }
 
         // Numeric type enforcement.
-        if (in_array('type', $rules, true) && $rules['type'] === 'number' && !is_numeric($_POST[$field])) {
+        if (isset($rules['type']) && $rules['type'] === 'number' && !is_numeric($value)) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is not a number!", AlertType::WARNING);
             return false;
         }
 
         // Email format validation.
-        if (in_array('type', $rules, true) && $rules['type'] === 'email' && !filter_var($_POST[$field], FILTER_VALIDATE_EMAIL)) {
+        if (isset($rules['type']) && $rules['type'] === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is not a valid email address!", AlertType::WARNING);
             return false;
@@ -91,15 +94,15 @@ class FormController
      * by calling formAlerts(). The method accepts an optional timeout
      * attribute that front-end code may use to auto-dismiss the alert.
      *
-     * @param string $message The message text to show
+     * @param string    $message The message text to show
      * @param AlertType $type Visual type/style for the alert
-     * @param int|null $timeout Optional auto-dismiss timeout in milliseconds
+     * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void
      */
     public static function addAlert(string $message, AlertType $type, ?int $timeout = null): void
     {
-        static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">$message</div>";
+        static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">" . htmlspecialchars($message, ENT_QUOTES | ENT_HTML5, 'UTF-8') . "</div>";
     }
 
     /**
@@ -132,15 +135,18 @@ class FormController
      */
     public static function validatePasswords(string $passwordField, string $confirmField): bool
     {
+        $password = RequestController::rawPost($passwordField);
+        $confirm = RequestController::rawPost($confirmField);
+
         // Validate password against policy (this adds alert if invalid)
-        if (!AuthController::validatePassword($_POST[$passwordField])) {
+        if (!AuthController::validatePassword((string)$password)) {
             $_POST[$passwordField] = '';
             $_POST[$confirmField] = '';
             return false;
         }
 
         // Check if passwords match
-        if ($_POST[$passwordField] !== $_POST[$confirmField]) {
+        if ($password !== $confirm) {
             $_POST[$passwordField] = '';
             $_POST[$confirmField] = '';
             static::addAlert('The entered passwords do not match!', AlertType::WARNING);

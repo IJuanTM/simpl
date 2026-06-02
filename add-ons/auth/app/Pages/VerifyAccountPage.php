@@ -9,6 +9,7 @@ use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
+use app\Controllers\RequestController;
 use app\Enums\AlertType;
 use app\Models\Page;
 
@@ -97,20 +98,22 @@ class VerifyAccountPage
      */
     private function post(int $userId): void
     {
+        $code = RequestController::rawPost('code');
+
         // Ensure a code was entered
-        if (empty($_POST['code'])) {
+        if (empty($code)) {
             FormController::addAlert('Please enter the verification code received in your mail!', AlertType::WARNING);
             return;
         }
 
         // Validate code length
-        if (strlen($_POST['code']) > 8) {
+        if (strlen($code) > 8) {
             FormController::addAlert('The verification code is too long!', AlertType::WARNING);
             return;
         }
 
         // Verify code is correct
-        if (!AuthController::checkToken($userId, $_POST['code'], 'verification')) {
+        if (!AuthController::checkToken($userId, $code, 'verification')) {
             FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
             return;
         }

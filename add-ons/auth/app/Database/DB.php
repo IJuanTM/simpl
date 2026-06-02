@@ -20,10 +20,10 @@ class DB
     /**
      * This method is for selecting records from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
      *
-     * @param string|array $SELECT
-     * @param string $FROM
-     * @param array $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
-     * @param array $WHERE
+     * @param string|array      $SELECT
+     * @param string            $FROM
+     * @param array             $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
+     * @param array             $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
      *
@@ -87,7 +87,7 @@ class DB
      * Multiple joins: array of the above format.
      *
      * @param string $table Sanitized main table name
-     * @param array $join
+     * @param array  $join
      *
      * @return string
      */
@@ -109,7 +109,7 @@ class DB
     /**
      * This method is for constructing the WHERE clause of an SQL query.
      *
-     * @param array $where
+     * @param array  $where
      * @param string $prefix
      *
      * @return array
@@ -205,7 +205,7 @@ class DB
      * This method is for preparing and executing a query with optional parameters.
      *
      * @param string $query
-     * @param array $params
+     * @param array  $params
      *
      * @return object
      */
@@ -291,10 +291,10 @@ class DB
     /**
      * This method is for selecting a single record from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
      *
-     * @param string|array $SELECT
-     * @param string $FROM
-     * @param array $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
-     * @param array $WHERE
+     * @param string|array      $SELECT
+     * @param string            $FROM
+     * @param array             $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
+     * @param array             $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
      *
@@ -319,7 +319,7 @@ class DB
      * This method is for inserting records into a table with specific VALUES.
      *
      * @param string $INTO
-     * @param array $VALUES
+     * @param array  $VALUES
      *
      * @return bool
      */
@@ -343,8 +343,8 @@ class DB
      * This method is for updating records in a table with specific SET values and WHERE conditions.
      *
      * @param string $UPDATE
-     * @param array $SET
-     * @param array $WHERE
+     * @param array  $SET
+     * @param array  $WHERE
      *
      * @return bool
      */
@@ -374,7 +374,7 @@ class DB
      * This method is for deleting records from a table with specific WHERE conditions.
      *
      * @param string $FROM
-     * @param array $WHERE
+     * @param array  $WHERE
      *
      * @return bool
      */
@@ -397,7 +397,7 @@ class DB
      * This method is for checking the existence of a record in a table with specific WHERE conditions.
      *
      * @param string $FROM
-     * @param array $WHERE
+     * @param array  $WHERE
      *
      * @return bool
      */
@@ -416,8 +416,8 @@ class DB
      * This method is for counting rows in a table with optional WHERE conditions.
      * If $GROUP_BY is provided, the count of groups is returned.
      *
-     * @param string $FROM
-     * @param array $WHERE
+     * @param string            $FROM
+     * @param array             $WHERE
      * @param string|array|null $GROUP_BY
      *
      * @return int
@@ -481,7 +481,7 @@ class DB
      * This method is for executing a raw query and returning the result set as an array.
      *
      * @param string $query
-     * @param array $params
+     * @param array  $params
      *
      * @return array
      */

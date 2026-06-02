@@ -40,32 +40,15 @@ class UserPage
             return;
         }
 
-        // Load user from database
-        $user = AuthController::getUserById($id);
+        // Load user with role in a single JOIN query.
+        $user = AuthController::getUserWithRole($id);
 
         if (!$user) {
             PageController::error(ErrorCode::NOT_FOUND);
             return;
         }
 
-        // Resolve role
-        $roleId = DB::single(
-            SELECT: 'role_id',
-            FROM: 'user_roles',
-            WHERE: [
-                'user_id' => $user['id']
-            ]
-        )['role_id'] ?? null;
-
-        $roleName = $roleId ? DB::single(
-            SELECT: 'name',
-            FROM: 'roles',
-            WHERE: [
-                'id' => $roleId
-            ]
-        )['name'] ?? null : null;
-
-        $user['role'] = $roleName ? Role::tryFrom($roleName) : null;
+        $user['role'] = isset($user['role']) ? Role::tryFrom($user['role']) : null;
         $user['is_verified'] = AuthController::isVerified($user['id']);
 
         if ($user['username'] !== null) $user['username'] = AppController::sanitize($user['username']);

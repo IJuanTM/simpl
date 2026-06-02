@@ -50,6 +50,7 @@ class AppController
      * Retrieves the contents of an SVG file by its name.
      *
      * @param string $data
+     *
      * @return string The SVG file contents as a string, or a boolean false if the file does not exist.
      */
     public static function sanitize(string $data): string
