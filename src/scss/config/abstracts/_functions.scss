@@ -1,5 +1,34 @@
 @use "sass:map";
 @use "sass:math";
+@use "sass:list";
+
+$z-layers: (
+  "background": (-1, -100),
+  "content": (0, 99),
+  "layout": (100, 199),
+  "modal": (200, 299),
+  "tooltip": (300, 399),
+  "overlay": (400, 499),
+  "top": (500, 1000),
+) !default;
+
+@function layer($layer, $offset: 0) {
+  $config: map.get($z-layers, $layer);
+  $start: list.nth($config, 1);
+  $max: math.abs(list.nth($config, 2) - $start);
+
+  @if $offset > $max {
+    @error "layer('#{$layer}') offset #{$offset} exceeds max #{$max}.";
+  }
+
+  @if $start < 0 {
+    @return $start - $offset;
+  }
+
+  @return $start + $offset;
+}
+
+// ---------------------------------------------------------------- //
 
 @function shade($theme, $keys: null) {
   @if $keys == null {

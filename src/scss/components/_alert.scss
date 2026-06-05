@@ -1,3 +1,4 @@
+@use "../config/abstracts/functions" as *;
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
@@ -14,7 +15,7 @@ div.alert {
 
   &.global {
     position: fixed;
-    z-index: 4;
+    z-index: layer("overlay", 50);
     bottom: 5rem;
     left: 0;
     margin: 2rem;

@@ -1,4 +1,6 @@
 @use "sass:map";
+
+@use "config/abstracts/functions" as *;
 @use "config/abstracts/mixins" as *;
 @use "config/vars/colors" as *;
 @use "config/vars/fonts" as *;
@@ -32,7 +34,7 @@ body {
 noscript {
   font-size: 1.25rem;
   position: fixed;
-  z-index: 5;
+  z-index: layer("top");
   left: 0;
   padding: 2rem;
   color: $red;

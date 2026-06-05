@@ -1,14 +1,15 @@
+@use "../../config/abstracts/functions" as *;
 @use "../../config/abstracts/mixins" as *;
 @use "../../config/vars/colors" as *;
 @use "../../config/vars/sizes" as *;
 
 header {
   position: relative;
-  z-index: 2;
+  z-index: layer("layout");
 
   > div.navbar {
     position: relative;
-    z-index: 2;
+    z-index: layer("layout");
     height: $header-height;
     padding: 2rem 3rem 1rem;
     border-bottom: .125rem solid var(--border-muted);
@@ -20,7 +21,7 @@ header {
     }
 
     > div.nav-brand {
-      z-index: 3;
+      z-index: layer("layout", 10);
       padding: 0 1rem;
 
       a.nav-logo {
@@ -225,7 +226,7 @@ header {
     }
 
     > div.nav-options {
-      z-index: 3;
+      z-index: layer("content", 10);
 
       @include breakpoint-up(lg) {
         flex: 0 0 auto;

@@ -1,9 +1,10 @@
+@use "../../config/abstracts/functions" as *;
 @use "../../config/abstracts/mixins" as *;
 @use "../../config/vars/sizes" as *;
 
 footer {
   position: relative;
-  z-index: 2;
+  z-index: layer("layout");
 
   > div.row {
     font-size: .875rem;
