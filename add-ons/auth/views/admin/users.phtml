@@ -90,7 +90,7 @@ use app\Models\Url;
             <div class="col end-x">
               <div class="row col-toggle-wrapper f-nowrap g-col-1">
                 <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
-                <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button"><i class="fas fa-columns"></i>Columns</button>
+                <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" data-cooldown="150"><i class="fas fa-columns"></i>Columns</button>
                 <div class="col col-toggle-panel">
 
                   <?php foreach ($this->pageObj->visibleColumns as $index => $column) : ?>
@@ -148,6 +148,7 @@ use app\Models\Url;
 
                                 <a class="col table-action f-0" href="<?= Url::to('admin/users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
                                 <button class="col table-action delete f-0" type="button"
+                                        data-cooldown="300"
                                         data-modal-delete
                                         data-user-id="<?= $user['id'] ?>"
                                         data-user-username="<?= $user['username'] ?? '-' ?>"
@@ -159,6 +160,7 @@ use app\Models\Url;
                               <?php else : ?>
 
                                 <button class="col table-action restore f-0" type="button"
+                                        data-cooldown="300"
                                         data-modal-restore
                                         data-user-id="<?= $user['id'] ?>"
                                         data-user-username="<?= $user['username'] ?? '-' ?>"
@@ -166,6 +168,7 @@ use app\Models\Url;
                                   <i class="fas fa-wrench"></i>
                                 </button>
                                 <button class="col table-action purge f-0" type="button"
+                                        data-cooldown="300"
                                         data-modal-purge
                                         data-user-id="<?= $user['id'] ?>"
                                         data-user-username="<?= $user['username'] ?? '-' ?>"

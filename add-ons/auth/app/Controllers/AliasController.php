@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace app\Controllers;
 
 /**
- * Add-on AliasController (auth)
- *
  * Inserted into the main AliasController bootstrap by the add-on install script.
  */
 class AliasController

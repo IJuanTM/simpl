@@ -7,10 +7,9 @@ namespace app\Controllers;
 use app\Enums\AlertType;
 
 /**
- * FormController (auth add-on)
- *
  * Utilities for validating form input and queuing alert markup for display.
- * Reads raw POST values via RequestController::rawPost() for validation, but still
+ *
+ * Reads raw POST values via RequestController::rawPost() for validation, but
  * writes directly to $_POST to clear invalid fields so views do not repopulate them.
  */
 class FormController
@@ -95,7 +94,7 @@ class FormController
      * attribute that front-end code may use to auto-dismiss the alert.
      *
      * @param string    $message The message text to show
-     * @param AlertType $type Visual type/style for the alert
+     * @param AlertType $type    Visual type/style for the alert
      * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void

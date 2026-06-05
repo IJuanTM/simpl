@@ -38,6 +38,7 @@ use app\Models\Url;
                       <div class="row g-col-0.5 center-y">
                         <a class="col table-action f-0" href="<?= Url::to('admin/roles/edit?id=' . $role['id']) ?>"><i class="fas fa-pen"></i></a>
                         <button class="col table-action delete f-0" type="button"
+                                data-cooldown="300"
                                 data-modal-role-delete
                                 data-role-id="<?= $role['id'] ?>"
                                 data-role-name="<?= $role['name'] ?>"

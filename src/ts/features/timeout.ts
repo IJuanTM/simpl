@@ -1,12 +1,22 @@
 export const timeoutModule = {
-  handleAlertCollapse: (item: HTMLElement): void => {
-    const height = item.scrollHeight;
-    item.style.maxHeight = `${height}px`;
+  lock: (item: HTMLElement, ms?: number): void => {
+    item.setAttribute('inert', '');
+    if (ms) setTimeout(() => timeoutModule.unlock(item), ms);
+  },
 
+  unlock: (item: HTMLElement): void => {
+    if (item.classList.contains('alert')) {
+      if (item.classList.contains('global')) item.classList.add('invisible');
+      else timeoutModule.collapseAlert(item);
+    } else {
+      item.removeAttribute('inert');
+    }
+  },
+
+  collapseAlert: (item: HTMLElement): void => {
+    item.style.maxHeight = `${item.scrollHeight}px`;
     void item.offsetHeight;
-
     item.classList.add('collapsing');
-
     item.addEventListener('transitionend', function handler(e) {
       if (e.propertyName === 'max-height') {
         item.remove();
@@ -15,17 +25,19 @@ export const timeoutModule = {
     });
   },
 
-  process: (item: HTMLElement): void => {
-    if (item.classList.contains('alert')) {
-      if (item.classList.contains('global')) item.classList.add('invisible');
-      else timeoutModule.handleAlertCollapse(item);
-    } else item.removeAttribute('inert');
-  },
-
   onLoad: (): void => {
-    document.querySelectorAll('[data-timeout]').forEach((item: Element) => {
-      const timeout = parseInt((item as HTMLElement).getAttribute('data-timeout') || '0');
-      setTimeout(() => timeoutModule.process(item as HTMLElement), timeout);
+    document.querySelectorAll<HTMLElement>('[data-timeout]').forEach(item => {
+      const ms = parseInt(item.getAttribute('data-timeout') ?? '0');
+      setTimeout(() => timeoutModule.unlock(item), ms);
     });
+
+    document.querySelectorAll<HTMLButtonElement>('button[data-cooldown]').forEach(button => {
+      button.addEventListener('click', () => {
+        const ms = parseInt(button.dataset.cooldown ?? '0');
+        if (ms > 0) timeoutModule.lock(button, ms);
+      });
+    });
+
+    document.querySelectorAll<HTMLFormElement>('form').forEach(form => form.addEventListener('submit', () => form.querySelector<HTMLButtonElement>('button[type="submit"]')?.setAttribute('inert', '')));
   }
 };

@@ -19,7 +19,7 @@ use app\Database\Migrations\Tables\CreateUsersTable;
  */
 class DatabaseMigrator
 {
-    // Order matters — tables with foreign keys must come after the tables they reference
+    // Order matters, migrations with foreign keys must come after the tables they reference
     private static array $migrations = [
         CreateUsersTable::class,
         CreateLoginAttemptsTable::class,

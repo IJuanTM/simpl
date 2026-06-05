@@ -18,7 +18,7 @@ use Random\RandomException;
  */
 class DatabaseSeeder
 {
-    // Order matters — seeders that depend on other seeded data must come after their dependencies
+    // Order matters, seeders with foreign keys must come after the tables they reference
     private static array $seeders = [
         RolesSeeder::class,
         UsersSeeder::class,

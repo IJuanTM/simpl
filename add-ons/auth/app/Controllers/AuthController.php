@@ -13,14 +13,12 @@ use app\Utils\Log;
 use Exception;
 
 /**
- * Authentication controller (add-on)
+ * Provides user authentication helpers: session management, token creation
+ * and validation, password handling, and email notifications.
  *
- * Provides user authentication helpers used by the auth add-on: session
- * management, token creation/validation, password handling, and email
- * notifications. The class uses direct DB access and several PHP superglobals
- * (e.g. $_COOKIE, $_SERVER) which makes unit testing harder; consider
- * refactoring into smaller services (UserRepository, TokenService, Mailer)
- * and injecting them for improved testability in the future.
+ * Uses direct DB access and PHP superglobals ($_COOKIE, $_SERVER), which
+ * makes unit testing harder. Consider refactoring into smaller services
+ * (UserRepository, TokenService, Mailer) with dependency injection.
  */
 class AuthController
 {
@@ -54,7 +52,7 @@ class AuthController
             ]
         );
 
-        // No matching token — clear cookie and stop.
+        // No token found: clear cookie and abort.
         if (!$token) {
             self::clearRememberCookie();
             return;

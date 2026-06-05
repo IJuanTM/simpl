@@ -14,7 +14,7 @@ class Scheduler
 
     public static function run(bool $test = false): void
     {
-        $title = 'Scheduler — ' . date('Y-m-d H:i:s');
+        $title = 'Scheduler - ' . date('Y-m-d H:i:s');
         if ($test) $title .= ' [TEST]';
 
         Console::box($title);

@@ -172,7 +172,7 @@ class Roles
         );
 
         if ($userCount > 0) {
-            FormController::addAlert("Cannot delete this role — $userCount user" . ($userCount !== 1 ? 's are' : ' is') . " assigned to it. Reassign them first.", AlertType::WARNING);
+            FormController::addAlert("Cannot delete this role - $userCount user" . ($userCount !== 1 ? 's are' : ' is') . " assigned to it. Reassign them first.", AlertType::WARNING);
             return;
         }
 

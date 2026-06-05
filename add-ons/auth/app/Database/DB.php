@@ -22,7 +22,7 @@ class DB
      *
      * @param string|array      $SELECT
      * @param string            $FROM
-     * @param array             $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
+     * @param array             $JOIN
      * @param array             $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
@@ -293,7 +293,7 @@ class DB
      *
      * @param string|array      $SELECT
      * @param string            $FROM
-     * @param array             $JOIN Single join: ['from_col', ['join_table', 'join_col']] — multiple: array of those
+     * @param array             $JOIN
      * @param array             $WHERE
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
@@ -444,7 +444,7 @@ class DB
     }
 
     /**
-     * This method is for executing a raw DDL statement (no user input — migration use only).
+     * This method is for executing a raw DDL statement.
      *
      * @param string $sql
      *

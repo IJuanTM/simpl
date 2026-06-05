@@ -7,13 +7,13 @@ namespace app\Controllers;
 use app\Utils\Log;
 
 /**
- * MailController (auth add-on)
+ * Provides email templating and delivery helpers.
  *
- * Provides simple email templating and sending helpers. The `template()`
- * method extracts variables into the template scope and captures the output
- * buffer — be careful with variable collisions in templates. Consider using a
- * lightweight templating engine or encapsulating template variables in an
- * isolated scope for improved safety.
+ * When FastCGI is available, outgoing mail is queued and sent after the
+ * response via register_shutdown_function. Otherwise delivery is synchronous.
+ *
+ * Note: template() extracts variables directly into the include scope,
+ * so watch for variable name collisions in templates.
  */
 class MailController
 {
@@ -50,11 +50,11 @@ class MailController
      * client (via register_shutdown_function). Otherwise sending is
      * performed synchronously.
      *
-     * @param string $senderName Display name of the sender
-     * @param string $to Recipient email address
+     * @param string $senderName  Display name of the sender
+     * @param string $to          Recipient email address
      * @param string $senderEmail Sender email address
-     * @param string $subject Email subject
-     * @param string $message HTML message body
+     * @param string $subject     Email subject
+     * @param string $message     HTML message body
      *
      * @return bool True when the message was sent or queued successfully
      */
@@ -89,11 +89,11 @@ class MailController
      * Perform the actual email delivery using PHP's mail() function.
      * Constructs typical HTML headers and logs any failure.
      *
-     * @param string $senderName Display name of the sender
-     * @param string $to Recipient email address
+     * @param string $senderName  Display name of the sender
+     * @param string $to          Recipient email address
      * @param string $senderEmail Sender email address
-     * @param string $subject Email subject
-     * @param string $message HTML message body
+     * @param string $subject     Email subject
+     * @param string $message     HTML message body
      *
      * @return bool True on success, false on failure
      */
