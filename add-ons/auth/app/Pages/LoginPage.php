@@ -78,7 +78,7 @@ class LoginPage
      * Calculates lockout duration for user and IP address.
      *
      * @param string $identifier Username or email
-     * @param string $ip IP address
+     * @param string $ip         IP address
      *
      * @return array [seconds, minutes, type] lockout information
      */
@@ -104,12 +104,12 @@ class LoginPage
     /**
      * Calculates lockout end timestamp based on failed attempts.
      *
-     * @param string $column Database column to query (user_id or ip_address)
-     * @param mixed  $value Value to match
+     * @param string $column    Database column to query (user_id or ip_address)
+     * @param mixed  $value     Value to match
      * @param int    $threshold Number of attempts before lockout
-     * @param int    $base Base lockout duration in minutes
-     * @param int    $max Maximum lockout duration in minutes
-     * @param int    $window Time window in minutes to count attempts
+     * @param int    $base      Base lockout duration in minutes
+     * @param int    $max       Maximum lockout duration in minutes
+     * @param int    $window    Time window in minutes to count attempts
      *
      * @return int|null Lockout end timestamp or null if not locked
      */
@@ -261,8 +261,8 @@ class LoginPage
             AuthController::createToken($user['id'], hash('sha256', $token), 'remember', date('Y-m-d H:i:s', $timestamp));
         }
 
-        // Redirect to profile
-        PageController::redirect('profile');
+        // Redirect the user
+        AuthController::intendedRedirect('profile');
         AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
     }
 }

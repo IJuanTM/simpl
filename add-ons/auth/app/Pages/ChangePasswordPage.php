@@ -7,7 +7,6 @@ namespace app\Pages;
 use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
-use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Enums\AlertType;
 
@@ -77,8 +76,8 @@ class ChangePasswordPage
         $user['must_change_password'] = 0;
         SessionController::set('user', $user);
 
-        // Redirect with success message
-        PageController::redirect('profile');
+        // Redirect the user
+        AuthController::intendedRedirect('profile');
         AlertController::globalAlert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
     }
 }

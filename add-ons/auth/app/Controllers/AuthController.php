@@ -209,14 +209,32 @@ class AuthController
     }
 
     /**
+     * Redirect to the originally requested URL saved by requireAuth(), or to
+     * $fallback when none was stored. Clears the stored URL after use so it
+     * cannot be replayed by a second call.
+     *
+     * @param string $fallback Route to use when no intended URL is in session
+     *
+     * @return void
+     */
+    public static function intendedRedirect(string $fallback = REDIRECT): void
+    {
+        // Get the intended URL from session or fallback to the provided default.
+        $url = SessionController::get('intended_url') ?? $fallback;
+        SessionController::remove('intended_url');
+        PageController::redirect($url);
+    }
+
+    /**
      * Ensure the current request is performed by an authenticated user and
      * optionally enforce role-based access.
      *
-     * If the user is unauthenticated, an unauthorized error is rendered.
+     * If the user is unauthenticated, the intended URL is stored in session
+     * and the user is redirected to the login page.
      * If password change is required and not explicitly allowed this will
      * redirect the user to the change-password flow.
      *
-     * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
+     * @param Role[]|null $allowedRoles        Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
@@ -226,8 +244,12 @@ class AuthController
         $user = SessionController::get('user');
 
         if (!$user) {
-            // Not authenticated — render 401 with requested URI for context.
-            PageController::error(ErrorCode::UNAUTHORIZED, $_SERVER['REQUEST_URI']);
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+
+            // Save the user's indended url to redirect back to after they login.
+            if ($uri && !preg_match('#^/(login|logout|register)(/|$)#i', $uri)) SessionController::set('intended_url', $uri);
+
+            PageController::redirect('login');
             exit;
         }
 
@@ -258,6 +280,11 @@ class AuthController
         // If the account requires a password change and this route doesn't
         // explicitly allow that, force a redirect to the change-password page.
         if (!$allowPasswordChange && $user['must_change_password']) {
+            $uri = $_SERVER['REQUEST_URI'] ?? '';
+
+            // Save the user's indended url to redirect back to after they changed their password.
+            if ($uri && !preg_match('#^/(change-password|login|logout)(/|$)#i', $uri)) SessionController::set('intended_url', $uri);
+
             PageController::redirect('change-password');
             AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
             exit;
@@ -369,7 +396,7 @@ class AuthController
      * The token length is trimmed to $length. If $uppercase is true the
      * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int  $length Number of characters to return
+     * @param int  $length    Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
@@ -466,9 +493,9 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type. Comparison is case-insensitive.
      *
-     * @param int    $id User id
+     * @param int    $id    User id
      * @param string $token Token to check
-     * @param string $type Token type (e.g. 'verification', 'reset', 'remember')
+     * @param string $type  Token type (e.g. 'verification', 'reset', 'remember')
      *
      * @return bool True if tokens match
      */
