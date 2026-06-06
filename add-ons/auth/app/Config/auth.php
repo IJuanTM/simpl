@@ -29,6 +29,7 @@ const RESET_TOKEN_LENGTH = 32;                // characters
 const GENERATED_PASSWORD_LENGTH = 12;         // characters; for admin-created accounts
 const PASSWORD_RESET_RESEND_TIMEOUT = 60;     // seconds
 const VERIFICATION_RESEND_TIMEOUT = 60;       // seconds
+const CONTACT_RESEND_TIMEOUT = 60;            // seconds
 
 // Inactive user cleanup
 const UNVERIFIED_USER_DEACTIVATION_AFTER = 1; // days

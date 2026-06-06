@@ -59,7 +59,7 @@ class VerifyAccountPage
         // If code provided in URL, verify immediately
         if (!empty($code)) {
             // Validate code length
-            if (strlen($code) > 8) {
+            if (strlen($code) > VERIFICATION_TOKEN_LENGTH) {
                 FormController::addAlert('The verification code given in the url is too long!', AlertType::WARNING);
                 return;
             }
@@ -113,7 +113,7 @@ class VerifyAccountPage
         }
 
         // Validate code length
-        if (strlen($code) > 8) {
+        if (strlen($code) > VERIFICATION_TOKEN_LENGTH) {
             FormController::addAlert('The verification code is too long!', AlertType::WARNING);
             return;
         }

@@ -46,7 +46,7 @@ class ContactPage
         ) return;
 
         // Rate limit after validation to avoid consuming slots on invalid input
-        if (!RateLimiter::attempt('contact', 1, 60)) {
+        if (!RateLimiter::attempt('contact', 1, CONTACT_RESEND_TIMEOUT)) {
             FormController::addAlert('Too many submissions. Please wait a moment before trying again.', AlertType::WARNING);
             return;
         }

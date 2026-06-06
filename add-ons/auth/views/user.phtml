@@ -65,7 +65,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group">
               <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-              <input class="col" id="username" type="text" name="username" maxlength="100" placeholder="Enter username" value="<?= RequestController::post('username') ?? $this->pageObj->user['username'] ?? '' ?>">
+              <input class="col" id="username" type="text" name="username" maxlength="<?= MAX_USERNAME_LENGTH ?>" placeholder="Enter username" value="<?= RequestController::post('username') ?? $this->pageObj->user['username'] ?? '' ?>">
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ use app\Models\Url;
               </div>
               <div class="row input-group">
                 <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
-                <input class="col" id="first_name" type="text" name="first_name" maxlength="100" placeholder="Enter first name" value="<?= RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '' ?>">
+                <input class="col" id="first_name" type="text" name="first_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter first name" value="<?= RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '' ?>">
               </div>
             </div>
           </div>
@@ -88,7 +88,7 @@ use app\Models\Url;
               <label class="col" for="last_name">Last name:</label>
             </div>
             <div class="row input-group">
-              <input class="col" id="last_name" type="text" name="last_name" maxlength="100" placeholder="Enter last name" value="<?= RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '' ?>">
+              <input class="col" id="last_name" type="text" name="last_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter last name" value="<?= RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '' ?>">
             </div>
           </div>
         </div>
@@ -100,7 +100,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group <?= isset($_POST['submit']) && empty($_POST['email']) ? 'error' : '' ?>">
               <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-              <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email" value="<?= RequestController::post('email') ?? $this->pageObj->user['email'] ?? '' ?>">
+              <input class="col" id="email" type="email" name="email" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter email" value="<?= RequestController::post('email') ?? $this->pageObj->user['email'] ?? '' ?>">
             </div>
           </div>
         </div>

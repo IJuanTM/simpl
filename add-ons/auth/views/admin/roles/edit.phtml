@@ -32,7 +32,7 @@ use app\Controllers\RequestController;
           </div>
           <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
             <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-            <input class="col" id="name" type="text" name="name" maxlength="50" placeholder="Enter role name:" value="<?= RequestController::post('name') ?? $this->pageObj->role['name'] ?? '' ?>">
+            <input class="col" id="name" type="text" name="name" maxlength="<?= MAX_ROLE_NAME_LENGTH ?>" placeholder="Enter role name:" value="<?= RequestController::post('name') ?? $this->pageObj->role['name'] ?? '' ?>">
           </div>
         </div>
       </div>

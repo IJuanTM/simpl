@@ -11,3 +11,6 @@ const MAX_NAME_LENGTH = 100;
 // Contact form
 const MAX_CONTACT_SUBJECT_LENGTH = 100;
 const MAX_CONTACT_MESSAGE_LENGTH = 1000;
+
+// Roles
+const MAX_ROLE_NAME_LENGTH = 50;
