@@ -8,9 +8,9 @@ use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
-use app\Controllers\SessionController;
 use app\Enums\AlertType;
 use app\Models\Page;
+use app\Utils\RateLimiter;
 
 /**
  * ResendVerificationPage
@@ -46,19 +46,14 @@ class ResendVerificationPage
             return;
         }
 
-        // Check resend rate limit
-        $timeoutKey = 'resend-verification-timeout-' . $id;
-        if (SessionController::get($timeoutKey) !== null && SessionController::get($timeoutKey) > time()) {
+        // Rate limit resend attempts, max 1 in set timeframe
+        if (!RateLimiter::attempt('resend-verification-' . $id, 1, VERIFICATION_RESEND_TIMEOUT)) {
             FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
             PageController::redirect(REDIRECT, 2);
             return;
         }
 
-        // Resend verification email
         $this->resendVerification($id);
-
-        // Set timeout to prevent spam
-        SessionController::set($timeoutKey, time() + VERIFICATION_RESEND_TIMEOUT);
     }
 
     /**

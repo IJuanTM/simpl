@@ -6,8 +6,8 @@ namespace app\Pages;
 
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
-use app\Controllers\SessionController;
 use app\Enums\AlertType;
+use app\Utils\RateLimiter;
 
 /**
  * ForgotPasswordPage
@@ -16,8 +16,12 @@ use app\Enums\AlertType;
  */
 class ForgotPasswordPage
 {
+    public int $resendCooldown = 0;
+
     public function __construct()
     {
+        $this->resendCooldown = RateLimiter::retryAfterMs('forgot-password');
+
         // Process forgot password form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
@@ -29,14 +33,14 @@ class ForgotPasswordPage
      */
     private function post(): void
     {
-        // Check if timeout has not been exceeded
-        if (SessionController::get('resend-timeout') !== null && SessionController::get('resend-timeout') > time()) {
+        // Validate form fields
+        if (!FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])) return;
+
+        // Rate limit after validation, before email-existence check to prevent enumeration
+        if (!RateLimiter::attempt('forgot-password', 1, PASSWORD_RESET_RESEND_TIMEOUT)) {
             FormController::addAlert('Please wait a moment before trying again!', AlertType::WARNING);
             return;
         }
-
-        // Validate form fields
-        if (!FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])) return;
 
         // Check if email exists
         if (!AuthController::checkEmail($_POST['email'])) {
@@ -45,11 +49,7 @@ class ForgotPasswordPage
             return;
         }
 
-        // Send reset email
         $this->sendPasswordReset($_POST['email']);
-
-        // Set timeout to prevent spam
-        SessionController::set('resend-timeout', time() + PASSWORD_RESET_RESEND_TIMEOUT);
     }
 
     /**

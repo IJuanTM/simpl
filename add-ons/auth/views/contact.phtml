@@ -26,7 +26,7 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-          <input class="col" id="name" type="text" name="name" maxlength="100" placeholder="Enter name:" value="<?= RequestController::post('name') ?? '' ?>" autocomplete="name" aria-label="Name input field">
+          <input class="col" id="name" type="text" name="name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter name:" value="<?= RequestController::post('name') ?? '' ?>" autocomplete="name" aria-label="Name input field">
         </div>
       </div>
     </div>
@@ -38,7 +38,7 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-          <input class="col" id="email" type="email" name="email" maxlength="100" placeholder="Enter email:" value="<?= RequestController::post('email') ?? '' ?>" autocomplete="email" aria-label="Email input field">
+          <input class="col" id="email" type="email" name="email" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter email:" value="<?= RequestController::post('email') ?? '' ?>" autocomplete="email" aria-label="Email input field">
         </div>
       </div>
     </div>
@@ -50,7 +50,7 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['subject'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-heading"></i></div>
-          <input class="col" id="subject" name="subject" maxlength="100" placeholder="Enter subject:" value="<?= RequestController::post('subject') ?? '' ?>" autocomplete="off" aria-label="Subject input field">
+          <input class="col" id="subject" name="subject" maxlength="<?= MAX_CONTACT_SUBJECT_LENGTH ?>" placeholder="Enter subject:" value="<?= RequestController::post('subject') ?? '' ?>" autocomplete="off" aria-label="Subject input field">
         </div>
       </div>
     </div>
@@ -65,20 +65,20 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['message'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-message"></i></div>
-          <textarea class="col message-field" id="message" name="message" maxlength="1000" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= RequestController::post('message') ?? '' ?></textarea>
+          <textarea class="col message-field" id="message" name="message" maxlength="<?= MAX_CONTACT_MESSAGE_LENGTH ?>" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= RequestController::post('message') ?? '' ?></textarea>
         </div>
         <div class="row">
           <div class="col">
           </div>
           <div class="col end-x">
-            <p class="form-details message-warning"><span class="message-length">0</span>/1000</p>
+            <p class="form-details message-warning"><span class="message-length">0</span>/<?= MAX_CONTACT_MESSAGE_LENGTH ?></p>
           </div>
         </div>
       </div>
     </div>
 
     <div class="row center-x">
-      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"><i class="fas fa-paper-plane"></i>Send</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"<?= $this->pageObj->sendCooldown > 0 ? ' data-timeout="' . $this->pageObj->sendCooldown . '" inert' : '' ?>><i class="fas fa-paper-plane"></i>Send</button>
     </div>
   </form>
 </section>

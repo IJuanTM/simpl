@@ -10,6 +10,7 @@ use app\Controllers\MailController;
 use app\Controllers\PageController;
 use app\Controllers\RequestController;
 use app\Enums\AlertType;
+use app\Utils\RateLimiter;
 
 /**
  * ContactPage
@@ -19,8 +20,12 @@ use app\Enums\AlertType;
  */
 class ContactPage
 {
+    public int $sendCooldown = 0;
+
     public function __construct()
     {
+        $this->sendCooldown = RateLimiter::retryAfterMs('contact');
+
         // Process contact form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
@@ -40,6 +45,12 @@ class ContactPage
             !FormController::validate('message', ['required', 'maxLength' => MAX_CONTACT_MESSAGE_LENGTH])
         ) return;
 
+        // Rate limit after validation to avoid consuming slots on invalid input
+        if (!RateLimiter::attempt('contact', 1, 60)) {
+            FormController::addAlert('Too many submissions. Please wait a moment before trying again.', AlertType::WARNING);
+            return;
+        }
+
         // Send contact email
         $this->contactMail(
             RequestController::post('name'),
@@ -52,8 +63,8 @@ class ContactPage
     /**
      * Sends contact form email to site administrator.
      *
-     * @param string $from Sender's name
-     * @param string $sender Sender's email address
+     * @param string $from    Sender's name
+     * @param string $sender  Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
      *

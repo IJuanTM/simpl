@@ -12,6 +12,7 @@ use app\Controllers\PageController;
 use app\Controllers\RequestController;
 use app\Enums\AlertType;
 use app\Models\Page;
+use app\Utils\RateLimiter;
 
 /**
  * VerifyAccountPage
@@ -21,6 +22,8 @@ use app\Models\Page;
  */
 class VerifyAccountPage
 {
+    public int $resendCooldown = 0;
+
     public function __construct(Page $page)
     {
         // Get and sanitize user ID from URL
@@ -39,6 +42,9 @@ class VerifyAccountPage
             PageController::redirect(REDIRECT, 2);
             return;
         }
+
+        // Get resend cooldown in milliseconds
+        $this->resendCooldown = RateLimiter::retryAfterMs('resend-verification-' . $id);
 
         // Check if already verified
         if (AuthController::isVerified($id)) {
