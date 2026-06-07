@@ -15,10 +15,8 @@ class DeleteInactiveUsers
 
         // Get all users pending deletion
         $pending = DB::count(
-            'users',
-            [
-                'deleted_at' => ['<', $cutoff]
-            ]
+            FROM: 'users',
+            WHERE: ['deleted_at' => ['<', $cutoff]]
         );
 
         if ($pending > 0) {

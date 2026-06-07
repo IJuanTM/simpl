@@ -18,31 +18,37 @@ class DB
     private static ?PDO $pdo = null;
 
     /**
-     * This method is for selecting records from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
+     * This method is for selecting records from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY, ORDER BY, LIMIT and OFFSET.
      *
      * @param string|array      $SELECT
      * @param string            $FROM
      * @param array             $JOIN
      * @param array             $WHERE
+     * @param array             $OR_WHERE Conditions joined with OR, AND-ed with WHERE as a group
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
+     * @param int|null          $LIMIT
+     * @param int|null          $OFFSET
      *
      * @return array
      */
-    public static function select(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): array
+    public static function select(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], array $OR_WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null, int|null $LIMIT = null, int|null $OFFSET = null): array
     {
-        // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
         $joinClause = self::buildJoin($table, $JOIN);
-        [$whereClause, $params] = self::buildWhere($WHERE);
+        [$whereClause, $params] = self::combineWhere($WHERE, $OR_WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
 
-        // Construct the final query
-        $query = "SELECT $cols FROM $table" . ($joinClause ? " $joinClause" : '') . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '');
+        $query = "SELECT $cols FROM $table"
+            . ($joinClause ? " $joinClause" : '')
+            . ($whereClause ? " WHERE $whereClause" : '')
+            . ($groupByClause ? " $groupByClause" : '')
+            . ($orderByClause ? " $orderByClause" : '')
+            . ($LIMIT !== null ? " LIMIT $LIMIT" : '')
+            . ($OFFSET !== null ? " OFFSET $OFFSET" : '');
 
-        // Execute and fetch results
         return self::execute($query, $params)->fetchAll();
     }
 
@@ -83,8 +89,9 @@ class DB
 
     /**
      * Build LEFT JOIN clause(s) from a JOIN definition.
-     * Single join: ['from_col', ['join_table', 'join_col']]
-     * Multiple joins: array of the above format.
+     * Join from main table: ['from_col', ['join_table', 'join_col']]
+     * Join from another table: [['left_table', 'left_col'], ['join_table', 'join_col']]
+     * Multiple joins: array of either of the above formats.
      *
      * @param string $table Sanitized main table name
      * @param array  $join
@@ -100,21 +107,49 @@ class DB
 
         foreach ($joins as [$fromCol, [$joinTable, $joinCol]]) {
             $joinTableSan = self::sanitize($joinTable);
-            $clauses[] = "LEFT JOIN $joinTableSan ON $table." . self::sanitize($fromCol) . " = $joinTableSan." . self::sanitize($joinCol);
+            if (is_array($fromCol)) {
+                $clauses[] = "LEFT JOIN $joinTableSan ON " . self::sanitize($fromCol[0]) . '.' . self::sanitize($fromCol[1]) . " = $joinTableSan." . self::sanitize($joinCol);
+            } else {
+                $clauses[] = "LEFT JOIN $joinTableSan ON $table." . self::sanitize($fromCol) . " = $joinTableSan." . self::sanitize($joinCol);
+            }
         }
 
         return implode(' ', $clauses);
     }
 
     /**
-     * This method is for constructing the WHERE clause of an SQL query.
+     * Combine AND WHERE and OR WHERE into a single clause and params array.
+     * OR conditions are wrapped in parentheses and AND-ed with the main WHERE.
      *
-     * @param array  $where
-     * @param string $prefix
+     * @param array $where
+     * @param array $orWhere
      *
      * @return array
      */
-    private static function buildWhere(array $where, string $prefix = ''): array
+    private static function combineWhere(array $where, array $orWhere): array
+    {
+        [$andClause, $andParams] = self::buildWhere($where);
+        [$orClause, $orParams] = self::buildWhere($orWhere, 'or_', ' OR ');
+
+        if ($andClause && $orClause) $clause = "$andClause AND ($orClause)";
+        else if ($andClause) $clause = $andClause;
+        else if ($orClause) $clause = "($orClause)";
+        else $clause = '';
+
+        return [$clause, array_merge($andParams, $orParams)];
+    }
+
+    /**
+     * This method is for constructing the WHERE clause of an SQL query.
+     * Keys support 'col' and 'table.col' forms.
+     *
+     * @param array  $where
+     * @param string $prefix
+     * @param string $separator Logical operator joining conditions ('AND' or 'OR')
+     *
+     * @return array
+     */
+    private static function buildWhere(array $where, string $prefix = '', string $separator = ' AND '): array
     {
         if (empty($where)) return ['', []];
 
@@ -123,7 +158,8 @@ class DB
         $counter = 0;
 
         foreach ($where as $key => $value) {
-            $column = self::sanitize($key);
+            $column = self::sanitizeColumn($key);
+            $paramBase = str_replace('.', '_', $key);
 
             if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'])) {
                 $operator = strtoupper($value[0]);
@@ -131,18 +167,32 @@ class DB
 
                 if ($val === null && in_array($operator, ['IS', 'IS NOT'])) $conditions[] = "$column $operator NULL";
                 else {
-                    $paramKey = ":$prefix" . $key . '_' . $counter++;
+                    $paramKey = ":$prefix{$paramBase}_{$counter}";
+                    $counter++;
                     $conditions[] = "$column $operator $paramKey";
                     $params[$paramKey] = $val;
                 }
             } else {
-                $paramKey = ":$prefix$key";
+                $paramKey = ":$prefix$paramBase";
                 $conditions[] = "$column = $paramKey";
                 $params[$paramKey] = $value;
             }
         }
 
-        return [implode(' AND ', $conditions), $params];
+        return [implode($separator, $conditions), $params];
+    }
+
+    /**
+     * Sanitize a column name, accepting 'col' or 'table.col' forms.
+     *
+     * @param string $col
+     *
+     * @return string
+     */
+    private static function sanitizeColumn(string $col): string
+    {
+        if (!preg_match('/^\w+(\.\w+)?$/', $col)) throw new PDOException("Invalid column: $col");
+        return $col;
     }
 
     /**
@@ -289,29 +339,33 @@ class DB
     }
 
     /**
-     * This method is for selecting a single record from a table with optional JOIN, WHERE, GROUP BY and ORDER BY.
+     * This method is for selecting a single record from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY and ORDER BY.
      *
      * @param string|array      $SELECT
      * @param string            $FROM
      * @param array             $JOIN
      * @param array             $WHERE
+     * @param array             $OR_WHERE Conditions joined with OR, AND-ed with WHERE as a group
      * @param string|array|null $GROUP_BY
      * @param string|array|null $ORDER_BY
      *
      * @return array|null
      */
-    public static function single(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): ?array
+    public static function single(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], array $OR_WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): ?array
     {
-        // Build query components
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
         $joinClause = self::buildJoin($table, $JOIN);
-        [$whereClause, $params] = self::buildWhere($WHERE);
+        [$whereClause, $params] = self::combineWhere($WHERE, $OR_WHERE);
         $groupByClause = self::groupByClause($GROUP_BY);
         $orderByClause = self::orderByClause($ORDER_BY);
-        $query = "SELECT $cols FROM $table" . ($joinClause ? " $joinClause" : '') . ($whereClause ? " WHERE $whereClause" : '') . ($groupByClause ? " $groupByClause" : '') . ($orderByClause ? " $orderByClause" : '') . ' LIMIT 1';
+        $query = "SELECT $cols FROM $table"
+            . ($joinClause ? " $joinClause" : '')
+            . ($whereClause ? " WHERE $whereClause" : '')
+            . ($groupByClause ? " $groupByClause" : '')
+            . ($orderByClause ? " $orderByClause" : '')
+            . ' LIMIT 1';
 
-        // Execute and fetch single result
         return self::execute($query, $params)->fetch() ?: null;
     }
 
@@ -413,33 +467,37 @@ class DB
     }
 
     /**
-     * This method is for counting rows in a table with optional WHERE conditions.
+     * This method is for counting rows in a table with optional JOIN, WHERE and OR_WHERE conditions.
      * If $GROUP_BY is provided, the count of groups is returned.
      *
      * @param string            $FROM
+     * @param array             $JOIN
      * @param array             $WHERE
+     * @param array             $OR_WHERE Conditions joined with OR, AND-ed with WHERE as a group
      * @param string|array|null $GROUP_BY
      *
      * @return int
      */
-    public static function count(string $FROM, array $WHERE = [], string|array|null $GROUP_BY = null): int
+    public static function count(string $FROM, array $JOIN = [], array $WHERE = [], array $OR_WHERE = [], string|array|null $GROUP_BY = null): int
     {
-        // Build the COUNT query
         $table = self::sanitize($FROM);
-        [$whereClause, $params] = self::buildWhere($WHERE);
+        $joinClause = self::buildJoin($table, $JOIN);
+        [$whereClause, $params] = self::combineWhere($WHERE, $OR_WHERE);
 
         if ($GROUP_BY === null) {
-            // Simple count without GROUP BY
-            $query = "SELECT COUNT(*) as count FROM $table" . ($whereClause ? " WHERE $whereClause" : '');
+            $query = "SELECT COUNT(*) as count FROM $table"
+                . ($joinClause ? " $joinClause" : '')
+                . ($whereClause ? " WHERE $whereClause" : '');
             return (int)self::execute($query, $params)->fetch()['count'];
         }
 
-        // Count with GROUP BY
         $groupCols = self::normalizeColumnsList($GROUP_BY);
-        $sub = "SELECT 1 FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . " GROUP BY $groupCols";
+        $sub = "SELECT 1 FROM $table"
+            . ($joinClause ? " $joinClause" : '')
+            . ($whereClause ? " WHERE $whereClause" : '')
+            . " GROUP BY $groupCols";
         $query = "SELECT COUNT(*) as count FROM ($sub) AS grp";
 
-        // Execute and return the count of groups
         return (int)self::execute($query, $params)->fetch()['count'];
     }
 

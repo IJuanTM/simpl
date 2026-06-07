@@ -14,6 +14,7 @@ use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
 use app\Models\Page;
+use app\Pages\Admin\Traits\AdminTableTrait;
 use JsonException;
 
 /**
@@ -25,6 +26,8 @@ use JsonException;
  */
 class Users
 {
+    use AdminTableTrait;
+
     private const string SORT_ASC = 'asc';
     private const string SORT_DESC = 'desc';
     private const array PER_PAGE_OPTIONS = [10, 25, 50, 100];
@@ -37,10 +40,8 @@ class Users
     public array $tableColumns = [];
     public array $visibleColumns = [];
     public string $generatedPassword = '';
-    public int $page = 0;
     public int $perPage = 10;
     public array $perPageOptions = self::PER_PAGE_OPTIONS;
-    public string $search = '';
     public string $filterRole = '';
     public string $filterStatus = '';
     public string $filterVerified = '';
@@ -49,13 +50,9 @@ class Users
     public ?string $sortDirection = self::SORT_ASC;
     public int $totalUsers = 0;
     public int $totalAllUsers = 0;
-    public int $maxPage = 0;
-    public int $startIndex = 0;
-    public int $endIndex = 0;
     public int $currentUserId = 0;
     public array $activeSortParams = [];
     public array $activeFilterParams = [];
-    public array $activeQueryParams = [];
     public array $availableRoles = [];
     public string $searchDisplay = '';
 
@@ -73,9 +70,8 @@ class Users
         $this->tableColumns = self::getTableColumns();
         $this->visibleColumns = $this->tableColumns;
 
-        if ($page->param('page') !== null) $this->page = (int)$page->param('page');
-        if ($page->param('per_page') !== null && in_array((int)$page->param('per_page'), self::PER_PAGE_OPTIONS, true)) $this->perPage = (int)$page->param('per_page');
-        if ($page->param('search') !== null) $this->search = trim((string)$page->param('search'));
+        $this->readTableParams($page);
+
         if ($page->param('role') !== null) $this->filterRole = trim((string)$page->param('role'));
         if ($page->param('status') !== null && in_array($page->param('status'), ['active', 'inactive'], true)) $this->filterStatus = (string)$page->param('status');
         if ($page->param('verified') !== null && in_array($page->param('verified'), ['yes', 'no'], true)) $this->filterVerified = (string)$page->param('verified');
@@ -175,12 +171,17 @@ class Users
      */
     private function loadUsers(): void
     {
-        $this->allUsers = DB::query(
-            'SELECT u.*, r.name AS role_name,
-                (CASE WHEN EXISTS (SELECT 1 FROM tokens t WHERE t.user_id = u.id AND t.type = \'verification\') THEN 0 ELSE 1 END) AS is_verified
-            FROM users u
-            LEFT JOIN user_roles ur ON ur.user_id = u.id
-            LEFT JOIN roles r ON r.id = ur.role_id'
+        $this->allUsers = DB::select(
+            SELECT: [
+                'users.*',
+                'roles.name AS role_name',
+                '(CASE WHEN EXISTS (SELECT 1 FROM tokens WHERE tokens.user_id = users.id AND tokens.type = \'verification\') THEN 0 ELSE 1 END) AS is_verified',
+            ],
+            FROM: 'users',
+            JOIN: [
+                ['id', ['user_roles', 'user_id']],
+                [['user_roles', 'role_id'], ['roles', 'id']],
+            ]
         );
 
         foreach ($this->allUsers as $key => $user) {
@@ -248,7 +249,7 @@ class Users
     /**
      * Returns a normalized sort value for the given user and column.
      *
-     * @param array<string, mixed> $user User row
+     * @param array<string, mixed> $user   User row
      * @param string               $column Column key
      *
      * @return int|string
@@ -280,9 +281,10 @@ class Users
      */
     private function buildPagedUsers(): void
     {
-        $this->maxPage = max(0, (int)ceil(count($this->users) / $this->perPage) - 1);
-        $this->page = max(0, min($this->page, $this->maxPage));
-        $this->pagedUsers = array_slice($this->users, $this->page * $this->perPage, $this->perPage);
+        $this->totalAllUsers = count($this->allUsers);
+        $this->totalUsers = count($this->users);
+        $offset = $this->applyPagination($this->totalUsers);
+        $this->pagedUsers = array_slice($this->users, $offset, $this->perPage);
 
         foreach ($this->pagedUsers as $key => $user) {
             if ($user['username'] !== null) $this->pagedUsers[$key]['username'] = AppController::sanitize($user['username']);
@@ -294,17 +296,12 @@ class Users
     }
 
     /**
-     * Computes pagination counters, sort/filter params, and other view-facing state.
+     * Computes sort/filter params and other view-facing state.
      *
      * @return void
      */
     private function prepareViewData(): void
     {
-        $this->totalAllUsers = count($this->allUsers);
-        $this->totalUsers = count($this->users);
-        $this->maxPage = max(0, (int)ceil($this->totalUsers / $this->perPage) - 1);
-        $this->startIndex = $this->totalUsers === 0 ? 0 : ($this->page * $this->perPage) + 1;
-        $this->endIndex = min(($this->page + 1) * $this->perPage, $this->totalUsers);
         $this->currentUserId = (int)SessionController::get('user')['id'];
         $this->activeSortParams = $this->sortColumn ? ['sort' => $this->sortColumn, 'dir' => $this->sortDirection] : [];
         $this->activeFilterParams = array_filter([
@@ -641,7 +638,7 @@ class Users
      * Renders the cell content for a given column and user row.
      *
      * @param array<string, mixed> $column Column definition
-     * @param array<string, mixed> $user User row
+     * @param array<string, mixed> $user   User row
      *
      * @return string
      */

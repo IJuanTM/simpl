@@ -124,13 +124,15 @@ class AuthController
      */
     public static function getUserWithRole(int $id): array|null
     {
-        return DB::query(
-            'SELECT u.*, r.name AS role FROM users u
-            LEFT JOIN user_roles ur ON ur.user_id = u.id
-            LEFT JOIN roles r ON r.id = ur.role_id
-            WHERE u.id = :id LIMIT 1',
-            [':id' => $id]
-        )[0] ?? null;
+        return DB::single(
+            SELECT: ['users.*', 'roles.name AS role'],
+            FROM: 'users',
+            JOIN: [
+                ['id', ['user_roles', 'user_id']],
+                [['user_roles', 'role_id'], ['roles', 'id']],
+            ],
+            WHERE: ['users.id' => $id]
+        );
     }
 
     /**

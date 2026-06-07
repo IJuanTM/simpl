@@ -7,6 +7,7 @@ namespace app\Pages\Admin;
 use app\Controllers\AppController;
 use app\Database\DB;
 use app\Models\Page;
+use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
  * LoginAttempts (admin)
@@ -15,26 +16,21 @@ use app\Models\Page;
  */
 class LoginAttempts
 {
+    use AdminTableTrait;
+
     private const array PER_PAGE_OPTIONS = [25, 50, 100];
 
     public array $attempts = [];
     public int $total = 0;
-    public int $page = 0;
     public int $perPage = 25;
     public array $perPageOptions = self::PER_PAGE_OPTIONS;
-    public int $maxPage = 0;
-    public int $startIndex = 0;
-    public int $endIndex = 0;
     public string $filterStatus = '';
-    public string $search = '';
-    public array $activeQueryParams = [];
 
     public function __construct(Page $page)
     {
-        if ($page->param('page') !== null) $this->page = max(0, (int)$page->param('page'));
-        if ($page->param('per_page') !== null && in_array((int)$page->param('per_page'), self::PER_PAGE_OPTIONS, true)) $this->perPage = (int)$page->param('per_page');
+        $this->readTableParams($page);
+
         if ($page->param('status') !== null && in_array($page->param('status'), ['success', 'failed'], true)) $this->filterStatus = (string)$page->param('status');
-        if ($page->param('search') !== null) $this->search = trim((string)$page->param('search'));
 
         $this->activeQueryParams = array_filter([
             'status' => $this->filterStatus ?: null,
@@ -47,28 +43,47 @@ class LoginAttempts
 
     private function loadAttempts(): void
     {
-        [$where, $params] = $this->buildWhere();
+        $where = [];
+        if ($this->filterStatus === 'success') $where['login_attempts.success'] = 1;
+        else if ($this->filterStatus === 'failed') $where['login_attempts.success'] = 0;
 
-        $this->total = (int)(DB::query(
-            "SELECT COUNT(*) AS count FROM login_attempts la LEFT JOIN users u ON la.user_id = u.id $where",
-            $params
-        )[0]['count'] ?? 0);
+        $orWhere = [];
+        if ($this->search !== '') {
+            $like = ['LIKE', '%' . $this->search . '%'];
+            $orWhere = [
+                'login_attempts.ip_address' => $like,
+                'users.username' => $like,
+                'users.email' => $like,
+            ];
+        }
 
-        $this->maxPage = $this->total > 0 ? (int)ceil($this->total / $this->perPage) - 1 : 0;
-        $this->page = min($this->page, $this->maxPage);
-        $offset = $this->page * $this->perPage;
-        $this->startIndex = $this->total > 0 ? $offset + 1 : 0;
-        $this->endIndex = min($offset + $this->perPage, $this->total);
+        $this->total = DB::count(
+            FROM: 'login_attempts',
+            JOIN: ['user_id', ['users', 'id']],
+            WHERE: $where,
+            OR_WHERE: $orWhere
+        );
 
-        $rows = DB::query(
-            "SELECT la.id, la.ip_address, la.user_agent, la.attempt_time, la.success, la.failed_reason,
-                    u.username, u.email
-             FROM login_attempts la
-             LEFT JOIN users u ON la.user_id = u.id
-             $where
-             ORDER BY la.attempt_time DESC
-             LIMIT :limit OFFSET :offset",
-            array_merge($params, [':limit' => $this->perPage, ':offset' => $offset])
+        $offset = $this->applyPagination($this->total);
+
+        $rows = DB::select(
+            SELECT: [
+                'login_attempts.id',
+                'login_attempts.ip_address',
+                'login_attempts.user_agent',
+                'login_attempts.attempt_time',
+                'login_attempts.success',
+                'login_attempts.failed_reason',
+                'users.username',
+                'users.email',
+            ],
+            FROM: 'login_attempts',
+            JOIN: ['user_id', ['users', 'id']],
+            WHERE: $where,
+            OR_WHERE: $orWhere,
+            ORDER_BY: 'login_attempts.attempt_time DESC',
+            LIMIT: $this->perPage,
+            OFFSET: $offset
         );
 
         foreach ($rows as $row) {
@@ -78,21 +93,5 @@ class LoginAttempts
             $row['email'] = AppController::sanitize($row['email'] ?? '');
             $this->attempts[] = $row;
         }
-    }
-
-    private function buildWhere(): array
-    {
-        $conditions = [];
-        $params = [];
-
-        if ($this->filterStatus === 'success') $conditions[] = 'la.success = 1';
-        else if ($this->filterStatus === 'failed') $conditions[] = 'la.success = 0';
-
-        if ($this->search !== '') {
-            $conditions[] = '(la.ip_address LIKE :search OR u.username LIKE :search OR u.email LIKE :search)';
-            $params[':search'] = '%' . $this->search . '%';
-        }
-
-        return [$conditions ? 'WHERE ' . implode(' AND ', $conditions) : '', $params];
     }
 }
