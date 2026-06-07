@@ -8,6 +8,7 @@ use app\Controllers\AuthController;
 use app\Controllers\PageController;
 use app\Enums\Role;
 use app\Models\Page;
+use app\Pages\Admin\LoginAttempts;
 use app\Pages\Admin\Roles;
 use app\Pages\Admin\Users;
 
@@ -15,7 +16,7 @@ class AdminPage
 {
     public string $section;
     public ?string $subAction;
-    private Users|Roles|null $delegate = null;
+    private Users|Roles|LoginAttempts|null $delegate = null;
 
     public function __construct(Page $page)
     {
@@ -27,6 +28,7 @@ class AdminPage
         $this->delegate = match ($this->section) {
             'users' => new Users($page),
             'roles' => new Roles($page),
+            'login-attempts' => new LoginAttempts($page),
             default => null,
         };
 

@@ -60,6 +60,26 @@ use app\Models\Url;
           </div>
         </div>
       </a>
+
+      <a class="col card center-y" href="<?= Url::to('admin/login-attempts') ?>" aria-label="Link to login attempt logs">
+        <div class="row g-col-2">
+          <div class="col card-icon center f-0">
+            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+          </div>
+          <div class="col f-col g-row-1">
+            <div class="row">
+              <div class="col">
+                <h2 class="card-title" data-typo="h4">Login attempts</h2>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <p>View login attempt logs with IP address and user agent details.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
     </div>
   </div>
 </section>

@@ -1,0 +1,146 @@
+<?php
+use app\Models\Url;
+?>
+
+<section class="row login-attempts">
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Login attempts</h1>
+      </div>
+    </div>
+
+    <div class="row center-x">
+      <div class="col login-attempts-table f-col g-row-1 w-100">
+
+        <form class="row login-attempts-filters" method="GET" action="">
+          <div class="col form-group g-row-0.25">
+            <div class="row">
+              <label class="col" for="la-search">Search:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
+              <input class="col" id="la-search" type="text" name="search" value="<?= htmlspecialchars($this->pageObj->search) ?>" placeholder="IP address, username or email" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25">
+            <div class="row">
+              <label class="col" for="la-status">Status:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
+              <select class="col" id="la-status" name="status">
+                <option value="">All</option>
+                <option value="success" <?= $this->pageObj->filterStatus === 'success' ? 'selected' : '' ?>>Success</option>
+                <option value="failed" <?= $this->pageObj->filterStatus === 'failed' ? 'selected' : '' ?>>Failed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25">
+            <div class="row">
+              <label class="col" for="la-per-page">Per page:</label>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-list"></i></div>
+              <select class="col" id="la-per-page" name="per_page">
+                <?php foreach ($this->pageObj->perPageOptions as $opt) : ?>
+                  <option value="<?= $opt ?>" <?= $this->pageObj->perPage === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                <?php endforeach ?>
+              </select>
+            </div>
+          </div>
+
+          <div class="col form-group g-row-0.25 end-y">
+            <button class="col button" type="submit"><i class="fas fa-filter"></i>Filter</button>
+          </div>
+        </form>
+
+        <?php if (count($this->pageObj->attempts) > 0) : ?>
+
+          <div class="row table-container">
+            <div class="col">
+              <table class="data-table">
+                <thead>
+                <tr>
+                  <th><p class="table-header-label">#</p></th>
+                  <th><p class="table-header-label">User</p></th>
+                  <th><p class="table-header-label">IP address</p></th>
+                  <th><p class="table-header-label">User agent</p></th>
+                  <th><p class="table-header-label">Time</p></th>
+                  <th><p class="table-header-label">Status</p></th>
+                </tr>
+                </thead>
+                <tbody>
+
+                <?php foreach ($this->pageObj->attempts as $a) : ?>
+
+                  <tr>
+                    <td><?= $a['id'] ?></td>
+                    <td>
+                      <?php if ($a['username'] || $a['email']) : ?>
+                        <span><?= $a['username'] ?: $a['email'] ?></span>
+                        <?php if ($a['username'] && $a['email']) : ?>
+                          <br><small><?= $a['email'] ?></small>
+                        <?php endif ?>
+                      <?php else : ?>
+                        <span class="muted">Unknown</span>
+                      <?php endif ?>
+                    </td>
+                    <td><?= $a['ip_address'] ?></td>
+                    <td title="<?= $a['user_agent'] ?>"><?= mb_strimwidth($a['user_agent'], 0, 80, '…') ?></td>
+                    <td><?= $a['attempt_time'] ?></td>
+                    <td>
+                      <?php if ($a['success']) : ?>
+                        <span class="badge badge-success">Success</span>
+                      <?php else : ?>
+                        <span class="badge badge-error"><?= $a['failed_reason'] ?? 'Failed' ?></span>
+                      <?php endif ?>
+                    </td>
+                  </tr>
+
+                <?php endforeach ?>
+
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="row center-y">
+            <div class="col">
+              <p class="form-details">Showing <?= $this->pageObj->startIndex ?>-<?= $this->pageObj->endIndex ?> of <?= $this->pageObj->total ?></p>
+            </div>
+
+            <?php
+            $qp = fn(array $extra = []) => ($p = http_build_query(array_filter(array_merge($this->pageObj->activeQueryParams, $extra)))) ? '?' . $p : '';
+            ?>
+
+            <div class="col end-x g-col-0.5">
+              <?php if ($this->pageObj->page > 0) : ?>
+                <a class="col button" href="<?= Url::to('admin/login-attempts') . $qp(['page' => $this->pageObj->page - 1]) ?>"><i class="fas fa-chevron-left"></i></a>
+              <?php endif ?>
+              <?php if ($this->pageObj->page < $this->pageObj->maxPage) : ?>
+                <a class="col button" href="<?= Url::to('admin/login-attempts') . $qp(['page' => $this->pageObj->page + 1]) ?>"><i class="fas fa-chevron-right"></i></a>
+              <?php endif ?>
+            </div>
+          </div>
+
+        <?php else : ?>
+
+          <div class="row">
+            <div class="col">
+              <p>No login attempts found<?= $this->pageObj->filterStatus || $this->pageObj->search ? ' matching your filters' : '' ?>.</p>
+            </div>
+          </div>
+
+        <?php endif ?>
+
+      </div>
+    </div>
+
+    <div class="row center-x">
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin') ?>"><i class="fas fa-arrow-left"></i>Back to admin</a>
+    </div>
+  </div>
+</section>

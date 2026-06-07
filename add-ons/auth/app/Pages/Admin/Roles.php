@@ -96,7 +96,7 @@ class Roles
      */
     private function createRole(): void
     {
-        if (!FormController::validate('name', ['required', 'maxLength' => 50])) return;
+        if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
 
         if (DB::exists(
             FROM: 'roles',
@@ -128,7 +128,7 @@ class Roles
      */
     private function updateRole(int $id): void
     {
-        if (!FormController::validate('name', ['required', 'maxLength' => 50])) return;
+        if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
 
         $existing = DB::single(
             SELECT: 'id',
