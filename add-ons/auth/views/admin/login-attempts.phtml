@@ -52,91 +52,79 @@ use app\Models\Url;
           </form>
         </div>
 
-        <?php if ($this->pageObj->total > 0) : ?>
-
-          <div class="row g-1">
-            <div class="col center-y">
-              <div class="row">
-                <button class="col link lh-1 filters-reset-btn g-col-0.5 center f-0" type="button" inert><i class="fas fa-xmark"></i>Clear filters</button>
-              </div>
-            </div>
-            <div class="col end-x">
-              <div class="row col-toggle-wrapper f-nowrap g-col-1">
-                <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
-                <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button"><i class="fas fa-columns"></i>Columns</button>
-                <div class="col col-toggle-panel">
-
-                  <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
-
-                    <div class="row">
-                      <label class="col center-y g-col-0.5 f-0">
-                        <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
-                      </label>
-                    </div>
-
-                  <?php endforeach ?>
-
-                </div>
-              </div>
+        <div class="row g-1">
+          <div class="col center-y">
+            <div class="row">
+              <button class="col link lh-1 filters-reset-btn g-col-0.5 center f-0" type="button" inert><i class="fas fa-xmark"></i>Clear filters</button>
             </div>
           </div>
+          <div class="col end-x">
+            <div class="row col-toggle-wrapper f-nowrap g-col-1">
+              <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
+              <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" data-cooldown="150"><i class="fas fa-columns"></i>Columns</button>
+              <div class="col col-toggle-panel">
 
-          <div class="row table-container">
-            <div class="col">
-              <table class="data-table" data-table-id="login-attempts" data-api="/api/admin/login-attempts" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
-                <thead>
-                <?= $this->pageObj->renderThead() ?>
-                </thead>
-                <tbody>
-                <?= $this->pageObj->renderTbody() ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
+                <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
 
-          <div class="row pagination-row g-1">
-            <div class="col f-0">
-              <div class="row g-col-4">
-                <div class="col center-y g-col-1">
-                  <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->total ?> attempts</p>
-                </div>
-                <form class="col table-tools-form g-col-0.5 center-y" novalidate>
                   <div class="row">
-                    <div class="col form-group g-row-0.25">
-                      <div class="row g-col-1 f-nowrap center-y">
-                        <label class="col" for="la-per-page">Per page:</label>
-                        <div class="col">
-                          <div class="row input-group">
-                            <select class="col table-per-page" id="la-per-page">
-                              <?php foreach ($this->pageObj->perPageOptions as $opt) : ?>
-                                <option value="<?= $opt ?>" <?= $this->pageObj->perPage === $opt ? 'selected' : '' ?>><?= $opt ?></option>
-                              <?php endforeach ?>
-                            </select>
-                          </div>
+                    <label class="col center-y g-col-0.5 f-0">
+                      <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
+                    </label>
+                  </div>
+
+                <?php endforeach ?>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row table-container">
+          <div class="col">
+            <table class="data-table" data-table-id="login-attempts" data-api="/api/admin/login-attempts" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
+              <thead>
+              <?= $this->pageObj->renderThead() ?>
+              </thead>
+              <tbody>
+              <?= $this->pageObj->renderTbody() ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row pagination-row g-1">
+          <div class="col f-0">
+            <div class="row g-col-4">
+              <div class="col center-y g-col-1">
+                <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->total ?> attempts</p>
+              </div>
+              <form class="col table-tools-form g-col-0.5 center-y" novalidate>
+                <div class="row">
+                  <div class="col form-group g-row-0.25">
+                    <div class="row g-col-1 f-nowrap center-y">
+                      <label class="col" for="la-per-page">Per page:</label>
+                      <div class="col">
+                        <div class="row input-group">
+                          <select class="col table-per-page" id="la-per-page">
+                            <?php foreach ($this->pageObj->perPageOptions as $opt) : ?>
+                              <option value="<?= $opt ?>" <?= $this->pageObj->perPage === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                            <?php endforeach ?>
+                          </select>
                         </div>
                       </div>
                     </div>
                   </div>
-                </form>
-              </div>
-            </div>
-            <div class="col center-y end-x">
-              <div class="row table-pagination f-nowrap g-col-1">
-                <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/login-attempts?' . http_build_query(['page' => $this->pageObj->page - 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page > 0 ? '' : 'inert' ?>><i class="fas fa-chevron-left"></i>Previous</a>
-                <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/login-attempts?' . http_build_query(['page' => $this->pageObj->page + 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page < $this->pageObj->maxPage ? '' : 'inert' ?>>Next<i class="fas fa-chevron-right"></i></a>
-              </div>
+                </div>
+              </form>
             </div>
           </div>
-
-        <?php else : ?>
-
-          <div class="row">
-            <div class="col">
-              <p><?= $this->pageObj->hasActiveFilters ? 'No login attempts match your filters.' : 'No login attempts found.' ?></p>
+          <div class="col center-y end-x">
+            <div class="row table-pagination f-nowrap g-col-1">
+              <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/login-attempts?' . http_build_query(['page' => $this->pageObj->page - 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page > 0 ? '' : 'inert' ?>><i class="fas fa-chevron-left"></i>Previous</a>
+              <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/login-attempts?' . http_build_query(['page' => $this->pageObj->page + 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page < $this->pageObj->maxPage ? '' : 'inert' ?>>Next<i class="fas fa-chevron-right"></i></a>
             </div>
           </div>
-
-        <?php endif ?>
+        </div>
 
       </div>
     </div>

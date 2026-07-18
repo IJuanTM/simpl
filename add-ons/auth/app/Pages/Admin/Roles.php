@@ -32,6 +32,7 @@ class Roles
     {
         $this->subAction = $page->subpage(1);
         $this->tableColumns = self::getTableColumns();
+        $this->itemLabel = 'roles';
         $this->loadRoles();
 
         if (in_array($this->subAction, ['edit', 'delete'])) {
@@ -210,9 +211,12 @@ class Roles
      */
     public function renderTbody(): string
     {
+        $rows = $this->pageRows();
+        if (!$rows) return $this->renderEmptyRow();
+
         $html = '';
 
-        foreach ($this->pageRows() as $role) {
+        foreach ($rows as $role) {
             $html .= '<tr>';
 
             foreach ($this->tableColumns as $column) {

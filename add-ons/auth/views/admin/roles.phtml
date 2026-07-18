@@ -15,52 +15,40 @@ use app\Models\Url;
     <div class="row center-x">
       <div class="col roles-table f-col g-row-1 w-100">
 
-        <?php if (count($this->pageObj->roles) > 0) : ?>
+        <div class="row g-1">
+          <div class="col end-x">
+            <div class="row col-toggle-wrapper f-nowrap g-col-1">
+              <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
+              <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" data-cooldown="150"><i class="fas fa-columns"></i>Columns</button>
+              <div class="col col-toggle-panel">
 
-          <div class="row g-1">
-            <div class="col end-x">
-              <div class="row col-toggle-wrapper f-nowrap g-col-1">
-                <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
-                <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button"><i class="fas fa-columns"></i>Columns</button>
-                <div class="col col-toggle-panel">
+                <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
 
-                  <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
+                  <div class="row">
+                    <label class="col center-y g-col-0.5 f-0">
+                      <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
+                    </label>
+                  </div>
 
-                    <div class="row">
-                      <label class="col center-y g-col-0.5 f-0">
-                        <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
-                      </label>
-                    </div>
+                <?php endforeach ?>
 
-                  <?php endforeach ?>
-
-                </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <div class="row table-container">
-            <div class="col">
-              <table class="data-table" data-table-id="roles" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
-                <thead>
-                <?= $this->pageObj->renderThead() ?>
-                </thead>
-                <tbody>
-                <?= $this->pageObj->renderTbody() ?>
-                </tbody>
-              </table>
-            </div>
+        <div class="row table-container">
+          <div class="col">
+            <table class="data-table" data-table-id="roles" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
+              <thead>
+              <?= $this->pageObj->renderThead() ?>
+              </thead>
+              <tbody>
+              <?= $this->pageObj->renderTbody() ?>
+              </tbody>
+            </table>
           </div>
-
-        <?php else : ?>
-
-          <div class="row">
-            <div class="col">
-              <p>No roles found.</p>
-            </div>
-          </div>
-
-        <?php endif ?>
+        </div>
 
       </div>
     </div>

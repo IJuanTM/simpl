@@ -57,6 +57,7 @@ class Users
         foreach ($this->availableRoles as $key => $r) $this->availableRoles[$key]['name'] = AppController::sanitize($r['name']);
 
         $this->tableColumns = self::getTableColumns();
+        $this->itemLabel = 'users';
         $this->sortColumn = 'id';
         $this->sortDirection = self::SORT_ASC;
         $this->filterDefinitions = [
@@ -475,9 +476,12 @@ class Users
      */
     public function renderTbody(): string
     {
+        $rows = $this->pageRows();
+        if (!$rows) return $this->renderEmptyRow();
+
         $html = '';
 
-        foreach ($this->pageRows() as $user) {
+        foreach ($rows as $user) {
             $isActive = $user['status'] === UserStatus::ACTIVE->value;
             $html .= '<tr class="' . ($isActive ? '' : 'deleted') . '">';
 

@@ -197,6 +197,11 @@ div.table-container {
           &:nth-child(even) {
             background-color: var(--table-row-even);
           }
+
+          &.table-empty-row td {
+            padding: 1.5rem .5rem;
+            color: var(--text-50);
+          }
         }
       }
     }

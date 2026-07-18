@@ -45,11 +45,6 @@ section.roles {
 
       @include shimmer(true, rgba(#FFF, .25));
 
-      &[inert] {
-        color: rgba(#FFF, .5) !important;
-        background-color: rgba($red, .5) !important;
-      }
-
       @include hover-focus {
         background-color: $red-dark !important;
       }

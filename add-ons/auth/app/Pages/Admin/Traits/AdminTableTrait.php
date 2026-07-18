@@ -124,9 +124,12 @@ trait AdminTableTrait
      */
     public function renderTbody(): string
     {
+        $rows = $this->pageRows();
+        if (!$rows) return $this->renderEmptyRow();
+
         $html = '';
 
-        foreach ($this->pageRows() as $row) {
+        foreach ($rows as $row) {
             $html .= '<tr>';
             foreach ($this->tableColumns as $column) $html .= '<td>' . $this->renderCell($column, $row) . '</td>';
             $html .= '</tr>';
@@ -139,6 +142,20 @@ trait AdminTableTrait
      * Row data for the current page, used by the default renderTbody().
      */
     abstract private function pageRows(): array;
+
+    /**
+     * Renders a single row spanning every column, shown instead of the normal rows
+     * when there's nothing to display (no records, or none matching the active
+     * search/filters).
+     */
+    private function renderEmptyRow(): string
+    {
+        $message = $this->hasActiveFilters
+            ? "No $this->itemLabel match your search or filters."
+            : "No $this->itemLabel found.";
+
+        return '<tr class="table-empty-row text-center"><td colspan="' . count($this->tableColumns) . '">' . $message . '</td></tr>';
+    }
 
     /**
      * Renders a single cell's content for the given column and row.
