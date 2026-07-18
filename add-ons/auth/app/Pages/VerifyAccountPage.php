@@ -36,6 +36,9 @@ class VerifyAccountPage
             return;
         }
 
+        // Cast to int now that it is validated; the downstream calls expect an int id
+        $id = (int)$id;
+
         // Check if user exists
         if (!AuthController::exists($id)) {
             FormController::addAlert('We could not find your account! Please check your mail.', AlertType::ERROR);
@@ -74,11 +77,11 @@ class VerifyAccountPage
             }
 
             // Verify account
-            $this->verify((int)$id);
+            $this->verify($id);
         }
 
         // Process manual verification form submission
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post((int)$id);
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
     }
 
     /**
