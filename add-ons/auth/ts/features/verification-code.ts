@@ -45,8 +45,18 @@ export const verificationModule = {
     verificationModule.updateHiddenInput();
 
     const nextEmpty = Array.from(digitInputs).findIndex(input => !input.value);
-    if (nextEmpty !== -1) digitInputs[nextEmpty].focus();
-    else digitInputs[digitInputs.length - 1].focus();
+
+    if (nextEmpty !== -1) {
+      digitInputs[nextEmpty].focus();
+      return;
+    }
+
+    // The paste filled every digit; submit the form automatically (only happens on paste, not typing).
+    digitInputs[digitInputs.length - 1].focus();
+
+    const form = codeInput?.form;
+    const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+    if (form && submitButton) form.requestSubmit(submitButton);
   },
 
   init: (): void => {
