@@ -1,5 +1,9 @@
+@use "../../config/abstracts/mixins" as *;
+
 section.login-attempts {
-  form.login-attempts-filters {
-    max-width: unset !important;
+  div.login-attempts-table {
+    @include breakpoint-up(sm) {
+      max-width: 96rem !important;
+    }
   }
 }

@@ -1,4 +1,76 @@
+@use "../config/abstracts/mixins" as *;
 @use "../config/vars/themes" as *;
+
+form.table-tools-form {
+  max-width: unset !important;
+}
+
+i.table-search-clear {
+  cursor: pointer;
+  user-select: none;
+
+  @include hover-focus {
+    color: var(--text-75);
+  }
+}
+
+div.col-toggle-wrapper {
+  position: relative;
+
+  div.col-toggle-panel {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + .5rem);
+    right: 0;
+    display: none;
+    overflow-y: auto;
+    min-width: 16rem;
+    max-height: 20rem;
+    padding: .5rem;
+    border: .125rem solid var(--border-muted);
+    border-radius: .25rem;
+    background-color: var(--bg-section);
+
+    &.open {
+      display: flex;
+      flex-direction: column;
+      row-gap: .5rem;
+    }
+
+    label {
+      font-size: .875rem;
+      cursor: pointer;
+      white-space: nowrap;
+      border-radius: .25rem;
+
+      > span {
+        display: flex;
+      }
+
+      &:not(:has(input:checked)) {
+        color: var(--text-50);
+
+        @include hover-focus {
+          color: var(--text-75);
+        }
+      }
+
+      @include hover-focus {
+        color: var(--text-75);
+      }
+    }
+  }
+}
+
+div.table-pagination > a {
+  > i {
+    font-size: .875rem;
+  }
+
+  @include hover-focus {
+    color: var(--text-75);
+  }
+}
 
 div.table-container {
   overflow: hidden;

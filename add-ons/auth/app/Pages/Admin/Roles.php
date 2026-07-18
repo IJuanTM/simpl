@@ -11,15 +11,19 @@ use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
+use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
  * Roles (admin)
  *
  * Handles role listing, creation, editing, and deletion for the admin panel.
- * Delete is POST-only via a modal confirmation dialog.
+ * Delete is POST-only via a modal confirmation dialog. Uses AdminTableTrait
+ * for column rendering only - no search, filters, sort or pagination.
  */
 class Roles
 {
+    use AdminTableTrait;
+
     public ?string $subAction;
     public array $roles = [];
     public array $role = [];
@@ -27,6 +31,7 @@ class Roles
     public function __construct(Page $page)
     {
         $this->subAction = $page->subpage(1);
+        $this->tableColumns = self::getTableColumns();
         $this->loadRoles();
 
         if (in_array($this->subAction, ['edit', 'delete'])) {
@@ -52,6 +57,21 @@ class Roles
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
+    }
+
+    /**
+     * Returns the table column definitions for the roles table.
+     *
+     * @return array<int, array{key: string, label: string, sortable: bool, width: int|null, visible: bool}>
+     */
+    private static function getTableColumns(): array
+    {
+        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], [
+            ['id', 'Id', false, 64, true],
+            ['name', 'Name', false, 256, true],
+            ['user_count', 'Users', false, 96, true],
+            ['actions', 'Actions', false, null, true],
+        ]);
     }
 
     /**
@@ -183,5 +203,59 @@ class Roles
 
         PageController::redirect('admin/roles');
         AlertController::globalAlert('Role deleted successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Overrides the trait default to add the actions column.
+     */
+    public function renderTbody(): string
+    {
+        $html = '';
+
+        foreach ($this->pageRows() as $role) {
+            $html .= '<tr>';
+
+            foreach ($this->tableColumns as $column) {
+                if ($column['key'] === 'actions') {
+                    $html .= '<td class="table-actions"><div class="row g-col-0.5 center-y">';
+                    $html .= '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $role['id'] . '"><i class="fas fa-pen"></i></a>';
+                    $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $role['id'] . '" data-role-name="' . $role['name'] . '" data-role-user-count="' . $role['user_count'] . '"><i class="fas fa-trash"></i></button>';
+                    $html .= '</div></td>';
+                } else $html .= '<td>' . $this->renderCell($column, $role) . '</td>';
+            }
+
+            $html .= '</tr>';
+        }
+
+        return $html;
+    }
+
+    /**
+     * Row data for the current page.
+     */
+    private function pageRows(): array
+    {
+        return $this->roles;
+    }
+
+    /**
+     * Renders a role row's cell for the given column.
+     */
+    public function renderCell(array $column, array $row): string
+    {
+        return match ($column['key']) {
+            'id' => (string)$row['id'],
+            'name' => $row['name'],
+            'user_count' => (string)$row['user_count'],
+            default => '',
+        };
+    }
+
+    /**
+     * Base route for pagination/sort-link hrefs.
+     */
+    private function routePath(): string
+    {
+        return '/admin/roles';
     }
 }

@@ -233,12 +233,15 @@ function initPaginationLinks(section: HTMLElement, container: Element, table: HT
 }
 
 async function fetchTableData(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void, params: URLSearchParams): Promise<void> {
-  const apiUrl = new URL('/api/admin/users', window.location.origin);
+  const api = table.dataset.api;
+  if (!api) return;
+
+  const apiUrl = new URL(api, window.location.origin);
   apiUrl.search = params.toString();
 
   const tbody = table.tBodies[0];
   const paginationRow = section.querySelector<HTMLElement>('.pagination-row');
-  const paginationLinks = section.querySelector<HTMLElement>('.users-pagination');
+  const paginationLinks = section.querySelector<HTMLElement>('.table-pagination');
 
   if (tbody) tbody.style.opacity = '0.4';
 
@@ -315,21 +318,14 @@ function initTable(table: HTMLTableElement): void {
   syncState();
 }
 
-function initFilters(): void {
-  const section = document.querySelector<HTMLElement>('section.users');
-  if (!section) return;
-
-  const table = section.querySelector<HTMLTableElement>('table.data-table');
-  if (!table) return;
-
+function initTableFilters(section: HTMLElement, table: HTMLTableElement): void {
   const baseUrl = window.location.pathname;
-  const searchInput = section.querySelector<HTMLInputElement>('#users-search');
-  const searchClear = section.querySelector<HTMLElement>('.users-search-clear');
-  const perPageSelect = section.querySelector<HTMLSelectElement>('#users-per-page');
+  const searchInput = section.querySelector<HTMLInputElement>('.table-search');
+  const searchClear = section.querySelector<HTMLElement>('.table-search-clear');
+  const perPageSelect = section.querySelector<HTMLSelectElement>('.table-per-page');
   const filtersResetBtn = section.querySelector<HTMLButtonElement>('.filters-reset-btn');
-  const roleSelect = section.querySelector<HTMLSelectElement>('#filter-role');
-  const statusSelect = section.querySelector<HTMLSelectElement>('#filter-status');
-  const verifiedSelect = section.querySelector<HTMLSelectElement>('#filter-verified');
+  const filterSelects = Array.from(section.querySelectorAll<HTMLSelectElement>('.table-filter'));
+  const filterParams = filterSelects.map(s => s.dataset.filter).filter((p): p is string => !!p);
   const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
@@ -347,8 +343,7 @@ function initFilters(): void {
   const syncFiltersResetBtn = (): void => {
     if (!filtersResetBtn) return;
     const params = new URLSearchParams(window.location.search);
-    const hasFilters = !!(params.get('search')?.trim() || params.get('role') || params.get('status') || params.get('verified'));
-    filtersResetBtn.inert = !hasFilters;
+    filtersResetBtn.inert = !(params.get('search')?.trim() || filterParams.some(p => params.get(p)));
   };
 
   const navigate = (newParams: Record<string, string | number | null>): void => {
@@ -358,7 +353,7 @@ function initFilters(): void {
     fetchTableData(section, table, defaultWidths, hiddenKey, syncState, onWidthChange, url.searchParams);
   };
 
-  section.querySelectorAll<HTMLFormElement>('form.users-search-form, form.users-per-page-form, form.users-filters').forEach(form => {
+  section.querySelectorAll<HTMLFormElement>('form.table-tools-form').forEach(form => {
     form.addEventListener('submit', e => e.preventDefault());
   });
 
@@ -412,9 +407,10 @@ function initFilters(): void {
 
   if (perPageSelect) perPageSelect.addEventListener('change', () => navigate({per_page: perPageSelect.value, page: 0}));
 
-  if (roleSelect) roleSelect.addEventListener('change', () => navigate({role: roleSelect.value || null, page: 0}));
-  if (statusSelect) statusSelect.addEventListener('change', () => navigate({status: statusSelect.value || null, page: 0}));
-  if (verifiedSelect) verifiedSelect.addEventListener('change', () => navigate({verified: verifiedSelect.value || null, page: 0}));
+  filterSelects.forEach(select => {
+    const param = select.dataset.filter;
+    if (param) select.addEventListener('change', () => navigate({[param]: select.value || null, page: 0}));
+  });
 
   if (filtersResetBtn) {
     filtersResetBtn.addEventListener('click', () => {
@@ -422,10 +418,10 @@ function initFilters(): void {
         searchInput.value = '';
         if (searchClear) searchClear.inert = true;
       }
-      if (roleSelect) roleSelect.value = '';
-      if (statusSelect) statusSelect.value = '';
-      if (verifiedSelect) verifiedSelect.value = '';
-      navigate({search: null, role: null, status: null, verified: null, page: 0});
+      filterSelects.forEach(s => s.value = '');
+      const reset: Record<string, string | number | null> = {search: null, page: 0};
+      filterParams.forEach(p => reset[p] = null);
+      navigate(reset);
     });
   }
 
@@ -433,7 +429,7 @@ function initFilters(): void {
 
   initSortLinks(section, table, defaultWidths, hiddenKey, syncState, onWidthChange);
 
-  const paginationLinks = section.querySelector<HTMLElement>('.users-pagination');
+  const paginationLinks = section.querySelector<HTMLElement>('.table-pagination');
   if (paginationLinks) initPaginationLinks(section, paginationLinks, table, defaultWidths, hiddenKey, syncState, onWidthChange);
 
   window.addEventListener('popstate', () => fetchTableData(section, table, defaultWidths, hiddenKey, syncState, onWidthChange, new URLSearchParams(window.location.search)));
@@ -442,6 +438,10 @@ function initFilters(): void {
 export const tableModule = {
   init(): void {
     document.querySelectorAll<HTMLTableElement>('table.data-table').forEach(initTable);
-    initFilters();
+
+    document.querySelectorAll<HTMLTableElement>('table.data-table[data-api]').forEach(table => {
+      const section = table.closest<HTMLElement>('section');
+      if (section) initTableFilters(section, table);
+    });
   }
 };

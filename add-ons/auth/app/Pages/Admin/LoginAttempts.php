@@ -21,31 +21,44 @@ class LoginAttempts
     private const array PER_PAGE_OPTIONS = [25, 50, 100];
 
     public array $attempts = [];
-    public int $total = 0;
     public int $perPage = 25;
     public array $perPageOptions = self::PER_PAGE_OPTIONS;
-    public string $filterStatus = '';
 
     public function __construct(Page $page)
     {
-        $this->readTableParams($page);
+        $this->tableColumns = self::getTableColumns();
+        $this->itemLabel = 'attempts';
+        $this->filterDefinitions = ['status' => ['success', 'failed']];
 
-        if ($page->param('status') !== null && in_array($page->param('status'), ['success', 'failed'], true)) $this->filterStatus = (string)$page->param('status');
-
-        $this->activeQueryParams = array_filter([
-            'status' => $this->filterStatus ?: null,
-            'search' => $this->search ?: null,
-            'per_page' => $this->perPage !== 25 ? $this->perPage : null,
-        ]);
-
+        $this->initTable($page);
         $this->loadAttempts();
     }
 
+    /**
+     * Returns the table column definitions for the login attempts table.
+     *
+     * @return array<int, array{key: string, label: string, sortable: bool, width: int|null, visible: bool}>
+     */
+    private static function getTableColumns(): array
+    {
+        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], [
+            ['id', '#', false, 64, true],
+            ['user', 'User', false, 160, true],
+            ['ip_address', 'IP address', false, 160, true],
+            ['user_agent', 'User agent', false, 288, true],
+            ['attempt_time', 'Time', false, 160, true],
+            ['status', 'Status', false, 128, true],
+        ]);
+    }
+
+    /**
+     * Loads the current page of login attempts matching the active search/filter.
+     */
     private function loadAttempts(): void
     {
         $where = [];
-        if ($this->filterStatus === 'success') $where['login_attempts.success'] = 1;
-        else if ($this->filterStatus === 'failed') $where['login_attempts.success'] = 0;
+        if ($this->filters['status'] === 'success') $where['login_attempts.success'] = 1;
+        else if ($this->filters['status'] === 'failed') $where['login_attempts.success'] = 0;
 
         $orWhere = [];
         if ($this->search !== '') {
@@ -57,14 +70,14 @@ class LoginAttempts
             ];
         }
 
-        $this->total = DB::count(
+        $total = DB::count(
             FROM: 'login_attempts',
             JOIN: ['user_id', ['users', 'id']],
             WHERE: $where,
             OR_WHERE: $orWhere
         );
 
-        $offset = $this->applyPagination($this->total);
+        $offset = $this->applyPagination($total);
 
         $rows = DB::select(
             SELECT: [
@@ -93,5 +106,40 @@ class LoginAttempts
             $row['email'] = AppController::sanitize($row['email'] ?? '');
             $this->attempts[] = $row;
         }
+    }
+
+    /**
+     * Renders an attempt row's cell for the given column.
+     */
+    public function renderCell(array $column, array $row): string
+    {
+        return match ($column['key']) {
+            'id' => (string)$row['id'],
+            'user' => match (true) {
+                $row['username'] || $row['email'] => '<span>' . ($row['username'] ?: $row['email']) . '</span>' . ($row['username'] && $row['email'] ? '<br><small>' . $row['email'] . '</small>' : ''),
+                default => '<span class="text-muted">Unknown</span>',
+            },
+            'ip_address' => $row['ip_address'],
+            'user_agent' => '<span title="' . $row['user_agent'] . '">' . mb_strimwidth($row['user_agent'], 0, 80, '…') . '</span>',
+            'attempt_time' => $row['attempt_time'],
+            'status' => $row['success'] ? '<span class="badge badge-success">Success</span>' : '<span class="badge badge-error">' . ($row['failed_reason'] ?? 'Failed') . '</span>',
+            default => '',
+        };
+    }
+
+    /**
+     * Base route for pagination/sort-link hrefs.
+     */
+    private function routePath(): string
+    {
+        return '/admin/login-attempts';
+    }
+
+    /**
+     * Row data for the current page.
+     */
+    private function pageRows(): array
+    {
+        return $this->attempts;
     }
 }

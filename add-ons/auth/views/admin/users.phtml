@@ -1,5 +1,4 @@
 <?php
-use app\Enums\UserStatus;
 use app\Models\Url;
 ?>
 
@@ -14,8 +13,8 @@ use app\Models\Url;
     <div class="row center-x">
       <div class="col users-table f-col g-row-1 w-100">
 
-        <div class="row users-tools">
-          <form class="col users-search-form" novalidate>
+        <div class="row table-tools">
+          <form class="col table-tools-form" novalidate>
             <div class="row">
               <div class="col form-group g-row-0.25">
                 <div class="row">
@@ -23,16 +22,16 @@ use app\Models\Url;
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
-                  <input class="col" id="users-search" type="text" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: Id, Username, Email or First/Last name" autocomplete="off">
-                  <div class="col input-append center f-0"><i class="fas fa-xmark users-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
+                  <input class="col table-search" id="users-search" type="text" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: Id, Username, Email or First/Last name" autocomplete="off">
+                  <div class="col input-append center f-0"><i class="fas fa-xmark table-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
                 </div>
               </div>
             </div>
           </form>
         </div>
 
-        <div class="row users-tools">
-          <form class="col users-filters center-y" novalidate>
+        <div class="row table-tools">
+          <form class="col center-y table-tools-form" novalidate>
             <div class="row g-col-1 w-100">
               <div class="col form-group g-row-0.25">
                 <div class="row">
@@ -40,10 +39,10 @@ use app\Models\Url;
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-                  <select class="col" id="filter-role">
+                  <select class="col table-filter" id="filter-role" data-filter="role">
                     <option value="">All roles</option>
                     <?php foreach ($this->pageObj->availableRoles as $r) : ?>
-                      <option value="<?= $r['name'] ?>" <?= $this->pageObj->filterRole === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
+                      <option value="<?= $r['name'] ?>" <?= $this->pageObj->filters['role'] === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
                     <?php endforeach ?>
                   </select>
                 </div>
@@ -55,11 +54,11 @@ use app\Models\Url;
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
-                  <select class="col" id="filter-status">
+                  <select class="col table-filter" id="filter-status" data-filter="status">
                     <option value="">All statuses</option>
-                    <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
-                    <option value="deactivated" <?= $this->pageObj->filterStatus === 'deactivated' ? 'selected' : '' ?>>Deactivated</option>
-                    <option value="deleted" <?= $this->pageObj->filterStatus === 'deleted' ? 'selected' : '' ?>>Deleted</option>
+                    <option value="active" <?= $this->pageObj->filters['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="deactivated" <?= $this->pageObj->filters['status'] === 'deactivated' ? 'selected' : '' ?>>Deactivated</option>
+                    <option value="deleted" <?= $this->pageObj->filters['status'] === 'deleted' ? 'selected' : '' ?>>Deleted</option>
                   </select>
                 </div>
               </div>
@@ -70,10 +69,10 @@ use app\Models\Url;
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-user-check"></i></div>
-                  <select class="col" id="filter-verified">
+                  <select class="col table-filter" id="filter-verified" data-filter="verified">
                     <option value="">All</option>
-                    <option value="yes" <?= $this->pageObj->filterVerified === 'yes' ? 'selected' : '' ?>>Verified</option>
-                    <option value="no" <?= $this->pageObj->filterVerified === 'no' ? 'selected' : '' ?>>Unverified</option>
+                    <option value="yes" <?= $this->pageObj->filters['verified'] === 'yes' ? 'selected' : '' ?>>Verified</option>
+                    <option value="no" <?= $this->pageObj->filters['verified'] === 'no' ? 'selected' : '' ?>>Unverified</option>
                   </select>
                 </div>
               </div>
@@ -81,7 +80,7 @@ use app\Models\Url;
           </form>
         </div>
 
-        <?php if ($this->pageObj->totalUsers > 0) : ?>
+        <?php if ($this->pageObj->total > 0) : ?>
 
           <div class="row g-1">
             <div class="col center-y">
@@ -95,11 +94,11 @@ use app\Models\Url;
                 <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" data-cooldown="150"><i class="fas fa-columns"></i>Columns</button>
                 <div class="col col-toggle-panel">
 
-                  <?php foreach ($this->pageObj->visibleColumns as $index => $column) : ?>
+                  <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
 
                     <div class="row">
                       <label class="col center-y g-col-0.5 f-0">
-                        <input id="users-col-<?= $index ?>" type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
+                        <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
                       </label>
                     </div>
 
@@ -112,93 +111,12 @@ use app\Models\Url;
 
           <div class="row table-container">
             <div class="col">
-              <table class="data-table" data-table-id="users" data-hidden-cols="<?= json_encode(array_keys(array_filter($this->pageObj->visibleColumns, static fn($c) => empty($c['visible']))), JSON_THROW_ON_ERROR) ?>">
+              <table class="data-table" data-table-id="users" data-api="/api/admin/users" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
                 <thead>
-                <tr>
-
-                  <?php foreach ($this->pageObj->tableColumns as $column) : ?>
-
-                    <?php $sortParams = array_merge($this->pageObj->activeFilterParams, $this->pageObj->getNextSortParams($column)) ?>
-                    <th class="<?= !empty($column['sortable']) ? 'sortable ' . $this->pageObj->getColumnSortClass($column) : '' ?>"<?= $column['width'] ? ' data-width="' . (int)$column['width'] . '"' : '' ?>>
-                      <?php if (!empty($column['sortable'])) : ?>
-                        <a class="table-sort-link" href="<?= Url::to('admin/users' . ($sortParams ? '?' . http_build_query($sortParams) : '')) ?>"><?= $column['label'] ?></a>
-                      <?php else : ?>
-                        <p class="table-header-label"><?= $column['label'] ?></p>
-                      <?php endif ?>
-                    </th>
-
-                  <?php endforeach ?>
-
-                </tr>
+                <?= $this->pageObj->renderThead() ?>
                 </thead>
                 <tbody>
-
-                <?php foreach ($this->pageObj->pagedUsers as $user) : ?>
-
-                  <?php $isActive = $user['status'] === UserStatus::ACTIVE->value ?>
-                  <tr class="<?= $isActive ? '' : 'deleted' ?>">
-
-                    <?php foreach ($this->pageObj->tableColumns as $column) : ?>
-
-                      <?php if ($column['key'] === 'actions') : ?>
-
-                        <?php if ($user['id'] !== $this->pageObj->currentUserId) : ?>
-
-                          <td class="table-actions">
-                            <div class="row g-col-0.5 center-y">
-
-                              <?php if ($isActive) : ?>
-
-                                <a class="col table-action f-0" href="<?= Url::to('admin/users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
-                                <button class="col table-action delete f-0" type="button"
-                                        data-cooldown="300"
-                                        data-modal-delete
-                                        data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= $user['username'] ?? '-' ?>"
-                                        data-user-email="<?= $user['email'] ?>"
-                                        aria-label="Delete user <?= $user['email'] ?>">
-                                  <i class="fas fa-trash"></i>
-                                </button>
-
-                              <?php else : ?>
-
-                                <button class="col table-action restore f-0" type="button"
-                                        data-cooldown="300"
-                                        data-modal-restore
-                                        data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= $user['username'] ?? '-' ?>"
-                                        data-user-email="<?= $user['email'] ?>">
-                                  <i class="fas fa-wrench"></i>
-                                </button>
-                                <button class="col table-action purge f-0" type="button"
-                                        data-cooldown="300"
-                                        data-modal-purge
-                                        data-user-id="<?= $user['id'] ?>"
-                                        data-user-username="<?= $user['username'] ?? '-' ?>"
-                                        data-user-email="<?= $user['email'] ?>"
-                                        aria-label="Permanently delete user <?= $user['email'] ?>">
-                                  <i class="fas fa-skull"></i>
-                                </button>
-
-                              <?php endif ?>
-
-                            </div>
-                          </td>
-
-                        <?php else : ?>
-                          <td><span class="text-muted">-</span></td>
-                        <?php endif ?>
-
-                      <?php else : ?>
-                        <td><?= $this->pageObj->renderCell($column, $user) ?></td>
-                      <?php endif ?>
-
-                    <?php endforeach ?>
-
-                  </tr>
-
-                <?php endforeach ?>
-
+                <?= $this->pageObj->renderTbody() ?>
                 </tbody>
               </table>
             </div>
@@ -208,16 +126,16 @@ use app\Models\Url;
             <div class="col f-0">
               <div class="row g-col-4">
                 <div class="col center-y g-col-1">
-                  <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->totalUsers ?><?= $this->pageObj->hasActiveFilters ? ' / ' . $this->pageObj->totalAllUsers : '' ?> users</p>
+                  <p class="no-wrap"><?= $this->pageObj->startIndex ?> - <?= $this->pageObj->endIndex ?> of <?= $this->pageObj->total ?><?= $this->pageObj->hasActiveFilters ? ' / ' . $this->pageObj->totalAllUsers : '' ?> users</p>
                 </div>
-                <form class="col users-per-page-form g-col-0.5 center-y" novalidate>
+                <form class="col table-tools-form g-col-0.5 center-y" novalidate>
                   <div class="row">
                     <div class="col form-group g-row-0.25">
                       <div class="row g-col-1 f-nowrap center-y">
                         <label class="col" for="users-per-page">Per page:</label>
                         <div class="col">
                           <div class="row input-group">
-                            <select class="col" id="users-per-page">
+                            <select class="col table-per-page" id="users-per-page">
                               <?php foreach ($this->pageObj->perPageOptions as $option) : ?>
                                 <option value="<?= $option ?>" <?= $this->pageObj->perPage === $option ? 'selected' : '' ?>><?= $option ?></option>
                               <?php endforeach ?>
@@ -231,7 +149,7 @@ use app\Models\Url;
               </div>
             </div>
             <div class="col center-y end-x">
-              <div class="row users-pagination f-nowrap g-col-1">
+              <div class="row table-pagination f-nowrap g-col-1">
                 <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/users?' . http_build_query(['page' => $this->pageObj->page - 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page > 0 ? '' : 'inert' ?>><i class="fas fa-chevron-left"></i>Previous</a>
                 <a class="col link lh-1 g-col-0.5 center f-0" href="<?= Url::to('admin/users?' . http_build_query(['page' => $this->pageObj->page + 1] + $this->pageObj->activeQueryParams)) ?>" <?= $this->pageObj->page < $this->pageObj->maxPage ? '' : 'inert' ?>>Next<i class="fas fa-chevron-right"></i></a>
               </div>
@@ -253,7 +171,6 @@ use app\Models\Url;
 
     <div class="row g-col-1 center-x">
       <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
-      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/roles') ?>"><i class="fas fa-user-group"></i>Manage roles</a>
     </div>
   </div>
 </section>

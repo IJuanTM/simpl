@@ -16,7 +16,6 @@ use app\Enums\Role;
 use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
-use JsonException;
 
 /**
  * Users (admin)
@@ -38,28 +37,17 @@ class Users
     public array $allUsers = [];
     public array $users = [];
     public array $pagedUsers = [];
-    public array $tableColumns = [];
-    public array $visibleColumns = [];
     public string $generatedPassword = '';
     public int $perPage = 10;
     public array $perPageOptions = self::PER_PAGE_OPTIONS;
-    public string $filterRole = '';
-    public string $filterStatus = '';
-    public string $filterVerified = '';
-    public bool $hasActiveFilters = false;
-    public ?string $sortColumn = 'id';
-    public ?string $sortDirection = self::SORT_ASC;
-    public int $totalUsers = 0;
     public int $totalAllUsers = 0;
     public int $currentUserId = 0;
-    public array $activeSortParams = [];
-    public array $activeFilterParams = [];
     public array $availableRoles = [];
-    public string $searchDisplay = '';
 
     public function __construct(Page $page)
     {
         $this->subAction = $page->subpage(1);
+        $this->currentUserId = (int)SessionController::get('user')['id'];
         $this->availableRoles = DB::select(
             SELECT: '*',
             FROM: 'roles',
@@ -69,21 +57,19 @@ class Users
         foreach ($this->availableRoles as $key => $r) $this->availableRoles[$key]['name'] = AppController::sanitize($r['name']);
 
         $this->tableColumns = self::getTableColumns();
-        $this->visibleColumns = $this->tableColumns;
+        $this->sortColumn = 'id';
+        $this->sortDirection = self::SORT_ASC;
+        $this->filterDefinitions = [
+            'role' => [],
+            'status' => ['active', 'deactivated', 'deleted'],
+            'verified' => ['yes', 'no'],
+        ];
 
-        $this->readTableParams($page);
-
-        if ($page->param('role') !== null) $this->filterRole = trim((string)$page->param('role'));
-        if ($page->param('status') !== null && in_array($page->param('status'), ['active', 'deactivated', 'deleted'], true)) $this->filterStatus = (string)$page->param('status');
-        if ($page->param('verified') !== null && in_array($page->param('verified'), ['yes', 'no'], true)) $this->filterVerified = (string)$page->param('verified');
-
-        $this->resolveSort($page->params);
+        $this->initTable($page);
         $this->loadUsers();
         $this->filterUsers();
         $this->sortUsers();
         $this->buildPagedUsers();
-        $this->prepareViewData();
-        $this->searchDisplay = AppController::sanitize($this->search);
 
         $subAction = $this->subAction;
         if ($subAction === null) return;
@@ -149,23 +135,6 @@ class Users
     }
 
     /**
-     * Reads and validates sort parameters from the request, falling back to defaults.
-     *
-     * @param array<string, mixed> $params URL query parameters
-     *
-     * @return void
-     */
-    private function resolveSort(array $params): void
-    {
-        $sortable = array_column(array_filter($this->tableColumns, static fn(array $c): bool => !empty($c['sortable'])), 'key');
-        if (!isset($params['sort']) || !in_array($params['sort'], $sortable, true)) return;
-
-        $this->sortColumn = $params['sort'];
-        $dir = isset($params['dir']) ? strtolower((string)$params['dir']) : self::SORT_ASC;
-        $this->sortDirection = in_array($dir, [self::SORT_ASC, self::SORT_DESC], true) ? $dir : self::SORT_ASC;
-    }
-
-    /**
      * Loads all users from the database and resolves their role and verification status.
      *
      * @return void
@@ -211,18 +180,18 @@ class Users
             ], static fn(string $v): bool => str_contains(strtolower($v), $needle))));
         }
 
-        if ($this->filterRole !== '') {
-            $role = $this->filterRole;
+        if ($this->filters['role'] !== '') {
+            $role = $this->filters['role'];
             $this->users = array_values(array_filter($this->users, static fn(array $user): bool => ($user['role_name'] ?? '') === $role));
         }
 
-        if ($this->filterStatus !== '') {
-            $status = $this->filterStatus;
+        if ($this->filters['status'] !== '') {
+            $status = $this->filters['status'];
             $this->users = array_values(array_filter($this->users, static fn(array $user): bool => $user['status'] === $status));
         }
 
-        if ($this->filterVerified !== '') {
-            $verified = $this->filterVerified === 'yes' ? 1 : 0;
+        if ($this->filters['verified'] !== '') {
+            $verified = $this->filters['verified'] === 'yes' ? 1 : 0;
             $this->users = array_values(array_filter($this->users, static fn(array $user): bool => (int)($user['is_verified'] ?? 0) === $verified));
         }
     }
@@ -283,8 +252,7 @@ class Users
     private function buildPagedUsers(): void
     {
         $this->totalAllUsers = count($this->allUsers);
-        $this->totalUsers = count($this->users);
-        $offset = $this->applyPagination($this->totalUsers);
+        $offset = $this->applyPagination(count($this->users));
         $this->pagedUsers = array_slice($this->users, $offset, $this->perPage);
 
         foreach ($this->pagedUsers as $key => $user) {
@@ -294,26 +262,6 @@ class Users
             if ($user['last_name'] !== null) $this->pagedUsers[$key]['last_name'] = AppController::sanitize($user['last_name']);
             if ($user['role_name'] !== null) $this->pagedUsers[$key]['role_name'] = AppController::sanitize($user['role_name']);
         }
-    }
-
-    /**
-     * Computes sort/filter params and other view-facing state.
-     *
-     * @return void
-     */
-    private function prepareViewData(): void
-    {
-        $this->currentUserId = (int)SessionController::get('user')['id'];
-        $this->activeSortParams = $this->sortColumn ? ['sort' => $this->sortColumn, 'dir' => $this->sortDirection] : [];
-        $this->activeFilterParams = array_filter([
-            'search' => $this->search,
-            'per_page' => $this->perPage !== self::PER_PAGE_OPTIONS[0] ? $this->perPage : null,
-            'role' => $this->filterRole,
-            'status' => $this->filterStatus,
-            'verified' => $this->filterVerified,
-        ], static fn(mixed $v): bool => $v !== '' && $v !== null);
-        $this->activeQueryParams = $this->activeSortParams + $this->activeFilterParams;
-        $this->hasActiveFilters = $this->search !== '' || $this->filterRole !== '' || $this->filterStatus !== '' || $this->filterVerified !== '';
     }
 
     /**
@@ -523,88 +471,13 @@ class Users
     }
 
     /**
-     * Renders the table data as JSON for the front-end.
-     *
-     * @return void
-     * @throws JsonException
-     *
+     * Overrides the trait default to add the actions column.
      */
-    final public function api(): void
-    {
-        header('Content-Type: application/json');
-
-        echo json_encode([
-            'thead' => $this->renderThead(),
-            'tbody' => $this->renderTbody(),
-            'pagination' => $this->renderPagination(),
-            'info' => $this->renderPaginationInfo(),
-            'total' => $this->totalUsers,
-        ], JSON_THROW_ON_ERROR);
-    }
-
-    /**
-     * Renders the table header row with sortable column links.
-     *
-     * @return string
-     */
-    private function renderThead(): string
-    {
-        $html = '<tr>';
-
-        foreach ($this->tableColumns as $column) {
-            $sortParams = array_merge($this->activeFilterParams, $this->getNextSortParams($column));
-            $href = '/admin/users' . ($sortParams ? '?' . http_build_query($sortParams) : '');
-            $widthAttr = $column['width'] ? ' data-width="' . $column['width'] . '"' : '';
-            $sortClass = !empty($column['sortable']) ? 'sortable ' . $this->getColumnSortClass($column) : '';
-
-            $html .= '<th class="' . $sortClass . '"' . $widthAttr . '>';
-            $html .= !empty($column['sortable'])
-                ? '<a class="table-sort-link" href="' . $href . '">' . $column['label'] . '</a>'
-                : '<p class="table-header-label">' . $column['label'] . '</p>';
-            $html .= '</th>';
-        }
-
-        return $html . '</tr>';
-    }
-
-    /**
-     * Returns the query parameters that would apply if this column header is clicked.
-     *
-     * @param array<string, mixed> $column Column definition
-     *
-     * @return array<string, mixed>
-     */
-    public function getNextSortParams(array $column): array
-    {
-        if (empty($column['sortable'])) return [];
-        if ($this->sortColumn !== $column['key']) return ['sort' => $column['key'], 'dir' => self::SORT_ASC];
-        if ($this->sortDirection === self::SORT_ASC) return ['sort' => $column['key'], 'dir' => self::SORT_DESC];
-        return [];
-    }
-
-    /**
-     * Returns the CSS sort class for the given column based on the active sort state.
-     *
-     * @param array<string, mixed> $column Column definition
-     *
-     * @return string
-     */
-    public function getColumnSortClass(array $column): string
-    {
-        if (empty($column['sortable']) || $this->sortColumn !== $column['key']) return '';
-        return $this->sortDirection === self::SORT_ASC ? 'sort-asc' : 'sort-desc';
-    }
-
-    /**
-     * Renders all table body rows for the current page.
-     *
-     * @return string
-     */
-    private function renderTbody(): string
+    public function renderTbody(): string
     {
         $html = '';
 
-        foreach ($this->pagedUsers as $user) {
+        foreach ($this->pageRows() as $user) {
             $isActive = $user['status'] === UserStatus::ACTIVE->value;
             $html .= '<tr class="' . ($isActive ? '' : 'deleted') . '">';
 
@@ -618,10 +491,10 @@ class Users
 
                         if ($isActive) {
                             $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '"><i class="fas fa-pen"></i></a>';
-                            $html .= '<button class="col table-action delete f-0" type="button" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-trash"></i></button>';
+                            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
                         } else {
-                            $html .= '<button class="col table-action restore f-0" type="button" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
-                            $html .= '<button class="col table-action purge f-0" type="button" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-skull"></i></button>';
+                            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
+                            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="300" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
                         }
 
                         $html .= '</div></td>';
@@ -636,58 +509,53 @@ class Users
     }
 
     /**
-     * Renders the cell content for a given column and user row.
-     *
-     * @param array<string, mixed> $column Column definition
-     * @param array<string, mixed> $user   User row
-     *
-     * @return string
+     * Row data for the current page.
      */
-    public function renderCell(array $column, array $user): string
+    private function pageRows(): array
+    {
+        return $this->pagedUsers;
+    }
+
+    /**
+     * Renders a user row's cell for the given column.
+     */
+    public function renderCell(array $column, array $row): string
     {
         $check = '<i class="fas fa-check"></i>';
         $times = '<i class="fas fa-times"></i>';
         $muted = static fn(string $v): string => $v ?: '<span class="text-muted">-</span>';
 
         return match ($column['key']) {
-            'id' => (string)$user['id'],
-            'username' => $muted($user['username'] ?? ''),
-            'email' => $user['email'],
-            'first_name' => $muted($user['first_name'] ?? ''),
-            'last_name' => $muted($user['last_name'] ?? ''),
-            'role' => $muted($user['role_name'] ?? ''),
-            'is_verified' => !empty($user['is_verified']) ? $check : $times,
-            'must_change_password' => $user['must_change_password'] ? $check : $times,
-            'last_login' => $muted($user['last_login'] ?? ''),
-            'created_at' => $user['created_at'],
-            'last_update' => $user['last_update'],
-            'status' => ucfirst((string)$user['status']),
-            'inactive_since' => $muted($user['inactive_since'] ?? ''),
+            'id' => (string)$row['id'],
+            'username' => $muted($row['username'] ?? ''),
+            'email' => $row['email'],
+            'first_name' => $muted($row['first_name'] ?? ''),
+            'last_name' => $muted($row['last_name'] ?? ''),
+            'role' => $muted($row['role_name'] ?? ''),
+            'is_verified' => !empty($row['is_verified']) ? $check : $times,
+            'must_change_password' => $row['must_change_password'] ? $check : $times,
+            'last_login' => $muted($row['last_login'] ?? ''),
+            'created_at' => $row['created_at'],
+            'last_update' => $row['last_update'],
+            'status' => ucfirst((string)$row['status']),
+            'inactive_since' => $muted($row['inactive_since'] ?? ''),
             default => '',
         };
     }
 
     /**
-     * Renders previous/next pagination links with active query parameters preserved.
-     *
-     * @return string
+     * Base route for pagination/sort-link hrefs.
      */
-    private function renderPagination(): string
+    private function routePath(): string
     {
-        $cls = 'class="col link lh-1 g-col-0.5 center f-0"';
-        $prev = '/admin/users?' . http_build_query(['page' => $this->page - 1] + $this->activeQueryParams);
-        $next = '/admin/users?' . http_build_query(['page' => $this->page + 1] + $this->activeQueryParams);
-
-        return '<a ' . $cls . ' href="' . $prev . '" ' . ($this->page > 0 ? '' : 'inert') . '><i class="fas fa-chevron-left"></i>Previous</a>' . '<a ' . $cls . ' href="' . $next . '" ' . ($this->page < $this->maxPage ? '' : 'inert') . '>Next<i class="fas fa-chevron-right"></i></a>';
+        return '/admin/users';
     }
 
     /**
-     * Renders the "X - Y of Z users" info string for the current page.
-     *
-     * @return string
+     * Overrides the trait default to add the "/ totalAllUsers" count when filtered.
      */
     private function renderPaginationInfo(): string
     {
-        return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->totalUsers . ($this->hasActiveFilters ? ' / ' . $this->totalAllUsers : '') . ' users';
+        return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ($this->hasActiveFilters ? ' / ' . $this->totalAllUsers : '') . ' users';
     }
 }

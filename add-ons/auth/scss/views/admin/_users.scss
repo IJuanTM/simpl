@@ -2,70 +2,9 @@
 @use "../../config/vars/colors" as *;
 
 section.users {
-  div.col-toggle-wrapper {
-    position: relative;
-
-    div.col-toggle-panel {
-      position: absolute;
-      z-index: 10;
-      top: calc(100% + .5rem);
-      right: 0;
-      display: none;
-      overflow-y: auto;
-      min-width: 16rem;
-      max-height: 20rem;
-      padding: .5rem;
-      border: .125rem solid var(--border-muted);
-      border-radius: .25rem;
-      background-color: var(--bg-section);
-
-      &.open {
-        display: flex;
-        flex-direction: column;
-        row-gap: .5rem;
-      }
-
-      label {
-        font-size: .875rem;
-        cursor: pointer;
-        white-space: nowrap;
-        border-radius: .25rem;
-
-        > span {
-          display: flex;
-        }
-
-        &:not(:has(input:checked)) {
-          color: var(--text-50);
-
-          @include hover-focus {
-            color: var(--text-75);
-          }
-        }
-
-        @include hover-focus {
-          color: var(--text-75);
-        }
-      }
-    }
-  }
-
   div.users-table {
     @include breakpoint-up(sm) {
       max-width: 96rem !important;
-    }
-
-    div.users-tools > form {
-      max-width: unset !important;
-    }
-
-    i.users-search-clear {
-      cursor: pointer;
-      user-select: none;
-
-      @include hover-focus {
-        color: var(--text-75);
-      }
     }
 
     i.fa-check {
@@ -123,16 +62,6 @@ section.users {
         @include hover-focus {
           color: $magenta-dark;
         }
-      }
-    }
-
-    div.users-pagination > a {
-      > i {
-        font-size: .875rem;
-      }
-
-      @include hover-focus {
-        color: var(--text-75);
       }
     }
   }
