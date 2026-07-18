@@ -1,4 +1,5 @@
 <?php
+use app\Enums\UserStatus;
 use app\Models\Url;
 ?>
 
@@ -57,7 +58,8 @@ use app\Models\Url;
                   <select class="col" id="filter-status">
                     <option value="">All statuses</option>
                     <option value="active" <?= $this->pageObj->filterStatus === 'active' ? 'selected' : '' ?>>Active</option>
-                    <option value="inactive" <?= $this->pageObj->filterStatus === 'inactive' ? 'selected' : '' ?>>Inactive</option>
+                    <option value="deactivated" <?= $this->pageObj->filterStatus === 'deactivated' ? 'selected' : '' ?>>Deactivated</option>
+                    <option value="deleted" <?= $this->pageObj->filterStatus === 'deleted' ? 'selected' : '' ?>>Deleted</option>
                   </select>
                 </div>
               </div>
@@ -133,7 +135,8 @@ use app\Models\Url;
 
                 <?php foreach ($this->pageObj->pagedUsers as $user) : ?>
 
-                  <tr class="<?= !$user['is_active'] ? 'deleted' : '' ?>">
+                  <?php $isActive = $user['status'] === UserStatus::ACTIVE->value ?>
+                  <tr class="<?= $isActive ? '' : 'deleted' ?>">
 
                     <?php foreach ($this->pageObj->tableColumns as $column) : ?>
 
@@ -144,7 +147,7 @@ use app\Models\Url;
                           <td class="table-actions">
                             <div class="row g-col-0.5 center-y">
 
-                              <?php if ($user['is_active']) : ?>
+                              <?php if ($isActive) : ?>
 
                                 <a class="col table-action f-0" href="<?= Url::to('admin/users/edit?id=' . $user['id']) ?>"><i class="fas fa-pen"></i></a>
                                 <button class="col table-action delete f-0" type="button"

@@ -27,7 +27,10 @@ class ErrorPage
         // $errorCode->value is an int backed enum value; cast to string for storage
         $this->code = (string)$errorCode->value;
         $this->message = $errorCode->message();
-        $this->redirectPage = $page->param('redirect') ?? REDIRECT;
+
+        // Only accept a safe internal path from the user-controlled redirect param; fall back otherwise.
+        $redirect = $page->param('redirect');
+        $this->redirectPage = is_string($redirect) && $redirect !== '' && preg_match('#^[\w\-/.?=&%]+$#', $redirect) ? $redirect : REDIRECT;
 
         $page->subtitle = "Error $this->code";
 

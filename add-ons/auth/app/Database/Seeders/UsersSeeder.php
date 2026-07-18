@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Database\Seeders;
 
 use app\Database\DB;
+use app\Enums\UserStatus;
 use Random\RandomException;
 
 class UsersSeeder
@@ -59,7 +60,7 @@ class UsersSeeder
                 'username' => 'Admin',
                 'email' => 'admin@example.com',
                 'password' => password_hash('admin', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
-                'is_active' => 1
+                'status' => UserStatus::ACTIVE->value
             ]
         );
 
@@ -69,7 +70,7 @@ class UsersSeeder
                 'username' => 'User',
                 'email' => 'user@example.com',
                 'password' => password_hash('user', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
-                'is_active' => 1
+                'status' => UserStatus::ACTIVE->value
             ]
         );
 
@@ -91,8 +92,8 @@ class UsersSeeder
                     'last_login' => random_int(0, 1) ? self::randomDate($createdAt, 'now') : null,
                     'created_at' => $createdAt,
                     'last_update' => $createdAt,
-                    'is_active' => $deletedAt ? 0 : 1,
-                    'deleted_at' => $deletedAt
+                    'status' => $deletedAt ? UserStatus::DELETED->value : UserStatus::ACTIVE->value,
+                    'inactive_since' => $deletedAt
                 ]
             );
         }
@@ -102,7 +103,7 @@ class UsersSeeder
      * Generates a random date between the given start and end dates.
      *
      * @param string $start The starting date in a valid date format.
-     * @param string $end The ending date in a valid date format.
+     * @param string $end   The ending date in a valid date format.
      *
      * @return string A random date between the start and end dates, formatted as 'Y-m-d H:i:s'.
      * @throws RandomException
@@ -124,7 +125,7 @@ class UsersSeeder
     private static function maybeDeleted(string $createdAt): ?string
     {
         // Randomly decide if the user should be deleted (10% chance)
-        if (random_int(0, 10) !== 0) return null;
+        if (random_int(1, 100) > 10) return null;
         return self::randomDate($createdAt, 'now');
     }
 }

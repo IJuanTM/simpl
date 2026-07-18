@@ -17,10 +17,13 @@ use app\Utils\RateLimiter;
 class ForgotPasswordPage
 {
     public int $resendCooldown = 0;
+    private string $rlKey;
 
     public function __construct()
     {
-        $this->resendCooldown = RateLimiter::retryAfterMs('forgot-password');
+        // Scope the rate limit to the client IP so it cannot be reset by clearing cookies.
+        $this->rlKey = 'forgot-password-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $this->resendCooldown = RateLimiter::retryAfterMs($this->rlKey);
 
         // Process forgot password form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
@@ -37,7 +40,7 @@ class ForgotPasswordPage
         if (!FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])) return;
 
         // Rate limit after validation, before email-existence check to prevent enumeration
-        if (!RateLimiter::attempt('forgot-password', 1, PASSWORD_RESET_RESEND_TIMEOUT)) {
+        if (!RateLimiter::attempt($this->rlKey, 1, PASSWORD_RESET_RESEND_TIMEOUT)) {
             FormController::addAlert('Please wait a moment before trying again!', AlertType::WARNING);
             return;
         }

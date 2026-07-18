@@ -45,8 +45,8 @@ class PageController extends Page
         // Initialize Page model with resolved route data
         parent::__construct($page, $urlArr, $params);
 
-        // Reject non-API POST requests that fail CSRF validation
-        if (!$api && $_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
+        // Reject any POST request (page or API) that fails CSRF validation
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
             self::error(ErrorCode::FORBIDDEN);
             exit;
         }
@@ -77,7 +77,7 @@ class PageController extends Page
      * This method constructs an error URL based on the provided error code and an optional
      * redirect URL. The user is then redirected to the generated error page.
      *
-     * @param ErrorCode   $code The specific error code used to determine the error page.
+     * @param ErrorCode   $code     The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
@@ -95,13 +95,23 @@ class PageController extends Page
      * An optional refresh delay can be specified to control the time before the redirection occurs.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
     public static function redirect(string $location, ?int $refresh = 0): void
     {
-        header("refresh: $refresh; url=" . Url::to($location));
+        $url = Url::to($location);
+
+        // Immediate redirects use a real 302 so crawlers and API clients follow correctly.
+        // Delayed redirects keep a meta-style refresh so the current page (and its flash alert) is shown first.
+        if ($refresh) {
+            header("refresh: $refresh; url=$url");
+            return;
+        }
+
+        http_response_code(302);
+        header("Location: $url");
     }
 
     /**

@@ -113,6 +113,9 @@ class UserPage
      */
     final public function api(Page $page): void
     {
+        // Profile image actions change state and act on the logged-in user; require authentication.
+        AuthController::requireAuth();
+
         if ($page->subpage(1) !== null) switch ($page->subpage(1)) {
             case 'update-profile-image':
                 self::updateProfileImage();
@@ -138,7 +141,6 @@ class UserPage
         }
 
         $file = $_FILES['new_img'];
-        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
         // Verify mime type
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -147,6 +149,21 @@ class UserPage
 
         // Validate image mime type
         if (!in_array($mimeType, PROFILE_IMAGE_ALLOWED_TYPES, true)) {
+            PageController::redirect('profile');
+            AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
+            return;
+        }
+
+        // Derive the extension from the validated mime type, never from the user-supplied filename.
+        $extension = match ($mimeType) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            default => null
+        };
+
+        if ($extension === null) {
             PageController::redirect('profile');
             AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
             return;
@@ -182,8 +199,12 @@ class UserPage
         // Generate new filename
         $name = "{$id}_" . time() . ".$extension";
 
-        // Move uploaded file
-        move_uploaded_file($file['tmp_name'], $path . $name);
+        // Move uploaded file, bailing out if the move fails
+        if (!move_uploaded_file($file['tmp_name'], $path . $name)) {
+            PageController::redirect('profile');
+            AlertController::globalAlert('Image upload failed. Please try again.', AlertType::ERROR, 4);
+            return;
+        }
 
         // Update database
         DB::update(

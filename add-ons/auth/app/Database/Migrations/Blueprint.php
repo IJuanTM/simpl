@@ -18,12 +18,13 @@ class Blueprint
     {
     }
 
-    public function __destruct()
-    {
-        $this->execute();
-    }
-
-    private function execute(): void
+    /**
+     * Assemble and run the CREATE TABLE statement. Called explicitly by Schema::create()
+     * once the table definition callback has finished, rather than from a destructor.
+     *
+     * @return void
+     */
+    public function build(): void
     {
         $parts = $this->columns;
 

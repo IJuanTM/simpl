@@ -3,15 +3,15 @@
 declare(strict_types=1);
 
 use app\Cron\DeactivateUnverifiedUsers;
-use app\Cron\DeleteInactiveUsers;
+use app\Cron\DeleteDeactivatedUsers;
 use app\Utils\Scheduler;
 
 /* ---------------------------------------------------------------- */
 
-// Every day, deactivate users who haven't verified their email within 24 hours
+// Every day, deactivate users who haven't verified their email within the grace period
 Scheduler::task('deactivate-unverified-users', static fn() => DeactivateUnverifiedUsers::run())
     ->daily();
 
-// Every week, delete users who haven't verified their email within 7 days'
-Scheduler::task('delete-inactive-users', static fn() => DeleteInactiveUsers::run())
+// Every week, permanently delete deactivated (unverified) users past the grace period
+Scheduler::task('delete-deactivated-users', static fn() => DeleteDeactivatedUsers::run())
     ->weekly();

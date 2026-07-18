@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-define('DEV', $_ENV['DEV']);
+// Cast to a real boolean; env values arrive as strings, so "false"/"0" would otherwise be truthy.
+define('DEV', filter_var($_ENV['DEV'] ?? false, FILTER_VALIDATE_BOOLEAN));
 define('APP_NAME', $_ENV['APP_NAME']);
 define('APP_URL', $_ENV['APP_URL']);
 

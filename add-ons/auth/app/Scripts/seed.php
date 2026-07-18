@@ -11,6 +11,14 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
+// Seeding inserts development/test data, including accounts with weak default passwords.
+// Refuse to run outside of development to avoid seeding those into a production database.
+if (!DEV) {
+    Console::error('Seeding is disabled outside of development. Set DEV=true to seed.');
+    Console::line();
+    exit(1);
+}
+
 Console::box('Seeding Database: ' . DB_NAME);
 Console::line();
 

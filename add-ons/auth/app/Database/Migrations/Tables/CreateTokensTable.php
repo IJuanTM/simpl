@@ -18,10 +18,10 @@ class CreateTokensTable
             $t->varchar('type', 50, notNull: true);
             $t->timestamp('created', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->timestamp('expires');
-        })
-            ->primary('id')
-            ->foreign('user_id', 'users')
-            ->index('idx_user_type_expires', ['user_id', 'type', 'expires']);
+            $t->primary('id');
+            $t->foreign('user_id', 'users');
+            $t->index('idx_user_type_expires', ['user_id', 'type', 'expires']);
+        });
     }
 
     public static function down(): void

@@ -35,7 +35,7 @@ use app\Models\Url;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-          <input class="col input-password" id="password" type="password" name="password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter password:" autocomplete="password" aria-label="Password input field">
+          <input class="col input-password" id="password" type="password" name="password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter password:" autocomplete="current-password" aria-label="Password input field">
           <div class="col input-append center f-0"><i class="fas fa-eye password-toggle input-icon-clickable"></i></div>
         </div>
         <div class="row">

@@ -64,6 +64,9 @@ class VerifyAccountPage
                 return;
             }
 
+            // Throttle brute-force attempts on the verification code
+            if ($this->throttle()) return;
+
             // Verify code is correct
             if (!AuthController::checkToken($id, $code, 'verification')) {
                 FormController::addAlert('The verification code given in the url is incorrect! Please check your mail.', AlertType::ERROR);
@@ -76,6 +79,24 @@ class VerifyAccountPage
 
         // Process manual verification form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post((int)$id);
+    }
+
+    /**
+     * Records a verification attempt and reports whether the client is now blocked.
+     * Scoped to the client IP so it cannot be reset by clearing cookies.
+     *
+     * @return bool True when the attempt limit has been exceeded
+     */
+    private function throttle(): bool
+    {
+        $key = 'verify-attempt-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+
+        if (!RateLimiter::attempt($key, VERIFICATION_MAX_ATTEMPTS, VERIFICATION_ATTEMPT_WINDOW)) {
+            FormController::addAlert('Too many verification attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -117,6 +138,9 @@ class VerifyAccountPage
             FormController::addAlert('The verification code is too long!', AlertType::WARNING);
             return;
         }
+
+        // Throttle brute-force attempts on the verification code
+        if ($this->throttle()) return;
 
         // Verify code is correct
         if (!AuthController::checkToken($userId, $code, 'verification')) {

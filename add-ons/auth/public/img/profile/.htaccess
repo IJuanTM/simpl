@@ -1,0 +1,23 @@
+# Uploaded files only - never execute anything in this directory.
+
+# Deny direct access to any script-like file
+<FilesMatch "(?i)\.(php|php3|php4|php5|php7|php8|phtml|pht|phar|cgi|pl|py|asp|aspx|sh|htaccess)$">
+    Require all denied
+</FilesMatch>
+
+# Disable the PHP engine regardless of the mod_php version in use
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_admin_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+    php_admin_flag engine off
+</IfModule>
+
+# Strip any handlers/types that could cause a file to be executed
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml .pht .phar .cgi .pl .py
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .pht .phar
+
+Options -ExecCGI

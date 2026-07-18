@@ -27,12 +27,15 @@ class AppController
 
     /**
      * Validate the CSRF token submitted with a POST request.
+     * Accepts the token from the csrf_token POST field or the X-CSRF-Token header
+     * (the latter lets fetch-based API calls authenticate without a form body).
      *
      * @return bool
      */
     public static function validateCsrf(): bool
     {
-        return is_string($submitted = ($_POST['csrf_token'] ?? '')) && hash_equals(self::csrfToken(), $submitted);
+        $submitted = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        return is_string($submitted) && hash_equals(self::csrfToken(), $submitted);
     }
 
     /**
@@ -44,6 +47,17 @@ class AppController
     {
         if (!SessionController::has('csrf_token')) SessionController::set('csrf_token', bin2hex(random_bytes(32)));
         return SessionController::get('csrf_token');
+    }
+
+    /**
+     * Build a <meta> tag carrying the CSRF token so client-side scripts can send it
+     * with fetch requests via the X-CSRF-Token header.
+     *
+     * @return string
+     */
+    public static function csrfMeta(): string
+    {
+        return '<meta name="csrf-token" content="' . htmlspecialchars(self::csrfToken(), ENT_QUOTES, 'UTF-8') . '">';
     }
 
     /**

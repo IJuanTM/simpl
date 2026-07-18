@@ -22,42 +22,52 @@ class ResetPasswordPage
 
     public function __construct(Page $page)
     {
-        // Validate URL parameters
-        if ($page->subpage() === null || $page->subpage(1) === null || !is_numeric($page->subpage())) {
+        $id = $page->subpage();
+        $token = $page->subpage(1);
+
+        // A valid reset link must carry a numeric user id and a token
+        if ($id === null || $token === null || !is_numeric($id)) {
             $this->disableForm = true;
-
-            // Check if reset request exists
-            if (!DB::exists(
-                'tokens',
-                [
-                    'user_id' => $page->subpage(),
-                    'type' => 'reset'
-                ]
-            )) {
-                FormController::addAlert('No valid password reset request found for this user! Please try again.', AlertType::ERROR);
-                PageController::redirect('forgot-password', 4);
-                return;
-            }
-
-            // Validate reset token
-            if (!AuthController::checkToken($page->subpage(), $page->subpage(1), 'reset')) {
-                FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
-                return;
-            }
+            FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
+            PageController::redirect('forgot-password', 4);
+            return;
         }
 
-        // Process password reset form submission
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($page);
+        $id = (int)$id;
+
+        // A reset request must exist for this user
+        if (!DB::exists(
+            'tokens',
+            [
+                'user_id' => $id,
+                'type' => 'reset'
+            ]
+        )) {
+            $this->disableForm = true;
+            FormController::addAlert('No valid password reset request found for this user! Please try again.', AlertType::ERROR);
+            PageController::redirect('forgot-password', 4);
+            return;
+        }
+
+        // The token must match before any password change is allowed (checked on both GET and POST)
+        if (!AuthController::checkToken($id, $token, 'reset')) {
+            $this->disableForm = true;
+            FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
+            return;
+        }
+
+        // Token is valid; process password reset form submission
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
     }
 
     /**
      * Processes password reset form submission.
      *
-     * @param Page $page Page object with URL parameters
+     * @param int $id Verified user ID from the reset link
      *
      * @return void
      */
-    private function post(Page $page): void
+    private function post(int $id): void
     {
         // Validate form fields
         if (
@@ -69,13 +79,13 @@ class ResetPasswordPage
         if (!FormController::validatePasswords('new-password', 'new-password-check')) return;
 
         // Reset password
-        $this->resetPassword($page->subpage(), $_POST['new-password']);
+        $this->resetPassword($id, $_POST['new-password']);
     }
 
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id User ID
+     * @param int    $id       User ID
      * @param string $password New password
      *
      * @return void

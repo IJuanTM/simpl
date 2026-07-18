@@ -19,11 +19,11 @@ class CreateLoginAttemptsTable
             $t->timestamp('attempt_time', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->tinyint('success', notNull: true, default: 0);
             $t->varchar('failed_reason', 50);
-        })
-            ->primary('id')
-            ->foreign('user_id', 'users')
-            ->index('idx_user_success_time', ['user_id', 'success', 'attempt_time'])
-            ->index('idx_ip_success_time', ['ip_address', 'success', 'attempt_time']);
+            $t->primary('id');
+            $t->foreign('user_id', 'users');
+            $t->index('idx_user_success_time', ['user_id', 'success', 'attempt_time']);
+            $t->index('idx_ip_success_time', ['ip_address', 'success', 'attempt_time']);
+        });
     }
 
     public static function down(): void

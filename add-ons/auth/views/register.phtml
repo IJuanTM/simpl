@@ -48,7 +48,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password-check'])) ? 'error' : '' ?>">
               <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-              <input class="col" id="password-check" type="password" name="password-check" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Repeat password:" autocomplete="new-password-check" aria-label="Repeat password input field">
+              <input class="col" id="password-check" type="password" name="password-check" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Repeat password:" autocomplete="new-password" aria-label="Repeat password input field">
             </div>
           </div>
         </div>

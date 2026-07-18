@@ -23,10 +23,10 @@ class CreateUsersTable
             $t->timestamp('last_login');
             $t->timestamp('created_at', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->timestamp('last_update', notNull: true, default: 'CURRENT_TIMESTAMP')->onUpdateCurrentTimestamp();
-            $t->tinyint('is_active', notNull: true, default: 1);
-            $t->timestamp('deleted_at');
-        })
-            ->primary('id');
+            $t->enum('status', ['active', 'deactivated', 'deleted'], notNull: true, default: 'active');
+            $t->timestamp('inactive_since');
+            $t->primary('id');
+        });
     }
 
     public static function down(): void

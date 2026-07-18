@@ -24,7 +24,7 @@ use app\Models\Url;
             <div class="profile-image-menu center g-col-1 w-100 h-100">
               <?php if ($this->pageObj->profileImage) : ?>
                 <button class="col profile-action edit f-0" type="button" data-cooldown="300"><i class="fas fa-pen"></i></button>
-                <a class="col profile-action delete f-0" href="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i></a>
+                <button class="col profile-action delete f-0" type="submit" formmethod="post" formaction="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i></button>
               <?php else : ?>
                 <button class="col profile-action edit f-0" type="button" data-cooldown="300"><i class="fas fa-plus"></i></button>
               <?php endif ?>
@@ -139,8 +139,8 @@ use app\Models\Url;
 
           <div class="row user-details g-col-0.5">
             <div class="col user-details-icon center-y f-0"><i class="fas fa-circle-check"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Active:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_active'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></div>
+            <div class="col user-details-label center-y end-x f-0">Status:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= ucfirst((string)$this->pageObj->user['status']) ?></div>
           </div>
 
           <div class="row user-details g-col-0.5">

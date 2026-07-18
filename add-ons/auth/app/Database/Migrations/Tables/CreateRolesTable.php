@@ -14,8 +14,8 @@ class CreateRolesTable
         Schema::create('roles', static function (Blueprint $t) {
             $t->smallintUnsigned('id', notNull: true)->autoIncrement();
             $t->varchar('name', 50, notNull: true)->unique();
-        })
-            ->primary('id');
+            $t->primary('id');
+        });
     }
 
     public static function down(): void

@@ -24,7 +24,7 @@ class AliasController
     /**
      * Registers a new alias by associating it with the specified alias object.
      *
-     * @param string $alias The name of the alias to register.
+     * @param string $alias    The name of the alias to register.
      * @param Alias  $aliasObj The alias object to associate with the given alias.
      *
      * @return void
@@ -38,7 +38,7 @@ class AliasController
      * Resolves the specified alias to retrieve associated information, including
      * the page, subpages, and evaluated parameters.
      *
-     * @param string $alias The alias to resolve.
+     * @param string $alias  The alias to resolve.
      * @param array  $params An array of parameters to evaluate with the alias.
      *
      * @return array|null Returns an associative array with the resolved information or null if the alias cannot be resolved.

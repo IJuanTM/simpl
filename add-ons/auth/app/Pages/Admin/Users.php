@@ -13,6 +13,7 @@ use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
+use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
 use JsonException;
@@ -73,7 +74,7 @@ class Users
         $this->readTableParams($page);
 
         if ($page->param('role') !== null) $this->filterRole = trim((string)$page->param('role'));
-        if ($page->param('status') !== null && in_array($page->param('status'), ['active', 'inactive'], true)) $this->filterStatus = (string)$page->param('status');
+        if ($page->param('status') !== null && in_array($page->param('status'), ['active', 'deactivated', 'deleted'], true)) $this->filterStatus = (string)$page->param('status');
         if ($page->param('verified') !== null && in_array($page->param('verified'), ['yes', 'no'], true)) $this->filterVerified = (string)$page->param('verified');
 
         $this->resolveSort($page->params);
@@ -141,8 +142,8 @@ class Users
             ['last_login', 'Last login', true, 160, true],
             ['created_at', 'Created at', true, 160, false],
             ['last_update', 'Last updated', true, 160, false],
-            ['is_active', 'Is active', true, 128, true],
-            ['deleted_at', 'Deleted at', true, 160, true],
+            ['status', 'Status', true, 128, true],
+            ['inactive_since', 'Inactive since', true, 160, true],
             ['actions', 'Actions', false, null, true],
         ]);
     }
@@ -216,8 +217,8 @@ class Users
         }
 
         if ($this->filterStatus !== '') {
-            $active = $this->filterStatus === 'active' ? 1 : 0;
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => (int)$user['is_active'] === $active));
+            $status = $this->filterStatus;
+            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => $user['status'] === $status));
         }
 
         if ($this->filterVerified !== '') {
@@ -268,8 +269,8 @@ class Users
             'last_login' => $user['last_login'] ? (int)strtotime((string)$user['last_login']) : 0,
             'created_at' => (int)strtotime((string)$user['created_at']),
             'last_update' => (int)strtotime((string)$user['last_update']),
-            'is_active' => (int)$user['is_active'],
-            'deleted_at' => $user['deleted_at'] ? (int)strtotime((string)$user['deleted_at']) : 0,
+            'status' => (string)$user['status'],
+            'inactive_since' => $user['inactive_since'] ? (int)strtotime((string)$user['inactive_since']) : 0,
             default => 0,
         };
     }
@@ -469,8 +470,8 @@ class Users
         DB::update(
             UPDATE: 'users',
             SET: [
-                'is_active' => 0,
-                'deleted_at' => date('Y-m-d H:i:s')
+                'status' => UserStatus::DELETED->value,
+                'inactive_since' => date('Y-m-d H:i:s')
             ],
             WHERE: compact('id')
         );
@@ -504,7 +505,7 @@ class Users
      */
     private function restoreUser(int $id): void
     {
-        if ($this->user['is_active']) {
+        if ($this->user['status'] === UserStatus::ACTIVE->value) {
             PageController::redirect('admin/users', 2);
             return;
         }
@@ -512,8 +513,8 @@ class Users
         DB::update(
             UPDATE: 'users',
             SET: [
-                'is_active' => 1,
-                'deleted_at' => null
+                'status' => UserStatus::ACTIVE->value,
+                'inactive_since' => null
             ],
             WHERE: compact('id')
         );
@@ -604,7 +605,8 @@ class Users
         $html = '';
 
         foreach ($this->pagedUsers as $user) {
-            $html .= '<tr class="' . (!$user['is_active'] ? 'deleted' : '') . '">';
+            $isActive = $user['status'] === UserStatus::ACTIVE->value;
+            $html .= '<tr class="' . ($isActive ? '' : 'deleted') . '">';
 
             foreach ($this->tableColumns as $column) {
                 if ($column['key'] === 'actions') {
@@ -612,15 +614,14 @@ class Users
                         $uid = $user['id'];
                         $uname = $user['username'] ?? '-';
                         $uemail = $user['email'];
-                        $active = $user['is_active'] ? '1' : '0';
                         $html .= '<td class="table-actions"><div class="row g-col-0.5 center-y">';
 
-                        if ($user['is_active']) {
+                        if ($isActive) {
                             $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '"><i class="fas fa-pen"></i></a>';
-                            $html .= '<button class="col table-action delete f-0" type="button" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" data-user-active="' . $active . '"><i class="fas fa-trash"></i></button>';
+                            $html .= '<button class="col table-action delete f-0" type="button" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-trash"></i></button>';
                         } else {
                             $html .= '<button class="col table-action restore f-0" type="button" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
-                            $html .= '<button class="col table-action purge f-0" type="button" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" data-user-active="' . $active . '"><i class="fas fa-skull"></i></button>';
+                            $html .= '<button class="col table-action purge f-0" type="button" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-skull"></i></button>';
                         }
 
                         $html .= '</div></td>';
@@ -660,8 +661,8 @@ class Users
             'last_login' => $muted($user['last_login'] ?? ''),
             'created_at' => $user['created_at'],
             'last_update' => $user['last_update'],
-            'is_active' => $user['is_active'] ? $check : $times,
-            'deleted_at' => $muted($user['deleted_at'] ?? ''),
+            'status' => ucfirst((string)$user['status']),
+            'inactive_since' => $muted($user['inactive_since'] ?? ''),
             default => '',
         };
     }

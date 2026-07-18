@@ -19,11 +19,11 @@ class Schema
         DB::raw("DROP SCHEMA IF EXISTS `$name`");
     }
 
-    public static function create(string $table, Closure $callback): Blueprint
+    public static function create(string $table, Closure $callback): void
     {
         $blueprint = new Blueprint($table);
         $callback($blueprint);
-        return $blueprint;
+        $blueprint->build();
     }
 
     public static function drop(string $table): void

@@ -136,33 +136,4 @@ section.users {
       }
     }
   }
-
-  form button {
-    &.delete-user, &.restore-user {
-      color: #FFF;
-
-      @include shimmer(true, rgba(#FFF, .25));
-    }
-
-    &.delete-user {
-      background-color: $red !important;
-
-      &[inert] {
-        color: rgba(#FFF, .5) !important;
-        background-color: rgba($red, .5) !important;
-      }
-
-      @include hover-focus {
-        background-color: $red-dark !important;
-      }
-    }
-
-    &.restore-user {
-      background-color: $green !important;
-
-      @include hover-focus {
-        background-color: $green-dark !important;
-      }
-    }
-  }
 }

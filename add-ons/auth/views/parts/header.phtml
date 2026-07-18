@@ -41,9 +41,9 @@ use app\Enums\Role;
               <span class="center h-100">Profile</span>
             <?php endif ?>
           </a>
-          <a class="col nav-item button logout center f-0" href="<?= Url::to('api/logout') ?>" aria-label="Logout button">
+          <button class="col nav-item button logout center f-0" type="button" data-logout aria-label="Logout button">
             <i class="fas fa-right-from-bracket"></i><span class="center h-100">Logout</span>
-          </a>
+          </button>
 
         <?php else : ?>
 

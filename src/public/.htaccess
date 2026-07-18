@@ -33,6 +33,10 @@ Options -MultiViews -Indexes
 
     # Referrer policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Content Security Policy. Assets are self-hosted; 'unsafe-inline' is required for the inline
+    # theme script and dynamic styles. Tightening these to nonces/hashes is a future improvement.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 </IfModule>
 
 # Enable compression

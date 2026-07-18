@@ -21,10 +21,13 @@ use app\Utils\RateLimiter;
 class ContactPage
 {
     public int $sendCooldown = 0;
+    private string $rlKey;
 
     public function __construct()
     {
-        $this->sendCooldown = RateLimiter::retryAfterMs('contact');
+        // Scope the rate limit to the client IP so it cannot be reset by clearing cookies.
+        $this->rlKey = 'contact-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $this->sendCooldown = RateLimiter::retryAfterMs($this->rlKey);
 
         // Process contact form submission
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
@@ -46,7 +49,7 @@ class ContactPage
         ) return;
 
         // Rate limit after validation to avoid consuming slots on invalid input
-        if (!RateLimiter::attempt('contact', 1, CONTACT_RESEND_TIMEOUT)) {
+        if (!RateLimiter::attempt($this->rlKey, 1, CONTACT_RESEND_TIMEOUT)) {
             FormController::addAlert('Too many submissions. Please wait a moment before trying again.', AlertType::WARNING);
             return;
         }

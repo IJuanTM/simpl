@@ -17,6 +17,9 @@ public/js/
 # Logs
 app/Logs/
 
+# Cache (rate limiter, etc.)
+app/Cache/
+
 # AI tools
 .claude/
 

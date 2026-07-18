@@ -55,6 +55,11 @@ class DB
     /**
      * This method is for sanitizing and formatting column names for SQL queries.
      *
+     * Simple identifiers (matching \w+) are validated; anything else (e.g. "roles.name AS role",
+     * aggregates, or subqueries) is passed through unchanged to support expressions. Because of
+     * this, the SELECT column list must only ever contain developer-defined literals - never
+     * request input.
+     *
      * @param string|array $columns
      *
      * @return string
@@ -303,7 +308,6 @@ class DB
                 DB_USERNAME,
                 DB_PASSWORD,
                 [
-                    PDO::ATTR_PERSISTENT => true,
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false

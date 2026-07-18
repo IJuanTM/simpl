@@ -19,7 +19,9 @@ const PASSWORD_HASH_OPTIONS = [
 
 // Email verification
 const EMAIL_VERIFICATION_REQUIRED = true;
-const VERIFICATION_TOKEN_LENGTH = 8; // characters
+const VERIFICATION_TOKEN_LENGTH = 12;        // characters
+const VERIFICATION_MAX_ATTEMPTS = 10;        // wrong-code attempts per window before blocking
+const VERIFICATION_ATTEMPT_WINDOW = 600;     // seconds
 
 // Remember me
 const REMEMBER_ME_DURATION = 30; // days

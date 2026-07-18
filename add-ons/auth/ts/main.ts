@@ -6,6 +6,7 @@ import {profileImageModule} from './features/profile-image.ts';
 import {tableModule} from './features/table.ts';
 import {verificationModule} from './features/verification-code.ts';
 import {modalModule} from './features/modal.ts';
+import {logoutModule} from './features/logout.ts';
 // @addon-end
 
 // @addon-insert:after('// Initialize modules')
@@ -16,4 +17,5 @@ profileImageModule.init();
 tableModule.init();
 verificationModule.init();
 modalModule.init();
+logoutModule.init();
 // @addon-end

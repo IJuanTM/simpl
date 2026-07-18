@@ -8,6 +8,7 @@ use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Enums\Role;
+use app\Enums\UserStatus;
 use app\Models\Url;
 use app\Utils\Log;
 use Exception;
@@ -255,7 +256,7 @@ class AuthController
 
         // Re-validate user status and role from the database on every protected request so that deactivations and role changes take effect immediately.
         $fresh = self::getUserWithRole((int)$user['id']);
-        if (!$fresh || !$fresh['is_active']) {
+        if (!$fresh || $fresh['status'] !== UserStatus::ACTIVE->value) {
             SessionController::remove('user');
             AlertController::globalAlert('Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
             PageController::redirect(REDIRECT);
@@ -617,7 +618,7 @@ class AuthController
     }
 
     /**
-     * Is the account active (is_active === 1) for the user with this email?
+     * Is the account active (status === active) for the user with this email?
      *
      * @param string $email
      *
@@ -625,11 +626,11 @@ class AuthController
      */
     public static function isActive(string $email): bool
     {
-        return (bool)DB::single(
-            SELECT: 'is_active',
-            FROM: 'users',
-            WHERE: compact('email')
-        )['is_active'];
+        return (DB::single(
+                SELECT: 'status',
+                FROM: 'users',
+                WHERE: compact('email')
+            )['status'] ?? null) === UserStatus::ACTIVE->value;
     }
 
     /**
@@ -641,7 +642,7 @@ class AuthController
      */
     public static function isActiveByIdentifier(string $identifier): bool
     {
-        return ($user = self::getUserByIdentifier($identifier)) && $user['is_active'];
+        return ($user = self::getUserByIdentifier($identifier)) && $user['status'] === UserStatus::ACTIVE->value;
     }
 
     /**

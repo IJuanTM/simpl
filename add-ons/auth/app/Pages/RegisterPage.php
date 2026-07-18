@@ -55,7 +55,7 @@ class RegisterPage
     /**
      * Creates new user account and sends verification email if required.
      *
-     * @param string $email User email
+     * @param string $email    User email
      * @param string $password User password (will be hashed)
      *
      * @return void

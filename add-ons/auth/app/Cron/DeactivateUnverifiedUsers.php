@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Cron;
 
 use app\Database\DB;
+use app\Enums\UserStatus;
 use app\Utils\Console;
 
 class DeactivateUnverifiedUsers
@@ -16,7 +17,7 @@ class DeactivateUnverifiedUsers
             SELECT: '*',
             FROM: 'users',
             WHERE: [
-                'is_active' => 1
+                'status' => UserStatus::ACTIVE->value
             ]
         );
 
@@ -39,8 +40,8 @@ class DeactivateUnverifiedUsers
             DB::update(
                 UPDATE: 'users',
                 SET: [
-                    'is_active' => 0,
-                    'deleted_at' => date('Y-m-d H:i:s')
+                    'status' => UserStatus::DEACTIVATED->value,
+                    'inactive_since' => date('Y-m-d H:i:s')
                 ],
                 WHERE: [
                     'id' => $user['id']

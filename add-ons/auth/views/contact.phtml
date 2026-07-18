@@ -11,13 +11,13 @@ use app\Controllers\RequestController;
       </div>
     </div>
 
+    <?= FormController::formAlerts() ?>
+
     <div class="row">
       <div class="col">
         <p>If you have any questions or need help, please feel free to contact us. Fill out the form below, and we will get back to you as soon as possible.</p>
       </div>
     </div>
-
-    <?= FormController::formAlerts() ?>
 
     <div class="row">
       <div class="col form-group g-row-0.25">
@@ -68,8 +68,6 @@ use app\Controllers\RequestController;
           <textarea class="col message-field" id="message" name="message" maxlength="<?= MAX_CONTACT_MESSAGE_LENGTH ?>" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= RequestController::post('message') ?? '' ?></textarea>
         </div>
         <div class="row">
-          <div class="col">
-          </div>
           <div class="col end-x">
             <p class="form-details message-warning"><span class="message-length">0</span>/<?= MAX_CONTACT_MESSAGE_LENGTH ?></p>
           </div>

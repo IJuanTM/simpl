@@ -18,8 +18,8 @@ class CreateSchedulerRunsTable
             $t->intUnsigned('last_duration_ms');
             $t->enum('last_status', ['success', 'failed']);
             $t->text('last_error');
-        })
-            ->primary('id');
+            $t->primary('id');
+        });
     }
 
     public static function down(): void

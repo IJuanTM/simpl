@@ -26,9 +26,9 @@ class Log
     /**
      * Write a log entry to the appropriate level file, optionally including a trace.
      *
-     * @param LogLevel $level Log severity
-     * @param string   $message Message template
-     * @param array    $context Context values for interpolation
+     * @param LogLevel $level        Log severity
+     * @param string   $message      Message template
+     * @param array    $context      Context values for interpolation
      * @param bool     $includeTrace Whether to include a filtered stack trace
      *
      * @return void

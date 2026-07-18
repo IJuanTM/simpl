@@ -1,6 +1,9 @@
 <!-- Charset -->
 <meta charset="UTF-8">
 
+<!-- CSRF token (used by fetch-based requests via the X-CSRF-Token header) -->
+<?= app\Controllers\AppController::csrfMeta() ?>
+
 <!-- Viewport -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
