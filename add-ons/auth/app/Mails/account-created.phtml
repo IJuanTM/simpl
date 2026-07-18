@@ -7,7 +7,7 @@
     <td style="padding: 32px 48px;" width="100%">
       <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
         <tr>
-          <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 20px; color: white; font-weight: bold;" width="100%">Hello!</td>
+          <td style="padding-bottom: 16px; font-family: 'IBM Plex Sans', sans-serif; font-size: 20px; color: white; font-weight: 700;" width="100%">Hello!</td>
         </tr>
 
         <tr>
@@ -15,11 +15,23 @@
         </tr>
 
         <tr>
-          <td style="padding: 16px 0; font-family: 'Inter', sans-serif; font-size: 14px; color: white;" width="100%">You can log in <a href="<?= $link ?>" style="color: #D01018;">here</a> using the following temporary password:</td>
+          <td style="padding: 16px 0; font-family: 'Inter', sans-serif; font-size: 14px; color: white;" width="100%">You can log in using the following temporary password:</td>
         </tr>
 
         <tr>
           <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white; font-weight: bold;" width="100%"><?= $password ?></td>
+        </tr>
+
+        <tr>
+          <td>
+            <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+              <tr>
+                <td align="center" bgcolor="#D01018" style="padding: 16px 32px; border-radius: 4px;">
+                  <a href="<?= $link ?>" style="font-family: 'Inter', sans-serif; font-size: 14px; color: #ffffff; text-decoration: none;">Log in</a>
+                </td>
+              </tr>
+            </table>
+          </td>
         </tr>
 
         <tr>

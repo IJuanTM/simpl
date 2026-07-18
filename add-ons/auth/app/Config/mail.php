@@ -5,6 +5,9 @@ declare(strict_types=1);
 define('SITE_MAIL', $_ENV['SITE_MAIL'] ?? 'support@example.com');
 define('NO_REPLY_MAIL', $_ENV['NO_REPLY_MAIL'] ?? 'noreply@example.com');
 
+// Absolute URL to the logo shown in email headers. A raster format (PNG/JPG) is the safest choice for broad client support.
+define('MAIL_LOGO_URL', $_ENV['MAIL_LOGO_URL'] ?? 'https://cdn.simpl.iwanvanderwal.nl/img/simpl-sm.png');
+
 define('SMTP_CONFIG', [
     'development' => [
         'host' => 'localhost',
