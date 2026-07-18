@@ -36,7 +36,6 @@ class VerifyAccountPage
             return;
         }
 
-        // Cast to int now that it is validated; the downstream calls expect an int id
         $id = (int)$id;
 
         // Check if user exists

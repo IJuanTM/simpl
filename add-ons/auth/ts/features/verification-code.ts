@@ -51,7 +51,6 @@ export const verificationModule = {
       return;
     }
 
-    // The paste filled every digit; submit the form automatically (only happens on paste, not typing).
     digitInputs[digitInputs.length - 1].focus();
 
     const form = codeInput?.form;

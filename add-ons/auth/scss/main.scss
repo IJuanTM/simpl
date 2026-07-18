@@ -2,6 +2,7 @@
 @use "views/user";
 @use "views/admin/users";
 @use "views/admin/roles";
+@use "views/admin/login-attempts";
 @use "views/verify-account";
 // @addon-end
 
@@ -9,4 +10,5 @@
 @use "components/form";
 @use "components/table";
 @use "components/modal";
+@use "components/badge";
 // @addon-end

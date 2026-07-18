@@ -13,47 +13,47 @@ use app\Models\Url;
     <div class="row center-x">
       <div class="col login-attempts-table f-col g-row-1 w-100">
 
-        <form class="row login-attempts-filters" method="GET" action="">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="la-search">Search:</label>
+        <form class="login-attempts-filters" method="GET" action="">
+          <div class="row g-col-1 w-100 end-y">
+            <div class="col form-group g-row-0.25">
+              <div class="row">
+                <label class="col" for="la-search">Search:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
+                <input class="col" id="la-search" type="text" name="search" value="<?= htmlspecialchars($this->pageObj->search) ?>" placeholder="IP address, username or email" autocomplete="off">
+              </div>
             </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
-              <input class="col" id="la-search" type="text" name="search" value="<?= htmlspecialchars($this->pageObj->search) ?>" placeholder="IP address, username or email" autocomplete="off">
-            </div>
-          </div>
 
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="la-status">Status:</label>
+            <div class="col form-group g-row-0.25">
+              <div class="row">
+                <label class="col" for="la-status">Status:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
+                <select class="col" id="la-status" name="status">
+                  <option value="">All</option>
+                  <option value="success" <?= $this->pageObj->filterStatus === 'success' ? 'selected' : '' ?>>Success</option>
+                  <option value="failed" <?= $this->pageObj->filterStatus === 'failed' ? 'selected' : '' ?>>Failed</option>
+                </select>
+              </div>
             </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
-              <select class="col" id="la-status" name="status">
-                <option value="">All</option>
-                <option value="success" <?= $this->pageObj->filterStatus === 'success' ? 'selected' : '' ?>>Success</option>
-                <option value="failed" <?= $this->pageObj->filterStatus === 'failed' ? 'selected' : '' ?>>Failed</option>
-              </select>
-            </div>
-          </div>
 
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="la-per-page">Per page:</label>
+            <div class="col form-group g-row-0.25">
+              <div class="row">
+                <label class="col" for="la-per-page">Per page:</label>
+              </div>
+              <div class="row input-group">
+                <div class="col input-prepend center f-0"><i class="fas fa-list"></i></div>
+                <select class="col" id="la-per-page" name="per_page">
+                  <?php foreach ($this->pageObj->perPageOptions as $opt) : ?>
+                    <option value="<?= $opt ?>" <?= $this->pageObj->perPage === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                  <?php endforeach ?>
+                </select>
+              </div>
             </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-list"></i></div>
-              <select class="col" id="la-per-page" name="per_page">
-                <?php foreach ($this->pageObj->perPageOptions as $opt) : ?>
-                  <option value="<?= $opt ?>" <?= $this->pageObj->perPage === $opt ? 'selected' : '' ?>><?= $opt ?></option>
-                <?php endforeach ?>
-              </select>
-            </div>
-          </div>
 
-          <div class="col form-group g-row-0.25 end-y">
-            <button class="col button" type="submit"><i class="fas fa-filter"></i>Filter</button>
+            <button class="col button g-col-0.5 center-y f-0" type="submit"><i class="fas fa-filter"></i>Filter</button>
           </div>
         </form>
 
@@ -61,7 +61,7 @@ use app\Models\Url;
 
           <div class="row table-container">
             <div class="col">
-              <table class="data-table">
+              <table class="data-table" data-table-id="login-attempts">
                 <thead>
                 <tr>
                   <th><p class="table-header-label">#</p></th>
@@ -85,7 +85,7 @@ use app\Models\Url;
                           <br><small><?= $a['email'] ?></small>
                         <?php endif ?>
                       <?php else : ?>
-                        <span class="muted">Unknown</span>
+                        <span class="text-muted">Unknown</span>
                       <?php endif ?>
                     </td>
                     <td><?= $a['ip_address'] ?></td>

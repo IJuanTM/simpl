@@ -1,0 +1,19 @@
+@use "../config/vars/colors" as *;
+
+span.badge {
+  font-size: .75rem;
+  line-height: 1;
+  display: inline-block;
+  padding: .25rem .5rem;
+  white-space: nowrap;
+  color: #FFF;
+  border-radius: .25rem;
+
+  &.badge-success {
+    background-color: $green;
+  }
+
+  &.badge-error {
+    background-color: $red;
+  }
+}

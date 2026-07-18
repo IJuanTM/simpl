@@ -64,7 +64,7 @@ class RegisterPage
      */
     private function register(string $email, string $password): void
     {
-        // Resolve the default user role before creating anything, so a user is never left without a role
+        // Get the default user role
         $roleId = DB::single(
             SELECT: 'id',
             FROM: 'roles',

@@ -157,7 +157,10 @@ function initResize(table: HTMLTableElement, defaultWidths: number[], hiddenKey:
   table.style.width = 'max-content';
   table.style.minWidth = '100%';
 
-  getHeaders(table).forEach((th, col) => addResizeHandle(table, th, col, defaultWidths, hiddenKey, onStateChange, onWidthChange));
+  const headers = getHeaders(table);
+  headers.forEach((th, col) => {
+    if (col < headers.length - 1) addResizeHandle(table, th, col, defaultWidths, hiddenKey, onStateChange, onWidthChange);
+  });
 }
 
 function restoreState(table: HTMLTableElement, container: Element, hiddenKey: string, defaultWidths: number[]): void {
@@ -247,9 +250,10 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
 
     if (table.tHead) {
       table.tHead.innerHTML = data.thead;
-      getHeaders(table).forEach((th, col) => {
+      const headers = getHeaders(table);
+      headers.forEach((th, col) => {
         setCellWidth(th as HTMLElement, Math.max(MIN_COL_WIDTH, defaultWidths[col] ?? 100));
-        addResizeHandle(table, th, col, defaultWidths, hiddenKey, onStateChange, onWidthChange);
+        if (col < headers.length - 1) addResizeHandle(table, th, col, defaultWidths, hiddenKey, onStateChange, onWidthChange);
       });
       initSortLinks(section, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
     }
