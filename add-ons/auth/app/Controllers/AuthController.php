@@ -791,7 +791,7 @@ class AuthController
     {
         $contents = MailController::template('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
-            'link' => Url::to("verify-account/$id/$code"),
+            'link' => Url::absolute("verify-account/$id/$code"),
             'code' => $code
         ]);
 
@@ -827,7 +827,7 @@ class AuthController
     {
         $contents = MailController::template('reset-password', [
             'title' => 'Password Reset Request - ' . APP_NAME,
-            'link' => Url::to("reset-password/$id/$token")
+            'link' => Url::absolute("reset-password/$id/$token")
         ]);
 
         if ($contents === false) {
@@ -854,7 +854,7 @@ class AuthController
     {
         $contents = MailController::template('account-created', [
             'title' => 'Account Created - ' . APP_NAME,
-            'link' => Url::to('login'),
+            'link' => Url::absolute('login'),
             'password' => $password
         ]);
 

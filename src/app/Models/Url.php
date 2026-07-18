@@ -72,4 +72,17 @@ class Url
             self::$baseUrl = "$protocol://$host$scriptDir";
         }
     }
+
+    /**
+     * Constructs an absolute URL based on the configured APP_URL. Use for links that leave the
+     * application (e.g. emails), where a root-relative path would not resolve.
+     *
+     * @param string $subUrl The sub-path to be appended, optionally starting with a slash.
+     *
+     * @return string The absolute URL.
+     */
+    public static function absolute(string $subUrl = ''): string
+    {
+        return rtrim(APP_URL, '/') . '/' . ltrim($subUrl, '/');
+    }
 }
