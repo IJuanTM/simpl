@@ -8,8 +8,11 @@
 }
 
 *[inert] {
-  color: var(--text-25) !important;
   interactivity: inert !important;
+
+  &:not(.button) {
+    color: var(--text-25) !important;
+  }
 }
 
 // ---------------------------------------------------------------- //

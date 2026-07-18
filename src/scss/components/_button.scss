@@ -40,6 +40,10 @@ a.button {
       background-color: $simpl-dark;
     }
   }
+
+  &[inert] {
+    opacity: .5;
+  }
 }
 
 button.link {
