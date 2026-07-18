@@ -120,9 +120,9 @@ class LoginAttempts
                 default => '<span class="text-muted">Unknown</span>',
             },
             'ip_address' => $row['ip_address'],
-            'user_agent' => '<span title="' . $row['user_agent'] . '">' . mb_strimwidth($row['user_agent'], 0, 80, '…') . '</span>',
+            'user_agent' => '<span title="' . $row['user_agent'] . '">' . $row['user_agent'] . '</span>',
             'attempt_time' => $row['attempt_time'],
-            'status' => $row['success'] ? '<span class="badge badge-success">Success</span>' : '<span class="badge badge-error">' . ($row['failed_reason'] ?? 'Failed') . '</span>',
+            'status' => $row['success'] ? '<span class="badge badge-success">Success</span>' : '<span class="badge badge-error">' . (ucfirst($row['failed_reason']) ?? 'Failed') . '</span>',
             default => '',
         };
     }

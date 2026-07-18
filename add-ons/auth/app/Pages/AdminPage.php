@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AuthController;
+use app\Controllers\BreadcrumbController;
 use app\Controllers\PageController;
 use app\Enums\Role;
 use app\Models\Page;
@@ -33,6 +34,8 @@ class AdminPage
         };
 
         if ($this->delegate === null && $this->section !== 'dashboard') PageController::redirect('admin/users');
+
+        BreadcrumbController::generate($page);
     }
 
     public function __get(string $name): mixed

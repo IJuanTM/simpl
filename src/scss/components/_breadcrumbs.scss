@@ -1,0 +1,24 @@
+@use "../config/abstracts/mixins" as *;
+
+nav.breadcrumbs {
+  font-size: .875rem;
+  align-items: center;
+
+  a.breadcrumb-item {
+    text-decoration: none;
+    color: var(--text-50);
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+  }
+
+  span.breadcrumb-item.current {
+    color: var(--text);
+  }
+
+  i.breadcrumb-separator {
+    font-size: .625rem;
+    color: var(--text-25);
+  }
+}

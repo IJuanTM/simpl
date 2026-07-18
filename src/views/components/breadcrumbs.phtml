@@ -1,0 +1,26 @@
+<?php
+use app\Controllers\BreadcrumbController;
+use app\Models\Url;
+
+$items = BreadcrumbController::get();
+?>
+
+<?php if ($items) : ?>
+
+  <nav class="row breadcrumbs g-col-0.5 w-auto f-0" aria-label="Breadcrumbs">
+    <?php foreach ($items as $index => $item) : ?>
+
+      <?php if ($index > 0) : ?>
+        <i class="fas fa-chevron-right breadcrumb-separator" aria-hidden="true"></i>
+      <?php endif ?>
+
+      <?php if ($item['url'] !== null) : ?>
+        <a class="col breadcrumb-item link f-0" href="<?= Url::to($item['url']) ?>"><?= $item['label'] ?></a>
+      <?php else : ?>
+        <span class="col breadcrumb-item current f-0" aria-current="page"><?= $item['label'] ?></span>
+      <?php endif ?>
+
+    <?php endforeach ?>
+  </nav>
+
+<?php endif ?>
