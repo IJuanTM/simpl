@@ -10,6 +10,8 @@ use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\Role;
+use app\Utils\Log;
 
 /**
  * RegisterPage
@@ -62,6 +64,19 @@ class RegisterPage
      */
     private function register(string $email, string $password): void
     {
+        // Resolve the default user role before creating anything, so a user is never left without a role
+        $roleId = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: ['name' => Role::USER->value]
+        )['id'] ?? null;
+
+        if ($roleId === null) {
+            Log::error('Default user role "' . Role::USER->value . '" is missing. Did you run the database seeder?');
+            FormController::addAlert('An error occurred while creating your account. Please contact support.', AlertType::ERROR);
+            return;
+        }
+
         // Insert new user into database
         DB::insert(
             'users',
@@ -74,11 +89,12 @@ class RegisterPage
         // Get new user ID
         $id = AuthController::getUserIdByEmail($email);
 
-        // Assign default user role
+        // Assign the default user role
         DB::insert(
             'user_roles',
             [
-                'user_id' => $id
+                'user_id' => $id,
+                'role_id' => $roleId
             ]
         );
 
