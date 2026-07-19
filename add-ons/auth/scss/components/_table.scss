@@ -205,6 +205,10 @@ div.table-container {
           }
         }
       }
+
+      th[data-hidden], td[data-hidden] {
+        display: none;
+      }
     }
   }
 }

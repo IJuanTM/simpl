@@ -12,7 +12,18 @@ function getColToggleCheckbox(container: Element, col: number): HTMLInputElement
 }
 
 function setColumnHidden(table: HTMLTableElement, col: number, hidden: boolean): void {
-  table.classList.toggle(`hide-col-${col}`, hidden);
+  getHeaders(table)[col]?.toggleAttribute('data-hidden', hidden);
+
+  const tbody = table.tBodies[0];
+  if (!tbody) return;
+
+  for (const row of Array.from(tbody.rows)) {
+    if (!row.classList.contains('table-empty-row')) row.cells[col]?.toggleAttribute('data-hidden', hidden);
+  }
+}
+
+function applyHiddenColumns(table: HTMLTableElement, hiddenKey: string): void {
+  for (const col of getHiddenCols(hiddenKey, table)) setColumnHidden(table, col, true);
 }
 
 function setCellWidth(cell: HTMLElement, width: number): void {
@@ -266,6 +277,8 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
       tbody.innerHTML = data.tbody;
     }
 
+    applyHiddenColumns(table, hiddenKey);
+
     if (paginationLinks) {
       paginationLinks.innerHTML = data.pagination;
       initPaginationLinks(section, paginationLinks, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
@@ -284,18 +297,6 @@ function initTable(table: HTMLTableElement): void {
   if (!container) return;
 
   const id = table.dataset.tableId ?? table.id ?? 'table';
-  const styleId = `hide-col-styles-${id}`;
-
-  if (!document.getElementById(styleId)) {
-    const rules = getHeaders(table).map((_, i) =>
-      `table[data-table-id="${id}"].hide-col-${i} th:nth-child(${i + 1}),table[data-table-id="${id}"].hide-col-${i} tbody tr:not(.table-empty-row) td:nth-child(${i + 1}){display:none}`
-    ).join('');
-    const style = document.createElement('style');
-    style.id = styleId;
-    style.textContent = rules;
-    document.head.appendChild(style);
-  }
-
   const hiddenKey = `${HIDDEN_KEY}-${id}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = container.querySelector<HTMLButtonElement>('.table-reset-btn');
