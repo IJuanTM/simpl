@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages\Admin\Traits;
 
 use app\Controllers\AppController;
+use app\Controllers\PageController;
 use app\Models\Page;
 use JsonException;
 
@@ -190,8 +191,9 @@ trait AdminTableTrait
 
     /**
      * Renders previous/next pagination links with active query params preserved.
+     * Called directly from views for the initial render, and from api() for AJAX.
      */
-    private function renderPagination(): string
+    public function renderPagination(): string
     {
         $cls = 'class="col link lh-1 g-col-0.5 center f-0"';
         $prev = $this->routePath() . '?' . http_build_query(['page' => $this->page - 1] + $this->activeQueryParams);
@@ -203,8 +205,9 @@ trait AdminTableTrait
 
     /**
      * Renders the "X - Y of Z <items>" info string for the current page.
+     * Called directly from views for the initial render, and from api() for AJAX.
      */
-    private function renderPaginationInfo(): string
+    public function renderPaginationInfo(): string
     {
         return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ' ' . $this->itemLabel;
     }
@@ -275,6 +278,35 @@ trait AdminTableTrait
         $this->sortColumn = $params['sort'];
         $dir = isset($params['dir']) ? strtolower((string)$params['dir']) : 'asc';
         $this->sortDirection = in_array($dir, ['asc', 'desc'], true) ? $dir : 'asc';
+    }
+
+    /**
+     * Requires ?id, resolves it via the given lookup callback, and redirects away (with
+     * a delay) if the param is missing or the callback finds nothing. Returns the
+     * resolved record, or null if a redirect was issued - callers should return
+     * immediately in that case.
+     *
+     * @param Page     $page
+     * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
+     * @param callable $lookup    (int $id): ?array
+     *
+     * @return array<string, mixed>|null
+     */
+    private function requireRecord(Page $page, string $routeBase, callable $lookup): ?array
+    {
+        if (!$page->param('id')) {
+            PageController::redirect($routeBase, 2);
+            return null;
+        }
+
+        $record = $lookup((int)$page->param('id'));
+
+        if (!$record) {
+            PageController::redirect($routeBase, 2);
+            return null;
+        }
+
+        return $record;
     }
 
     /**

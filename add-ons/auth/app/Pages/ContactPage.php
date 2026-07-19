@@ -26,7 +26,7 @@ class ContactPage
     public function __construct()
     {
         // Scope the rate limit to the client IP so it cannot be reset by clearing cookies.
-        $this->rlKey = 'contact-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $this->rlKey = RateLimiter::ipKey('contact');
         $this->sendCooldown = RateLimiter::retryAfterMs($this->rlKey);
 
         // Process contact form submission

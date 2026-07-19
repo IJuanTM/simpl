@@ -82,20 +82,13 @@ class Users
         }
 
         if (in_array($subAction, ['edit', 'delete', 'restore', 'purge'])) {
-            if (!$page->param('id')) {
-                PageController::redirect('admin/users', 2);
-                return;
-            }
+            $user = $this->requireRecord($page, 'admin/users', function (int $id): ?array {
+                $index = array_search($id, array_column($this->allUsers, 'id'), true);
+                return $index === false ? null : $this->allUsers[$index];
+            });
+            if ($user === null) return;
 
-            $id = (int)$page->param('id');
-            $index = array_search($id, array_column($this->allUsers, 'id'), true);
-
-            if ($index === false) {
-                PageController::redirect('admin/users', 2);
-                return;
-            }
-
-            $this->user = $this->allUsers[$index];
+            $this->user = $user;
             if ($this->user['username'] !== null) $this->user['username'] = AppController::sanitize($this->user['username']);
             if ($this->user['email'] !== null) $this->user['email'] = AppController::sanitize($this->user['email']);
             if ($this->user['first_name'] !== null) $this->user['first_name'] = AppController::sanitize($this->user['first_name']);
@@ -437,6 +430,11 @@ class Users
      */
     private function purgeUser(int $id): void
     {
+        if ($this->user['status'] === UserStatus::ACTIVE->value) {
+            PageController::redirect('admin/users', 2);
+            return;
+        }
+
         DB::delete(
             FROM: 'users',
             WHERE: compact('id')
@@ -499,6 +497,14 @@ class Users
     }
 
     /**
+     * Overrides the trait default to add the "/ totalAllUsers" count when filtered.
+     */
+    public function renderPaginationInfo(): string
+    {
+        return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ($this->hasActiveFilters ? ' / ' . $this->totalAllUsers : '') . ' users';
+    }
+
+    /**
      * Row data for the current page.
      */
     private function pageRows(): array
@@ -545,13 +551,5 @@ class Users
     private function routePath(): string
     {
         return '/admin/users';
-    }
-
-    /**
-     * Overrides the trait default to add the "/ totalAllUsers" count when filtered.
-     */
-    private function renderPaginationInfo(): string
-    {
-        return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ($this->hasActiveFilters ? ' / ' . $this->totalAllUsers : '') . ' users';
     }
 }

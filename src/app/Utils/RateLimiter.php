@@ -16,6 +16,20 @@ use RuntimeException;
 class RateLimiter
 {
     /**
+     * Builds a rate-limit key scoped to the client's IP address, for actions throttled
+     * per-IP rather than per-account. Falls back to a shared 'unknown' bucket when the
+     * IP can't be determined.
+     *
+     * @param string $prefix
+     *
+     * @return string
+     */
+    public static function ipKey(string $prefix): string
+    {
+        return $prefix . '-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    }
+
+    /**
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
@@ -109,6 +123,7 @@ class RateLimiter
 
     /**
      * Read the stored record for a key, or an empty array when none exists.
+     * Takes a shared lock so it can't observe attempt()'s write mid-truncate.
      *
      * @param string $key
      *
@@ -119,7 +134,18 @@ class RateLimiter
         $file = self::path($key);
         if (!is_file($file)) return [];
 
-        $data = json_decode((string)file_get_contents($file), true);
+        $handle = fopen($file, 'r');
+        if ($handle === false) return [];
+
+        try {
+            flock($handle, LOCK_SH);
+            $raw = stream_get_contents($handle);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+
+        $data = json_decode((string)$raw, true);
         return is_array($data) ? $data : [];
     }
 

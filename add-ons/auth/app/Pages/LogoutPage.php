@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages;
 
 use app\Controllers\AlertController;
+use app\Controllers\AuthController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
@@ -46,13 +47,7 @@ class LogoutPage
         SessionController::remove('user');
 
         // Clear the remember cookie using the same flags it was set with
-        setcookie('remember', '', [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
+        AuthController::clearRememberCookie();
 
         // Rotate the session id so the now-anonymous session cannot reuse the authenticated one
         session_regenerate_id(true);

@@ -57,7 +57,7 @@ class AppController
      */
     public static function csrfMeta(): string
     {
-        return '<meta name="csrf-token" content="' . htmlspecialchars(self::csrfToken(), ENT_QUOTES, 'UTF-8') . '">';
+        return '<meta name="csrf-token" content="' . self::sanitize(self::csrfToken()) . '">';
     }
 
     /**
@@ -96,7 +96,7 @@ class AppController
     {
         return preg_replace_callback(
             '/<form\b[^>]*\bmethod\s*=\s*["\']post["\'][^>]*>/i',
-            static fn(array $m): string => $m[0] . '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(self::csrfToken(), ENT_QUOTES, 'UTF-8') . '">',
+            static fn(array $m): string => $m[0] . '<input type="hidden" name="csrf_token" value="' . self::sanitize(self::csrfToken()) . '">',
             $output
         );
     }

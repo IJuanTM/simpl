@@ -196,8 +196,23 @@ class DB
      */
     private static function sanitizeColumn(string $col): string
     {
-        if (!preg_match('/^\w+(\.\w+)?$/', $col)) throw new PDOException("Invalid column: $col");
-        return $col;
+        return self::sanitizeIdentifier($col, 'column');
+    }
+
+    /**
+     * Validates an identifier in 'col' or 'table.col' form, shared by WHERE and GROUP BY clause building.
+     *
+     * @param string $elem
+     * @param string $context Used in the exception message (e.g. "column", "GROUP BY element")
+     *
+     * @return string
+     */
+    private static function sanitizeIdentifier(string $elem, string $context): string
+    {
+        $elem = trim($elem);
+
+        if (!preg_match('/^\w+(\.\w+)?$/', $elem)) throw new PDOException("Invalid $context: $elem");
+        return $elem;
     }
 
     /**
@@ -582,11 +597,7 @@ class DB
      */
     private static function sanitizeGroupElement(string $elem): string
     {
-        $elem = trim($elem);
-
-        // Validate the GROUP BY element format
-        if (!preg_match('/^\w+(\.\w+)?$/', $elem)) throw new PDOException("Invalid GROUP BY element: $elem");
-        return $elem;
+        return self::sanitizeIdentifier($elem, 'GROUP BY element');
     }
 
     /**

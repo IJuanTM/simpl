@@ -104,7 +104,7 @@ class AuthController
      *
      * @return void
      */
-    private static function clearRememberCookie(): void
+    public static function clearRememberCookie(): void
     {
         setcookie('remember', '', [
             'expires' => time() - 3600,

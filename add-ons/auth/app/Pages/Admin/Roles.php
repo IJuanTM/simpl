@@ -28,6 +28,7 @@ class Roles
     public ?string $subAction;
     public array $roles = [];
     public array $role = [];
+    public int $perPage = 0;
 
     public function __construct(Page $page)
     {
@@ -37,22 +38,12 @@ class Roles
         $this->loadRoles();
 
         if (in_array($this->subAction, ['edit', 'delete'])) {
-            if (!$page->param('id')) {
-                PageController::redirect('admin/roles', 2);
-                return;
-            }
-
-            $id = (int)$page->param('id');
-            $role = DB::single(
+            $role = $this->requireRecord($page, 'admin/roles', static fn(int $id): ?array => DB::single(
                 SELECT: '*',
                 FROM: 'roles',
                 WHERE: compact('id')
-            );
-
-            if (!$role) {
-                PageController::redirect('admin/roles', 2);
-                return;
-            }
+            ));
+            if ($role === null) return;
 
             $role['name'] = AppController::sanitize($role['name']);
             $this->role = $role;
@@ -77,7 +68,9 @@ class Roles
     }
 
     /**
-     * Loads all roles with their assigned user counts.
+     * Loads all roles with their assigned user counts. Names are kept raw here (sanitized
+     * only at render time) so links built from them, e.g. the user_count filter link, round-trip
+     * correctly against the raw DB values compared in Users::filterUsers().
      *
      * @return void
      */
@@ -93,7 +86,10 @@ class Roles
             ORDER_BY: 'roles.name ASC'
         );
 
-        foreach ($this->roles as $key => $role) $this->roles[$key]['name'] = AppController::sanitize($role['name']);
+        // No real pagination for this page - one page sized to fit every role - just to
+        // keep total/startIndex/endIndex accurate for renderPaginationInfo()/the API response.
+        $this->perPage = max(1, count($this->roles));
+        $this->applyPagination(count($this->roles));
     }
 
     /**
@@ -214,7 +210,7 @@ class Roles
     {
         return match ($column['key']) {
             'id' => (string)$row['id'],
-            'name' => $row['name'],
+            'name' => AppController::sanitize($row['name']),
             'user_count' => '<a class="link" href="' . Url::to('admin/users?' . http_build_query(['role' => $row['name']])) . '">' . $row['user_count'] . '</a>',
             default => '',
         };
@@ -235,7 +231,7 @@ class Roles
     {
         return '<td class="table-actions"><div class="row g-col-0.5 center-y">'
             . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '"><i class="fas fa-pen"></i></a>'
-            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $row['name'] . '" data-role-user-count="' . $row['user_count'] . '"><i class="fas fa-trash"></i></button>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . AppController::sanitize($row['name']) . '" data-role-user-count="' . $row['user_count'] . '"><i class="fas fa-trash"></i></button>'
             . '</div></td>';
     }
 
