@@ -68,9 +68,9 @@ class Roles
     }
 
     /**
-     * Loads all roles with their assigned user counts. Names are kept raw here (sanitized
-     * only at render time) so links built from them, e.g. the user_count filter link, round-trip
-     * correctly against the raw DB values compared in Users::filterUsers().
+     * Loads all roles with their assigned user counts.
+     * Names are kept raw here, sanitized only at render time, so links built from them
+     * round-trip correctly against the raw DB values Users::filterUsers() compares against.
      *
      * @return void
      */
@@ -86,8 +86,7 @@ class Roles
             ORDER_BY: 'roles.name ASC'
         );
 
-        // No real pagination for this page - one page sized to fit every role - just to
-        // keep total/startIndex/endIndex accurate for renderPaginationInfo()/the API response.
+        // One page sized to fit every role, just to keep total/startIndex/endIndex accurate.
         $this->perPage = max(1, count($this->roles));
         $this->applyPagination(count($this->roles));
     }

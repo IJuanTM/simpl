@@ -16,9 +16,7 @@ use RuntimeException;
 class RateLimiter
 {
     /**
-     * Builds a rate-limit key scoped to the client's IP address, for actions throttled
-     * per-IP rather than per-account. Falls back to a shared 'unknown' bucket when the
-     * IP can't be determined.
+     * Builds a rate-limit key scoped to the client's IP address (falls back to 'unknown').
      *
      * @param string $prefix
      *

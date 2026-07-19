@@ -281,16 +281,13 @@ trait AdminTableTrait
     }
 
     /**
-     * Requires ?id, resolves it via the given lookup callback, and redirects away (with
-     * a delay) if the param is missing or the callback finds nothing. Returns the
-     * resolved record, or null if a redirect was issued - callers should return
-     * immediately in that case.
+     * Requires ?id, resolves it via $lookup, and redirects away (delayed) if missing or not found.
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
      * @param callable $lookup    (int $id): ?array
      *
-     * @return array<string, mixed>|null
+     * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */
     private function requireRecord(Page $page, string $routeBase, callable $lookup): ?array
     {
