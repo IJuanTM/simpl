@@ -23,7 +23,7 @@ textarea {
 
 :has(> select) {
   position: relative;
-  min-width: 4rem;
+  min-width: 6rem;
 
   &::after {
     font-family: "Font Awesome 7 Free", sans-serif;
@@ -33,6 +33,7 @@ textarea {
     right: .625rem;
     content: "\f0d7";
     transform: translateY(-50%);
+    pointer-events: none;
   }
 }
 
