@@ -7,8 +7,7 @@ namespace app\Controllers;
 use app\Models\Page;
 
 /**
- * Holds the breadcrumb trail for the current page. A page registers its trail once,
- * typically in its constructor; the shared breadcrumbs component renders it.
+ * Holds the breadcrumb trail for the current page, set by the page and rendered by the component.
  */
 class BreadcrumbController
 {
@@ -18,10 +17,9 @@ class BreadcrumbController
     private static array $trail = [];
 
     /**
-     * Sets the breadcrumb trail for the current page.
+     * Sets the breadcrumb trail for the current page. A null url marks the current crumb.
      *
-     * @param array<int, array{label: string, url: string|null}> $trail Ordered list of
-     *                                                                  crumbs; a null url marks a non-clickable (current page) crumb.
+     * @param array<int, array{label: string, url: string|null}> $trail
      *
      * @return void
      */
@@ -31,10 +29,7 @@ class BreadcrumbController
     }
 
     /**
-     * Builds and sets the breadcrumb trail straight from the page's URL: one crumb
-     * per segment (top-level page, then each subpage), dashes replaced with spaces
-     * and the first letter capitalized. The last crumb is left without a url, marking
-     * it as the current (non-clickable) page.
+     * Builds and sets the breadcrumb trail from the page's URL segments.
      *
      * @return void
      */

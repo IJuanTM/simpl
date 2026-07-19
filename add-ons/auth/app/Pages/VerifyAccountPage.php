@@ -67,7 +67,7 @@ class VerifyAccountPage
             }
 
             // Throttle brute-force attempts on the verification code
-            if ($this->throttle()) return;
+            if ($this->throttle($id)) return;
 
             // Verify code is correct
             if (!AuthController::checkToken($id, $code, 'verification')) {
@@ -84,16 +84,22 @@ class VerifyAccountPage
     }
 
     /**
-     * Records a verification attempt and reports whether the client is now blocked.
-     * Scoped to the client IP so it cannot be reset by clearing cookies.
+     * Records a verification attempt, checking per-account then per-IP limits.
      *
-     * @return bool True when the attempt limit has been exceeded
+     * @param int $id User ID being verified
+     *
+     * @return bool True when either attempt limit has been exceeded
      */
-    private function throttle(): bool
+    private function throttle(int $id): bool
     {
-        $key = 'verify-attempt-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        if (!RateLimiter::attempt("verify-attempt-account-$id", VERIFICATION_ACCOUNT_MAX_ATTEMPTS, VERIFICATION_ACCOUNT_ATTEMPT_WINDOW)) {
+            FormController::addAlert('Too many verification attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
+            return true;
+        }
 
-        if (!RateLimiter::attempt($key, VERIFICATION_MAX_ATTEMPTS, VERIFICATION_ATTEMPT_WINDOW)) {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+        if (!RateLimiter::attempt("verify-attempt-ip-$ip", VERIFICATION_IP_MAX_ATTEMPTS, VERIFICATION_IP_ATTEMPT_WINDOW)) {
             FormController::addAlert('Too many verification attempts. Please wait a while before trying again.', AlertType::ERROR);
             return true;
         }
@@ -142,7 +148,7 @@ class VerifyAccountPage
         }
 
         // Throttle brute-force attempts on the verification code
-        if ($this->throttle()) return;
+        if ($this->throttle($userId)) return;
 
         // Verify code is correct
         if (!AuthController::checkToken($userId, $code, 'verification')) {

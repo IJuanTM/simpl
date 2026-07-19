@@ -273,7 +273,6 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
 
     const paginationInfo = paginationRow?.querySelector<HTMLElement>('p');
     if (paginationInfo) paginationInfo.textContent = data.info;
-    if (paginationRow) paginationRow.style.display = data.total === 0 ? 'none' : '';
 
   } catch {
     if (tbody) tbody.style.opacity = '';
@@ -289,7 +288,7 @@ function initTable(table: HTMLTableElement): void {
 
   if (!document.getElementById(styleId)) {
     const rules = getHeaders(table).map((_, i) =>
-      `table[data-table-id="${id}"].hide-col-${i} th:nth-child(${i + 1}),table[data-table-id="${id}"].hide-col-${i} td:nth-child(${i + 1}){display:none}`
+      `table[data-table-id="${id}"].hide-col-${i} th:nth-child(${i + 1}),table[data-table-id="${id}"].hide-col-${i} tbody tr:not(.table-empty-row) td:nth-child(${i + 1}){display:none}`
     ).join('');
     const style = document.createElement('style');
     style.id = styleId;

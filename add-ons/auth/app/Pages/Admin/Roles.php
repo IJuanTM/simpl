@@ -11,6 +11,7 @@ use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Models\Page;
+use app\Models\Url;
 use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
@@ -207,31 +208,16 @@ class Roles
     }
 
     /**
-     * Overrides the trait default to add the actions column.
+     * Renders a role row's cell for the given column.
      */
-    public function renderTbody(): string
+    public function renderCell(array $column, array $row): string
     {
-        $rows = $this->pageRows();
-        if (!$rows) return $this->renderEmptyRow();
-
-        $html = '';
-
-        foreach ($rows as $role) {
-            $html .= '<tr>';
-
-            foreach ($this->tableColumns as $column) {
-                if ($column['key'] === 'actions') {
-                    $html .= '<td class="table-actions"><div class="row g-col-0.5 center-y">';
-                    $html .= '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $role['id'] . '"><i class="fas fa-pen"></i></a>';
-                    $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $role['id'] . '" data-role-name="' . $role['name'] . '" data-role-user-count="' . $role['user_count'] . '"><i class="fas fa-trash"></i></button>';
-                    $html .= '</div></td>';
-                } else $html .= '<td>' . $this->renderCell($column, $role) . '</td>';
-            }
-
-            $html .= '</tr>';
-        }
-
-        return $html;
+        return match ($column['key']) {
+            'id' => (string)$row['id'],
+            'name' => $row['name'],
+            'user_count' => '<a class="link" href="' . Url::to('admin/users?' . http_build_query(['role' => $row['name']])) . '">' . $row['user_count'] . '</a>',
+            default => '',
+        };
     }
 
     /**
@@ -243,16 +229,14 @@ class Roles
     }
 
     /**
-     * Renders a role row's cell for the given column.
+     * Overrides the trait default to add the edit/delete actions.
      */
-    public function renderCell(array $column, array $row): string
+    private function renderActionsCell(array $row): string
     {
-        return match ($column['key']) {
-            'id' => (string)$row['id'],
-            'name' => $row['name'],
-            'user_count' => (string)$row['user_count'],
-            default => '',
-        };
+        return '<td class="table-actions"><div class="row g-col-0.5 center-y">'
+            . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '"><i class="fas fa-pen"></i></a>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $row['name'] . '" data-role-user-count="' . $row['user_count'] . '"><i class="fas fa-trash"></i></button>'
+            . '</div></td>';
     }
 
     /**

@@ -17,6 +17,7 @@ class RateLimiter
 {
     /**
      * Record an attempt and return whether it is within the allowed limit.
+     * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
      * @param string $key           Unique identifier for the action being limited
      * @param int    $max           Maximum number of attempts allowed in the window
@@ -27,37 +28,35 @@ class RateLimiter
     public static function attempt(string $key, int $max, int $windowSeconds): bool
     {
         $now = time();
-
-        $attempts = array_values(array_filter(
-            self::read($key)['attempts'] ?? [],
-            static fn(int $ts) => $now - $ts < $windowSeconds
-        ));
-
-        if (count($attempts) >= $max) {
-            // Store when the oldest blocking attempt expires so the view can render data-timeout.
-            self::write($key, ['attempts' => $attempts, 'retry' => $attempts[count($attempts) - $max] + $windowSeconds]);
-            return false;
-        }
-
-        $attempts[] = $now;
-        self::write($key, ['attempts' => $attempts, 'retry' => 0]);
-        return true;
-    }
-
-    /**
-     * Read the stored record for a key, or an empty array when none exists.
-     *
-     * @param string $key
-     *
-     * @return array
-     */
-    private static function read(string $key): array
-    {
         $file = self::path($key);
-        if (!is_file($file)) return [];
 
-        $data = json_decode((string)file_get_contents($file), true);
-        return is_array($data) ? $data : [];
+        $handle = fopen($file, 'c+');
+        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
+
+        try {
+            flock($handle, LOCK_EX);
+
+            $raw = stream_get_contents($handle);
+            $data = $raw ? json_decode($raw, true) : null;
+
+            $attempts = array_values(array_filter(
+                is_array($data) ? ($data['attempts'] ?? []) : [],
+                static fn(int $ts) => $now - $ts < $windowSeconds
+            ));
+
+            if (count($attempts) >= $max) {
+                // Store when the oldest blocking attempt expires so the view can render data-timeout.
+                self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $attempts[count($attempts) - $max] + $windowSeconds]);
+                return false;
+            }
+
+            $attempts[] = $now;
+            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => 0]);
+            return true;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
     }
 
     /**
@@ -79,16 +78,19 @@ class RateLimiter
     }
 
     /**
-     * Persist the record for a key.
+     * Overwrites the record in an already-open, already-locked file handle.
      *
-     * @param string $key
-     * @param array  $data
+     * @param resource $handle
+     * @param array    $data
      *
      * @return void
      */
-    private static function write(string $key, array $data): void
+    private static function writeLocked($handle, array $data): void
     {
-        file_put_contents(self::path($key), json_encode($data), LOCK_EX);
+        rewind($handle);
+        ftruncate($handle, 0);
+        fwrite($handle, json_encode($data));
+        fflush($handle);
     }
 
     /**
@@ -106,6 +108,22 @@ class RateLimiter
     }
 
     /**
+     * Read the stored record for a key, or an empty array when none exists.
+     *
+     * @param string $key
+     *
+     * @return array
+     */
+    private static function read(string $key): array
+    {
+        $file = self::path($key);
+        if (!is_file($file)) return [];
+
+        $data = json_decode((string)file_get_contents($file), true);
+        return is_array($data) ? $data : [];
+    }
+
+    /**
      * Clear the attempt history for a key.
      *
      * @param string $key
@@ -116,5 +134,28 @@ class RateLimiter
     {
         $file = self::path($key);
         if (is_file($file)) unlink($file);
+    }
+
+    /**
+     * Deletes cache files whose mtime is older than $olderThanSeconds. Call from a scheduled task.
+     *
+     * @param int $olderThanSeconds Age threshold; defaults to a day
+     *
+     * @return int Number of files deleted
+     */
+    public static function prune(int $olderThanSeconds = 86400): int
+    {
+        $dir = BASEDIR . '/app/Cache/ratelimit';
+        if (!is_dir($dir)) return 0;
+
+        $cutoff = time() - $olderThanSeconds;
+        $deleted = 0;
+
+        foreach (glob("$dir/*.json") ?: [] as $file) {
+            $mtime = filemtime($file);
+            if ($mtime !== false && $mtime < $cutoff && unlink($file)) $deleted++;
+        }
+
+        return $deleted;
     }
 }

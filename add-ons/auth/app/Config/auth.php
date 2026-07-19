@@ -19,9 +19,13 @@ const PASSWORD_HASH_OPTIONS = [
 
 // Email verification
 const EMAIL_VERIFICATION_REQUIRED = true;
-const VERIFICATION_TOKEN_LENGTH = 8;     // characters
-const VERIFICATION_MAX_ATTEMPTS = 10;    // wrong-code attempts per window before blocking
-const VERIFICATION_ATTEMPT_WINDOW = 600; // seconds
+const VERIFICATION_TOKEN_LENGTH = 8; // characters
+
+// Verification code throttling (per-account and per-IP)
+const VERIFICATION_ACCOUNT_MAX_ATTEMPTS = 5;     // wrong-code attempts per account before blocking
+const VERIFICATION_ACCOUNT_ATTEMPT_WINDOW = 300; // seconds
+const VERIFICATION_IP_MAX_ATTEMPTS = 20;         // wrong-code attempts per IP before blocking
+const VERIFICATION_IP_ATTEMPT_WINDOW = 900;      // seconds
 
 // Remember me
 const REMEMBER_ME_DURATION = 30;          // days

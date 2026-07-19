@@ -118,9 +118,7 @@ trait AdminTableTrait
     }
 
     /**
-     * Default row renderer: one plain <td> per column via renderCell(). Override
-     * this when a column needs special per-row markup (e.g. an actions column).
-     * Called directly from views for the initial render, and from api() for AJAX.
+     * Row renderer: renderCell() per column, 'actions' column via renderActionsCell().
      */
     public function renderTbody(): string
     {
@@ -130,8 +128,13 @@ trait AdminTableTrait
         $html = '';
 
         foreach ($rows as $row) {
-            $html .= '<tr>';
-            foreach ($this->tableColumns as $column) $html .= '<td>' . $this->renderCell($column, $row) . '</td>';
+            $class = $this->rowClass($row);
+            $html .= '<tr' . ($class ? ' class="' . $class . '"' : '') . '>';
+
+            foreach ($this->tableColumns as $column) {
+                $html .= $column['key'] === 'actions' ? $this->renderActionsCell($row) : '<td>' . $this->renderCell($column, $row) . '</td>';
+            }
+
             $html .= '</tr>';
         }
 
@@ -139,7 +142,7 @@ trait AdminTableTrait
     }
 
     /**
-     * Row data for the current page, used by the default renderTbody().
+     * Row data for the current page, used by renderTbody().
      */
     abstract private function pageRows(): array;
 
@@ -155,6 +158,26 @@ trait AdminTableTrait
             : "No $this->itemLabel found.";
 
         return '<tr class="table-empty-row text-center"><td colspan="' . count($this->tableColumns) . '">' . $message . '</td></tr>';
+    }
+
+    /**
+     * CSS class for a row's <tr>, or '' for none. Override to flag row states.
+     *
+     * @param array<string, mixed> $row
+     */
+    private function rowClass(array $row): string
+    {
+        return '';
+    }
+
+    /**
+     * Renders the <td> for the 'actions' column. Override to add action buttons.
+     *
+     * @param array<string, mixed> $row
+     */
+    private function renderActionsCell(array $row): string
+    {
+        return '<td>' . $this->renderCell(['key' => 'actions'], $row) . '</td>';
     }
 
     /**
@@ -192,6 +215,9 @@ trait AdminTableTrait
      */
     private function initTable(Page $page): void
     {
+        // Captured before the URL can override it, so we know the page's real default.
+        $defaultPerPage = $this->perPage;
+
         $this->readTableParams($page);
         $this->readFilters($page);
         $this->resolveSort($page->params);
@@ -201,7 +227,7 @@ trait AdminTableTrait
 
         $this->activeFilterParams = array_filter(
             array_merge(
-                ['search' => $this->search, 'per_page' => $this->perPage !== $this->perPageOptions[0] ? $this->perPage : null],
+                ['search' => $this->search, 'per_page' => $this->perPage !== $defaultPerPage ? $this->perPage : null],
                 $this->filters
             ),
             static fn(mixed $v): bool => $v !== '' && $v !== null

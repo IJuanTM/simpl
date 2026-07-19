@@ -30,7 +30,7 @@ class Users
 
     private const string SORT_ASC = 'asc';
     private const string SORT_DESC = 'desc';
-    private const array PER_PAGE_OPTIONS = [10, 25, 50, 100];
+    private const array PER_PAGE_OPTIONS = [25, 50, 100, 250];
 
     public ?string $subAction;
     public array $user = [];
@@ -38,7 +38,7 @@ class Users
     public array $users = [];
     public array $pagedUsers = [];
     public string $generatedPassword = '';
-    public int $perPage = 10;
+    public int $perPage = 25;
     public array $perPageOptions = self::PER_PAGE_OPTIONS;
     public int $totalAllUsers = 0;
     public int $currentUserId = 0;
@@ -183,7 +183,7 @@ class Users
 
         if ($this->filters['role'] !== '') {
             $role = $this->filters['role'];
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => ($user['role_name'] ?? '') === $role));
+            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => AppController::sanitize($user['role_name'] ?? '') === $role));
         }
 
         if ($this->filters['status'] !== '') {
@@ -472,55 +472,6 @@ class Users
     }
 
     /**
-     * Overrides the trait default to add the actions column.
-     */
-    public function renderTbody(): string
-    {
-        $rows = $this->pageRows();
-        if (!$rows) return $this->renderEmptyRow();
-
-        $html = '';
-
-        foreach ($rows as $user) {
-            $isActive = $user['status'] === UserStatus::ACTIVE->value;
-            $html .= '<tr class="' . ($isActive ? '' : 'deleted') . '">';
-
-            foreach ($this->tableColumns as $column) {
-                if ($column['key'] === 'actions') {
-                    if ($user['id'] !== $this->currentUserId) {
-                        $uid = $user['id'];
-                        $uname = $user['username'] ?? '-';
-                        $uemail = $user['email'];
-                        $html .= '<td class="table-actions"><div class="row g-col-0.5 center-y">';
-
-                        if ($isActive) {
-                            $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '"><i class="fas fa-pen"></i></a>';
-                            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
-                        } else {
-                            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
-                            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="300" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
-                        }
-
-                        $html .= '</div></td>';
-                    } else $html .= '<td><span class="text-muted">-</span></td>';
-                } else $html .= '<td>' . $this->renderCell($column, $user) . '</td>';
-            }
-
-            $html .= '</tr>';
-        }
-
-        return $html;
-    }
-
-    /**
-     * Row data for the current page.
-     */
-    private function pageRows(): array
-    {
-        return $this->pagedUsers;
-    }
-
-    /**
      * Renders a user row's cell for the given column.
      */
     public function renderCell(array $column, array $row): string
@@ -545,6 +496,47 @@ class Users
             'inactive_since' => $muted($row['inactive_since'] ?? ''),
             default => '',
         };
+    }
+
+    /**
+     * Row data for the current page.
+     */
+    private function pageRows(): array
+    {
+        return $this->pagedUsers;
+    }
+
+    /**
+     * Overrides the trait default: soft-deleted (non-active) users get a "deleted" row class.
+     */
+    private function rowClass(array $row): string
+    {
+        return $row['status'] === UserStatus::ACTIVE->value ? '' : 'deleted';
+    }
+
+    /**
+     * Edit/delete for active users, restore/purge otherwise; no actions on the current user.
+     */
+    private function renderActionsCell(array $row): string
+    {
+        if ($row['id'] === $this->currentUserId) return '<td><span class="text-muted">-</span></td>';
+
+        $isActive = $row['status'] === UserStatus::ACTIVE->value;
+        $uid = $row['id'];
+        $uname = $row['username'] ?? '-';
+        $uemail = $row['email'];
+
+        $html = '<td class="table-actions"><div class="row g-col-0.5 center-y">';
+
+        if ($isActive) {
+            $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '"><i class="fas fa-pen"></i></a>';
+            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
+        } else {
+            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
+            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="300" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
+        }
+
+        return $html . '</div></td>';
     }
 
     /**
