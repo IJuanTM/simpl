@@ -175,11 +175,14 @@ function initResize(table: HTMLTableElement, defaultWidths: number[], hiddenKey:
 }
 
 function restoreState(table: HTMLTableElement, container: Element, hiddenKey: string, defaultWidths: number[]): void {
-  for (const col of getHiddenCols(hiddenKey, table)) {
-    setColumnHidden(table, col, true);
+  const hidden = new Set(getHiddenCols(hiddenKey, table));
+
+  getHeaders(table).forEach((_, col) => {
+    const isHidden = hidden.has(col);
+    setColumnHidden(table, col, isHidden);
     const cb = getColToggleCheckbox(container, col);
-    if (cb) cb.checked = false;
-  }
+    if (cb) cb.checked = !isHidden;
+  });
 
   defaultWidths.forEach((w, col) => applyColumnWidth(table, col, w));
   syncColToggleState(table, container, hiddenKey);
@@ -292,9 +295,9 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
   }
 }
 
-function initTable(table: HTMLTableElement): void {
+function initTable(table: HTMLTableElement): number[] | undefined {
   const container = table.closest('.table-container')?.parentElement;
-  if (!container) return;
+  if (!container) return undefined;
 
   const id = table.dataset.tableId ?? table.id ?? 'table';
   const hiddenKey = `${HIDDEN_KEY}-${id}`;
@@ -316,9 +319,11 @@ function initTable(table: HTMLTableElement): void {
     hasCustomWidths = isDirty;
   });
   syncState();
+
+  return defaultWidths;
 }
 
-function initTableFilters(section: HTMLElement, table: HTMLTableElement): void {
+function initTableFilters(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[]): void {
   const baseUrl = window.location.pathname;
   const searchInput = section.querySelector<HTMLInputElement>('.table-search');
   const searchClear = section.querySelector<HTMLElement>('.table-search-clear');
@@ -327,7 +332,6 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement): void {
   const filterSelects = Array.from(section.querySelectorAll<HTMLSelectElement>('.table-filter'));
   const filterParams = filterSelects.map(s => s.dataset.filter).filter((p): p is string => !!p);
   const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
-  const defaultWidths = getDefaultWidths(table);
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
   let hasCustomWidths = false;
 
@@ -437,11 +441,16 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement): void {
 
 export const tableModule = {
   init(): void {
-    document.querySelectorAll<HTMLTableElement>('table.data-table').forEach(initTable);
+    const defaultWidths = new Map<HTMLTableElement, number[]>();
+
+    document.querySelectorAll<HTMLTableElement>('table.data-table').forEach(table => {
+      const widths = initTable(table);
+      if (widths) defaultWidths.set(table, widths);
+    });
 
     document.querySelectorAll<HTMLTableElement>('table.data-table[data-api]').forEach(table => {
       const section = table.closest<HTMLElement>('section');
-      if (section) initTableFilters(section, table);
+      if (section) initTableFilters(section, table, defaultWidths.get(table) ?? getDefaultWidths(table));
     });
   }
 };

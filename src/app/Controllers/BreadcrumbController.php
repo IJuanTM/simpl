@@ -40,7 +40,7 @@ class BreadcrumbController
 
         foreach ([$page->page, ...$page->subpages] as $segment) {
             $path = $path === '' ? $segment : "$path/$segment";
-            $trail[] = ['label' => ucfirst(str_replace('-', ' ', $segment)), 'url' => $path];
+            $trail[] = ['label' => AppController::sanitize(ucfirst(str_replace('-', ' ', $segment))), 'url' => AppController::sanitize($path)];
         }
 
         $trail[array_key_last($trail)]['url'] = null;

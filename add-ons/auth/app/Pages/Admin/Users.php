@@ -183,7 +183,7 @@ class Users
 
         if ($this->filters['role'] !== '') {
             $role = $this->filters['role'];
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => AppController::sanitize($user['role_name'] ?? '') === $role));
+            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => ($user['role_name'] ?? '') === $role));
         }
 
         if ($this->filters['status'] !== '') {

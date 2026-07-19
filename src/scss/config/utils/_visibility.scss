@@ -8,7 +8,13 @@
 }
 
 *[inert] {
-  interactivity: inert !important;
+  cursor: default;
+  user-select: none;
+  pointer-events: none;
+
+  * {
+    pointer-events: none;
+  }
 
   &:not(.button) {
     color: var(--text-25) !important;
