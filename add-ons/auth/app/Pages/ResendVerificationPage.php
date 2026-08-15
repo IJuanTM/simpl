@@ -67,16 +67,10 @@ class ResendVerificationPage
      */
     private function resendVerification(int $id): void
     {
-        // Generate new verification token
-        $token = AuthController::generateToken(VERIFICATION_TOKEN_LENGTH);
-
-        // Get user email
         $email = AuthController::getUserById($id)['email'];
 
-        // Update token in database
-        AuthController::createToken($id, $token, 'verification');
-
-        // Send verification email
-        AuthController::sendVerificationMail($id, $email, $token, true);
+        $result = AuthController::issueVerificationToken($id, $email);
+        if ($result) PageController::redirectWithAlert("verify-account/$id", 'Success! A new verification email has been sent!', AlertType::SUCCESS, 4);
+        else PageController::redirectWithAlert("verify-account/$id", 'An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
     }
 }

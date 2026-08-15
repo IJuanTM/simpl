@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
@@ -83,7 +82,7 @@ class UserPage
         ) return;
 
         // Reject the email if it belongs to a different account
-        if (AuthController::checkEmail($_POST['email']) && AuthController::getUserIdByEmail($_POST['email']) !== $id) {
+        if (AuthController::emailTakenByOtherUser($_POST['email'], $id)) {
             $_POST['email'] = $this->user['email'];
             FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
             return;
@@ -100,8 +99,7 @@ class UserPage
             WHERE: compact('id')
         );
 
-        PageController::redirect('user/' . $id);
-        AlertController::globalAlert('Profile updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/' . $id, 'Profile updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -135,8 +133,7 @@ class UserPage
     {
         // Check if file was uploaded successfully
         if (!isset($_FILES['new_img']) || $_FILES['new_img']['error'] !== UPLOAD_ERR_OK) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('Image upload failed. Please try again.', AlertType::ERROR, 4);
+            self::uploadFailed('Image upload failed. Please try again.');
             return;
         }
 
@@ -149,8 +146,7 @@ class UserPage
 
         // Validate image mime type
         if (!in_array($mimeType, PROFILE_IMAGE_ALLOWED_TYPES, true)) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
+            self::uploadFailed('The uploaded file is not a valid image type.');
             return;
         }
 
@@ -164,22 +160,19 @@ class UserPage
         };
 
         if ($extension === null) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('The uploaded file is not a valid image type.', AlertType::ERROR, 4);
+            self::uploadFailed('The uploaded file is not a valid image type.');
             return;
         }
 
         // Validate image using getimagesize
         if (getimagesize($file['tmp_name']) === false) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('The uploaded file is not a valid image.', AlertType::ERROR, 4);
+            self::uploadFailed('The uploaded file is not a valid image.');
             return;
         }
 
         // Check file size
         if ($file['size'] > PROFILE_IMAGE_MAX_SIZE * 1024 * 1024) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_MAX_SIZE . 'MB.', AlertType::ERROR, 4);
+            self::uploadFailed('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_MAX_SIZE . 'MB.');
             return;
         }
 
@@ -201,8 +194,7 @@ class UserPage
 
         // Move uploaded file, bailing out if the move fails
         if (!move_uploaded_file($file['tmp_name'], $path . $name)) {
-            PageController::redirect('profile');
-            AlertController::globalAlert('Image upload failed. Please try again.', AlertType::ERROR, 4);
+            self::uploadFailed('Image upload failed. Please try again.');
             return;
         }
 
@@ -216,8 +208,19 @@ class UserPage
         );
 
         // Redirect with success message
-        PageController::redirect('profile');
-        AlertController::globalAlert('Profile image updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('profile', 'Profile image updated successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Redirects to the profile page with a generic upload-failure alert.
+     *
+     * @param string $message
+     *
+     * @return void
+     */
+    private static function uploadFailed(string $message): void
+    {
+        PageController::redirectWithAlert('profile', $message, AlertType::ERROR, 4);
     }
 
     /**
@@ -251,7 +254,6 @@ class UserPage
         );
 
         // Redirect with success message
-        PageController::redirect('profile');
-        AlertController::globalAlert('Profile image deleted successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('profile', 'Profile image deleted successfully!', AlertType::SUCCESS, 4);
     }
 }

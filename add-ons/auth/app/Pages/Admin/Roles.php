@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages\Admin;
 
-use app\Controllers\AlertController;
 use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
@@ -28,7 +27,6 @@ class Roles
     public ?string $subAction;
     public array $roles = [];
     public array $role = [];
-    public int $perPage = 0;
 
     public function __construct(Page $page)
     {
@@ -85,10 +83,6 @@ class Roles
             GROUP_BY: 'roles.id',
             ORDER_BY: 'roles.name ASC'
         );
-
-        // One page sized to fit every role, just to keep total/startIndex/endIndex accurate.
-        $this->perPage = max(1, count($this->roles));
-        $this->applyPagination(count($this->roles));
     }
 
     /**
@@ -132,8 +126,7 @@ class Roles
             ]
         );
 
-        PageController::redirect('admin/roles');
-        AlertController::globalAlert('Role created successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/roles', 'Role created successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -168,8 +161,7 @@ class Roles
             WHERE: compact('id')
         );
 
-        PageController::redirect('admin/roles');
-        AlertController::globalAlert('Role updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/roles', 'Role updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -198,8 +190,7 @@ class Roles
             WHERE: compact('id')
         );
 
-        PageController::redirect('admin/roles');
-        AlertController::globalAlert('Role deleted successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/roles', 'Role deleted successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -228,9 +219,11 @@ class Roles
      */
     private function renderActionsCell(array $row): string
     {
+        $name = AppController::sanitize($row['name']);
+
         return '<td class="table-actions"><div class="row g-col-0.5 center-y">'
-            . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '"><i class="fas fa-pen"></i></a>'
-            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . AppController::sanitize($row['name']) . '" data-role-user-count="' . $row['user_count'] . '"><i class="fas fa-trash"></i></button>'
+            . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '" aria-label="Edit role ' . $name . '"><i class="fas fa-pen"></i></a>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $name . '" data-role-user-count="' . $row['user_count'] . '" aria-label="Delete role ' . $name . '"><i class="fas fa-trash"></i></button>'
             . '</div></td>';
     }
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
+use app\Pages\Traits\RateLimitedForm;
 use app\Utils\Log;
 
 /**
@@ -20,10 +20,12 @@ use app\Utils\Log;
  */
 class RegisterPage
 {
+    use RateLimitedForm;
+
     public function __construct()
     {
         // Process registration form submission
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
+        if ($this->initRateLimitedForm('register')) $this->post();
     }
 
     /**
@@ -39,6 +41,9 @@ class RegisterPage
             !FormController::validate('password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
             !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
+
+        // Rate limit after validation, before email-existence check to prevent enumeration
+        if (!$this->attemptRateLimit(REGISTER_RESEND_TIMEOUT)) return;
 
         // Check if email already exists
         if (AuthController::checkEmail($_POST['email'])) {
@@ -100,18 +105,12 @@ class RegisterPage
 
         // Handle email verification if required
         if (EMAIL_VERIFICATION_REQUIRED) {
-            // Generate verification token
-            $token = AuthController::generateToken(VERIFICATION_TOKEN_LENGTH);
-
-            // Store token in database
-            AuthController::createToken($id, $token, 'verification');
-
-            // Send verification email
-            AuthController::sendVerificationMail($id, $email, $token);
+            $result = AuthController::issueVerificationToken((int)$id, $email);
+            if ($result) PageController::redirectWithAlert("verify-account/$id", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
+            else PageController::redirectWithAlert("verify-account/$id", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
         } else {
             // No verification required, redirect to login
-            PageController::redirect('login');
-            AlertController::globalAlert('Success! Your account has been created!', AlertType::SUCCESS, 4);
+            PageController::redirectWithAlert('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
         }
     }
 }

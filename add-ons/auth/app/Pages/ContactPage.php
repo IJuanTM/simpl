@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
 use app\Controllers\RequestController;
 use app\Enums\AlertType;
-use app\Utils\RateLimiter;
+use app\Pages\Traits\RateLimitedForm;
 
 /**
  * ContactPage
@@ -20,17 +19,12 @@ use app\Utils\RateLimiter;
  */
 class ContactPage
 {
-    public int $sendCooldown = 0;
-    private string $rlKey;
+    use RateLimitedForm;
 
     public function __construct()
     {
-        // Scope the rate limit to the client IP so it cannot be reset by clearing cookies.
-        $this->rlKey = RateLimiter::ipKey('contact');
-        $this->sendCooldown = RateLimiter::retryAfterMs($this->rlKey);
-
         // Process contact form submission
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
+        if ($this->initRateLimitedForm('contact')) $this->post();
     }
 
     /**
@@ -49,10 +43,7 @@ class ContactPage
         ) return;
 
         // Rate limit after validation to avoid consuming slots on invalid input
-        if (!RateLimiter::attempt($this->rlKey, 1, CONTACT_RESEND_TIMEOUT)) {
-            FormController::addAlert('Too many submissions. Please wait a moment before trying again.', AlertType::WARNING);
-            return;
-        }
+        if (!$this->attemptRateLimit(CONTACT_RESEND_TIMEOUT)) return;
 
         // Send contact email
         $this->contactMail(
@@ -86,18 +77,15 @@ class ContactPage
 
         // Check if template loaded successfully
         if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            FormController::addAlert('An error occurred while sending your message! Please contact support.', AlertType::ERROR);
             return;
         }
 
         // Send email
         $result = MailController::send($from, SITE_MAIL, $sender, $subject, $contents);
 
-        // Redirect to home
-        PageController::redirect(REDIRECT);
-
-        // Show appropriate alert
-        if ($result) AlertController::globalAlert('Your message has been sent!', AlertType::SUCCESS, 4);
-        else AlertController::globalAlert('There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
+        // Redirect to home with appropriate alert
+        if ($result) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
+        else PageController::redirectWithAlert(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }
 }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages\Admin;
 
-use app\Controllers\AlertController;
 use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
@@ -76,7 +75,15 @@ class Users
         if ($subAction === null) return;
 
         if ($subAction === 'create') {
-            $this->generatedPassword = AuthController::generatePassword();
+            $password = AuthController::generatePassword();
+
+            if ($password === null) {
+                FormController::addAlert('Could not generate a password. Please try again.', AlertType::ERROR);
+                PageController::redirect('admin/users', 2);
+                return;
+            }
+
+            $this->generatedPassword = $password;
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->createUser();
             return;
         }
@@ -93,6 +100,7 @@ class Users
             if ($this->user['email'] !== null) $this->user['email'] = AppController::sanitize($this->user['email']);
             if ($this->user['first_name'] !== null) $this->user['first_name'] = AppController::sanitize($this->user['first_name']);
             if ($this->user['last_name'] !== null) $this->user['last_name'] = AppController::sanitize($this->user['last_name']);
+            if ($this->user['role_name'] !== null) $this->user['role_name'] = AppController::sanitize($this->user['role_name']);
 
             if ($this->user['id'] === SessionController::get('user')['id']) {
                 PageController::redirect('admin/users', 2);
@@ -279,6 +287,19 @@ class Users
             return;
         }
 
+        $roleRecord = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
+                'name' => $_POST['role']
+            ]
+        );
+
+        if (!$roleRecord) {
+            FormController::addAlert('The selected role no longer exists. Please choose another.', AlertType::WARNING);
+            return;
+        }
+
         DB::insert(
             INTO: 'users',
             VALUES: [
@@ -293,14 +314,7 @@ class Users
 
         $id = AuthController::getUserIdByEmail($_POST['email']);
 
-        $roleRecord = DB::single(
-            SELECT: 'id',
-            FROM: 'roles',
-            WHERE: [
-                'name' => $_POST['role']
-            ]
-        );
-        if ($roleRecord) DB::insert(
+        DB::insert(
             INTO: 'user_roles',
             VALUES: [
                 'user_id' => $id,
@@ -308,10 +322,10 @@ class Users
             ]
         );
 
-        AuthController::sendCreatedUserMail($_POST['email'], $this->generatedPassword);
+        $result = AuthController::sendCreatedUserMail($_POST['email'], $this->generatedPassword);
 
-        PageController::redirect('admin/users');
-        AlertController::globalAlert('Success! The user has been created!', AlertType::SUCCESS, 4);
+        if ($result) PageController::redirectWithAlert('admin/users', 'Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
+        else PageController::redirectWithAlert('admin/users', 'The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
     }
 
     /**
@@ -345,11 +359,24 @@ class Users
             !FormController::validate('role', ['required'])
         ) return;
 
-        $id = $this->user['id'];
+        $id = (int)$this->user['id'];
 
-        if (AuthController::checkEmail($_POST['email']) && AuthController::getUserIdByEmail($_POST['email']) !== $id) {
+        if (AuthController::emailTakenByOtherUser($_POST['email'], $id)) {
             $_POST['email'] = $this->user['email'];
             FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
+            return;
+        }
+
+        $roleRecord = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
+                'name' => $_POST['role']
+            ]
+        );
+
+        if (!$roleRecord) {
+            FormController::addAlert('The selected role no longer exists. Please choose another.', AlertType::WARNING);
             return;
         }
 
@@ -364,40 +391,29 @@ class Users
             WHERE: compact('id')
         );
 
-        $roleRecord = DB::single(
-            SELECT: 'id',
-            FROM: 'roles',
+        if (DB::exists(
+            FROM: 'user_roles',
             WHERE: [
-                'name' => $_POST['role']
+                'user_id' => $id
+            ]
+        )) DB::update(
+            UPDATE: 'user_roles',
+            SET: [
+                'role_id' => $roleRecord['id']
+            ],
+            WHERE: [
+                'user_id' => $id
+            ]
+        );
+        else DB::insert(
+            INTO: 'user_roles',
+            VALUES: [
+                'user_id' => $id,
+                'role_id' => $roleRecord['id']
             ]
         );
 
-        if ($roleRecord) {
-            if (DB::exists(
-                FROM: 'user_roles',
-                WHERE: [
-                    'user_id' => $id
-                ]
-            )) DB::update(
-                UPDATE: 'user_roles',
-                SET: [
-                    'role_id' => $roleRecord['id']
-                ],
-                WHERE: [
-                    'user_id' => $id
-                ]
-            );
-            else DB::insert(
-                INTO: 'user_roles',
-                VALUES: [
-                    'user_id' => $id,
-                    'role_id' => $roleRecord['id']
-                ]
-            );
-        }
-
-        PageController::redirect('admin/users');
-        AlertController::globalAlert('Success! The user has been updated!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users', 'Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -417,8 +433,7 @@ class Users
             ],
             WHERE: compact('id')
         );
-        PageController::redirect('admin/users');
-        AlertController::globalAlert('User successfully deleted!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users', 'User successfully deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -439,8 +454,7 @@ class Users
             FROM: 'users',
             WHERE: compact('id')
         );
-        PageController::redirect('admin/users');
-        AlertController::globalAlert('User permanently deleted!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users', 'User permanently deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -465,8 +479,7 @@ class Users
             ],
             WHERE: compact('id')
         );
-        PageController::redirect('admin/users');
-        AlertController::globalAlert('User successfully restored!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users', 'User successfully restored!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -477,6 +490,7 @@ class Users
         $check = '<i class="fas fa-check"></i>';
         $times = '<i class="fas fa-times"></i>';
         $muted = static fn(string $v): string => $v ?: '<span class="text-muted">-</span>';
+        $isVerified = !empty($row['is_verified']);
 
         return match ($column['key']) {
             'id' => (string)$row['id'],
@@ -485,12 +499,12 @@ class Users
             'first_name' => $muted($row['first_name'] ?? ''),
             'last_name' => $muted($row['last_name'] ?? ''),
             'role' => $muted($row['role_name'] ?? ''),
-            'is_verified' => !empty($row['is_verified']) ? $check : $times,
+            'is_verified' => $this->renderBadge($isVerified, $isVerified ? 'Verified' : 'Unverified'),
             'must_change_password' => $row['must_change_password'] ? $check : $times,
             'last_login' => $muted($row['last_login'] ?? ''),
             'created_at' => $row['created_at'],
             'last_update' => $row['last_update'],
-            'status' => ucfirst((string)$row['status']),
+            'status' => $this->renderBadge($row['status'] === UserStatus::ACTIVE->value, ucfirst((string)$row['status'])),
             'inactive_since' => $muted($row['inactive_since'] ?? ''),
             default => '',
         };
@@ -535,10 +549,10 @@ class Users
         $html = '<td class="table-actions"><div class="row g-col-0.5 center-y">';
 
         if ($isActive) {
-            $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '"><i class="fas fa-pen"></i></a>';
+            $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '" aria-label="Edit user ' . $uemail . '"><i class="fas fa-pen"></i></a>';
             $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
         } else {
-            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '"><i class="fas fa-wrench"></i></button>';
+            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>';
             $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="300" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
         }
 

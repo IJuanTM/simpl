@@ -1,0 +1,71 @@
+<?php
+
+use app\Controllers\AppController;
+
+/**
+ * Shared confirmation modal for a single-user action (delete/purge/restore).
+ *
+ * @var string $triggerAttr Bare data-* attribute that opens this modal, e.g. "data-user-delete-modal"
+ * @var string $ariaLabel   Dialog aria-label, e.g. "Delete user"
+ * @var string $title       Modal heading, e.g. "Delete user"
+ * @var string $question    Confirmation question shown above the user info block
+ * @var array  $quotes      List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
+ * @var string $formClass   Class on the submit <form>, used by modal.ts to find it
+ * @var string $buttonClass Class on the submit <button>
+ * @var string $icon        Font Awesome icon class for the submit button, e.g. "fa-user-slash"
+ * @var string $buttonText  Submit button label, e.g. "Delete user"
+ */
+?>
+<dialog class="row modal-overlay center invisible" <?= AppController::sanitize($triggerAttr) ?> aria-modal="true" aria-label="<?= AppController::sanitize($ariaLabel) ?>">
+  <div class="col modal f-col g-row-2">
+    <div class="row center-y g-col-1">
+      <h3 class="col"><?= AppController::sanitize($title) ?></h3>
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="row modal-body">
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col">
+            <p><?= AppController::sanitize($question) ?></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col modal-user-info f-col g-row-0.5">
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Id:</span>
+              <span class="col modal-user-id">-</span>
+            </div>
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Username:</span>
+              <span class="col modal-user-username">-</span>
+            </div>
+            <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Email:</span>
+              <span class="col modal-user-email">-</span>
+            </div>
+          </div>
+        </div>
+
+        <?php foreach ($quotes as $quote): ?>
+          <div class="row">
+            <div class="col">
+              <p class="quote <?= AppController::sanitize($quote['type']) ?>"><?= AppController::sanitize($quote['text']) ?></p>
+            </div>
+          </div>
+        <?php endforeach ?>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Cancel</button>
+      <form class="col <?= AppController::sanitize($formClass) ?> f-0" method="POST" action="">
+        <input type="hidden" name="submit" value="1">
+        <div class="row">
+          <button class="col button <?= AppController::sanitize($buttonClass) ?> g-col-0.5 center-y f-0" type="submit"><i class="fas <?= AppController::sanitize($icon) ?>"></i><?= AppController::sanitize($buttonText) ?></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</dialog>

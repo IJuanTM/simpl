@@ -11,18 +11,18 @@ use app\Enums\Role;
 use app\Enums\UserStatus;
 use app\Models\Url;
 use app\Utils\Log;
+use app\Utils\Timebox;
 use Exception;
 
 /**
  * Provides user authentication helpers: session management, token creation
  * and validation, password handling, and email notifications.
- *
- * Uses direct DB access and PHP superglobals ($_COOKIE, $_SERVER), which
- * makes unit testing harder. Consider refactoring into smaller services
- * (UserRepository, TokenService, Mailer) with dependency injection.
  */
 class AuthController
 {
+    // Deliberately vague so a login attempt can't be used to confirm account status.
+    public const string ACCOUNT_ISSUE_MESSAGE = 'There is an issue with your account. Please contact support for assistance.';
+
     public function __construct()
     {
         // If a "remember" cookie is present and no user session exists,
@@ -60,7 +60,7 @@ class AuthController
         }
 
         // If token expired: remove DB record and clear cookie.
-        if ($token['expires'] < time()) {
+        if (strtotime((string)$token['expires']) < time()) {
             DB::delete(
                 FROM: 'tokens',
                 WHERE: [
@@ -155,8 +155,7 @@ class AuthController
         if (!$role) {
             Log::error("No user role is set for user with id \"{$user['id']}\"");
             SessionController::remove('user');
-            FormController::addAlert('Error! No user role is set for this account! Please contact an admin!', AlertType::ERROR);
-            PageController::redirect(REDIRECT);
+            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 5);
             return false;
         }
 
@@ -212,18 +211,24 @@ class AuthController
     /**
      * Redirect to the originally requested URL saved by requireAuth(), or to
      * $fallback when none was stored. Clears the stored URL after use so it
-     * cannot be replayed by a second call.
+     * cannot be replayed by a second call. Optionally queues a flash alert,
+     * shown after the redirect, when $message is given.
      *
-     * @param string $fallback Route to use when no intended URL is in session
+     * @param string      $fallback Route to use when no intended URL is in session
+     * @param string|null $message  Optional flash alert message to show after redirecting
+     * @param AlertType   $type     Alert type, used only when $message is given
+     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
      *
      * @return void
      */
-    public static function intendedRedirect(string $fallback = REDIRECT): void
+    public static function intendedRedirect(string $fallback = REDIRECT, ?string $message = null, AlertType $type = AlertType::SUCCESS, int $timeout = 0): void
     {
         // Get the intended URL from session or fallback to the provided default.
         $url = SessionController::get('intended_url') ?? $fallback;
         SessionController::remove('intended_url');
-        PageController::redirect($url);
+
+        if ($message !== null) PageController::redirectWithAlert($url, $message, $type, $timeout);
+        else PageController::redirect($url);
     }
 
     /**
@@ -258,8 +263,7 @@ class AuthController
         $fresh = self::getUserWithRole((int)$user['id']);
         if (!$fresh || $fresh['status'] !== UserStatus::ACTIVE->value) {
             SessionController::remove('user');
-            AlertController::globalAlert('Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
-            PageController::redirect(REDIRECT);
+            PageController::redirectWithAlert(REDIRECT, 'Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
             exit;
         }
 
@@ -267,16 +271,14 @@ class AuthController
 
         if (!$freshRole) {
             SessionController::remove('user');
-            PageController::redirect(REDIRECT);
+            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 5);
             exit;
         }
 
-        // Sync session when role has changed in the database.
-        if ($freshRole !== $user['role']) {
-            unset($fresh['password']);
-            SessionController::set('user', $fresh);
-            $user = SessionController::get('user');
-        }
+        // Sync session with fresh DB data every request, not just on role change.
+        unset($fresh['password']);
+        SessionController::set('user', $fresh);
+        $user = $fresh;
 
         // If the account requires a password change and this route doesn't
         // explicitly allow that, force a redirect to the change-password page.
@@ -286,8 +288,7 @@ class AuthController
             // Save the user's indended url to redirect back to after they changed their password.
             if ($uri && !preg_match('#^/(change-password|login|logout)(/|$)#i', $uri)) SessionController::set('intended_url', $uri);
 
-            PageController::redirect('change-password');
-            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
             exit;
         }
 
@@ -359,6 +360,18 @@ class AuthController
     public static function getPasswordRequirements(): string
     {
         return self::getPasswordRules()[1];
+    }
+
+    /**
+     * Return the password regex pattern's source (anchors included, no delimiters), for
+     * client-side use with the JS RegExp constructor. Kept in sync with validatePassword()
+     * since both come from the same cached getPasswordRules() pattern.
+     *
+     * @return string
+     */
+    public static function getPasswordPatternSource(): string
+    {
+        return substr(self::getPasswordRules()[0], 1, -1);
     }
 
     /**
@@ -446,22 +459,13 @@ class AuthController
 
     /**
      * Return whether the account is verified (no pending verification token).
-     * Either provide $id or $email (email will be resolved to id).
      *
-     * @param int|null    $id
-     * @param string|null $email
+     * @param int $id
      *
      * @return bool True when verified, false otherwise
      */
-    public static function isVerified(int|null $id = null, string|null $email = null): bool
+    public static function isVerified(int $id): bool
     {
-        if ($id === null && $email !== null) {
-            $id = self::getUserIdByEmail($email);
-            if (!$id) return false;
-        }
-
-        if ($id === null) return false;
-
         // Account considered verified when there is no verification token row.
         return !DB::exists(
             FROM: 'tokens',
@@ -470,6 +474,21 @@ class AuthController
                 'type' => 'verification'
             ]
         );
+    }
+
+    /**
+     * Whether $email belongs to a user other than $excludeId - the check a
+     * profile/edit form needs before saving a changed email address.
+     *
+     * @param string $email
+     * @param int    $excludeId User id allowed to already have this email
+     *
+     * @return bool
+     */
+    public static function emailTakenByOtherUser(string $email, int $excludeId): bool
+    {
+        $id = self::getUserIdByEmail($email);
+        return $id !== null && $id !== $excludeId;
     }
 
     /**
@@ -492,39 +511,76 @@ class AuthController
 
     /**
      * Verify that a provided token matches the stored token for the given
-     * user id and token type. Comparison is case-insensitive.
+     * user id and token type, and hasn't expired. Comparison is case-insensitive.
      *
      * @param int    $id    User id
      * @param string $token Token to check
      * @param string $type  Token type (e.g. 'verification', 'reset', 'remember')
      *
-     * @return bool True if tokens match
+     * @return bool True if tokens match and the token hasn't expired
      */
     public static function checkToken(int $id, string $token, string $type): bool
     {
-        $dbToken = DB::single(
-            SELECT: 'token',
+        $row = DB::single(
+            SELECT: ['token', 'expires'],
             FROM: 'tokens',
             WHERE: [
                 'user_id' => $id,
                 'type' => $type
             ]
-        )['token'] ?? null;
+        );
+
+        if (!$row) return false;
+        if ($row['expires'] !== null && strtotime((string)$row['expires']) < time()) return false;
 
         // Constant-time comparison to prevent timing attacks; case-insensitive for human-readable tokens.
-        return $dbToken !== null && hash_equals(strtolower($dbToken), strtolower($token));
+        return hash_equals(strtolower($row['token']), strtolower($token));
     }
 
     /**
-     * Given a username or email (identifier) return the associated email.
+     * Check provided plaintext password against the stored hash for the
+     * user identified by email.
      *
-     * @param string $identifier Username or email
+     * @param string $email
+     * @param string $password Plaintext password to verify
      *
-     * @return string|null Email or null when not found
+     * @return bool True when the password matches
      */
-    public static function getEmailByIdentifier(string $identifier): string|null
+    public static function checkPassword(string $email, string $password): bool
     {
-        return self::getUserByIdentifier($identifier)['email'] ?? null;
+        $hash = DB::single(
+            SELECT: 'password',
+            FROM: 'users',
+            WHERE: compact('email')
+        )['password'] ?? null;
+
+        return $hash && password_verify($password, $hash);
+    }
+
+    /**
+     * Verify credentials for an identifier that may be an email or username. Any
+     * failure path takes at least LOGIN_TIMING_FLOOR_MS (hashing a dummy password
+     * when the identifier doesn't resolve), so timing can't reveal why it failed.
+     *
+     * @param string $identifier Email or username
+     * @param string $password   Plaintext password to verify
+     *
+     * @return array|null Matched user row on success, null on any failure
+     */
+    public static function verifyCredentials(string $identifier, string $password): ?array
+    {
+        return (new Timebox())->call(function (Timebox $timebox) use ($identifier, $password) {
+            $user = self::getUserByIdentifier($identifier);
+
+            if ($user) {
+                if (!password_verify($password, $user['password'])) return null;
+                $timebox->returnEarly();
+                return $user;
+            }
+
+            password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
+            return null;
+        }, LOGIN_TIMING_FLOOR_MS * 1000);
     }
 
     /**
@@ -567,85 +623,6 @@ class AuthController
     }
 
     /**
-     * Check provided plaintext password against the stored hash for the
-     * user identified by email.
-     *
-     * @param string $email
-     * @param string $password Plaintext password to verify
-     *
-     * @return bool True when the password matches
-     */
-    public static function checkPassword(string $email, string $password): bool
-    {
-        $hash = DB::single(
-            SELECT: 'password',
-            FROM: 'users',
-            WHERE: compact('email')
-        )['password'] ?? null;
-
-        return $hash && password_verify($password, $hash);
-    }
-
-    /**
-     * Check password for an identifier that may be an email or username.
-     *
-     * @param string $identifier
-     * @param string $password
-     *
-     * @return bool
-     */
-    public static function checkPasswordByIdentifier(string $identifier, string $password): bool
-    {
-        return ($user = self::getUserByIdentifier($identifier)) && password_verify($password, $user['password']);
-    }
-
-    /**
-     * Determine whether an email or username exists in the database.
-     *
-     * @param string $identifier Email or username
-     *
-     * @return bool
-     */
-    public static function checkIdentifier(string $identifier): bool
-    {
-        return DB::exists(
-                FROM: 'users',
-                WHERE: ['email' => $identifier]
-            ) || DB::exists(
-                FROM: 'users',
-                WHERE: ['username' => $identifier]
-            );
-    }
-
-    /**
-     * Is the account active (status === active) for the user with this email?
-     *
-     * @param string $email
-     *
-     * @return bool
-     */
-    public static function isActive(string $email): bool
-    {
-        return (DB::single(
-                SELECT: 'status',
-                FROM: 'users',
-                WHERE: compact('email')
-            )['status'] ?? null) === UserStatus::ACTIVE->value;
-    }
-
-    /**
-     * Is the account active for a user located by username or email?
-     *
-     * @param string $identifier
-     *
-     * @return bool
-     */
-    public static function isActiveByIdentifier(string $identifier): bool
-    {
-        return ($user = self::getUserByIdentifier($identifier)) && $user['status'] === UserStatus::ACTIVE->value;
-    }
-
-    /**
      * Update a user's password and clear the "must_change_password" flag.
      * Password is hashed with configured algorithm/options constants.
      *
@@ -663,40 +640,6 @@ class AuthController
                 'must_change_password' => 0
             ],
             WHERE: compact('id')
-        );
-    }
-
-    /**
-     * Create or replace a token of the given type for a user. Existing tokens
-     * of the same type for that user are removed before insertion.
-     *
-     * @param int         $userId
-     * @param string      $token
-     * @param string      $type
-     * @param string|null $expires Optional expiry timestamp value
-     *
-     * @return void
-     */
-    public static function createToken(int $userId, string $token, string $type, string|null $expires = null): void
-    {
-        DB::delete(
-            FROM: 'tokens',
-            WHERE: [
-                'user_id' => $userId,
-                'type' => $type
-            ]
-        );
-
-        $data = [
-            'user_id' => $userId,
-            'token' => $token,
-            'type' => $type
-        ];
-        if ($expires) $data['expires'] = $expires;
-
-        DB::insert(
-            INTO: 'tokens',
-            VALUES: $data
         );
     }
 
@@ -722,20 +665,21 @@ class AuthController
     /**
      * Persist a login attempt record including IP, user agent and whether it
      * succeeded. The user_id will be resolved from the provided identifier
-     * (email or username) when possible.
+     * (email or username) when not already known.
      *
      * @param string      $identifier
      * @param bool        $success
      * @param string|null $failedReason
+     * @param int|null    $userId Pre-resolved user id, to skip a redundant lookup
      *
      * @return void
      */
-    public static function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null): void
+    public static function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null, ?int $userId = null): void
     {
         DB::insert(
             INTO: 'login_attempts',
             VALUES: [
-                'user_id' => self::getUserIdByIdentifier($identifier),
+                'user_id' => $userId ?? self::getUserIdByIdentifier($identifier),
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
                 'success' => $success ? 1 : 0,
@@ -776,18 +720,74 @@ class AuthController
     }
 
     /**
-     * Send a verification email containing a one-time code/link and redirect
-     * the user to the verification page. Displays user feedback alerts
-     * depending on the mailer result.
+     * Generates a verification token, stores it, and emails it to the user. Used by both
+     * the initial registration flow and the resend flow, which only differ in the alert
+     * message shown for each outcome, so the caller still picks that based on the result.
+     *
+     * @param int    $id
+     * @param string $email
+     *
+     * @return bool True on success, false if token generation or sending failed
+     */
+    public static function issueVerificationToken(int $id, string $email): bool
+    {
+        $token = self::generateToken(VERIFICATION_TOKEN_LENGTH);
+
+        if ($token === null) {
+            Log::error("Could not generate a verification token for user id \"$id\"");
+            return false;
+        }
+
+        self::createToken($id, $token, 'verification', date('Y-m-d H:i:s', time() + VERIFICATION_TOKEN_EXPIRY));
+
+        return self::sendVerificationMail($id, $email, $token);
+    }
+
+    /**
+     * Create or replace a token of the given type for a user. Existing tokens
+     * of the same type for that user are removed before insertion.
+     *
+     * @param int         $userId
+     * @param string      $token
+     * @param string      $type
+     * @param string|null $expires Optional expiry timestamp value
+     *
+     * @return void
+     */
+    public static function createToken(int $userId, string $token, string $type, string|null $expires = null): void
+    {
+        DB::delete(
+            FROM: 'tokens',
+            WHERE: [
+                'user_id' => $userId,
+                'type' => $type
+            ]
+        );
+
+        $data = [
+            'user_id' => $userId,
+            'token' => $token,
+            'type' => $type
+        ];
+        if ($expires) $data['expires'] = $expires;
+
+        DB::insert(
+            INTO: 'tokens',
+            VALUES: $data
+        );
+    }
+
+    /**
+     * Send a verification email containing a one-time code/link.
+     * Does not redirect; the caller owns the post-send redirect.
      *
      * @param int    $id
      * @param string $to
      * @param string $code
-     * @param bool   $isResend
      *
-     * @return void
+     * @return bool True if the email was sent successfully
      */
-    public static function sendVerificationMail(int $id, string $to, string $code, bool $isResend = false): void
+    public static function sendVerificationMail(int $id, string $to, string $code): bool
     {
         $contents = MailController::template('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
@@ -796,26 +796,18 @@ class AuthController
         ]);
 
         if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
-            return;
+            Log::error("Verification email template failed to render for user id \"$id\"");
+            return false;
         }
 
-        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
-
-        // Redirect to the verification page regardless of email sending result.
-        PageController::redirect("verify-account/$id");
-
-        if ($result) {
-            $message = $isResend ? 'Success! A new verification email has been sent!' : 'Success! Your account has been created! A verification email has been sent!';
-            AlertController::globalAlert($message, AlertType::SUCCESS, 4);
-        } else {
-            $message = $isResend ? 'An error occurred while sending your verification email! Please contact support.' : 'Your account has been created! However, there was an issue sending the verification email. Please contact support.';
-            AlertController::globalAlert($message, AlertType::ERROR, 8);
-        }
+        return MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
     }
 
     /**
-     * Send a password reset email with a tokenized link to the reset form.
+     * Send a password reset email with a tokenized link to the reset form. Failures are
+     * logged rather than shown to the user: ForgotPasswordPage always shows the same
+     * generic response regardless of outcome, so this endpoint can't be used to check
+     * which emails are registered.
      *
      * @param int    $id
      * @param string $to
@@ -831,26 +823,24 @@ class AuthController
         ]);
 
         if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your verification email! Please contact support.', AlertType::ERROR);
+            Log::error("Password reset email template failed to render for user id \"$id\"");
             return;
         }
 
-        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Reset password', $contents);
-
-        if ($result) FormController::addAlert('Success! A reset link has been sent to your email!', AlertType::SUCCESS);
-        else FormController::addAlert('An error occurred while sending the reset link. Please contact support.', AlertType::ERROR);
+        MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Reset password', $contents);
     }
 
     /**
-     * Notify a newly-created user by email with a temporary password and
-     * redirect to the users listing. Shows feedback about mail delivery.
+     * Notify a newly-created user by email with a temporary password. Does not redirect;
+     * the caller owns the single post-creation redirect and picks its message based on
+     * the returned result (see Admin\Users::createUser()).
      *
      * @param string $to
      * @param string $password Temporary plaintext password
      *
-     * @return void
+     * @return bool True when the email was sent (or queued) successfully
      */
-    public static function sendCreatedUserMail(string $to, string $password): void
+    public static function sendCreatedUserMail(string $to, string $password): bool
     {
         $contents = MailController::template('account-created', [
             'title' => 'Account Created - ' . APP_NAME,
@@ -859,15 +849,10 @@ class AuthController
         ]);
 
         if ($contents === false) {
-            FormController::addAlert('An error occurred while sending the account creation email! Please contact support.', AlertType::ERROR);
-            return;
+            Log::error("Account-created email template failed to render for \"$to\"");
+            return false;
         }
 
-        $result = MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'An account has been created', $contents);
-
-        PageController::redirect('users');
-
-        if ($result) AlertController::globalAlert('Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
-        else AlertController::globalAlert('The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
+        return MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'An account has been created', $contents);
     }
 }

@@ -31,10 +31,18 @@ class FormController
      */
     public static function validate(string $field, array $rules): bool
     {
-        $value = RequestController::rawPost($field);
-
         // Convert field identifier to a user-friendly label for messages.
         $fieldName = str_replace('-', ' ', $field);
+
+        // Reject a field submitted as an array (e.g. name="x[]") - an optional field has
+        // no rule below that would otherwise catch it before a raw $_POST read elsewhere.
+        if (isset($_POST[$field]) && !is_string($_POST[$field])) {
+            $_POST[$field] = '';
+            static::addAlert("The input in the $fieldName field is invalid!", AlertType::WARNING);
+            return false;
+        }
+
+        $value = RequestController::rawPost($field);
 
         // Required check: field must be set and not empty.
         if (empty($value) && in_array('required', $rules, true)) {

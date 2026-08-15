@@ -213,6 +213,14 @@ trait AdminTableTrait
     }
 
     /**
+     * Renders a colored status badge, e.g. for boolean or success/failure columns.
+     */
+    private function renderBadge(bool $ok, string $label): string
+    {
+        return '<span class="badge badge-' . ($ok ? 'success' : 'error') . '">' . $label . '</span>';
+    }
+
+    /**
      * Reads search/filter/sort/pagination params and derived state. Call once
      * from the constructor, after $tableColumns/$filterDefinitions are set.
      */

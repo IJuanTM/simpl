@@ -99,6 +99,11 @@ class MailController
      */
     private static function sendEmail(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
     {
+        // Strip CR/LF from untrusted header values to prevent header injection (e.g. via the contact form name field)
+        $senderName = str_replace(["\r", "\n"], '', $senderName);
+        $senderEmail = str_replace(["\r", "\n"], '', $senderEmail);
+        $subject = str_replace(["\r", "\n"], '', $subject);
+
         // Build standard headers for an HTML email
         $headers = [
             'MIME-Version: 1.0',

@@ -17,9 +17,13 @@ const PASSWORD_HASH_OPTIONS = [
     'threads' => 3
 ];
 
+// Login timing floor, so response time can't reveal why a login attempt failed
+const LOGIN_TIMING_FLOOR_MS = 200;
+
 // Email verification
 const EMAIL_VERIFICATION_REQUIRED = true;
-const VERIFICATION_TOKEN_LENGTH = 8; // characters
+const VERIFICATION_TOKEN_LENGTH = 8;    // characters
+const VERIFICATION_TOKEN_EXPIRY = 86400; // seconds
 
 // Verification code throttling (per-account and per-IP)
 const VERIFICATION_ACCOUNT_MAX_ATTEMPTS = 5;     // wrong-code attempts per account before blocking
@@ -32,10 +36,19 @@ const REMEMBER_ME_DURATION = 30;          // days
 
 // Password reset
 const RESET_TOKEN_LENGTH = 32;            // characters
+const RESET_TOKEN_EXPIRY = 3600;          // seconds
 const GENERATED_PASSWORD_LENGTH = 12;     // characters; for admin-created accounts
 const PASSWORD_RESET_RESEND_TIMEOUT = 60; // seconds
+
+// Password reset throttling, per account (independent of whether the email is registered)
+const PASSWORD_RESET_ACCOUNT_MAX_ATTEMPTS = 3;      // reset requests per email before blocking
+const PASSWORD_RESET_ACCOUNT_ATTEMPT_WINDOW = 3600; // seconds
+
+// Timing floor, so response time can't reveal whether the submitted email is registered
+const PASSWORD_RESET_TIMING_FLOOR_MS = 200;
 const VERIFICATION_RESEND_TIMEOUT = 60;   // seconds
 const CONTACT_RESEND_TIMEOUT = 60;        // seconds
+const REGISTER_RESEND_TIMEOUT = 60;       // seconds
 
 // Inactive user cleanup
 const UNVERIFIED_USER_DEACTIVATION_AFTER = 1; // days

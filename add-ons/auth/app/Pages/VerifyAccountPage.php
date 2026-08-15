@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
@@ -77,6 +76,7 @@ class VerifyAccountPage
 
             // Verify account
             $this->verify($id);
+            return;
         }
 
         // Process manual verification form submission
@@ -120,8 +120,7 @@ class VerifyAccountPage
         AuthController::deleteToken($id, 'verification');
 
         // Redirect to login with success message
-        PageController::redirect('login');
-        AlertController::globalAlert('Success! Your account has been verified!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
     }
 
     /**

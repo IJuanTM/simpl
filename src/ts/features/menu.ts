@@ -57,7 +57,7 @@ export const menuModule = {
     if (!navMenu || !menuHamburger) return;
 
     menuHamburger.addEventListener('click', menuModule.toggle);
-    document.querySelectorAll('a.nav-link').forEach(link => link.addEventListener('click', menuModule.toggle));
+    document.querySelectorAll('a.nav-item').forEach(link => link.addEventListener('click', menuModule.toggle));
     window.addEventListener('resize', menuModule.setTabIndex);
   }
 };

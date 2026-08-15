@@ -23,7 +23,7 @@ class RequestController
      */
     public static function post(string $key): ?string
     {
-        return isset($_POST[$key]) ? AppController::sanitize($_POST[$key]) : null;
+        return isset($_POST[$key]) && is_string($_POST[$key]) ? AppController::sanitize($_POST[$key]) : null;
     }
 
     /**
@@ -36,7 +36,7 @@ class RequestController
      */
     public static function rawPost(string $key): ?string
     {
-        return $_POST[$key] ?? null;
+        return isset($_POST[$key]) && is_string($_POST[$key]) ? $_POST[$key] : null;
     }
 
     /**
@@ -48,6 +48,6 @@ class RequestController
      */
     public static function get(string $key): ?string
     {
-        return isset($_GET[$key]) ? AppController::sanitize($_GET[$key]) : null;
+        return isset($_GET[$key]) && is_string($_GET[$key]) ? AppController::sanitize($_GET[$key]) : null;
     }
 }

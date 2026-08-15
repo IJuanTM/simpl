@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Controllers;
 
+use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Models\Url;
@@ -192,6 +193,24 @@ class PageController extends Page
     }
 
     /**
+     * Redirects the user while queuing a session-persisted flash alert to show after navigation.
+     * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
+     *
+     * @param string    $location The target location URL for the redirect.
+     * @param string    $message  The alert message to show after redirecting.
+     * @param AlertType $type     Visual type/style for the alert.
+     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     *
+     * @return void
+     */
+    public static function redirectWithAlert(string $location, string $message, AlertType $type, int $timeout = 0, ?int $refresh = 0): void
+    {
+        AlertController::globalAlert($message, $type, $timeout);
+        self::redirect($location, $refresh);
+    }
+
+    /**
      * Retrieves the URL of the previous page in the user's navigation history.
      *
      * This method accesses the user's navigation history and returns the URL of the
@@ -216,7 +235,7 @@ class PageController extends Page
      */
     public static function back(): void
     {
-        $updated = array_slice(Page::history(), 0, -2);
+        $updated = array_slice(Page::history(), 0, -1);
         SessionController::set('history', $updated);
         self::redirect(end($updated) ?: REDIRECT);
     }

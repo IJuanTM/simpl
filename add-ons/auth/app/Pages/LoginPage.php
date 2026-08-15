@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\UserStatus;
 
 /**
  * LoginPage
@@ -31,12 +31,15 @@ class LoginPage
 
     /**
      * Checks if user or IP address is locked out due to failed login attempts.
+     * The message deliberately doesn't say whether the lockout is account- or
+     * IP-based, so it can't be used to confirm an identifier maps to a real account.
      *
      * @param string|null $identifier Username/email for fresh lockout check
+     * @param int|null    $userId     Pre-resolved user id, to skip a redundant lookup
      *
      * @return bool True if locked out
      */
-    private function checkLockedOut(string|null $identifier = null): bool
+    private function checkLockedOut(string|null $identifier = null, ?int $userId = null): bool
     {
         // When no identifier provided, check existing session lockout
         if ($identifier === null) {
@@ -44,9 +47,7 @@ class LoginPage
 
             // Check if there is an active lockout
             if ($timeout && $timeout > time()) {
-                $seconds = $timeout - time();
-                $minutes = (int)ceil($seconds / 60);
-                FormController::addAlert("You are still locked out due to too many failed login attempts. Please wait $minutes minute(s) before trying again.", AlertType::ERROR, $seconds * 1000);
+                $this->showLockoutAlert($timeout - time());
                 return true;
             }
 
@@ -56,18 +57,12 @@ class LoginPage
         }
 
         // Check lockout status for provided identifier and IP
-        $lockOut = $this->lockOutTime($identifier, $_SERVER['REMOTE_ADDR'] ?? 'unknown');
+        $seconds = $this->lockOutSeconds($identifier, $_SERVER['REMOTE_ADDR'] ?? 'unknown', $userId);
 
-        if ($lockOut['seconds'] > 0) {
+        if ($seconds > 0) {
             // Set lockout timeout in session
-            SessionController::set('lockout-timeout', time() + $lockOut['seconds']);
-
-            // Show appropriate lockout message
-            $message = $lockOut['type'] === 'user'
-                ? "Your account is locked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again."
-                : "Access from your IP address is temporarily blocked due to too many failed login attempts. Please wait {$lockOut['minutes']} minute(s) before trying again.";
-
-            FormController::addAlert($message, AlertType::ERROR, $lockOut['seconds'] * 1000);
+            SessionController::set('lockout-timeout', time() + $seconds);
+            $this->showLockoutAlert($seconds);
             return true;
         }
 
@@ -75,30 +70,39 @@ class LoginPage
     }
 
     /**
-     * Calculates lockout duration for user and IP address.
+     * Queues the lockout alert with a countdown timeout matching the lockout duration.
      *
-     * @param string $identifier Username or email
-     * @param string $ip         IP address
+     * @param int $seconds Seconds remaining on the lockout
      *
-     * @return array [seconds, minutes, type] lockout information
+     * @return void
      */
-    private function lockOutTime(string $identifier, string $ip): array
+    private function showLockoutAlert(int $seconds): void
     {
-        $userId = AuthController::getUserIdByIdentifier($identifier);
+        $minutes = (int)ceil($seconds / 60);
+        FormController::addAlert("Too many failed attempts. Please wait $minutes minute(s) before trying again.", AlertType::ERROR, $seconds * 1000);
+    }
+
+    /**
+     * Calculates remaining lockout duration for user and IP address, whichever is longer.
+     *
+     * @param string   $identifier Username or email
+     * @param string   $ip         IP address
+     * @param int|null $userId     Pre-resolved user id, to skip a redundant lookup
+     *
+     * @return int Seconds remaining on the lockout, or 0 when not locked out
+     */
+    private function lockOutSeconds(string $identifier, string $ip, ?int $userId = null): int
+    {
+        $userId ??= AuthController::getUserIdByIdentifier($identifier);
 
         // Check user-based lockout first
         if ($userId !== null) {
             $seconds = max(0, ($this->calculateLockout('user_id', $userId, USER_LOGIN_ATTEMPTS, MIN_USER_LOCKOUT_DURATION, MAX_USER_LOCKOUT_DURATION, USER_LOCKOUT_WINDOW) ?? 0) - time());
-            $minutes = (int)ceil($seconds / 60);
-            if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'user'];
+            if ($seconds > 0) return $seconds;
         }
 
         // Check IP-based lockout
-        $seconds = max(0, ($this->calculateLockout('ip_address', $ip, IP_LOGIN_ATTEMPTS, MIN_IP_LOCKOUT_DURATION, MAX_IP_LOCKOUT_DURATION, IP_LOCKOUT_WINDOW) ?? 0) - time());
-        $minutes = (int)ceil($seconds / 60);
-        if ($seconds > 0) return ['seconds' => $seconds, 'minutes' => $minutes, 'type' => 'ip'];
-
-        return ['seconds' => 0, 'minutes' => 0, 'type' => 'none'];
+        return max(0, ($this->calculateLockout('ip_address', $ip, IP_LOGIN_ATTEMPTS, MIN_IP_LOCKOUT_DURATION, MAX_IP_LOCKOUT_DURATION, IP_LOCKOUT_WINDOW) ?? 0) - time());
     }
 
     /**
@@ -163,89 +167,83 @@ class LoginPage
         // Check lockout status for this identifier
         if ($this->checkLockedOut($_POST['identifier'])) return;
 
-        // Verify credentials
-        if (!AuthController::checkIdentifier($_POST['identifier']) || !AuthController::checkPasswordByIdentifier($_POST['identifier'], $_POST['password'])) {
-            // Record failed attempt
-            AuthController::recordLoginAttempt($_POST['identifier'], false, 'incorrect');
+        // Timing-safe regardless of whether the identifier resolves (see AuthController::verifyCredentials).
+        $user = AuthController::verifyCredentials($_POST['identifier'], $_POST['password']);
 
-            // Check if now locked out
-            if ($this->checkLockedOut($_POST['identifier'])) return;
-
-            $_POST['identifier'] = '';
-            $_POST['password'] = '';
-            FormController::addAlert('Invalid username/email or password. Please try again.', AlertType::WARNING);
+        if ($user === null) {
+            $this->fail('incorrect', 'Invalid username/email or password. Please try again.', AlertType::WARNING);
             return;
         }
 
         // Check if account is active
-        if (!AuthController::isActiveByIdentifier($_POST['identifier'])) {
-            // Record failed attempt
-            AuthController::recordLoginAttempt($_POST['identifier'], false, 'inactive');
-
-            // Check if now locked out
-            if ($this->checkLockedOut($_POST['identifier'])) return;
-
-            $_POST['identifier'] = '';
-            $_POST['password'] = '';
-            FormController::addAlert('Your account is inactive! Contact an administrator for more information!', AlertType::ERROR);
+        if ($user['status'] !== UserStatus::ACTIVE->value) {
+            $this->fail('inactive', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, (int)$user['id']);
             return;
         }
 
-        // Get email from identifier
-        $email = AuthController::getEmailByIdentifier($_POST['identifier']);
-
         // Check if account is verified
-        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified(null, $email)) {
-            // Record failed attempt
-            AuthController::recordLoginAttempt($_POST['identifier'], false, 'unverified');
-
-            // Check if now locked out
-            if ($this->checkLockedOut($_POST['identifier'])) return;
-
-            $_POST['identifier'] = '';
-            $_POST['password'] = '';
-            FormController::addAlert('Your account has not been verified! Check your email for the verification link!', AlertType::ERROR);
+        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified((int)$user['id'])) {
+            $this->fail('unverified', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, (int)$user['id']);
             return;
         }
 
         // Proceed with login
-        $this->login($email);
+        $this->login($user);
+    }
+
+    /**
+     * Records a failed login attempt, checks whether it just triggered a lockout
+     * (which shows its own alert), and otherwise clears the submitted credentials
+     * and shows the given alert.
+     *
+     * @param string    $reason  Failure reason recorded in the login_attempts log
+     * @param string    $message Alert message to show when this didn't trigger a lockout
+     * @param AlertType $type    Alert type for $message
+     * @param int|null  $userId  Pre-resolved user id, to skip redundant lookups
+     *
+     * @return void
+     */
+    private function fail(string $reason, string $message, AlertType $type, ?int $userId = null): void
+    {
+        AuthController::recordLoginAttempt($_POST['identifier'], false, $reason, $userId);
+
+        // A fresh lockout alert takes priority over the generic failure message
+        if ($this->checkLockedOut($_POST['identifier'], $userId)) return;
+
+        $_POST['identifier'] = '';
+        $_POST['password'] = '';
+        FormController::addAlert($message, $type);
     }
 
     /**
      * Creates user session and handles remember-me cookie.
      *
-     * @param string $email User email
+     * @param array $user Verified user row from verifyCredentials()
      *
      * @return void
      */
-    private function login(string $email): void
+    private function login(array $user): void
     {
         // Record successful login attempt
-        AuthController::recordLoginAttempt($email, true);
+        AuthController::recordLoginAttempt($user['email'], true, null, (int)$user['id']);
 
         // Update last login timestamp
-        AuthController::updateLastLogin($email);
+        AuthController::updateLastLogin($user['email']);
 
-        // Get user data
-        $user = AuthController::getUserByEmail($email);
-
-        // Set user session
-        if (!AuthController::setUserSession($user)) {
-            FormController::addAlert('An error occurred while trying to log you in! Please try again!', AlertType::ERROR);
-            return;
-        }
+        // Set user session; setUserSession() already redirects with its own alert on failure
+        if (!AuthController::setUserSession($user)) return;
 
         // Check if user must change password
         if ($user['must_change_password']) {
-            PageController::redirect('change-password');
-            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
             return;
         }
 
-        // Handle remember-me checkbox
-        if (isset($_POST['remember'])) {
-            $token = AuthController::generateToken();
+        // Handle remember-me checkbox. Skips silently on token-generation failure;
+        // the login itself already succeeded regardless.
+        $token = isset($_POST['remember']) ? AuthController::generateToken() : null;
+
+        if ($token !== null) {
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
             // Set cookie
@@ -258,11 +256,10 @@ class LoginPage
             ]);
 
             // Store SHA-256 hash of the token in the DB; the raw token stays only in the cookie.
-            AuthController::createToken($user['id'], hash('sha256', $token), 'remember', date('Y-m-d H:i:s', $timestamp));
+            AuthController::createToken((int)$user['id'], hash('sha256', $token), 'remember', date('Y-m-d H:i:s', $timestamp));
         }
 
         // Redirect the user
-        AuthController::intendedRedirect('profile');
-        AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
+        AuthController::intendedRedirect('profile', 'Login successful! Welcome!', AlertType::SUCCESS, 4);
     }
 }

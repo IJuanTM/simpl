@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\SessionController;
@@ -41,17 +40,12 @@ class ChangePasswordPage
             !FormController::validate('new-password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
+        $user = SessionController::get('user');
+
         // Verify old password is correct
-        if (!AuthController::checkPassword(SessionController::get('user')['email'], $_POST['old-password'])) {
+        if (!AuthController::checkPassword($user['email'], $_POST['old-password'])) {
             $_POST['old-password'] = '';
             FormController::addAlert('The old password is incorrect!', AlertType::WARNING);
-            return;
-        }
-
-        // Validate new password against policy
-        if (!AuthController::validatePassword($_POST['new-password'])) {
-            $_POST['new-password'] = '';
-            $_POST['new-password-check'] = '';
             return;
         }
 
@@ -61,23 +55,17 @@ class ChangePasswordPage
             return;
         }
 
-        // Check if new passwords match
-        if ($_POST['new-password'] !== $_POST['new-password-check']) {
-            FormController::addAlert('The newly entered passwords do not match!', AlertType::WARNING);
-            return;
-        }
+        // Validate new password against policy and confirmation match
+        if (!FormController::validatePasswords('new-password', 'new-password-check')) return;
 
         // Update password
-        $userId = SessionController::get('user')['id'];
-        AuthController::updatePassword($userId, $_POST['new-password']);
+        AuthController::updatePassword($user['id'], $_POST['new-password']);
 
         // Update session to clear must_change_password flag
-        $user = SessionController::get('user');
         $user['must_change_password'] = 0;
         SessionController::set('user', $user);
 
         // Redirect the user
-        AuthController::intendedRedirect('profile');
-        AlertController::globalAlert('Success! Your password has been changed!', AlertType::SUCCESS, 4);
+        AuthController::intendedRedirect('profile', 'Success! Your password has been changed!', AlertType::SUCCESS, 4);
     }
 }

@@ -62,7 +62,9 @@ class LoginAttempts
 
         $orWhere = [];
         if ($this->search !== '') {
-            $like = ['LIKE', '%' . $this->search . '%'];
+            // Escape LIKE wildcards so a literal '%' or '_' in the search term isn't treated as a pattern
+            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $this->search);
+            $like = ['LIKE', '%' . $escapedSearch . '%'];
             $orWhere = [
                 'login_attempts.ip_address' => $like,
                 'users.username' => $like,
@@ -104,6 +106,7 @@ class LoginAttempts
             $row['user_agent'] = AppController::sanitize($row['user_agent'] ?? '');
             $row['username'] = AppController::sanitize($row['username'] ?? '');
             $row['email'] = AppController::sanitize($row['email'] ?? '');
+            $row['failed_reason'] = AppController::sanitize($row['failed_reason'] ?? '');
             $this->attempts[] = $row;
         }
     }
@@ -115,16 +118,30 @@ class LoginAttempts
     {
         return match ($column['key']) {
             'id' => (string)$row['id'],
-            'user' => match (true) {
-                $row['username'] || $row['email'] => '<span>' . ($row['username'] ?: $row['email']) . '</span>' . ($row['username'] && $row['email'] ? '<br><small>' . $row['email'] . '</small>' : ''),
-                default => '<span class="text-muted">Unknown</span>',
-            },
+            'user' => self::renderUserCell($row),
             'ip_address' => $row['ip_address'],
             'user_agent' => '<span title="' . $row['user_agent'] . '">' . $row['user_agent'] . '</span>',
             'attempt_time' => $row['attempt_time'],
-            'status' => $row['success'] ? '<span class="badge badge-success">Success</span>' : '<span class="badge badge-error">' . ($row['failed_reason'] ? ucfirst($row['failed_reason']) : 'Failed') . '</span>',
+            'status' => $this->renderBadge((bool)$row['success'], $row['success'] ? 'Success' : ($row['failed_reason'] ? ucfirst($row['failed_reason']) : 'Failed')),
             default => '',
         };
+    }
+
+    /**
+     * Renders the 'user' column cell, preferring username over email when both are present.
+     * Uses explicit null/empty checks (not truthy checks) so a username of "0" isn't treated as absent.
+     */
+    private static function renderUserCell(array $row): string
+    {
+        $username = $row['username'] ?? '';
+        $email = $row['email'] ?? '';
+
+        if ($username === '' && $email === '') return '<span class="text-muted">Unknown</span>';
+
+        $primary = $username !== '' ? $username : $email;
+        $secondary = $username !== '' && $email !== '' ? '<br><small>' . $email . '</small>' : '';
+
+        return '<span>' . $primary . '</span>' . $secondary;
     }
 
     /**

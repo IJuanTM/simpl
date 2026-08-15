@@ -39,7 +39,7 @@ class AlertController
     public static function globalAlert(string $message, AlertType $type, int $timeout = 0): void
     {
         SessionController::set('alert', [
-            'message' => $message,
+            'message' => AppController::sanitize($message),
             'type' => $type->value,
             'timeout' => $timeout > 0 ? time() + $timeout : 0
         ]);

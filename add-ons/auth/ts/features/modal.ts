@@ -17,67 +17,32 @@ function bindClose(modal: HTMLElement): void {
   modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => closeModal(modal)));
 }
 
-function initUserDeleteModal(): void {
-  const modal = document.querySelector<HTMLElement>('[data-user-delete-modal]');
-  if (!modal) return;
-
-  const softDeleteForm = modal.querySelector<HTMLFormElement>('.modal-soft-delete-form');
-  const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
-  const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
-  const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
-
-  document.querySelectorAll<HTMLElement>('[data-modal-delete]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
-      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
-      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
-      if (softDeleteForm) softDeleteForm.action = `${base}/delete?id=${btn.dataset.userId}`;
-      openModal(modal);
-    });
-  });
-
-  bindClose(modal);
+interface UserActionModalConfig {
+  modalSelector: string;
+  triggerAttr: string;
+  formSelector: string;
+  urlSegment: string;
 }
 
-function initUserPurgeModal(): void {
-  const modal = document.querySelector<HTMLElement>('[data-user-purge-modal]');
+// Delegated on document, not the trigger buttons, so rows added after an AJAX table refresh still work.
+function initUserActionModal(config: UserActionModalConfig): void {
+  const modal = document.querySelector<HTMLElement>(config.modalSelector);
   if (!modal) return;
 
-  const purgeForm = modal.querySelector<HTMLFormElement>('.modal-purge-form');
+  const form = modal.querySelector<HTMLFormElement>(config.formSelector);
   const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
   const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
   const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
 
-  document.querySelectorAll<HTMLElement>('[data-modal-purge]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
-      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
-      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
-      if (purgeForm) purgeForm.action = `${base}/purge?id=${btn.dataset.userId}`;
-      openModal(modal);
-    });
-  });
+  document.addEventListener('click', e => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>(`[${config.triggerAttr}]`);
+    if (!btn) return;
 
-  bindClose(modal);
-}
-
-function initUserRestoreModal(): void {
-  const modal = document.querySelector<HTMLElement>('[data-user-restore-modal]');
-  if (!modal) return;
-
-  const restoreForm = modal.querySelector<HTMLFormElement>('.modal-restore-form');
-  const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
-  const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
-  const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
-
-  document.querySelectorAll<HTMLElement>('[data-modal-restore]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
-      if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
-      if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
-      if (restoreForm) restoreForm.action = `${base}/restore?id=${btn.dataset.userId}`;
-      openModal(modal);
-    });
+    if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
+    if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
+    if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
+    if (form) form.action = `${base}/${config.urlSegment}?id=${btn.dataset.userId}`;
+    openModal(modal);
   });
 
   bindClose(modal);
@@ -116,9 +81,9 @@ function initRoleDeleteModal(): void {
 
 export const modalModule = {
   init(): void {
-    initUserDeleteModal();
-    initUserPurgeModal();
-    initUserRestoreModal();
+    initUserActionModal({modalSelector: '[data-user-delete-modal]', triggerAttr: 'data-modal-delete', formSelector: '.modal-soft-delete-form', urlSegment: 'delete'});
+    initUserActionModal({modalSelector: '[data-user-purge-modal]', triggerAttr: 'data-modal-purge', formSelector: '.modal-purge-form', urlSegment: 'purge'});
+    initUserActionModal({modalSelector: '[data-user-restore-modal]', triggerAttr: 'data-modal-restore', formSelector: '.modal-restore-form', urlSegment: 'restore'});
     initRoleDeleteModal();
   }
 };

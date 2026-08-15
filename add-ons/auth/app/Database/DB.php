@@ -107,7 +107,7 @@ class DB
     {
         if (empty($join)) return '';
 
-        $joins = is_string($join[0]) ? [$join] : $join;
+        $joins = self::isJoinSpec($join) ? [$join] : $join;
         $clauses = [];
 
         foreach ($joins as [$fromCol, [$joinTable, $joinCol]]) {
@@ -120,6 +120,29 @@ class DB
         }
 
         return implode(' ', $clauses);
+    }
+
+    /**
+     * Whether $item is one join spec rather than a list of them. Ambiguous only when
+     * $item has 2 elements; distinguished by $item[1] - a flat [table, col] pair
+     * means $item is a single spec, a nested spec means $item is a list of two.
+     *
+     * @param array $item
+     *
+     * @return bool
+     */
+    private static function isJoinSpec(array $item): bool
+    {
+        if (count($item) !== 2 || !self::isColPair($item[1])) return false;
+        return is_string($item[0]) || self::isColPair($item[0]);
+    }
+
+    /**
+     * Whether $v is a [table, column] pair - a 2-element array of two strings.
+     */
+    private static function isColPair(mixed $v): bool
+    {
+        return is_array($v) && count($v) === 2 && is_string($v[0]) && is_string($v[1]);
     }
 
     /**

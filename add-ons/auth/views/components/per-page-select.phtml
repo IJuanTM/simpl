@@ -1,0 +1,23 @@
+<?php
+/**
+ * @var string $id HTML id for the <select>, must be unique per table on the page
+ */
+?>
+<form class="col table-tools-form g-col-0.5 center-y" novalidate>
+  <div class="row">
+    <div class="col form-group g-row-0.25">
+      <div class="row g-col-1 f-nowrap center-y">
+        <label class="col" for="<?= $id ?>">Per page:</label>
+        <div class="col">
+          <div class="row input-group">
+            <select class="col table-per-page" id="<?= $id ?>">
+              <?php foreach ($this->pageObj->perPageOptions as $option) : ?>
+                <option value="<?= $option ?>" <?= $this->pageObj->perPage === $option ? 'selected' : '' ?>><?= $option ?></option>
+              <?php endforeach ?>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>

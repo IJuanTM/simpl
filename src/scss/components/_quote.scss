@@ -6,12 +6,30 @@ p.quote {
   color: var(--text-muted);
   border-left: .25rem solid var(--border-muted);
 
+  &.success {
+    color: $green !important;
+    border-color: $green;
+
+    &::before {
+      content: "\f058";
+    }
+  }
+
   &.warning {
     color: $orange !important;
     border-color: $orange;
 
     &::before {
-      content: "\f071";
+      content: "\f06a";
+    }
+  }
+
+  &.error {
+    color: $red !important;
+    border-color: $red;
+
+    &::before {
+      content: "\f057";
     }
   }
 

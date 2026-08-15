@@ -13,10 +13,10 @@ class CreateUsersTable
     {
         Schema::create('users', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
-            $t->varchar('username', 100);
-            $t->varchar('first_name', 100);
-            $t->varchar('last_name', 100);
-            $t->varchar('email', 100, notNull: true)->unique();
+            $t->varchar('username', MAX_USERNAME_LENGTH);
+            $t->varchar('first_name', MAX_NAME_LENGTH);
+            $t->varchar('last_name', MAX_NAME_LENGTH);
+            $t->varchar('email', MAX_EMAIL_LENGTH, notNull: true)->unique();
             $t->varchar('password', notNull: true);
             $t->varchar('profile_img', 50);
             $t->tinyint('must_change_password', notNull: true, default: 0);

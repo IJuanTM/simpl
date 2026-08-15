@@ -76,7 +76,7 @@ use app\Controllers\RequestController;
     </div>
 
     <div class="row center-x">
-      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"<?= $this->pageObj->sendCooldown > 0 ? ' data-timeout="' . $this->pageObj->sendCooldown . '" inert' : '' ?>><i class="fas fa-paper-plane"></i>Send</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the contact form"<?= $this->pageObj->cooldown > 0 ? ' data-timeout="' . $this->pageObj->cooldown . '" inert' : '' ?>><i class="fas fa-paper-plane"></i>Send</button>
     </div>
   </form>
 </section>

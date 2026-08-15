@@ -37,7 +37,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
               <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-              <input class="col input-password" id="password" type="password" name="password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter password:" value="<?= RequestController::post('password') ?? '' ?>" autocomplete="new-password" aria-label="Password input field">
+              <input class="col input-password" id="password" type="password" name="password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter password:" value="<?= RequestController::post('password') ?? '' ?>" autocomplete="new-password" aria-label="Password input field" data-password-pattern="<?= AuthController::getPasswordPatternSource() ?>" data-password-message="<?= AuthController::getPasswordRequirements() ?>">
               <div class="col input-append center f-0"><i class="fas fa-eye password-toggle input-icon-clickable"></i></div>
             </div>
           </div>
@@ -48,7 +48,7 @@ use app\Models\Url;
             </div>
             <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password-check'])) ? 'error' : '' ?>">
               <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-              <input class="col" id="password-check" type="password" name="password-check" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Repeat password:" autocomplete="new-password" aria-label="Repeat password input field">
+              <input class="col" id="password-check" type="password" name="password-check" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Repeat password:" autocomplete="new-password" aria-label="Repeat password input field" data-match="password">
             </div>
           </div>
         </div>
@@ -56,6 +56,12 @@ use app\Models\Url;
         <div class="row">
           <div class="col">
             <p class="form-details"><?= AuthController::getPasswordRequirements() ?></p>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <p class="quote warning hidden" data-password-quote><span class="quote-text"></span></p>
           </div>
         </div>
       </div>
@@ -68,7 +74,7 @@ use app\Models\Url;
     </div>
 
     <div class="row g-2 center-x">
-      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit register form"><i class="fas fa-user-plus"></i>Register</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit register form"<?= $this->pageObj->cooldown > 0 ? ' data-timeout="' . $this->pageObj->cooldown . '" inert' : '' ?>><i class="fas fa-user-plus"></i>Register</button>
     </div>
   </form>
 </section>

@@ -17,23 +17,7 @@ use app\Models\Url;
 
         <div class="row g-1">
           <div class="col end-x">
-            <div class="row col-toggle-wrapper f-nowrap g-col-1">
-              <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
-              <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" data-cooldown="150"><i class="fas fa-columns"></i>Columns</button>
-              <div class="col col-toggle-panel">
-
-                <?php foreach ($this->pageObj->tableColumns as $index => $column) : ?>
-
-                  <div class="row">
-                    <label class="col center-y g-col-0.5 f-0">
-                      <input type="checkbox" data-col="<?= $index ?>" <?= !empty($column['visible']) ? 'checked' : '' ?>><?= $column['label'] ?>
-                    </label>
-                  </div>
-
-                <?php endforeach ?>
-
-              </div>
-            </div>
+            <?php $this->component('column-toggle') ?>
           </div>
         </div>
 

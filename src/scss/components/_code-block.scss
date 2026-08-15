@@ -9,6 +9,11 @@ div.code-block {
   background-color: var(--bg-section);
 
   code {
+    > span.command-name {
+      font-weight: 700;
+      color: $simpl;
+    }
+
     > span.command-argument {
       color: $simpl;
     }

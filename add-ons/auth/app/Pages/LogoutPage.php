@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AlertController;
 use app\Controllers\AuthController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
@@ -53,7 +52,6 @@ class LogoutPage
         session_regenerate_id(true);
 
         // Redirect to home with logout message
-        PageController::redirect(REDIRECT);
-        AlertController::globalAlert('You have been logged out.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert(REDIRECT, 'You have been logged out.', AlertType::SUCCESS, 4);
     }
 }

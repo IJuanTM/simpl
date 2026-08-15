@@ -58,6 +58,37 @@ function getDefaultWidths(table: HTMLTableElement): number[] {
   );
 }
 
+// Sibling key to hiddenKey, derived instead of threaded through every caller.
+function widthsKeyFor(hiddenKey: string): string {
+  return hiddenKey.replace(HIDDEN_KEY, 'table-widths');
+}
+
+function getStoredWidths(hiddenKey: string): number[] | null {
+  const raw = storage.get(widthsKeyFor(hiddenKey));
+  if (raw === null) return null;
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function getEffectiveWidths(table: HTMLTableElement, defaultWidths: number[], hiddenKey: string): number[] {
+  const stored = getStoredWidths(hiddenKey);
+  if (!stored) return defaultWidths;
+  return getHeaders(table).map((_, col) => stored[col] ?? defaultWidths[col] ?? 100);
+}
+
+// Hidden columns report offsetWidth 0, so their previous (or default) width is kept
+// instead of overwriting it with 0 - resizing one column must not corrupt another's.
+function persistWidths(table: HTMLTableElement, hiddenKey: string, defaultWidths: number[]): void {
+  const hidden = new Set(getHiddenCols(hiddenKey, table));
+  const previous = getStoredWidths(hiddenKey);
+  const widths = getHeaders(table).map((th, col) => hidden.has(col) ? (previous?.[col] ?? defaultWidths[col] ?? 100) : th.offsetWidth);
+  storage.set(widthsKeyFor(hiddenKey), JSON.stringify(widths));
+}
+
 function hasWidthChanges(table: HTMLTableElement, defaultWidths: number[], hiddenKey: string): boolean {
   const hidden = new Set(getHiddenCols(hiddenKey, table));
   return getHeaders(table).some((th, i) => !hidden.has(i) && th.offsetWidth !== defaultWidths[i]);
@@ -152,6 +183,7 @@ function addResizeHandle(table: HTMLTableElement, th: HTMLTableCellElement, col:
     const onUp = () => {
       document.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseup', onUp);
+      persistWidths(table, hiddenKey, defaultWidths);
       onWidthChange(hasWidthChanges(table, defaultWidths, hiddenKey));
       onStateChange();
     };
@@ -184,7 +216,7 @@ function restoreState(table: HTMLTableElement, container: Element, hiddenKey: st
     if (cb) cb.checked = !isHidden;
   });
 
-  defaultWidths.forEach((w, col) => applyColumnWidth(table, col, w));
+  getEffectiveWidths(table, defaultWidths, hiddenKey).forEach((w, col) => applyColumnWidth(table, col, w));
   syncColToggleState(table, container, hiddenKey);
 }
 
@@ -194,6 +226,7 @@ function initReset(table: HTMLTableElement, container: Element, hiddenKey: strin
 
   resetBtn.addEventListener('click', () => {
     storage.remove(hiddenKey);
+    storage.remove(widthsKeyFor(hiddenKey));
     const defaults = new Set(getDefaultHiddenCols(table));
 
     getHeaders(table).forEach((_, col) => {
@@ -268,8 +301,9 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
     if (table.tHead) {
       table.tHead.innerHTML = data.thead;
       const headers = getHeaders(table);
+      const widths = getEffectiveWidths(table, defaultWidths, hiddenKey);
       headers.forEach((th, col) => {
-        setCellWidth(th as HTMLElement, Math.max(MIN_COL_WIDTH, defaultWidths[col] ?? 100));
+        setCellWidth(th as HTMLElement, Math.max(MIN_COL_WIDTH, widths[col] ?? 100));
         if (col < headers.length - 1) addResizeHandle(table, th, col, defaultWidths, hiddenKey, onStateChange, onWidthChange);
       });
       initSortLinks(section, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
@@ -287,6 +321,8 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
       initPaginationLinks(section, paginationLinks, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
     }
 
+    if (paginationRow) paginationRow.classList.toggle('hidden', data.total === 0);
+
     const paginationInfo = paginationRow?.querySelector<HTMLElement>('p');
     if (paginationInfo) paginationInfo.textContent = data.info;
 
@@ -303,7 +339,7 @@ function initTable(table: HTMLTableElement): number[] | undefined {
   const hiddenKey = `${HIDDEN_KEY}-${id}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = container.querySelector<HTMLButtonElement>('.table-reset-btn');
-  let hasCustomWidths = false;
+  let hasCustomWidths = getStoredWidths(hiddenKey) !== null;
 
   const syncState = (): void => {
     syncColToggleState(table, container, hiddenKey);
@@ -333,7 +369,7 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement, default
   const filterParams = filterSelects.map(s => s.dataset.filter).filter((p): p is string => !!p);
   const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
-  let hasCustomWidths = false;
+  let hasCustomWidths = getStoredWidths(hiddenKey) !== null;
 
   const syncState = (): void => {
     syncColToggleState(table, section, hiddenKey);
