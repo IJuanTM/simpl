@@ -13,8 +13,8 @@
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
-    "phpunit/phpunit": "^13.3",
-    "phpstan/phpstan": "^2.2"
+    "phpunit/phpunit": "^13.3.1",
+    "phpstan/phpstan": "^2.2.8"
   },
   "autoload": {
     "psr-4": {
