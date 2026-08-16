@@ -25,7 +25,6 @@ namespace app\Pages {
 
 namespace tests\Controllers {
 
-    use app\Controllers\AlertController;
     use app\Controllers\BreadcrumbController;
     use app\Controllers\PageController;
     use app\Controllers\SessionController;

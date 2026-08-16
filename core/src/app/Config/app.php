@@ -14,6 +14,9 @@ const SESSION_LIFETIME = 3;      // days
 const REDIRECT = 'home';         // page name
 const ERROR_AUTO_REDIRECT = true;
 
+const RATE_LIMIT_CACHE_RETENTION = 86400; // seconds; how long stale rate-limit files are kept before pruning
+const HISTORY_DEPTH = 5; // how many prior pages back()/prev() can navigate
+
 // ---------------------------------------------------------------- //
 
 define('SIMPL_VERSION', $_ENV['SIMPL_VERSION']);

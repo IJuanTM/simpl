@@ -358,6 +358,10 @@ class DB
     private static function handleError(PDOException $e): never
     {
         Log::error($e->getMessage());
+
+        // CLI scripts (migrate/seed) need a real exception to report failure with a non-zero exit code.
+        if (PHP_SAPI === 'cli') throw new PDOException($e->getMessage(), (int)$e->getCode(), $e);
+
         PageController::error(ErrorCode::INTERNAL_ERROR);
         exit;
     }

@@ -64,13 +64,13 @@ class PageTest extends TestCase
         $this->assertCount(1, Page::history());
     }
 
-    public function testHistoryKeepsOnlyTheLastFiveEntries(): void
+    public function testHistoryKeepsOnlyTheLastHistoryDepthEntries(): void
     {
         foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $page) new Page($page);
 
         $history = Page::history();
 
-        $this->assertCount(5, $history);
+        $this->assertCount(HISTORY_DEPTH, $history);
         $this->assertSame('/f/', end($history));
         $this->assertSame('/b/', $history[0]);
     }

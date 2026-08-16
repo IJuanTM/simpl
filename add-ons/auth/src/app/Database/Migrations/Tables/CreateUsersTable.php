@@ -13,7 +13,7 @@ class CreateUsersTable
     {
         Schema::create('users', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
-            $t->varchar('username', MAX_USERNAME_LENGTH);
+            $t->varchar('username', MAX_USERNAME_LENGTH)->unique();
             $t->varchar('first_name', MAX_NAME_LENGTH);
             $t->varchar('last_name', MAX_NAME_LENGTH);
             $t->varchar('email', MAX_EMAIL_LENGTH, notNull: true)->unique();

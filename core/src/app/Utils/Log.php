@@ -48,7 +48,7 @@ class Log
         if ($includeTrace) {
             $trace = array_filter(
                 debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),
-                static fn($e) => !in_array($e['function'] ?? '', ['log', 'error', 'warning', 'info', 'debug'], true) && basename($e['file'] ?? '') !== 'index.php'
+                static fn($e) => !in_array($e['function'], ['log', 'error', 'warning', 'info', 'debug'], true) && basename($e['file'] ?? '') !== 'index.php'
             );
 
             if ($trace) {

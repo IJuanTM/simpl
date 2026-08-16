@@ -45,7 +45,7 @@ class AuthControllerTest extends TestCase
     {
         $message = AuthController::getPasswordRequirements();
 
-        $this->assertStringContainsString('at least ' . MIN_PASSWORD_LENGTH . ' characters', $message);
+        $this->assertStringContainsString('at least ' . PASSWORD_CONFIG['min_length'] . ' characters', $message);
         $this->assertStringContainsString('lowercase letter', $message);
         $this->assertStringContainsString('uppercase letter', $message);
         $this->assertStringContainsString('number', $message);
@@ -78,7 +78,7 @@ class AuthControllerTest extends TestCase
     {
         $password = AuthController::generatePassword();
 
-        $this->assertSame(GENERATED_PASSWORD_LENGTH, strlen($password));
+        $this->assertSame(PASSWORD_CONFIG['generated_length'], strlen($password));
     }
 
     protected function setUp(): void

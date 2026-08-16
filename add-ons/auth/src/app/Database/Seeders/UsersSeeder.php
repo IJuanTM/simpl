@@ -58,7 +58,7 @@ class UsersSeeder
             [
                 'username' => 'Admin',
                 'email' => 'admin@example.com',
-                'password' => password_hash('admin', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'password' => password_hash('admin', PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                 'status' => UserStatus::ACTIVE->value
             ]
         );
@@ -68,7 +68,7 @@ class UsersSeeder
             [
                 'username' => 'User',
                 'email' => 'user@example.com',
-                'password' => password_hash('user', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'password' => password_hash('user', PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                 'status' => UserStatus::ACTIVE->value
             ]
         );
@@ -85,7 +85,7 @@ class UsersSeeder
                     'first_name' => $first,
                     'last_name' => $last,
                     'email' => $username . '@example.com',
-                    'password' => password_hash('user', PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                    'password' => password_hash('user', PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                     'must_change_password' => (random_int(1, 100) <= 10) ? 1 : 0,
                     'last_login' => random_int(0, 1) ? self::randomDate($createdAt, 'now') : null,
                     'created_at' => $createdAt,

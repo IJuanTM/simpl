@@ -9,6 +9,7 @@ use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\TokenType;
 
 /**
  * LogoutPage
@@ -38,7 +39,7 @@ class LogoutPage
             FROM: 'tokens',
             WHERE: [
                 'token' => hash('sha256', $_COOKIE['remember']),
-                'type' => 'remember'
+                'type' => TokenType::REMEMBER->value
             ]
         );
 

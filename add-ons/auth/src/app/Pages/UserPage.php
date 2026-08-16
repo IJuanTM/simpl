@@ -78,6 +78,12 @@ class UserPage
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
         ) return;
 
+        if ($_POST['username'] !== '' && AuthController::usernameTakenByOtherUser($_POST['username'], $id)) {
+            $_POST['username'] = $this->user['username'] ?? '';
+            FormController::addAlert('That username is already taken!', AlertType::WARNING);
+            return;
+        }
+
         if (AuthController::emailTakenByOtherUser($_POST['email'], $id)) {
             $_POST['email'] = $this->user['email'];
             FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
@@ -138,7 +144,7 @@ class UserPage
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
 
-        if (!in_array($mimeType, PROFILE_IMAGE_ALLOWED_TYPES, true)) {
+        if (!in_array($mimeType, PROFILE_IMAGE_CONFIG['allowed_types'], true)) {
             self::uploadFailed('The uploaded file is not a valid image type.');
             return;
         }
@@ -162,13 +168,13 @@ class UserPage
             return;
         }
 
-        if ($file['size'] > PROFILE_IMAGE_MAX_SIZE * 1024 * 1024) {
-            self::uploadFailed('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_MAX_SIZE . 'MB.');
+        if ($file['size'] > PROFILE_IMAGE_CONFIG['max_size_mb'] * 1024 * 1024) {
+            self::uploadFailed('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_CONFIG['max_size_mb'] . 'MB.');
             return;
         }
 
         $id = SessionController::get('user')['id'];
-        $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH;
+        $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'];
 
         $old = DB::single(
             SELECT: 'profile_img',
@@ -223,9 +229,7 @@ class UserPage
             WHERE: compact('id')
         )['profile_img'] ?? null;
 
-        if ($old && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH . $old)) {
-            unlink($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_PATH . $old);
-        }
+        if ($old && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'] . $old)) unlink($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'] . $old);
 
         DB::update(
             UPDATE: 'users',

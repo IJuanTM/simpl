@@ -12,13 +12,7 @@ class SessionController
     public function __construct()
     {
         ini_set('session.gc_maxlifetime', (string)(86400 * SESSION_LIFETIME));
-        session_set_cookie_params([
-            'lifetime' => 86400 * SESSION_LIFETIME,
-            'path' => '/',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
+        session_set_cookie_params(['lifetime' => 86400 * SESSION_LIFETIME] + AppController::secureCookieFlags());
 
         if (session_status() !== PHP_SESSION_ACTIVE) session_start();
     }

@@ -36,7 +36,7 @@ use app\Enums\Role;
             <?php endif ?>
 
             <?php if ($username) : ?>
-              <span class="center h-100"><?= $username ?></span>
+              <span class="center h-100"><?= AppController::sanitize($username) ?></span>
             <?php else : ?>
               <span class="center h-100">Profile</span>
             <?php endif ?>

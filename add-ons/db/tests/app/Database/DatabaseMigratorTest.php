@@ -33,11 +33,18 @@ class DatabaseMigratorTest extends TestCase
         return (new ReflectionProperty(DatabaseMigrator::class, 'migrations'))->getValue();
     }
 
-    public function testNameExtractsTheClassBasenameFromAFullyQualifiedName(): void
+    public function testNameKeepsTheFullyQualifiedNameToAvoidBasenameCollisionsAcrossAddOns(): void
     {
         $method = new ReflectionMethod(DatabaseMigrator::class, 'name');
 
-        $this->assertSame('CreateUsersTable', $method->invoke(null, 'app\\Database\\Migrations\\Tables\\CreateUsersTable'));
+        $this->assertSame('app\\Database\\Migrations\\Tables\\CreateUsersTable', $method->invoke(null, 'app\\Database\\Migrations\\Tables\\CreateUsersTable'));
+    }
+
+    public function testNameStripsALeadingBackslash(): void
+    {
+        $method = new ReflectionMethod(DatabaseMigrator::class, 'name');
+
+        $this->assertSame('app\\Database\\Migrations\\Tables\\CreateUsersTable', $method->invoke(null, '\\app\\Database\\Migrations\\Tables\\CreateUsersTable'));
     }
 
     public function testNameWithNoNamespaceReturnsTheClassNameUnchanged(): void

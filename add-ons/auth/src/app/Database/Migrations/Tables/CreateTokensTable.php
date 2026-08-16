@@ -14,7 +14,7 @@ class CreateTokensTable
         Schema::create('tokens', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
             $t->bigintUnsigned('user_id', notNull: true);
-            $t->varchar('token', 32, notNull: true);
+            $t->varchar('token', 64, notNull: true);
             $t->varchar('type', 50, notNull: true);
             $t->timestamp('created', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->timestamp('expires');

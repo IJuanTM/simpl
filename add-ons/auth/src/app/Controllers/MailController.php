@@ -116,14 +116,14 @@ class MailController
     }
 
     /**
-     * Send an email that was queued during request handling. This function is
-     * intended to be executed after the HTTP response (registered via
-     * register_shutdown_function when async delivery is chosen).
+     * Send emails queued during request handling. Registered via register_shutdown_function.
      *
      * @return void
      */
     public static function sendEmailAsync(): void
     {
+        if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+
         $pending = SessionController::get('pending_emails');
         if (!empty($pending)) {
             SessionController::remove('pending_emails');

@@ -13,7 +13,7 @@ class CreateRolesTable
     {
         Schema::create('roles', static function (Blueprint $t) {
             $t->smallintUnsigned('id', notNull: true)->autoIncrement();
-            $t->varchar('name', 50, notNull: true)->unique();
+            $t->varchar('name', MAX_ROLE_NAME_LENGTH, notNull: true)->unique();
             $t->primary('id');
         });
     }

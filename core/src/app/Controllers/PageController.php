@@ -23,7 +23,9 @@ class PageController extends Page
 {
     public function __construct()
     {
-        $urlArr = explode('/', strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')) ?: REDIRECT, '?'));
+        // strtok() runs first so a bare "?query" root URL also falls back to REDIRECT.
+        $requestPath = strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')), '?');
+        $urlArr = explode('/', $requestPath ?: REDIRECT);
 
         $page = array_shift($urlArr);
         $params = $_GET;

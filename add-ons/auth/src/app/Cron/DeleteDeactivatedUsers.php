@@ -12,7 +12,7 @@ class DeleteDeactivatedUsers
 {
     public static function run(): void
     {
-        $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_DELETION_AFTER . ' days'));
+        $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['deletion_after_days'] . ' days'));
 
         // Only auto-deactivated (unverified) accounts are purged here. Admin soft-deletes
         // (status 'deleted') are left untouched and are managed manually from the admin panel.

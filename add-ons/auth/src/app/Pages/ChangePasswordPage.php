@@ -8,6 +8,7 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\SessionController;
 use app\Enums\AlertType;
+use app\Utils\RateLimiter;
 
 /**
  * ChangePasswordPage
@@ -39,6 +40,11 @@ class ChangePasswordPage
         ) return;
 
         $user = SessionController::get('user');
+
+        if (!RateLimiter::attempt("change-password-{$user['id']}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
+            FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return;
+        }
 
         if (!AuthController::checkPassword($user['email'], $_POST['old-password'])) {
             $_POST['old-password'] = '';

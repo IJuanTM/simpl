@@ -4,17 +4,17 @@
   "version": "1.7.0",
   "type": "project",
   "require": {
-    "php": "^8.4",
+    "php": "^8.5",
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
-    "vlucas/phpdotenv": "^v5.6.3"
+    "vlucas/phpdotenv": "^v5.6.4"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
     "phpunit/phpunit": "^13.3",
-    "phpstan/phpstan": "^2.1"
+    "phpstan/phpstan": "^2.2"
   },
   "autoload": {
     "psr-4": {

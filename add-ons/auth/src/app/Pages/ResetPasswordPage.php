@@ -9,6 +9,7 @@ use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\TokenType;
 use app\Models\Page;
 
 /**
@@ -29,7 +30,7 @@ class ResetPasswordPage
         if ($id === null || $token === null || !is_numeric($id)) {
             $this->disableForm = true;
             FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
-            PageController::redirect('forgot-password', 4);
+            PageController::redirect('forgot-password', 2);
             return;
         }
 
@@ -40,17 +41,17 @@ class ResetPasswordPage
             'tokens',
             [
                 'user_id' => $id,
-                'type' => 'reset'
+                'type' => TokenType::RESET->value
             ]
         )) {
             $this->disableForm = true;
             FormController::addAlert('No valid password reset request found for this user! Please try again.', AlertType::ERROR);
-            PageController::redirect('forgot-password', 4);
+            PageController::redirect('forgot-password', 2);
             return;
         }
 
         // The token must match before any password change is allowed (checked on both GET and POST)
-        if (!AuthController::checkToken($id, $token, 'reset')) {
+        if (!AuthController::checkToken($id, $token, TokenType::RESET)) {
             $this->disableForm = true;
             FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
             return;
@@ -91,9 +92,9 @@ class ResetPasswordPage
     {
         AuthController::updatePassword($id, $password);
 
-        AuthController::deleteToken($id, 'reset');
+        AuthController::deleteToken($id, TokenType::RESET);
 
         FormController::addAlert('Success! Your password has been reset!', AlertType::SUCCESS);
-        PageController::redirect('login', 2);
+        PageController::redirect('login', 4);
     }
 }

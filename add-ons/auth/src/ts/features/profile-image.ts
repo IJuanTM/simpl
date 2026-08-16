@@ -27,7 +27,11 @@ export const profileImageModule = {
             canvas.toBlob(blob => resolve(blob));
           } else resolve(null);
         };
+
+        image.onerror = () => resolve(null);
       };
+
+      reader.onerror = () => resolve(null);
 
       reader.readAsDataURL(file);
     });
@@ -45,9 +49,11 @@ export const profileImageModule = {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
+    const maxSizeMb = Number(profileImageInput.dataset.maxSizeMb ?? 2);
+
+    if (file.size > maxSizeMb * 1024 * 1024) {
       profileImage.classList.remove('loading');
-      alert('The image size is too large. Please choose an image that is less than 2MB.');
+      alert(`The image size is too large. Please choose an image that is less than ${maxSizeMb}MB.`);
       return;
     }
 

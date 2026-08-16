@@ -32,7 +32,7 @@ class Blueprint
 
         array_push($parts, ...$this->foreigns, ...$this->indexes);
 
-        $sql = "CREATE TABLE `$this->table` (\n  " . implode(",\n  ", $parts) . "\n) ENGINE = " . DB_ENGINE;
+        $sql = "CREATE TABLE `$this->table` (\n  " . implode(",\n  ", $parts) . "\n) ENGINE = " . DB_SCHEMA_DEFAULTS['engine'];
 
         if ($this->startAt !== null) $sql .= ",\n  AUTO_INCREMENT = $this->startAt";
 
@@ -129,7 +129,7 @@ class Blueprint
         return $this;
     }
 
-    public function foreign(string $column, string $refTable, string $refColumn = DB_PRIMARY_KEY, string $onDelete = DB_FOREIGN_KEY_ON_DELETE): static
+    public function foreign(string $column, string $refTable, string $refColumn = DB_SCHEMA_DEFAULTS['primary_key'], string $onDelete = DB_SCHEMA_DEFAULTS['foreign_key_on_delete']): static
     {
         $this->foreigns[] = "FOREIGN KEY (`$column`) REFERENCES `$refTable` (`$refColumn`) ON DELETE $onDelete";
         return $this;

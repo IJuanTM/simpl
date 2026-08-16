@@ -331,7 +331,11 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
   }
 }
 
-function initTable(table: HTMLTableElement): number[] | undefined {
+interface WidthsState {
+  hasCustomWidths: boolean;
+}
+
+function initTable(table: HTMLTableElement): { defaultWidths: number[]; widthsState: WidthsState } | undefined {
   const container = table.closest('.table-container')?.parentElement;
   if (!container) return undefined;
 
@@ -339,27 +343,27 @@ function initTable(table: HTMLTableElement): number[] | undefined {
   const hiddenKey = `${HIDDEN_KEY}-${id}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = container.querySelector<HTMLButtonElement>('.table-reset-btn');
-  let hasCustomWidths = getStoredWidths(hiddenKey) !== null;
+  const widthsState: WidthsState = {hasCustomWidths: getStoredWidths(hiddenKey) !== null};
 
   const syncState = (): void => {
     syncColToggleState(table, container, hiddenKey);
-    syncResetBtnState(table, resetBtn, hiddenKey, hasCustomWidths);
+    syncResetBtnState(table, resetBtn, hiddenKey, widthsState.hasCustomWidths);
   };
 
   initColToggle(table, container, hiddenKey, syncState);
   initResize(table, defaultWidths, hiddenKey, syncState, isDirty => {
-    hasCustomWidths = isDirty;
+    widthsState.hasCustomWidths = isDirty;
   });
   restoreState(table, container, hiddenKey, defaultWidths);
   initReset(table, container, hiddenKey, defaultWidths, syncState, isDirty => {
-    hasCustomWidths = isDirty;
+    widthsState.hasCustomWidths = isDirty;
   });
   syncState();
 
-  return defaultWidths;
+  return {defaultWidths, widthsState};
 }
 
-function initTableFilters(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[]): void {
+function initTableFilters(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], widthsState: WidthsState): void {
   const baseUrl = window.location.pathname;
   const searchInput = section.querySelector<HTMLInputElement>('.table-search');
   const searchClear = section.querySelector<HTMLElement>('.table-search-clear');
@@ -369,15 +373,14 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement, default
   const filterParams = filterSelects.map(s => s.dataset.filter).filter((p): p is string => !!p);
   const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
-  let hasCustomWidths = getStoredWidths(hiddenKey) !== null;
 
   const syncState = (): void => {
     syncColToggleState(table, section, hiddenKey);
-    syncResetBtnState(table, resetBtn, hiddenKey, hasCustomWidths);
+    syncResetBtnState(table, resetBtn, hiddenKey, widthsState.hasCustomWidths);
   };
 
   const onWidthChange = (isDirty: boolean): void => {
-    hasCustomWidths = isDirty;
+    widthsState.hasCustomWidths = isDirty;
   };
 
   const syncFiltersResetBtn = (): void => {
@@ -478,15 +481,19 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement, default
 export const tableModule = {
   init(): void {
     const defaultWidths = new Map<HTMLTableElement, number[]>();
+    const widthsStates = new Map<HTMLTableElement, WidthsState>();
 
     document.querySelectorAll<HTMLTableElement>('table.data-table').forEach(table => {
-      const widths = initTable(table);
-      if (widths) defaultWidths.set(table, widths);
+      const result = initTable(table);
+      if (result) {
+        defaultWidths.set(table, result.defaultWidths);
+        widthsStates.set(table, result.widthsState);
+      }
     });
 
     document.querySelectorAll<HTMLTableElement>('table.data-table[data-api]').forEach(table => {
       const section = table.closest<HTMLElement>('section');
-      if (section) initTableFilters(section, table, defaultWidths.get(table) ?? getDefaultWidths(table));
+      if (section) initTableFilters(section, table, defaultWidths.get(table) ?? getDefaultWidths(table), widthsStates.get(table) ?? {hasCustomWidths: false});
     });
   }
 };

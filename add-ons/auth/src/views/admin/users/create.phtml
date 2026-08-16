@@ -88,7 +88,7 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group">
           <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-          <input class="col" id="password" type="text" name="password" maxlength="<?= GENERATED_PASSWORD_LENGTH ?>" placeholder="Enter password:" value="<?= $this->pageObj->generatedPassword ?>" readonly>
+          <input class="col" id="password" type="text" name="password" maxlength="<?= PASSWORD_CONFIG['generated_length'] ?>" placeholder="Enter password:" value="<?= $this->pageObj->generatedPassword ?>" readonly>
         </div>
       </div>
     </div>

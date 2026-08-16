@@ -72,6 +72,22 @@ class AppController
     }
 
     /**
+     * Shared flags for security-sensitive cookies: site-wide path, Strict same-site, httponly,
+     * and secure conditional on HTTPS. Callers merge in their own 'expires' or 'lifetime' key.
+     *
+     * @return array{path: string, secure: bool, httponly: bool, samesite: string}
+     */
+    public static function secureCookieFlags(): array
+    {
+        return [
+            'path' => '/',
+            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'httponly' => true,
+            'samesite' => 'Strict',
+        ];
+    }
+
+    /**
      * Retrieves the contents of an SVG file by its name.
      *
      * @param string $name

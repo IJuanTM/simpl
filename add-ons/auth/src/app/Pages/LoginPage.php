@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
+use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\TokenType;
 use app\Enums\UserStatus;
 
 /**
@@ -88,27 +90,25 @@ class LoginPage
     {
         $userId ??= AuthController::getUserIdByIdentifier($identifier);
 
-        if ($userId !== null) {
-            $seconds = max(0, ($this->calculateLockout('user_id', $userId, USER_LOGIN_ATTEMPTS, MIN_USER_LOCKOUT_DURATION, MAX_USER_LOCKOUT_DURATION, USER_LOCKOUT_WINDOW) ?? 0) - time());
-            if ($seconds > 0) return $seconds;
-        }
+        $userSeconds = $userId !== null
+            ? max(0, ($this->calculateLockout('user_id', $userId, LOCKOUT_CONFIG['user']) ?? 0) - time())
+            : 0;
 
-        return max(0, ($this->calculateLockout('ip_address', $ip, IP_LOGIN_ATTEMPTS, MIN_IP_LOCKOUT_DURATION, MAX_IP_LOCKOUT_DURATION, IP_LOCKOUT_WINDOW) ?? 0) - time());
+        $ipSeconds = max(0, ($this->calculateLockout('ip_address', $ip, LOCKOUT_CONFIG['ip']) ?? 0) - time());
+
+        return max($userSeconds, $ipSeconds);
     }
 
     /**
      * Calculates lockout end timestamp based on failed attempts.
      *
-     * @param string $column    Database column to query (user_id or ip_address)
-     * @param mixed  $value     Value to match
-     * @param int    $threshold Number of attempts before lockout
-     * @param int    $base      Base lockout duration in minutes
-     * @param int    $max       Maximum lockout duration in minutes
-     * @param int    $window    Time window in minutes to count attempts
+     * @param string                                                                                              $column Database column to query (user_id or ip_address)
+     * @param mixed                                                                                               $value  Value to match
+     * @param array{max_attempts: int, min_duration_minutes: int, max_duration_minutes: int, window_minutes: int} $config
      *
      * @return int|null Lockout end timestamp or null if not locked
      */
-    private function calculateLockout(string $column, mixed $value, int $threshold, int $base, int $max, int $window): ?int
+    private function calculateLockout(string $column, mixed $value, array $config): ?int
     {
         $rows = DB::select(
             SELECT: "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
@@ -129,15 +129,15 @@ class LoginPage
         // remaining one is too - safe to stop counting there.
         $count = 0;
         foreach ($timestamps as $ts) {
-            if (($newest - $ts) <= $window * 60) $count++;
+            if (($newest - $ts) <= $config['window_minutes'] * 60) $count++;
             else break;
         }
 
-        $blocks = (int)floor($count / $threshold);
+        $blocks = (int)floor($count / $config['max_attempts']);
         if ($blocks === 0) return null;
 
-        // Exponential backoff: duration doubles per completed threshold, capped at $max.
-        return $newest + (min($base * (2 ** ($blocks - 1)), $max) * 60);
+        // Exponential backoff: duration doubles per completed threshold, capped at max_duration_minutes.
+        return $newest + (min($config['min_duration_minutes'] * (2 ** ($blocks - 1)), $config['max_duration_minutes']) * 60);
     }
 
     /**
@@ -167,7 +167,7 @@ class LoginPage
             return;
         }
 
-        if (EMAIL_VERIFICATION_REQUIRED && !AuthController::isVerified((int)$user['id'])) {
+        if (VERIFICATION_CONFIG['required'] && !AuthController::isVerified((int)$user['id'])) {
             $this->fail('unverified', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, (int)$user['id']);
             return;
         }
@@ -227,16 +227,10 @@ class LoginPage
         if ($token !== null) {
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
-            setcookie('remember', $token, [
-                'expires' => $timestamp,
-                'path' => '/',
-                'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-                'httponly' => true,
-                'samesite' => 'Strict',
-            ]);
+            setcookie('remember', $token, ['expires' => $timestamp] + AppController::secureCookieFlags());
 
             // Store SHA-256 hash of the token in the DB; the raw token stays only in the cookie.
-            AuthController::createToken((int)$user['id'], hash('sha256', $token), 'remember', date('Y-m-d H:i:s', $timestamp));
+            AuthController::createToken((int)$user['id'], hash('sha256', $token), TokenType::REMEMBER, date('Y-m-d H:i:s', $timestamp));
         }
 
         AuthController::intendedRedirect('profile', 'Login successful! Welcome!', AlertType::SUCCESS, 4);

@@ -12,6 +12,7 @@ use app\Enums\AlertType;
 use app\Enums\Role;
 use app\Pages\Traits\RateLimitedForm;
 use app\Utils\Log;
+use app\Utils\Timebox;
 
 /**
  * RegisterPage
@@ -41,17 +42,20 @@ class RegisterPage
         ) return;
 
         // Rate limit after validation, before email-existence check to prevent enumeration
-        if (!$this->attemptRateLimit(REGISTER_RESEND_TIMEOUT)) return;
+        if (!$this->attemptRateLimit(RESEND_TIMEOUTS['register'])) return;
 
-        if (AuthController::checkEmail($_POST['email'])) {
-            $_POST['email'] = '';
-            FormController::addAlert('An account with this email already exists! Try logging in!', AlertType::WARNING);
-            return;
-        }
+        // Timeboxed so the response takes the same time whether or not the email is already registered.
+        (new Timebox())->call(function () {
+            if (AuthController::checkEmail($_POST['email'])) {
+                $_POST['email'] = '';
+                FormController::addAlert('An account with this email already exists! Try logging in!', AlertType::WARNING);
+                return;
+            }
 
-        if (!FormController::validatePasswords('password', 'password-check')) return;
+            if (!FormController::validatePasswords('password', 'password-check')) return;
 
-        $this->register($_POST['email'], $_POST['password']);
+            $this->register($_POST['email'], $_POST['password']);
+        }, TIMING_FLOOR_MS['register'] * 1000);
     }
 
     /**
@@ -80,7 +84,7 @@ class RegisterPage
             'users',
             [
                 'email' => $email,
-                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS)
+                'password' => password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options'])
             ]
         );
 
@@ -94,7 +98,7 @@ class RegisterPage
             ]
         );
 
-        if (EMAIL_VERIFICATION_REQUIRED) {
+        if (VERIFICATION_CONFIG['required']) {
             $result = AuthController::issueVerificationToken((int)$id, $email);
             if ($result) PageController::redirectWithAlert("verify-account/$id", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
             else PageController::redirectWithAlert("verify-account/$id", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);

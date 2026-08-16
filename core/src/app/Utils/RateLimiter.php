@@ -163,11 +163,11 @@ class RateLimiter
     /**
      * Deletes cache files whose mtime is older than $olderThanSeconds. Call from a scheduled task.
      *
-     * @param int $olderThanSeconds Age threshold; defaults to a day
+     * @param int $olderThanSeconds Age threshold; defaults to RATE_LIMIT_CACHE_RETENTION
      *
      * @return int Number of files deleted
      */
-    public static function prune(int $olderThanSeconds = 86400): int
+    public static function prune(int $olderThanSeconds = RATE_LIMIT_CACHE_RETENTION): int
     {
         $dir = BASEDIR . '/app/Cache/ratelimit';
         if (!is_dir($dir)) return 0;

@@ -10,6 +10,7 @@ use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\RequestController;
 use app\Enums\AlertType;
+use app\Enums\TokenType;
 use app\Models\Page;
 use app\Utils\RateLimiter;
 
@@ -52,14 +53,14 @@ class VerifyAccountPage
         $code = AppController::sanitize($page->subpage(1) ?? '');
 
         if (!empty($code)) {
-            if (strlen($code) > VERIFICATION_TOKEN_LENGTH) {
+            if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
                 FormController::addAlert('The verification code given in the url is too long!', AlertType::WARNING);
                 return;
             }
 
             if ($this->throttle($id)) return;
 
-            if (!AuthController::checkToken($id, $code, 'verification')) {
+            if (!AuthController::checkToken($id, $code, TokenType::VERIFICATION)) {
                 FormController::addAlert('The verification code given in the url is incorrect! Please check your mail.', AlertType::ERROR);
                 return;
             }
@@ -80,14 +81,14 @@ class VerifyAccountPage
      */
     private function throttle(int $id): bool
     {
-        if (!RateLimiter::attempt("verify-attempt-account-$id", VERIFICATION_ACCOUNT_MAX_ATTEMPTS, VERIFICATION_ACCOUNT_ATTEMPT_WINDOW)) {
+        if (!RateLimiter::attempt("verify-attempt-account-$id", VERIFICATION_CONFIG['account_max_attempts'], VERIFICATION_CONFIG['account_attempt_window'])) {
             FormController::addAlert('Too many verification attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
             return true;
         }
 
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        if (!RateLimiter::attempt("verify-attempt-ip-$ip", VERIFICATION_IP_MAX_ATTEMPTS, VERIFICATION_IP_ATTEMPT_WINDOW)) {
+        if (!RateLimiter::attempt("verify-attempt-ip-$ip", VERIFICATION_CONFIG['ip_max_attempts'], VERIFICATION_CONFIG['ip_attempt_window'])) {
             FormController::addAlert('Too many verification attempts. Please wait a while before trying again.', AlertType::ERROR);
             return true;
         }
@@ -104,7 +105,7 @@ class VerifyAccountPage
      */
     private function verify(int $id): void
     {
-        AuthController::deleteToken($id, 'verification');
+        AuthController::deleteToken($id, TokenType::VERIFICATION);
 
         PageController::redirectWithAlert('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
     }
@@ -125,14 +126,14 @@ class VerifyAccountPage
             return;
         }
 
-        if (strlen($code) > VERIFICATION_TOKEN_LENGTH) {
+        if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
             FormController::addAlert('The verification code is too long!', AlertType::WARNING);
             return;
         }
 
         if ($this->throttle($userId)) return;
 
-        if (!AuthController::checkToken($userId, $code, 'verification')) {
+        if (!AuthController::checkToken($userId, $code, TokenType::VERIFICATION)) {
             FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
             return;
         }

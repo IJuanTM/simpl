@@ -273,13 +273,13 @@ class Users
      */
     private function createUser(): void
     {
-        if (
-            !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
-            !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
-            !FormController::validate('role', ['required'])
-        ) return;
+        if (!$this->validateUserFields()) return;
+
+        if ($_POST['username'] !== '' && AuthController::getUserIdByUsername($_POST['username']) !== null) {
+            $_POST['username'] = '';
+            FormController::addAlert('That username is already taken!', AlertType::WARNING);
+            return;
+        }
 
         if (AuthController::checkEmail($_POST['email'])) {
             $_POST['email'] = '';
@@ -287,18 +287,8 @@ class Users
             return;
         }
 
-        $roleRecord = DB::single(
-            SELECT: 'id',
-            FROM: 'roles',
-            WHERE: [
-                'name' => $_POST['role']
-            ]
-        );
-
-        if (!$roleRecord) {
-            FormController::addAlert('The selected role no longer exists. Please choose another.', AlertType::WARNING);
-            return;
-        }
+        $roleRecord = $this->resolveRole();
+        if (!$roleRecord) return;
 
         DB::insert(
             INTO: 'users',
@@ -307,7 +297,7 @@ class Users
                 'first_name' => $_POST['first_name'] ?: null,
                 'last_name' => $_POST['last_name'] ?: null,
                 'email' => $_POST['email'],
-                'password' => password_hash($this->generatedPassword, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'password' => password_hash($this->generatedPassword, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                 'must_change_password' => 1,
             ]
         );
@@ -326,6 +316,43 @@ class Users
 
         if ($result) PageController::redirectWithAlert('admin/users', 'Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
         else PageController::redirectWithAlert('admin/users', 'The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
+    }
+
+    /**
+     * Validates the fields shared by create and edit forms.
+     *
+     * @return bool True when all fields pass validation
+     */
+    private function validateUserFields(): bool
+    {
+        return FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) &&
+            FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) &&
+            FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) &&
+            FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) &&
+            FormController::validate('role', ['required']);
+    }
+
+    /**
+     * Resolves the submitted role name to its id, alerting when it no longer exists.
+     *
+     * @return array|null The role row, or null (with an alert already queued) when not found
+     */
+    private function resolveRole(): ?array
+    {
+        $roleRecord = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
+                'name' => $_POST['role']
+            ]
+        );
+
+        if (!$roleRecord) {
+            FormController::addAlert('The selected role no longer exists. Please choose another.', AlertType::WARNING);
+            return null;
+        }
+
+        return $roleRecord;
     }
 
     /**
@@ -351,15 +378,15 @@ class Users
      */
     private function updateUser(): void
     {
-        if (
-            !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
-            !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
-            !FormController::validate('role', ['required'])
-        ) return;
+        if (!$this->validateUserFields()) return;
 
         $id = (int)$this->user['id'];
+
+        if ($_POST['username'] !== '' && AuthController::usernameTakenByOtherUser($_POST['username'], $id)) {
+            $_POST['username'] = $this->user['username'] ?? '';
+            FormController::addAlert('That username is already taken!', AlertType::WARNING);
+            return;
+        }
 
         if (AuthController::emailTakenByOtherUser($_POST['email'], $id)) {
             $_POST['email'] = $this->user['email'];
@@ -367,18 +394,8 @@ class Users
             return;
         }
 
-        $roleRecord = DB::single(
-            SELECT: 'id',
-            FROM: 'roles',
-            WHERE: [
-                'name' => $_POST['role']
-            ]
-        );
-
-        if (!$roleRecord) {
-            FormController::addAlert('The selected role no longer exists. Please choose another.', AlertType::WARNING);
-            return;
-        }
+        $roleRecord = $this->resolveRole();
+        if (!$roleRecord) return;
 
         DB::update(
             UPDATE: 'users',

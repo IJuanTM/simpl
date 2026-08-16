@@ -19,7 +19,7 @@ use app\Models\Url;
               <i class="fas fa-circle-user"></i>
             <?php endif ?>
 
-            <input id="image" type="file" name="image" accept="image/*" hidden>
+            <input id="image" type="file" name="image" accept="image/*" data-max-size-mb="<?= PROFILE_IMAGE_CONFIG['max_size_mb'] ?>" hidden>
 
             <div class="profile-image-menu center g-col-1 w-100 h-100">
               <?php if ($this->pageObj->profileImage) : ?>

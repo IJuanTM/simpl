@@ -8,6 +8,7 @@ use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Enums\Role;
+use app\Enums\TokenType;
 use app\Enums\UserStatus;
 use app\Models\Url;
 use app\Utils\Log;
@@ -48,7 +49,7 @@ class AuthController
             FROM: 'tokens',
             WHERE: [
                 'token' => $tokenHash,
-                'type' => 'remember'
+                'type' => TokenType::REMEMBER->value
             ]
         );
 
@@ -77,20 +78,14 @@ class AuthController
         DB::update(
             UPDATE: 'tokens',
             SET: [
-                'expires' => $timestamp
+                'expires' => date('Y-m-d H:i:s', $timestamp)
             ],
             WHERE: [
                 'token' => $tokenHash
             ]
         );
 
-        setcookie('remember', $rememberToken, [
-            'expires' => $timestamp,
-            'path' => '/',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
+        setcookie('remember', $rememberToken, ['expires' => $timestamp] + AppController::secureCookieFlags());
     }
 
     /**
@@ -100,13 +95,7 @@ class AuthController
      */
     public static function clearRememberCookie(): void
     {
-        setcookie('remember', '', [
-            'expires' => time() - 3600,
-            'path' => '/',
-            'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
-            'httponly' => true,
-            'samesite' => 'Strict',
-        ]);
+        setcookie('remember', '', ['expires' => time() - 3600] + AppController::secureCookieFlags());
     }
 
     /**
@@ -147,7 +136,7 @@ class AuthController
         if (!$role) {
             Log::error("No user role is set for user with id \"{$user['id']}\"");
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 5);
+            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             return false;
         }
 
@@ -253,7 +242,7 @@ class AuthController
         $fresh = self::getUserWithRole((int)$user['id']);
         if (!$fresh || $fresh['status'] !== UserStatus::ACTIVE->value) {
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, 'Your session has been invalidated. Please log in again.', AlertType::ERROR, 5);
+            PageController::redirectWithAlert(REDIRECT, 'Your session has been invalidated. Please log in again.', AlertType::ERROR, 4);
             exit;
         }
 
@@ -261,7 +250,7 @@ class AuthController
 
         if (!$freshRole) {
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 5);
+            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;
         }
 
@@ -310,8 +299,7 @@ class AuthController
 
     /**
      * Build and cache the regular expression used to validate passwords
-     * according to the app configuration constants (e.g. REQUIRE_UPPERCASE,
-     * MIN_PASSWORD_LENGTH). Returns an array with [pattern, humanMessage].
+     * according to PASSWORD_CONFIG. Returns an array with [pattern, humanMessage].
      *
      * @return array{0:string,1:string} [regex pattern, error message]
      */
@@ -321,17 +309,17 @@ class AuthController
         if ($cache !== null) return $cache;
 
         $rules = array_filter([
-            REQUIRE_LOWERCASE ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
-            REQUIRE_UPPERCASE ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
-            REQUIRE_NUMBER ? ['(?=.*\d)', '1 number'] : null,
-            REQUIRE_SPECIAL_CHARACTER ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
+            PASSWORD_CONFIG['require_lowercase'] ? ['(?=.*[a-z])', '1 lowercase letter'] : null,
+            PASSWORD_CONFIG['require_uppercase'] ? ['(?=.*[A-Z])', '1 uppercase letter'] : null,
+            PASSWORD_CONFIG['require_number'] ? ['(?=.*\d)', '1 number'] : null,
+            PASSWORD_CONFIG['require_special_character'] ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
         ]);
 
         // Anchored regex enforcing all required character classes plus the minimum length.
-        $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . MIN_PASSWORD_LENGTH . ',}$/';
+        $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . PASSWORD_CONFIG['min_length'] . ',}$/';
 
         $messages = array_column($rules, 1);
-        array_unshift($messages, "at least " . MIN_PASSWORD_LENGTH . " characters");
+        array_unshift($messages, "at least " . PASSWORD_CONFIG['min_length'] . " characters");
         $message = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . ".";
 
         return $cache = [$pattern, $message];
@@ -375,7 +363,7 @@ class AuthController
             WHERE: compact('id')
         )['profile_img'] ?? null;
 
-        return $profile_img ? PROFILE_IMAGE_PATH . $profile_img : null;
+        return $profile_img ? PROFILE_IMAGE_CONFIG['path'] . $profile_img : null;
     }
 
     /**
@@ -385,7 +373,7 @@ class AuthController
      *
      * @return string|null Generated password or null on failure
      */
-    public static function generatePassword(int $length = GENERATED_PASSWORD_LENGTH): string|null
+    public static function generatePassword(int $length = PASSWORD_CONFIG['generated_length']): string|null
     {
         return self::generateToken($length, false);
     }
@@ -400,7 +388,7 @@ class AuthController
      *
      * @return string|null Token string or null when secure random generation fails
      */
-    public static function generateToken(int $length = RESET_TOKEN_LENGTH, bool $uppercase = true): string|null
+    public static function generateToken(int $length = PASSWORD_RESET_CONFIG['token_length'], bool $uppercase = true): string|null
     {
         try {
             $bytes = random_bytes((int)ceil($length / 2));
@@ -456,7 +444,7 @@ class AuthController
             FROM: 'tokens',
             WHERE: [
                 'user_id' => $id,
-                'type' => 'verification'
+                'type' => TokenType::VERIFICATION->value
             ]
         );
     }
@@ -495,23 +483,56 @@ class AuthController
     }
 
     /**
+     * Whether $username belongs to a user other than $excludeId - the check a
+     * profile/edit form needs before saving a changed username.
+     *
+     * @param string $username
+     * @param int    $excludeId User id allowed to already have this username
+     *
+     * @return bool
+     */
+    public static function usernameTakenByOtherUser(string $username, int $excludeId): bool
+    {
+        $id = self::getUserIdByUsername($username);
+        return $id !== null && $id !== $excludeId;
+    }
+
+    /**
+     * Resolve a user's id by their username.
+     *
+     * @param string $username
+     *
+     * @return int|null Id or null when not found
+     */
+    public static function getUserIdByUsername(string $username): int|null
+    {
+        $user = DB::single(
+            SELECT: 'id',
+            FROM: 'users',
+            WHERE: compact('username')
+        );
+
+        return $user ? (int)$user['id'] : null;
+    }
+
+    /**
      * Verify that a provided token matches the stored token for the given
      * user id and token type, and hasn't expired. Comparison is case-insensitive.
      *
-     * @param int    $id    User id
-     * @param string $token Token to check
-     * @param string $type  Token type (e.g. 'verification', 'reset', 'remember')
+     * @param int       $id    User id
+     * @param string    $token Token to check
+     * @param TokenType $type  Token type
      *
      * @return bool True if tokens match and the token hasn't expired
      */
-    public static function checkToken(int $id, string $token, string $type): bool
+    public static function checkToken(int $id, string $token, TokenType $type): bool
     {
         $row = DB::single(
             SELECT: ['token', 'expires'],
             FROM: 'tokens',
             WHERE: [
                 'user_id' => $id,
-                'type' => $type
+                'type' => $type->value
             ]
         );
 
@@ -519,7 +540,7 @@ class AuthController
         if ($row['expires'] !== null && strtotime((string)$row['expires']) < time()) return false;
 
         // Constant-time comparison to prevent timing attacks; case-insensitive for human-readable tokens.
-        return hash_equals(strtolower($row['token']), strtolower($token));
+        return hash_equals($row['token'], hash('sha256', strtoupper($token)));
     }
 
     /**
@@ -544,7 +565,7 @@ class AuthController
 
     /**
      * Verify credentials for an identifier that may be an email or username. Any
-     * failure path takes at least LOGIN_TIMING_FLOOR_MS (hashing a dummy password
+     * failure path takes at least TIMING_FLOOR_MS['login'] (hashing a dummy password
      * when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
@@ -563,9 +584,9 @@ class AuthController
                 return $user;
             }
 
-            password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS);
+            password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']);
             return null;
-        }, LOGIN_TIMING_FLOOR_MS * 1000);
+        }, TIMING_FLOOR_MS['login'] * 1000);
     }
 
     /**
@@ -619,7 +640,7 @@ class AuthController
         DB::update(
             UPDATE: 'users',
             SET: [
-                'password' => password_hash($password, PASSWORD_HASH_ALGO, PASSWORD_HASH_OPTIONS),
+                'password' => password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                 'must_change_password' => 0
             ],
             WHERE: compact('id')
@@ -629,18 +650,18 @@ class AuthController
     /**
      * Remove a token record for a user by type.
      *
-     * @param int    $userId
-     * @param string $type
+     * @param int       $userId
+     * @param TokenType $type
      *
      * @return void
      */
-    public static function deleteToken(int $userId, string $type): void
+    public static function deleteToken(int $userId, TokenType $type): void
     {
         DB::delete(
             FROM: 'tokens',
             WHERE: [
                 'user_id' => $userId,
-                'type' => $type
+                'type' => $type->value
             ]
         );
     }
@@ -714,14 +735,14 @@ class AuthController
      */
     public static function issueVerificationToken(int $id, string $email): bool
     {
-        $token = self::generateToken(VERIFICATION_TOKEN_LENGTH);
+        $token = self::generateToken(VERIFICATION_CONFIG['token_length']);
 
         if ($token === null) {
             Log::error("Could not generate a verification token for user id \"$id\"");
             return false;
         }
 
-        self::createToken($id, $token, 'verification', date('Y-m-d H:i:s', time() + VERIFICATION_TOKEN_EXPIRY));
+        self::createToken($id, hash('sha256', $token), TokenType::VERIFICATION, date('Y-m-d H:i:s', time() + VERIFICATION_CONFIG['token_expiry']));
 
         return self::sendVerificationMail($id, $email, $token);
     }
@@ -732,25 +753,25 @@ class AuthController
      *
      * @param int         $userId
      * @param string      $token
-     * @param string      $type
+     * @param TokenType   $type
      * @param string|null $expires Optional expiry timestamp value
      *
      * @return void
      */
-    public static function createToken(int $userId, string $token, string $type, string|null $expires = null): void
+    public static function createToken(int $userId, string $token, TokenType $type, string|null $expires = null): void
     {
         DB::delete(
             FROM: 'tokens',
             WHERE: [
                 'user_id' => $userId,
-                'type' => $type
+                'type' => $type->value
             ]
         );
 
         $data = [
             'user_id' => $userId,
             'token' => $token,
-            'type' => $type
+            'type' => $type->value
         ];
         if ($expires) $data['expires'] = $expires;
 
@@ -783,7 +804,7 @@ class AuthController
             return false;
         }
 
-        return MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Verify account', $contents);
+        return MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'Verify account', $contents);
     }
 
     /**
@@ -810,7 +831,7 @@ class AuthController
             return;
         }
 
-        MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'Reset password', $contents);
+        MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'Reset password', $contents);
     }
 
     /**
@@ -836,6 +857,6 @@ class AuthController
             return false;
         }
 
-        return MailController::send(APP_NAME, $to, NO_REPLY_MAIL, 'An account has been created', $contents);
+        return MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'An account has been created', $contents);
     }
 }

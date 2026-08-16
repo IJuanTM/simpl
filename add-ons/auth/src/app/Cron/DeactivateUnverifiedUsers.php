@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Cron;
 
 use app\Database\DB;
+use app\Enums\TokenType;
 use app\Enums\UserStatus;
 use app\Utils\Console;
 
@@ -28,11 +29,11 @@ class DeactivateUnverifiedUsers
                 FROM: 'tokens',
                 WHERE: [
                     'user_id' => $user['id'],
-                    'type' => 'verification'
+                    'type' => TokenType::VERIFICATION->value
                 ]
             );
 
-            if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime('-' . UNVERIFIED_USER_DEACTIVATION_AFTER . ' days'))) continue;
+            if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['unverified_deactivation_after_days'] . ' days'))) continue;
 
             DB::update(
                 UPDATE: 'users',

@@ -76,7 +76,7 @@ class DatabaseMigrator
             "  `batch` INT UNSIGNED NOT NULL,\n" .
             "  `ran_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n" .
             "  PRIMARY KEY (`id`)\n" .
-            ") ENGINE = " . DB_ENGINE
+            ") ENGINE = " . DB_SCHEMA_DEFAULTS['engine']
         );
     }
 
@@ -91,8 +91,8 @@ class DatabaseMigrator
 
     private static function name(string $class): string
     {
-        $parts = explode('\\', $class);
-        return end($parts);
+        // Full name, not basename, so migrations from different add-ons can't collide.
+        return ltrim($class, '\\');
     }
 
     private static function nextBatch(): int

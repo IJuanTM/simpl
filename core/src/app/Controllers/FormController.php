@@ -43,7 +43,7 @@ class FormController
 
         $value = RequestController::rawPost($field);
 
-        if (empty($value) && in_array('required', $rules, true)) {
+        if (($value === null || $value === '') && in_array('required', $rules, true)) {
             static::addAlert("Please enter an input in the $fieldName field!", AlertType::WARNING);
             return false;
         }

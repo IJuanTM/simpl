@@ -44,7 +44,7 @@ class ResendVerificationPage
             return;
         }
 
-        if (!RateLimiter::attempt('resend-verification-' . $id, 1, VERIFICATION_RESEND_TIMEOUT)) {
+        if (!RateLimiter::attempt('resend-verification-' . $id, 1, RESEND_TIMEOUTS['verification'])) {
             FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
             PageController::redirect(REDIRECT, 2);
             return;

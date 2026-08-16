@@ -41,7 +41,7 @@ class ContactPage
         ) return;
 
         // Rate limit after validation to avoid consuming slots on invalid input
-        if (!$this->attemptRateLimit(CONTACT_RESEND_TIMEOUT)) return;
+        if (!$this->attemptRateLimit(RESEND_TIMEOUTS['contact'])) return;
 
         $this->contactMail(
             RequestController::post('name'),
@@ -76,7 +76,7 @@ class ContactPage
             return;
         }
 
-        $result = MailController::send($from, SITE_MAIL, $sender, $subject, $contents);
+        $result = MailController::send($from, MAIL_CONFIG['site_address'], $sender, $subject, $contents);
 
         if ($result) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
         else PageController::redirectWithAlert(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);

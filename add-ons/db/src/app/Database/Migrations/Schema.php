@@ -11,7 +11,7 @@ class Schema
 {
     public static function createDatabase(string $name): void
     {
-        DB::raw("CREATE SCHEMA IF NOT EXISTS `$name` CHARACTER SET " . DB_CHARSET . " COLLATE " . DB_COLLATION);
+        DB::raw("CREATE SCHEMA IF NOT EXISTS `$name` CHARACTER SET " . DB_SCHEMA_DEFAULTS['charset'] . " COLLATE " . DB_SCHEMA_DEFAULTS['collation']);
     }
 
     public static function dropDatabase(string $name): void
