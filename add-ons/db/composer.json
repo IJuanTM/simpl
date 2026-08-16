@@ -1,0 +1,8 @@
+@addon-insert:replace('"@addon-placeholder": "db"')
+"migrate": "php src/app/Scripts/migrate.php",
+"migrate:fresh": "php src/app/Scripts/migrate.php --fresh",
+"migrate:rollback": "php src/app/Scripts/migrate.php --rollback",
+"seed": "php src/app/Scripts/seed.php",
+"seed:fresh": "php src/app/Scripts/seed.php --fresh",
+"cron:test": "php src/app/Scripts/scheduler.php --test"
+@addon-end

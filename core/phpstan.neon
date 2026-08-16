@@ -1,0 +1,21 @@
+parameters:
+    level: 6
+    paths:
+        - src/app
+        - tests/app
+    bootstrapFiles:
+        - phpstan.php
+    tmpDir: .phpstan.cache
+    # Needed for core alone to analyze cleanly - some entries below only match once add-ons merge in.
+    reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        # This codebase never uses generic array shapes, so nothing to retrofit here.
+        - identifier: missingType.iterableValue
+        # False positives: these consts are deployment-editable, but PHPStan only sees their declared value.
+        - identifiers:
+              - if.alwaysTrue
+              - ternary.alwaysTrue
+              - ternary.alwaysFalse
+              - greater.alwaysTrue
+              - booleanAnd.leftAlwaysTrue
+              - booleanNot.alwaysFalse

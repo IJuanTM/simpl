@@ -1,0 +1,35 @@
+# IDE files
+.idea/
+.vscode/
+
+# AI tools
+.claude/
+
+# Package manager files
+vendor/
+node_modules/
+composer.lock
+
+# Environment variables
+.env
+
+# Generated build output
+src/assets/
+src/public/css/
+src/public/js/
+
+# Logs
+src/app/Logs/
+
+# Cache (rate limiter, etc.)
+src/app/Cache/
+
+# Profile images
+src/public/img/profile/
+
+# PHPUnit
+.phpunit.cache/
+.phpunit.result.cache
+
+# PHPStan
+.phpstan.cache/

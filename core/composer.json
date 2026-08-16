@@ -1,0 +1,47 @@
+{
+  "name": "simpl/simpl",
+  "description": "An easy-to-use PHP, HTML, Sass and TypeScript framework!",
+  "version": "1.7.0",
+  "type": "project",
+  "require": {
+    "php": "^8.4",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-fileinfo": "*",
+    "ext-mbstring": "*",
+    "vlucas/phpdotenv": "^v5.6.3"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest",
+    "phpunit/phpunit": "^13.3",
+    "phpstan/phpstan": "^2.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "app\\": "src/app/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "tests\\": "tests/app/"
+    }
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "vendor-dir": "src/vendor"
+  },
+  "scripts": {
+    "test": "phpunit",
+    "stan": "phpstan analyse --memory-limit=512M",
+    "@addon-placeholder": "db"
+  },
+  "keywords": [
+    "php",
+    "html",
+    "sass",
+    "typescript",
+    "framework",
+    "mvc"
+  ],
+  "license": "GPL-3.0-only"
+}

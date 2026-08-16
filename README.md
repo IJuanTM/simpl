@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
+[<img src="core/src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
 
 # Simpl
 
@@ -71,9 +71,9 @@ Available commands:
 
 Alternatively, you can also set up a new Simpl project manually by following these steps:
 
-- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+- Download the latest version of Simpl from [here](#download) and extract the folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
 
-- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
+- Next, rename the extracted folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/). Inside it you'll find a `src` folder (the application code) and a `tests` folder (its PHPUnit test suite).
 
 ### Step 2: Run composer install
 
@@ -81,7 +81,7 @@ Simpl makes use of PSR-4 autoloading; for this to work, you will have to run `co
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the `src` folder of your project (that's where `package.json` lives), this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
 
 ### Step 4: Set up your localhost
 
@@ -132,13 +132,13 @@ _The reason Vite is not used as a server, but instead only to bundle the TypeScr
 
 #### Config
 
-Config files for the PHP framework are located in the `app/Config` folder. Here you can find the `app.php` file, which contains the configuration for the framework.
+Config files for the PHP framework are located in the `src/app/Config` folder. Here you can find the `app.php` file, which contains the configuration for the framework.
 
 Feel free to add your own config files here, as each `.php` file in this folder will be loaded automatically on page load.
 
 #### Controllers, Models and Pages
 
-In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders.
+In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
     - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
@@ -151,17 +151,23 @@ There is also a `Utils` folder, which contains utility classes that are used in 
 
 #### Views
 
-You can find the HTML code in the `views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containing the `header.phtml` and `footer.phtml` files.
+You can find the HTML code in the `src/views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containing the `header.phtml` and `footer.phtml` files.
 
 #### Styling and TypeScript
 
-The styling is located in the `scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
+The styling is located in the `src/scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
 
-The TypeScript code is located in the `ts` folder. Simpl makes use of Rollup to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
+The TypeScript code is located in the `src/ts` folder. Simpl makes use of Rollup to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
 
 #### Public
 
-The `public` folder contains the static files like images and fonts, as well as other static files for the website. Here you can also find the `index.php` file, which is the entry point for the framework. This file loads the autoloader, environment variables and runs the main `AppController`. After running the `build` script, the compiled Sass and TypeScript files will be located in this folder under their respective `css` and `js` folders.
+The `src/public` folder contains the static files like images and fonts, as well as other static files for the website. Here you can also find the `index.php` file, which is the entry point for the framework. This file loads the autoloader, environment variables and runs the main `AppController`. After running the `build` script, the compiled Sass and TypeScript files will be located in this folder under their respective `css` and `js` folders.
+
+#### Tests
+
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s
+structure. Run `composer install` once, then `composer test`, to check that everything still
+works as expected - handy after upgrading dependencies or making changes of your own.
 
 <br>
 
@@ -291,6 +297,19 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 * Small formatting changes and improvements
 * Added a code block to the landing page with the command to install add-ons using the npx tool
+
+#### Version 1.7.0 (2026-08-15)
+
+* Added a full admin panel to the auth add-on: user management (view, edit, soft-delete and restore, admin-created accounts), role management, and a login attempts page, all with sortable/searchable/paginated tables, breadcrumb navigation and hideable columns
+* Added proper migration and seeder classes for the auth add-on's database, replacing the old example `.sql` schema file
+* Added a scheduling system for running cron jobs
+* Added password policy enforcement, validated live as you type and again server-side
+* Added login lockout protection with exponential backoff, and per-account/per-IP rate limiting for the contact, forgot-password and verification forms
+* Hardened CSRF validation and session cookie handling
+* Added a shared modal for admin user actions
+* Automated subpage loading, reducing the PHP boilerplate a page needs; improved error page handling with its own redirect function and a new `ErrorCode` enum
+* Added a user profile page accessible to every user, with inline editing and profile image handling
+* Various console output, email template, and accessibility improvements throughout
 
 <br>
 
