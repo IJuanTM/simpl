@@ -1,9 +1,10 @@
+@use "../config/abstracts/functions" as *;
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
 dialog.modal-overlay {
   position: fixed;
-  z-index: 5;
+  z-index: layer("modal");
   padding: 2rem;
   transition: visibility .15s ease-out, opacity .15s ease-out;
   background-color: rgba(#000, .5);

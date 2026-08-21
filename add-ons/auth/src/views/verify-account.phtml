@@ -1,4 +1,5 @@
 <?php
+use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\RequestController;
 use app\Models\Url;
@@ -42,7 +43,7 @@ use app\Models\Url;
 
     <div class="row">
       <div class="col">
-        <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= Url::to('api/resend-verification/' . ($this->subpage() ?? '')) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Link to resend verification code email">Click here to resend</a>.</p>
+        <p class="form-details">Didn't receive an email? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/resend-verification/' . ($this->subpage() ?? ''))) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Link to resend verification code email">Click here to resend</a>.</p>
       </div>
     </div>
 

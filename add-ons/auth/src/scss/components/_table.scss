@@ -191,7 +191,7 @@ div.table-container {
           background-color: var(--table-row-odd);
 
           > td:not(:last-child) {
-            border-right: .0625rem solid rgba($light-0, .125);
+            border-right: .0625rem solid var(--border-muted);
           }
 
           &:nth-child(even) {

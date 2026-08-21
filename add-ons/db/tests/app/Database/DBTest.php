@@ -25,6 +25,17 @@ class DBTest extends TestCase
         return (new ReflectionMethod(DB::class, $method))->invoke(null, ...$args);
     }
 
+    public function testSanitizeBacktickQuotedAcceptsAHyphenatedIdentifier(): void
+    {
+        $this->assertSame('user-app_prod', $this->call('sanitizeBacktickQuoted', ['user-app_prod']));
+    }
+
+    public function testSanitizeBacktickQuotedRejectsABacktick(): void
+    {
+        $this->expectException(PDOException::class);
+        $this->call('sanitizeBacktickQuoted', ['users` ; DROP TABLE users -- ']);
+    }
+
     public function testSanitizeRejectsAnIdentifierWithSqlMetacharacters(): void
     {
         $this->expectException(PDOException::class);
@@ -63,8 +74,8 @@ class DBTest extends TestCase
     {
         [$clause, $params] = $this->call('buildWhere', [['age' => ['>', 18]]]);
 
-        $this->assertSame('age > :age_0', $clause);
-        $this->assertSame([':age_0' => 18], $params);
+        $this->assertSame('age > :age', $clause);
+        $this->assertSame([':age' => 18], $params);
     }
 
     public function testBuildWhereHandlesIsNullWithoutABoundParameter(): void
@@ -94,6 +105,16 @@ class DBTest extends TestCase
 
         $this->assertSame('users.email = :users_email', $clause);
         $this->assertSame([':users_email' => 'a@b.com'], $params);
+    }
+
+    public function testBuildWhereDisambiguatesParamNamesThatCollideAfterNormalization(): void
+    {
+        // 'a.b' and 'a_b' both normalize to the same param name - the second must not
+        // silently overwrite the first's bound value.
+        [$clause, $params] = $this->call('buildWhere', [['a.b' => 1, 'a_b' => 2]]);
+
+        $this->assertSame('a.b = :a_b AND a_b = :a_b_1', $clause);
+        $this->assertSame([':a_b' => 1, ':a_b_1' => 2], $params);
     }
 
     public function testCombineWhereAndsThePlainWhereWithAParenthesizedOrGroup(): void

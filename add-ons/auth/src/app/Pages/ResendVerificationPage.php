@@ -32,14 +32,10 @@ class ResendVerificationPage
 
         $id = (int)$id;
 
-        if (!AuthController::exists($id)) {
-            FormController::addAlert('We could not find your account! Please contact an administrator.', AlertType::ERROR);
-            PageController::redirect(REDIRECT, 2);
-            return;
-        }
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-        if (AuthController::isVerified($id)) {
-            FormController::addAlert('Your account is currently not being verified!', AlertType::INFO);
+        if (!RateLimiter::attempt("resend-verification-ip-$ip", VERIFICATION_CONFIG['resend_ip_max_attempts'], VERIFICATION_CONFIG['resend_ip_attempt_window'])) {
+            FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
             PageController::redirect(REDIRECT, 2);
             return;
         }
@@ -47,6 +43,11 @@ class ResendVerificationPage
         if (!RateLimiter::attempt('resend-verification-' . $id, 1, RESEND_TIMEOUTS['verification'])) {
             FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
             PageController::redirect(REDIRECT, 2);
+            return;
+        }
+
+        if (!AuthController::needsVerification($id)) {
+            PageController::redirectWithAlert("verify-account/$id", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
             return;
         }
 
@@ -65,7 +66,7 @@ class ResendVerificationPage
         $email = AuthController::getUserById($id)['email'];
 
         $result = AuthController::issueVerificationToken($id, $email);
-        if ($result) PageController::redirectWithAlert("verify-account/$id", 'Success! A new verification email has been sent!', AlertType::SUCCESS, 4);
+        if ($result) PageController::redirectWithAlert("verify-account/$id", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
         else PageController::redirectWithAlert("verify-account/$id", 'An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace app\Controllers;
 
 use app\Utils\Log;
+use PHPMailer\PHPMailer\Exception as PHPMailerException;
+use PHPMailer\PHPMailer\PHPMailer;
 
 /**
  * Provides email templating and delivery helpers.
@@ -17,6 +19,8 @@ use app\Utils\Log;
  */
 class MailController
 {
+    private static array $pendingEmails = [];
+
     /**
      * Render an email template file and return the resulting HTML.
      * Variables in $vars are extracted into the template scope and may be
@@ -49,11 +53,11 @@ class MailController
      * client (via register_shutdown_function). Otherwise sending is
      * performed synchronously.
      *
-     * @param string $senderName  Display name of the sender
-     * @param string $to          Recipient email address
+     * @param string $senderName Display name of the sender
+     * @param string $to Recipient email address
      * @param string $senderEmail Sender email address
-     * @param string $subject     Email subject
-     * @param string $message     HTML message body
+     * @param string $subject Email subject
+     * @param string $message HTML message body
      *
      * @return bool True when the message was sent or queued successfully
      */
@@ -65,9 +69,7 @@ class MailController
         }
 
         if (function_exists('fastcgi_finish_request')) {
-            $pending = SessionController::get('pending_emails') ?? [];
-            $pending[] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
-            SessionController::set('pending_emails', $pending);
+            self::$pendingEmails[] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
 
             static $registered = false;
             if (!$registered) {
@@ -82,37 +84,49 @@ class MailController
     }
 
     /**
-     * Perform the actual email delivery using PHP's mail() function.
-     * Constructs typical HTML headers and logs any failure.
+     * Perform the actual email delivery over SMTP via PHPMailer, using SMTP_CONFIG's
+     * development or production settings depending on the DEV flag.
      *
-     * @param string $senderName  Display name of the sender
-     * @param string $to          Recipient email address
+     * @param string $senderName Display name of the sender
+     * @param string $to Recipient email address
      * @param string $senderEmail Sender email address
-     * @param string $subject     Email subject
-     * @param string $message     HTML message body
+     * @param string $subject Email subject
+     * @param string $message HTML message body
      *
      * @return bool True on success, false on failure
      */
     private static function sendEmail(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
     {
-        // Strip CR/LF from untrusted header values to prevent header injection (e.g. via the contact form name field)
-        $senderName = str_replace(["\r", "\n"], '', $senderName);
-        $senderEmail = str_replace(["\r", "\n"], '', $senderEmail);
-        $subject = str_replace(["\r", "\n"], '', $subject);
+        $config = SMTP_CONFIG[DEV ? 'development' : 'production'];
 
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/html; charset=UTF-8',
-            'From: ' . $senderName . ' <' . $senderEmail . '>',
-            'Reply-To: ' . $senderEmail,
-            'X-Mailer: PHP/' . PHP_VERSION
-        ];
+        $mail = new PHPMailer(true);
 
-        $result = mail($to, $subject, $message, implode("\r\n", $headers));
+        try {
+            $mail->isSMTP();
+            $mail->Host = $config['host'];
+            $mail->Port = $config['port'];
+            $mail->SMTPAuth = $config['smtp_auth'];
+            $mail->SMTPSecure = $config['encryption'] ?? '';
 
-        if (!$result) Log::error("Failed to send email from \"$senderEmail\" to \"$to\": $subject");
+            if ($config['smtp_auth']) {
+                $mail->Username = $config['username'];
+                $mail->Password = $config['password'];
+            }
 
-        return $result;
+            $mail->setFrom($senderEmail, $senderName);
+            $mail->addReplyTo($senderEmail);
+            $mail->addAddress($to);
+
+            $mail->isHTML(true);
+            $mail->Subject = $subject;
+            $mail->Body = $message;
+
+            $mail->send();
+            return true;
+        } catch (PHPMailerException) {
+            Log::error("Failed to send email from \"$senderEmail\" to \"$to\": {$mail->ErrorInfo}");
+            return false;
+        }
     }
 
     /**
@@ -124,12 +138,10 @@ class MailController
     {
         if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
 
-        $pending = SessionController::get('pending_emails');
-        if (!empty($pending)) {
-            SessionController::remove('pending_emails');
-            foreach ($pending as $email) {
-                self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message']);
-            }
+        foreach (self::$pendingEmails as $email) {
+            self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message']);
         }
+
+        self::$pendingEmails = [];
     }
 }

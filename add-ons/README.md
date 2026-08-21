@@ -51,7 +51,7 @@ A production-ready authentication system with modern security practices. Depends
 
 **Includes:**
 
-- Email templates (verification, password reset, contact)
+- Email templates (verification, password reset, admin-created account, contact)
 - TypeScript form enhancements
 - Responsive SCSS styling
 - Table/seeder definitions registered with the `db` add-on's runners

@@ -16,11 +16,11 @@ define('SMTP_CONFIG', [
         'encryption' => null
     ],
     'production' => [
-        'host' => $_ENV['SMTP_HOST'],
+        'host' => $_ENV['SMTP_HOST'] ?? '',
         'port' => $_ENV['SMTP_PORT'] ?? 587,
         'smtp_auth' => true,
         'encryption' => 'tls',                // null, 'tls', or 'ssl'
-        'username' => $_ENV['SMTP_USERNAME'],
-        'password' => $_ENV['SMTP_PASSWORD']
+        'username' => $_ENV['SMTP_USERNAME'] ?? '',
+        'password' => $_ENV['SMTP_PASSWORD'] ?? ''
     ]
 ]);

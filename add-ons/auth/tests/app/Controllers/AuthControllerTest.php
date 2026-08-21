@@ -29,6 +29,11 @@ class AuthControllerTest extends TestCase
         $this->assertFalse(AuthController::validatePassword('Abcdefgh'));
     }
 
+    public function testValidatePasswordRejectsAPasswordMissingALowercaseLetter(): void
+    {
+        $this->assertFalse(AuthController::validatePassword('ABCDEFG1'));
+    }
+
     public function testValidatePasswordRejectsATooShortPassword(): void
     {
         $this->assertFalse(AuthController::validatePassword('Ab1'));

@@ -279,9 +279,15 @@ function initPaginationLinks(section: HTMLElement, container: Element, table: HT
   }
 }
 
+// Prevents a slower response from overwriting a newer one.
+const latestTableRequest = new WeakMap<HTMLTableElement, number>();
+
 async function fetchTableData(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void, params: URLSearchParams): Promise<void> {
   const api = table.dataset.api;
   if (!api) return;
+
+  const requestId = (latestTableRequest.get(table) ?? 0) + 1;
+  latestTableRequest.set(table, requestId);
 
   const apiUrl = new URL(api, window.location.origin);
   apiUrl.search = params.toString();
@@ -294,9 +300,15 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
 
   try {
     const res = await fetch(apiUrl.toString());
-    if (!res.ok) return;
+    if (!res.ok) {
+      if (tbody && latestTableRequest.get(table) === requestId) tbody.style.opacity = '';
+      return;
+    }
 
     const data = await res.json() as { thead: string; tbody: string; pagination: string; info: string; total: number };
+
+    // A newer request for this table has since been made - discard this now-stale response.
+    if (latestTableRequest.get(table) !== requestId) return;
 
     if (table.tHead) {
       table.tHead.innerHTML = data.thead;
@@ -327,7 +339,7 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
     if (paginationInfo) paginationInfo.textContent = data.info;
 
   } catch {
-    if (tbody) tbody.style.opacity = '';
+    if (tbody && latestTableRequest.get(table) === requestId) tbody.style.opacity = '';
   }
 }
 

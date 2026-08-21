@@ -21,4 +21,9 @@ const LOCKOUT_CONFIG = [
         'max_attempts' => 5,     // wrong-old-password attempts before blocking
         'window_seconds' => 300,
     ],
+    // Profile email-change password confirmation, per authenticated user
+    'change_email' => [
+        'max_attempts' => 5,     // wrong-current-password attempts before blocking
+        'window_seconds' => 300,
+    ],
 ];

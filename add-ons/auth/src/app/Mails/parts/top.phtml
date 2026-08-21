@@ -1,7 +1,11 @@
+<?php
+use app\Controllers\AppController;
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title><?= htmlspecialchars($title ?? 'Email - ' . APP_NAME) ?></title>
+  <title><?= AppController::sanitize($title ?? 'Email - ' . APP_NAME) ?></title>
   <meta charset="UTF-8">
   <meta content="width=device-width, initial-scale=1.0" name="viewport">
   <link href="https://cdn.simpl.iwanvanderwal.nl/fonts/fonts.css" rel="stylesheet">

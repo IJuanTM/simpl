@@ -114,4 +114,26 @@ class ScheduledTaskTest extends TestCase
         $this->assertTrue($this->matchesCronField(3, '1,3,5'));
         $this->assertFalse($this->matchesCronField(2, '1,3,5'));
     }
+
+    public function testMatchesCronFieldListContainingARange(): void
+    {
+        $this->assertTrue($this->matchesCronField(1, '1,3,5-10'));
+        $this->assertTrue($this->matchesCronField(3, '1,3,5-10'));
+        $this->assertTrue($this->matchesCronField(5, '1,3,5-10'));
+        $this->assertTrue($this->matchesCronField(7, '1,3,5-10'));
+        $this->assertTrue($this->matchesCronField(10, '1,3,5-10'));
+        $this->assertFalse($this->matchesCronField(2, '1,3,5-10'));
+        $this->assertFalse($this->matchesCronField(4, '1,3,5-10'));
+        $this->assertFalse($this->matchesCronField(11, '1,3,5-10'));
+    }
+
+    public function testMatchesCronFieldRangeWithStep(): void
+    {
+        $this->assertTrue($this->matchesCronField(1, '1-10/2'));
+        $this->assertTrue($this->matchesCronField(3, '1-10/2'));
+        $this->assertTrue($this->matchesCronField(9, '1-10/2'));
+        $this->assertFalse($this->matchesCronField(2, '1-10/2'));
+        $this->assertFalse($this->matchesCronField(10, '1-10/2'));
+        $this->assertFalse($this->matchesCronField(11, '1-10/2'));
+    }
 }

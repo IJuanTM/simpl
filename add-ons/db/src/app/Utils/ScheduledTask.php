@@ -94,21 +94,24 @@ class ScheduledTask
     {
         if ($field === '*') return true;
 
+        // Check comma-lists first, so "1,3,5-10" matches as three parts, not one "-" range.
+        if (str_contains($field, ',')) return array_any(explode(',', $field), fn($part) => $this->matchesCronField($current, $part));
+
         if (str_contains($field, '/')) {
             [$range, $step] = explode('/', $field);
             $step = (int)$step;
-            $start = $range === '*' ? 0 : (int)$range;
-            return $step > 0 && ($current - $start) % $step === 0 && $current >= $start;
+
+            if ($range === '*') [$start, $end] = [0, null];
+            else if (str_contains($range, '-')) [$start, $end] = array_map('intval', explode('-', $range));
+            else [$start, $end] = [(int)$range, null];
+
+            return $step > 0 && $current >= $start && ($end === null || $current <= $end) && ($current - $start) % $step === 0;
         }
 
         if (str_contains($field, '-')) {
             [$from, $to] = explode('-', $field);
             return $current >= (int)$from && $current <= (int)$to;
         }
-
-        if (str_contains($field, ',')) return explode(',', $field)
-                |> (static fn($x) => array_map('intval', $x))
-                |> (static fn($x) => in_array($current, $x, true));
 
         return $current === (int)$field;
     }

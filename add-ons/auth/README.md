@@ -34,13 +34,9 @@ Complete authentication system for Simpl projects with user management, email ve
 
 ## Database
 
-Auth's migrations and seeders are *data* registered with the [`db`](../db/README.md) add-on's
-generic `DatabaseMigrator`/`DatabaseSeeder` runners (`Config/auth.migrations.php`,
-`Config/auth.seeders.php`) - the runners themselves, the `DB` query builder, and the
-`Blueprint`/`Schema` DDL builder all live in `db`. Auth's own `Database/` folder only holds its
-table/seeder *definitions* (`users`, `roles`, `tokens`, `login_attempts`, ...), in dependency
-order. Auth's scheduled cleanup tasks (`Config/scheduler.php`) work the same way, registered with
-`db`'s `Scheduler`.
+Auth's migrations and seeders are *data* registered with the [`db`](../db/README.md) add-on's generic `DatabaseMigrator`/`DatabaseSeeder` runners - the runners themselves, the `DB` query builder, and the `Blueprint`/`Schema` DDL builder all live in `db`. Auth ships its own
+`Config/migrations.php` and `Config/seeders.php`, which patch into `db`'s base files of the same name via `@addon-insert`/`@addon-end` markers on install - `db` owns the base file (a placeholder extension point), `auth`'s patch inserts its own `DatabaseMigrator::register(...)`/
+`DatabaseSeeder::register(...)` calls in place of it. Auth's own `Database/` folder only holds its table/seeder *definitions* (`users`, `roles`, `tokens`, `login_attempts`, ...), in dependency order. Auth's scheduled cleanup tasks (`Config/scheduler.php`) work the same way, patched into `db`'s base `Config/scheduler.php`.
 
 ## Structure
 
@@ -49,11 +45,12 @@ auth/
 ├── README.md
 ├── src/                 # Merges into a project's src/
 │   ├── app/
-│   │   ├── Config/       # auth.php, mail.php, auth.migrations.php, auth.seeders.php, scheduler.php
-│   │   ├── Controllers/  # Core logic (Auth, Mail, Form patch)
+│   │   ├── Config/       # auth.php, mail.php, lockout.php, upload.php, validation.php,
+│   │   │                 #   migrations.php/seeders.php/scheduler.php (patches into db's base files)
+│   │   ├── Controllers/  # AuthController, MailController, plus patches into App/Alias/Form
 │   │   ├── Cron/         # Scheduled task implementations
 │   │   ├── Database/     # Table/seeder definitions only - run by the db add-on's runners
-│   │   ├── Mails/        # Email templates (verification, reset, contact)
+│   │   ├── Mails/        # Email templates (verification, reset, account-created, contact)
 │   │   └── Pages/        # Page controllers (Login, Register, Profile, Users, etc.)
 │   ├── scss/             # Styling for forms, tables, and pages
 │   ├── ts/                # TypeScript for form interactions
@@ -73,8 +70,7 @@ auth/
 
 ### Database
 
-Provided by the [`db`](../db/README.md) add-on's `src/app/Config/database.php`. Set your
-database credentials in `.env`:
+Provided by the [`db`](../db/README.md) add-on's `src/app/Config/database.php`. Set your database credentials in `.env`:
 
 ```env
 DB_SERVER=localhost
@@ -85,8 +81,9 @@ DB_PASSWORD=your_password
 
 ### Mail Settings (`src/app/Config/mail.php`)
 
-- SMTP server configuration
-- Email templates (verification, password reset, contact)
+- Site/no-reply sender addresses and the mail logo URL
+- SMTP server configuration (dev/production), sent via [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+- Email templates (verification, password reset, admin-created account, contact)
 
 ## Installation
 
@@ -120,9 +117,16 @@ The installer will:
 2. Manually merge any conflicting files by following their inline `@addon-insert`/`@addon-end` markers
 3. Follow the post-installation steps above
 
+## Tests
+
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `AuthController`'s config-driven password-policy/token surface, `FormController::validatePasswords()`,
+`AdminTableTrait`'s pagination/sort/filter logic, `RateLimitedForm`, `MailController::template`'s not-found branch, and the `PruneRateLimitCache` cron task. Once installed, run `composer test`
+from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*`
+classes) isn't covered here - that requires a real database connection.
+
 ## Requirements
 
-- **PHP**: >= 8.4
+- **PHP**: >= 8.5
 - **Database**: MySQL >= 9.5.0 or MariaDB >= 12.1.2
 - **Extensions**: PDO, pdo_mysql (via the [`db`](../db/README.md) add-on)
 
@@ -132,6 +136,7 @@ Includes responsive, email-client-compatible templates:
 
 - Account verification
 - Password reset
+- Admin-created account (temporary password + login link)
 - Contact form notifications
 
 All templates use tables and inline styles for maximum compatibility.

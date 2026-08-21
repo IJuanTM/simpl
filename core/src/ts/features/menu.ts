@@ -50,7 +50,7 @@ export const menuModule = {
     if (window.innerWidth > 1024) {
       menuModule.setMenuState(false);
       navItems.forEach(item => item.setAttribute('tabindex', '0'));
-    } else menuModule.updateHeight();
+    } else menuModule.setMenuState(menuHamburger.classList.contains('is-active'));
   },
 
   init: (): void => {

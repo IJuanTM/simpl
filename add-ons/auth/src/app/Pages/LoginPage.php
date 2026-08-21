@@ -35,7 +35,7 @@ class LoginPage
      * IP-based, so it can't be used to confirm an identifier maps to a real account.
      *
      * @param string|null $identifier Username/email for fresh lockout check
-     * @param int|null    $userId     Pre-resolved user id, to skip a redundant lookup
+     * @param int|null    $userId Pre-resolved user id, to skip a redundant lookup
      *
      * @return bool True if locked out
      */
@@ -81,8 +81,8 @@ class LoginPage
      * Calculates remaining lockout duration for user and IP address, whichever is longer.
      *
      * @param string   $identifier Username or email
-     * @param string   $ip         IP address
-     * @param int|null $userId     Pre-resolved user id, to skip a redundant lookup
+     * @param string   $ip IP address
+     * @param int|null $userId Pre-resolved user id, to skip a redundant lookup
      *
      * @return int Seconds remaining on the lockout, or 0 when not locked out
      */
@@ -103,7 +103,7 @@ class LoginPage
      * Calculates lockout end timestamp based on failed attempts.
      *
      * @param string                                                                                              $column Database column to query (user_id or ip_address)
-     * @param mixed                                                                                               $value  Value to match
+     * @param mixed                                                                                               $value Value to match
      * @param array{max_attempts: int, min_duration_minutes: int, max_duration_minutes: int, window_minutes: int} $config
      *
      * @return int|null Lockout end timestamp or null if not locked
@@ -152,13 +152,16 @@ class LoginPage
             !FormController::validate('password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
-        if ($this->checkLockedOut($_POST['identifier'])) return;
+        // Resolved once and threaded through below, instead of each check re-resolving it.
+        $userId = AuthController::getUserIdByIdentifier($_POST['identifier']);
+
+        if ($this->checkLockedOut($_POST['identifier'], $userId)) return;
 
         // Timing-safe regardless of whether the identifier resolves (see AuthController::verifyCredentials).
         $user = AuthController::verifyCredentials($_POST['identifier'], $_POST['password']);
 
         if ($user === null) {
-            $this->fail('incorrect', 'Invalid username/email or password. Please try again.', AlertType::WARNING);
+            $this->fail('incorrect', 'Invalid username/email or password. Please try again.', AlertType::WARNING, $userId);
             return;
         }
 
@@ -180,10 +183,10 @@ class LoginPage
      * (which shows its own alert), and otherwise clears the submitted credentials
      * and shows the given alert.
      *
-     * @param string    $reason  Failure reason recorded in the login_attempts log
+     * @param string    $reason Failure reason recorded in the login_attempts log
      * @param string    $message Alert message to show when this didn't trigger a lockout
-     * @param AlertType $type    Alert type for $message
-     * @param int|null  $userId  Pre-resolved user id, to skip redundant lookups
+     * @param AlertType $type Alert type for $message
+     * @param int|null  $userId Pre-resolved user id, to skip redundant lookups
      *
      * @return void
      */

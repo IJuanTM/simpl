@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace app\Models;
 
+use Closure;
+
 /**
  * Represents an alias with associated page information, subpages, and parameters.
  */
@@ -33,7 +35,7 @@ class Alias
         // keys are restored with array_combine() rather than lost from the result.
         return array_combine(
             array_keys($this->params),
-            array_map(static fn($value, $key) => $params[$key] ?? (is_callable($value) ? $value() : $value), $this->params, array_keys($this->params))
+            array_map(static fn($value, $key) => $params[$key] ?? ($value instanceof Closure ? $value() : $value), $this->params, array_keys($this->params))
         );
     }
 }

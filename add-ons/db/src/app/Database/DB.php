@@ -16,6 +16,7 @@ use PDOException;
 class DB
 {
     private static ?PDO $pdo = null;
+    private static bool $pdoHasDatabase = false;
 
     /**
      * This method is for selecting records from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY, ORDER BY, LIMIT and OFFSET.
@@ -182,11 +183,16 @@ class DB
 
         $conditions = [];
         $params = [];
-        $counter = 0;
+        $usedParamNames = [];
 
         foreach ($where as $key => $value) {
             $column = self::sanitizeColumn($key);
-            $paramBase = str_replace('.', '_', $key);
+
+            // Two different keys can normalize to the same param name (e.g. 'a.b' and 'a_b'
+            // both become 'a_b') - only disambiguate with a suffix when that actually happens.
+            $paramName = str_replace('.', '_', $key);
+            for ($suffix = 1; isset($usedParamNames[$paramName]); $suffix++) $paramName = str_replace('.', '_', $key) . "_$suffix";
+            $usedParamNames[$paramName] = true;
 
             if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'])) {
                 $operator = strtoupper($value[0]);
@@ -194,13 +200,12 @@ class DB
 
                 if ($val === null && in_array($operator, ['IS', 'IS NOT'])) $conditions[] = "$column $operator NULL";
                 else {
-                    $paramKey = ":$prefix{$paramBase}_{$counter}";
-                    $counter++;
+                    $paramKey = ":$prefix$paramName";
                     $conditions[] = "$column $operator $paramKey";
                     $params[$paramKey] = $val;
                 }
             } else {
-                $paramKey = ":$prefix$paramBase";
+                $paramKey = ":$prefix$paramName";
                 $conditions[] = "$column = $paramKey";
                 $params[$paramKey] = $value;
             }
@@ -323,7 +328,11 @@ class DB
      */
     private static function connect(bool $withDatabase = true): PDO
     {
-        if (self::$pdo !== null) return self::$pdo;
+        // Otherwise $withDatabase would be silently ignored after the first connect().
+        if (self::$pdo !== null) {
+            if ($withDatabase && !self::$pdoHasDatabase) self::useDatabase(DB_NAME);
+            return self::$pdo;
+        }
 
         try {
             self::$pdo = new PDO(
@@ -336,6 +345,7 @@ class DB
                     PDO::ATTR_EMULATE_PREPARES => false
                 ]
             );
+            self::$pdoHasDatabase = $withDatabase;
 
             $tz = new DateTime('now', new DateTimeZone(TIMEZONE))->format('P');
             self::$pdo->exec("SET time_zone = '$tz'");
@@ -346,6 +356,42 @@ class DB
         } catch (DateMalformedStringException) {
             self::handleError(new PDOException('Invalid timezone configuration.'));
         }
+    }
+
+    /**
+     * This method is for switching the active database on the current connection.
+     *
+     * @param string $name
+     *
+     * @return void
+     */
+    public static function useDatabase(string $name): void
+    {
+        $name = self::sanitizeBacktickQuoted($name);
+
+        try {
+            if (self::$pdo === null) self::connect(false);
+            self::$pdo->exec("USE `$name`");
+            self::$pdoHasDatabase = true;
+        } catch (PDOException $e) {
+            throw new PDOException("Failed to select database '$name': " . $e->getMessage(), (int)$e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Validate an identifier that will be interpolated backtick-quoted (unlike sanitize()'s
+     * \w+ whitelist, needed where identifiers are interpolated unquoted elsewhere in this
+     * class). A real database name can contain characters \w+ would reject (e.g. a hyphen),
+     * so only the backtick itself - which would let the value escape its quoting - is unsafe.
+     *
+     * @param string $identifier
+     *
+     * @return string
+     */
+    private static function sanitizeBacktickQuoted(string $identifier): string
+    {
+        if (str_contains($identifier, '`')) throw new PDOException("Invalid identifier: $identifier");
+        return $identifier;
     }
 
     /**
@@ -535,23 +581,6 @@ class DB
     }
 
     /**
-     * This method is for switching the active database on the current connection.
-     *
-     * @param string $name
-     *
-     * @return void
-     */
-    public static function useDatabase(string $name): void
-    {
-        try {
-            if (self::$pdo === null) self::connect(false);
-            self::$pdo->exec("USE `$name`");
-        } catch (PDOException $e) {
-            throw new PDOException("Failed to select database '$name': " . $e->getMessage(), (int)$e->getCode(), $e);
-        }
-    }
-
-    /**
      * This method is for executing a raw query and returning the result set as an array.
      *
      * @param string $query
@@ -607,11 +636,7 @@ class DB
     {
         $elem = trim($elem);
 
-        if (preg_match('/^(\w+(\.\w+)?)(\s+(ASC|DESC))?$/i', $elem, $m)) {
-            $column = $m[1];
-            $dir = isset($m[4]) ? ' ' . strtoupper($m[4]) : '';
-            return $column . $dir;
-        }
+        if (preg_match('/^(\w+(\.\w+)?)(\s+(ASC|DESC))?$/i', $elem, $m)) return $m[1] . (isset($m[4]) ? ' ' . strtoupper($m[4]) : '');
 
         throw new PDOException("Invalid ORDER BY element: $elem");
     }

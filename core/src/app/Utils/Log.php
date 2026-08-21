@@ -26,9 +26,9 @@ class Log
     /**
      * Write a log entry to the appropriate level file, optionally including a trace.
      *
-     * @param LogLevel $level        Log severity
-     * @param string   $message      Message template
-     * @param array    $context      Context values for interpolation
+     * @param LogLevel $level Log severity
+     * @param string   $message Message template
+     * @param array    $context Context values for interpolation
      * @param bool     $includeTrace Whether to include a filtered stack trace
      *
      * @return void
@@ -37,7 +37,7 @@ class Log
     {
         $dir = BASEDIR . '/app/Logs';
 
-        if (!is_dir($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
         }
 

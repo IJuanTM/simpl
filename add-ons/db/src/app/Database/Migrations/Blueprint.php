@@ -53,7 +53,7 @@ class Blueprint
                 $default === null => ' DEFAULT NULL',
                 $default === 'CURRENT_TIMESTAMP' => ' DEFAULT CURRENT_TIMESTAMP',
                 is_int($default) || is_float($default) => " DEFAULT $default",
-                default => " DEFAULT '$default'"
+                default => " DEFAULT '" . str_replace("'", "''", (string)$default) . "'"
             };
         }
 
@@ -99,7 +99,7 @@ class Blueprint
 
     public function enum(string $name, array $values, bool $notNull = false, mixed $default = PHP_INT_MIN): static
     {
-        $list = implode(', ', array_map(static fn($v) => "'$v'", $values));
+        $list = implode(', ', array_map(static fn($v) => "'" . str_replace("'", "''", $v) . "'", $values));
         return $this->addColumn("`$name` ENUM($list)", $notNull, $default);
     }
 

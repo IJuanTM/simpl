@@ -48,25 +48,27 @@ class FormController
             return false;
         }
 
-        if (isset($rules['minLength']) && strlen((string)$value) < $rules['minLength']) {
+        if ($value === null || $value === '') return true;
+
+        if (isset($rules['minLength']) && strlen($value) < $rules['minLength']) {
             $_POST[$field] = '';
             static::addAlert("The input of the $fieldName field is too short!", AlertType::WARNING);
             return false;
         }
 
-        if (isset($rules['maxLength']) && strlen((string)$value) > $rules['maxLength']) {
+        if (isset($rules['maxLength']) && strlen($value) > $rules['maxLength']) {
             $_POST[$field] = '';
             static::addAlert("The input of the $fieldName field is too long!", AlertType::WARNING);
             return false;
         }
 
-        if (isset($rules['minValue']) && $value < $rules['minValue']) {
+        if (isset($rules['minValue']) && (!is_numeric($value) || $value < $rules['minValue'])) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is too low!", AlertType::WARNING);
             return false;
         }
 
-        if (isset($rules['maxValue']) && $value > $rules['maxValue']) {
+        if (isset($rules['maxValue']) && (!is_numeric($value) || $value > $rules['maxValue'])) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is too high!", AlertType::WARNING);
             return false;
@@ -94,7 +96,7 @@ class FormController
      * attribute that front-end code may use to auto-dismiss the alert.
      *
      * @param string    $message The message text to show
-     * @param AlertType $type    Visual type/style for the alert
+     * @param AlertType $type Visual type/style for the alert
      * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void

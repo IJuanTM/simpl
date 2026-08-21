@@ -40,7 +40,7 @@ class PageController extends Page
         if ($alias = AliasController::resolve($page, $params)) [$page, $urlArr, $params] = [$alias['page'], $alias['subpages'], array_merge($params, $alias['params'])];
 
         $api = $page === 'api';
-        if ($api) $page = array_shift($urlArr);
+        if ($api) $page = array_shift($urlArr) ?? '';
 
         parent::__construct($page, $urlArr, $params);
 
@@ -72,7 +72,7 @@ class PageController extends Page
      * This method constructs an error URL based on the provided error code and an optional
      * redirect URL. The user is then redirected to the generated error page.
      *
-     * @param ErrorCode   $code     The specific error code used to determine the error page.
+     * @param ErrorCode   $code The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
@@ -89,7 +89,7 @@ class PageController extends Page
      * An optional refresh delay can be specified to control the time before the redirection occurs.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -187,10 +187,10 @@ class PageController extends Page
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message  The alert message to show after redirecting.
-     * @param AlertType $type     Visual type/style for the alert.
-     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
-     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param string    $message The alert message to show after redirecting.
+     * @param AlertType $type Visual type/style for the alert.
+     * @param int       $timeout Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -217,7 +217,7 @@ class PageController extends Page
     /**
      * Navigates back to the previous page in the user's navigation history.
      *
-     * This method updates the user's navigation history by removing the last two entries
+     * This method updates the user's navigation history by removing the last entry
      * and redirects the user to the new last entry in the history. If no history is available,
      * it redirects to a default location.
      *

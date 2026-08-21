@@ -5,7 +5,7 @@ use app\Controllers\RequestController;
 use app\Controllers\SessionController;
 ?>
 
-<?php if (isset($this->pageObj->user)) : ?>
+<?php if ($this->pageObj->user !== []) : ?>
 
   <?php if ($this->pageObj->user['id'] !== SessionController::get('user')['id']) : ?>
 

@@ -1,0 +1,15 @@
+<?php
+use app\Controllers\AppController;
+?>
+
+<tr>
+  <td>
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td align="center" bgcolor="#D01018" style="padding: 16px 32px; border: 2px solid #4F4F4F; border-radius: 8px;">
+          <a href="<?= AppController::sanitize($link) ?>" style="font-family: 'Inter', sans-serif; font-size: 14px; color: #ffffff; text-decoration: none;"><?= AppController::sanitize($label) ?></a>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>

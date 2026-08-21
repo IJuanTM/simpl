@@ -120,6 +120,6 @@ class AppController
             '/<form\b[^>]*\bmethod\s*=\s*["\']post["\'][^>]*>/i',
             static fn(array $m): string => $m[0] . '<input type="hidden" name="csrf_token" value="' . self::sanitize(self::csrfToken()) . '">',
             $output
-        );
+        ) ?? $output;
     }
 }

@@ -22,6 +22,7 @@ const TIMING_FLOOR_MS = [
     'login' => 200,
     'register' => 200,
     'password_reset' => 200,
+    'password_confirm' => 200,
 ];
 
 const VERIFICATION_CONFIG = [
@@ -32,6 +33,8 @@ const VERIFICATION_CONFIG = [
     'account_attempt_window' => 300, // seconds
     'ip_max_attempts' => 20,         // wrong-code attempts per IP before blocking
     'ip_attempt_window' => 900,      // seconds
+    'resend_ip_max_attempts' => 10,  // resend requests per IP before blocking
+    'resend_ip_attempt_window' => 900, // seconds
 ];
 
 const REMEMBER_ME_DURATION = 30; // days

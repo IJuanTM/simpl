@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
+use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
@@ -54,8 +55,8 @@ class ContactPage
     /**
      * Sends contact form email to site administrator.
      *
-     * @param string $from    Sender's name
-     * @param string $sender  Sender's email address
+     * @param string $from Sender's name
+     * @param string $sender Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
      *
@@ -65,10 +66,10 @@ class ContactPage
     {
         $contents = MailController::template('contact', [
             'title' => 'New Contact Form Submission',
-            'from' => $from,
+            'from' => AppController::sanitize($from),
             'date' => date('Y-m-d'),
             'time' => date('H:i'),
-            'contents' => nl2br($message)
+            'contents' => nl2br(AppController::sanitize($message))
         ]);
 
         if ($contents === false) {

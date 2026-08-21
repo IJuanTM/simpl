@@ -122,12 +122,14 @@ namespace tests\Controllers {
         {
             $page = $this->instanceWithoutConstructor();
             $method = new ReflectionMethod(PageController::class, 'part');
+            $name = 'does-not-exist-' . uniqid();
 
             ob_start();
-            $method->invoke($page, 'does-not-exist-' . uniqid());
+            $method->invoke($page, $name);
             $output = ob_get_clean();
 
-            $this->assertStringContainsString('not found', $output);
+            // Exact match, not substring - the non-DEV branch's comment output also contains "not found".
+            $this->assertSame("Part \"$name\" not found", $output);
         }
 
         private function instanceWithoutConstructor(): PageController
@@ -151,12 +153,14 @@ namespace tests\Controllers {
         public function testComponentEchoesAVisibleMessageWhenNotFound(): void
         {
             $page = $this->instanceWithoutConstructor();
+            $name = 'does-not-exist-' . uniqid();
 
             ob_start();
-            $page->component('does-not-exist-' . uniqid());
+            $page->component($name);
             $output = ob_get_clean();
 
-            $this->assertStringContainsString('not found', $output);
+            // Exact match, not substring - the non-DEV branch's comment output also contains "not found".
+            $this->assertSame("Component \"$name\" not found", $output);
         }
 
         public function testRoutesShortCircuitBeforeAnyPageResolution(): void

@@ -65,14 +65,17 @@ class Users
             'verified' => ['yes', 'no'],
         ];
 
-        $this->initTable($page);
-        $this->loadUsers();
-        $this->filterUsers();
-        $this->sortUsers();
-        $this->buildPagedUsers();
-
         $subAction = $this->subAction;
-        if ($subAction === null) return;
+
+        // Only the main listing needs the full table pipeline - sub-actions look up one row.
+        if ($subAction === null) {
+            $this->initTable($page);
+            $this->loadUsers();
+            $this->filterUsers();
+            $this->sortUsers();
+            $this->buildPagedUsers();
+            return;
+        }
 
         if ($subAction === 'create') {
             $password = AuthController::generatePassword();
@@ -89,10 +92,15 @@ class Users
         }
 
         if (in_array($subAction, ['edit', 'delete', 'restore', 'purge'])) {
-            $user = $this->requireRecord($page, 'admin/users', function (int $id): ?array {
-                $index = array_search($id, array_column($this->allUsers, 'id'), true);
-                return $index === false ? null : $this->allUsers[$index];
-            });
+            $user = $this->requireRecord($page, 'admin/users', static fn(int $id): ?array => DB::single(
+                SELECT: ['users.*', 'roles.name AS role_name'],
+                FROM: 'users',
+                JOIN: [
+                    ['id', ['user_roles', 'user_id']],
+                    [['user_roles', 'role_id'], ['roles', 'id']],
+                ],
+                WHERE: ['users.id' => $id]
+            ));
             if ($user === null) return;
 
             $this->user = $user;
@@ -102,7 +110,7 @@ class Users
             if ($this->user['last_name'] !== null) $this->user['last_name'] = AppController::sanitize($this->user['last_name']);
             if ($this->user['role_name'] !== null) $this->user['role_name'] = AppController::sanitize($this->user['role_name']);
 
-            if ($this->user['id'] === SessionController::get('user')['id']) {
+            if ($this->user['id'] === $this->currentUserId) {
                 PageController::redirect('admin/users', 2);
                 return;
             }
@@ -221,7 +229,7 @@ class Users
     /**
      * Returns a normalized sort value for the given user and column.
      *
-     * @param array<string, mixed> $user   User row
+     * @param array<string, mixed> $user User row
      * @param string               $column Column key
      *
      * @return int|string

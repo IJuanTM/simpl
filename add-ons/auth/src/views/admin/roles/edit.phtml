@@ -3,7 +3,7 @@ use app\Controllers\FormController;
 use app\Controllers\RequestController;
 ?>
 
-<?php if (isset($this->pageObj->role)) : ?>
+<?php if ($this->pageObj->role !== []) : ?>
 
   <section class="row roles center-x">
     <form class="col g-row-1" method="POST" action="" data-track-form>

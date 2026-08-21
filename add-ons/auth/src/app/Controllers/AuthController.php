@@ -59,25 +59,32 @@ class AuthController
         }
 
         if (strtotime((string)$token['expires']) < time()) {
-            DB::delete(
-                FROM: 'tokens',
-                WHERE: [
-                    'token' => $tokenHash
-                ]
-            );
-
-            self::clearRememberCookie();
+            self::invalidateRememberToken($tokenHash);
             return;
         }
 
         $user = self::getUserWithRole($token['user_id']);
-        if (!$user || !self::setUserSession($user)) return;
+
+        if (!$user || !self::setUserSession($user)) {
+            self::invalidateRememberToken($tokenHash);
+            return;
+        }
+
+        // Rotate the token, not just extend its expiry, so a stolen cookie stops working next use.
+        $newToken = self::generateToken();
+
+        // Can't rotate - fail closed like the branches above, rather than leaving the old token valid.
+        if ($newToken === null) {
+            self::invalidateRememberToken($tokenHash);
+            return;
+        }
 
         $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
         DB::update(
             UPDATE: 'tokens',
             SET: [
+                'token' => hash('sha256', $newToken),
                 'expires' => date('Y-m-d H:i:s', $timestamp)
             ],
             WHERE: [
@@ -85,7 +92,7 @@ class AuthController
             ]
         );
 
-        setcookie('remember', $rememberToken, ['expires' => $timestamp] + AppController::secureCookieFlags());
+        setcookie('remember', $newToken, ['expires' => $timestamp] + AppController::secureCookieFlags());
     }
 
     /**
@@ -96,6 +103,26 @@ class AuthController
     public static function clearRememberCookie(): void
     {
         setcookie('remember', '', ['expires' => time() - 3600] + AppController::secureCookieFlags());
+    }
+
+    /**
+     * Delete a remember token row and clear the client's cookie, used by every
+     * rememberLogin() failure branch past the initial "token not found" check.
+     *
+     * @param string $tokenHash Hashed token value, as stored in the 'tokens' table
+     *
+     * @return void
+     */
+    private static function invalidateRememberToken(string $tokenHash): void
+    {
+        DB::delete(
+            FROM: 'tokens',
+            WHERE: [
+                'token' => $tokenHash
+            ]
+        );
+
+        self::clearRememberCookie();
     }
 
     /**
@@ -172,6 +199,28 @@ class AuthController
     }
 
     /**
+     * Generate a cryptographically secure random token (hex characters).
+     * The token length is trimmed to $length. If $uppercase is true the
+     * returned string is uppercased to be more human-readable in some cases.
+     *
+     * @param int  $length Number of characters to return
+     * @param bool $uppercase Uppercase the resulting token
+     *
+     * @return string|null Token string or null when secure random generation fails
+     */
+    public static function generateToken(int $length = PASSWORD_RESET_CONFIG['token_length'], bool $uppercase = true): string|null
+    {
+        try {
+            $bytes = random_bytes((int)ceil($length / 2));
+            $token = substr(bin2hex($bytes), 0, $length);
+            return $uppercase ? strtoupper($token) : $token;
+        } catch (Exception $e) {
+            Log::error("Could not generate token: {$e->getMessage()}");
+            return null;
+        }
+    }
+
+    /**
      * Retrieve a user row by id.
      *
      * @param int $id User primary key
@@ -194,9 +243,9 @@ class AuthController
      * shown after the redirect, when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message  Optional flash alert message to show after redirecting
-     * @param AlertType   $type     Alert type, used only when $message is given
-     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
+     * @param string|null $message Optional flash alert message to show after redirecting
+     * @param AlertType   $type Alert type, used only when $message is given
+     * @param int         $timeout Alert timeout in seconds, used only when $message is given
      *
      * @return void
      */
@@ -218,7 +267,7 @@ class AuthController
      * If password change is required and not explicitly allowed this will
      * redirect the user to the change-password flow.
      *
-     * @param Role[]|null $allowedRoles        Roles that are allowed, or null to allow any authenticated user
+     * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
@@ -231,7 +280,7 @@ class AuthController
             $uri = $_SERVER['REQUEST_URI'] ?? '';
 
             // Skip auth routes themselves, so a login redirect doesn't loop back into login.
-            if ($uri && !preg_match('#^/(login|logout|register)(/|$)#i', $uri)) SessionController::set('intended_url', $uri);
+            self::setIntendedUrl($uri, '#^/(login|logout|register)(/|$)#i');
 
             PageController::redirect('login');
             exit;
@@ -265,7 +314,7 @@ class AuthController
             $uri = $_SERVER['REQUEST_URI'] ?? '';
 
             // Skip the change-password route itself, so the redirect back doesn't loop into it.
-            if ($uri && !preg_match('#^/(change-password|login|logout)(/|$)#i', $uri)) SessionController::set('intended_url', $uri);
+            self::setIntendedUrl($uri, '#^/(change-password|login|logout)(/|$)#i');
 
             PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
             exit;
@@ -275,6 +324,35 @@ class AuthController
             PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }
+    }
+
+    /**
+     * Store $uri as the post-login/post-password-change redirect target, unless it fails
+     * isSafeRedirectPath() or matches $excludePattern (the route(s) that would otherwise
+     * redirect back into themselves). The only way to write 'intended_url' to the session,
+     * so every call site is guaranteed the safety check.
+     *
+     * @param string $uri Request URI to store
+     * @param string $excludePattern preg_match() pattern for routes to skip storing
+     *
+     * @return void
+     */
+    private static function setIntendedUrl(string $uri, string $excludePattern): void
+    {
+        if ($uri && self::isSafeRedirectPath($uri) && !preg_match($excludePattern, $uri)) SessionController::set('intended_url', $uri);
+    }
+
+    /**
+     * Whether $uri is safe to store and later redirect to.
+     * Only a plain root-relative path passes - anything else risks a protocol-relative offsite redirect.
+     *
+     * @param string $uri
+     *
+     * @return bool
+     */
+    private static function isSafeRedirectPath(string $uri): bool
+    {
+        return (bool)preg_match('#^/(?!/|\\\\)#', $uri);
     }
 
     /**
@@ -367,7 +445,8 @@ class AuthController
     }
 
     /**
-     * Convenience: generate a random password using the token generator.
+     * Generate a random password that always satisfies PASSWORD_CONFIG's policy.
+     * Uses an unambiguous charset (no 0/O/1/l/I) since it's meant to be typed by a human.
      *
      * @param int $length Desired password length
      *
@@ -375,27 +454,29 @@ class AuthController
      */
     public static function generatePassword(int $length = PASSWORD_CONFIG['generated_length']): string|null
     {
-        return self::generateToken($length, false);
-    }
+        $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $lower = 'abcdefghijkmnpqrstuvwxyz';
+        $digits = '23456789';
+        $all = $upper . $lower . $digits;
 
-    /**
-     * Generate a cryptographically secure random token (hex characters).
-     * The token length is trimmed to $length. If $uppercase is true the
-     * returned string is uppercased to be more human-readable in some cases.
-     *
-     * @param int  $length    Number of characters to return
-     * @param bool $uppercase Uppercase the resulting token
-     *
-     * @return string|null Token string or null when secure random generation fails
-     */
-    public static function generateToken(int $length = PASSWORD_RESET_CONFIG['token_length'], bool $uppercase = true): string|null
-    {
         try {
-            $bytes = random_bytes((int)ceil($length / 2));
-            $token = substr(bin2hex($bytes), 0, $length);
-            return $uppercase ? strtoupper($token) : $token;
+            $password = [
+                $upper[random_int(0, strlen($upper) - 1)],
+                $lower[random_int(0, strlen($lower) - 1)],
+                $digits[random_int(0, strlen($digits) - 1)],
+            ];
+
+            for ($i = count($password); $i < $length; $i++) $password[] = $all[random_int(0, strlen($all) - 1)];
+
+            // Fisher-Yates shuffle so the guaranteed characters aren't always in the same position.
+            for ($i = count($password) - 1; $i > 0; $i--) {
+                $j = random_int(0, $i);
+                [$password[$i], $password[$j]] = [$password[$j], $password[$i]];
+            }
+
+            return implode('', $password);
         } catch (Exception $e) {
-            Log::error("Could not generate token: {$e->getMessage()}");
+            Log::error("Could not generate password: {$e->getMessage()}");
             return null;
         }
     }
@@ -428,6 +509,20 @@ class AuthController
             FROM: 'users',
             WHERE: compact('id')
         );
+    }
+
+    /**
+     * Whether an account exists and still has a pending verification. Shared by every page
+     * that must respond identically to a missing account and an already-verified one, so
+     * they can't be used to enumerate account existence/verification status.
+     *
+     * @param int $id
+     *
+     * @return bool
+     */
+    public static function needsVerification(int $id): bool
+    {
+        return self::exists($id) && !self::isVerified($id);
     }
 
     /**
@@ -519,9 +614,9 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type, and hasn't expired. Comparison is case-insensitive.
      *
-     * @param int       $id    User id
+     * @param int       $id User id
      * @param string    $token Token to check
-     * @param TokenType $type  Token type
+     * @param TokenType $type Token type
      *
      * @return bool True if tokens match and the token hasn't expired
      */
@@ -554,13 +649,21 @@ class AuthController
      */
     public static function checkPassword(string $email, string $password): bool
     {
-        $hash = DB::single(
-            SELECT: 'password',
-            FROM: 'users',
-            WHERE: compact('email')
-        )['password'] ?? null;
+        return (new Timebox())->call(function (Timebox $timebox) use ($email, $password) {
+            $hash = DB::single(
+                SELECT: 'password',
+                FROM: 'users',
+                WHERE: compact('email')
+            )['password'] ?? null;
 
-        return $hash && password_verify($password, $hash);
+            if ($hash && password_verify($password, $hash)) {
+                $timebox->returnEarly();
+                return true;
+            }
+
+            if (!$hash) password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']);
+            return false;
+        }, TIMING_FLOOR_MS['password_confirm'] * 1000);
     }
 
     /**
@@ -569,7 +672,7 @@ class AuthController
      * when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
-     * @param string $password   Plaintext password to verify
+     * @param string $password Plaintext password to verify
      *
      * @return array|null Matched user row on success, null on any failure
      */

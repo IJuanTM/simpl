@@ -36,19 +36,13 @@ class VerifyAccountPage
 
         $id = (int)$id;
 
-        if (!AuthController::exists($id)) {
-            FormController::addAlert('We could not find your account! Please check your mail.', AlertType::ERROR);
-            PageController::redirect(REDIRECT, 2);
+        if (!AuthController::needsVerification($id)) {
+            FormController::addAlert('This verification link is no longer valid.', AlertType::INFO);
+            PageController::redirect('login', 2);
             return;
         }
 
         $this->resendCooldown = RateLimiter::retryAfterMs('resend-verification-' . $id);
-
-        if (AuthController::isVerified($id)) {
-            FormController::addAlert('Your account has already been verified!', AlertType::INFO);
-            PageController::redirect('login', 2);
-            return;
-        }
 
         $code = AppController::sanitize($page->subpage(1) ?? '');
 

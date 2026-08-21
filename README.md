@@ -14,9 +14,9 @@
 [![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
 [![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
 [![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com/)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev/)
+[![Sass logo](https://img.shields.io/badge/sass-1.102.0-CC6699?logo=sass)](https://sass-lang.com/)
+[![TypeScript logo](https://img.shields.io/badge/typescript-7.0.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite logo](https://img.shields.io/badge/vite-8.2.1-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -37,6 +37,8 @@
 * Makes use of Vite for bundling TypeScript files and compiling Sass files, as well as live reloading
 * Comes with example pages and a default landing page
 * A collection of handy TypeScript functions
+* Ships with its own PHPUnit test suite
+* PHPStan static analysis configured out of the box
 
 _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
@@ -48,7 +50,7 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net/) >= 8.4.x
+* [PHP](https://www.php.net/) >= 8.5.x
 * [Composer](https://getcomposer.org/) >= 2.9.x
 * [Node.js](https://nodejs.org/) >= 24.x.x
 * [npm](https://www.npmjs.com/) >= 11.x.x
@@ -109,6 +111,8 @@ Available commands:
 - `npx @ijuantm/simpl-addon --list` - List all available add-ons
 - `npx @ijuantm/simpl-addon --help` - Show help
 
+Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - install the dependency first. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
+
 ### Step 6: Start coding!
 
 Now you're all set up and ready to start coding! This is the framework in a nutshell:
@@ -141,7 +145,7 @@ Feel free to add your own config files here, as each `.php` file in this folder 
 In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
-    - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+    - Besides these there are also the `AlertController`, `AliasController`, `SessionController`, `BreadcrumbController`, `RequestController` and `FormController`, used for handling alerts, aliases, sessions, breadcrumbs, sanitized request input and form validation respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
@@ -157,7 +161,7 @@ You can find the HTML code in the `src/views` folder, here you can find the `hom
 
 The styling is located in the `src/scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
 
-The TypeScript code is located in the `src/ts` folder. Simpl makes use of Rollup to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
+The TypeScript code is located in the `src/ts` folder. Simpl makes use of Vite to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
 
 #### Public
 
@@ -165,9 +169,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s
-structure. Run `composer install` once, then `composer test`, to check that everything still
-works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test`, to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+
+#### Static Analysis
+
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -266,7 +272,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Added options for aliases to pages (multiple urls for one page, or custom urls)
 * Improved error handling and logging
 * Moved error page logic to its own Page class
-* Added a timestamp to <head> files to prevent caching issues (dynamically added in the url() method)
+* Added a timestamp to <head> files to prevent caching issues (dynamically added in the url () method)
 * Improved tsconfig.json file
 * Added enums to the php code for better type safety and readability
 * The auth add-on now has config options for password requirements and to enable/disable user email verification
@@ -310,6 +316,10 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Automated subpage loading, reducing the PHP boilerplate a page needs; improved error page handling with its own redirect function and a new `ErrorCode` enum
 * Added a user profile page accessible to every user, with inline editing and profile image handling
 * Various console output, email template, and accessibility improvements throughout
+* Restructured the repo into `core/` (renamed from `framework/`) and `add-ons/`, each split into a `src/` and `tests/` folder that both ship to installed projects
+* Split the database layer and scheduler out of the auth add-on into their own `db` add-on, so any add-on needing persistence or scheduled tasks can depend on it without pulling in auth-specific tables
+* Added a full PHPUnit test suite covering the framework and add-ons
+* Added PHPStan static analysis, configured at level 6
 
 <br>
 
@@ -317,7 +327,16 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 ### Composer packages
 
+#### Development
+
+* [PHPUnit](https://phpunit.de/)
+* [PHPStan](https://phpstan.org/)
+* [Roave security advisories](https://github.com/Roave/SecurityAdvisories/)
+
+#### Production
+
 * [PHP dotenv](https://github.com/vlucas/phpdotenv/)
+* [PHPMailer](https://github.com/PHPMailer/PHPMailer/)
 
 ### Node packages
 

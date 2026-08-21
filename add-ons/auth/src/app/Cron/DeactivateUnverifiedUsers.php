@@ -13,27 +13,22 @@ class DeactivateUnverifiedUsers
 {
     public static function run(): void
     {
+        // A user with no verification token is already verified, so only join-matched rows qualify.
         $users = DB::select(
-            SELECT: '*',
+            SELECT: ['users.id', 'users.email', 'tokens.created AS token_created'],
             FROM: 'users',
+            JOIN: ['id', ['tokens', 'user_id']],
             WHERE: [
-                'status' => UserStatus::ACTIVE->value
+                'users.status' => UserStatus::ACTIVE->value,
+                'tokens.type' => TokenType::VERIFICATION->value
             ]
         );
 
+        $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['unverified_deactivation_after_days'] . ' days'));
         $deactivated = 0;
 
         foreach ($users as $user) {
-            $token = DB::single(
-                SELECT: '*',
-                FROM: 'tokens',
-                WHERE: [
-                    'user_id' => $user['id'],
-                    'type' => TokenType::VERIFICATION->value
-                ]
-            );
-
-            if (!$token || $token['created'] >= date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['unverified_deactivation_after_days'] . ' days'))) continue;
+            if ($user['token_created'] >= $cutoff) continue;
 
             DB::update(
                 UPDATE: 'users',

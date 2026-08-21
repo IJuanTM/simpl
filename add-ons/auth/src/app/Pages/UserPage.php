@@ -14,6 +14,7 @@ use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Enums\Role;
 use app\Models\Page;
+use app\Utils\RateLimiter;
 
 /**
  * UserPage
@@ -78,6 +79,25 @@ class UserPage
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
         ) return;
 
+        $currentEmail = DB::single(SELECT: 'email', FROM: 'users', WHERE: compact('id'))['email'] ?? null;
+        $emailChanged = $currentEmail !== null && $_POST['email'] !== $currentEmail;
+
+        // Email changes are sensitive - the current password stops a hijacked session from redirecting password resets.
+        if ($emailChanged) {
+            if (!FormController::validate('current-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])) return;
+
+            if (!RateLimiter::attempt("change-email-{$id}", LOCKOUT_CONFIG['change_email']['max_attempts'], LOCKOUT_CONFIG['change_email']['window_seconds'])) {
+                FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+                return;
+            }
+
+            if (!AuthController::checkPassword($currentEmail, $_POST['current-password'])) {
+                $_POST['current-password'] = '';
+                FormController::addAlert('Your current password is incorrect!', AlertType::WARNING);
+                return;
+            }
+        }
+
         if ($_POST['username'] !== '' && AuthController::usernameTakenByOtherUser($_POST['username'], $id)) {
             $_POST['username'] = $this->user['username'] ?? '';
             FormController::addAlert('That username is already taken!', AlertType::WARNING);
@@ -100,6 +120,12 @@ class UserPage
             ],
             WHERE: compact('id')
         );
+
+        if (VERIFICATION_CONFIG['required'] && $emailChanged) {
+            AuthController::issueVerificationToken($id, $_POST['email']);
+            PageController::redirectWithAlert('user/' . $id, 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
+            return;
+        }
 
         PageController::redirectWithAlert('user/' . $id, 'Profile updated successfully!', AlertType::SUCCESS, 4);
     }
@@ -182,14 +208,15 @@ class UserPage
             WHERE: compact('id')
         )['profile_img'] ?? null;
 
-        if ($old && is_file($path . $old)) unlink($path . $old);
-
         $name = "{$id}_" . time() . ".$extension";
 
         if (!move_uploaded_file($file['tmp_name'], $path . $name)) {
             self::uploadFailed('Image upload failed. Please try again.');
             return;
         }
+
+        // Remove the old file only after the new one is confirmed written, so a failed upload can't orphan the DB reference.
+        if ($old && is_file($path . $old)) unlink($path . $old);
 
         DB::update(
             UPDATE: 'users',
