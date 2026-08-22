@@ -31,8 +31,8 @@ class RateLimiter
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
-     * @param string $key           Unique identifier for the action being limited
-     * @param int    $max           Maximum number of attempts allowed in the window
+     * @param string $key Unique identifier for the action being limited
+     * @param int    $max Maximum number of attempts allowed in the window
      * @param int    $windowSeconds Rolling time window in seconds
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded

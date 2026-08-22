@@ -43,7 +43,7 @@ class DatabaseSeeder
             Schema::disableForeignKeys();
 
             $tables = DB::query('SELECT LOWER(table_name) AS table_name FROM information_schema.tables WHERE table_schema = DATABASE()');
-            foreach ($tables as $row) DB::query("TRUNCATE TABLE $row[table_name]");
+            foreach ($tables as $row) DB::query("TRUNCATE TABLE `$row[table_name]`");
 
             Schema::enableForeignKeys();
         } catch (PDOException $e) {

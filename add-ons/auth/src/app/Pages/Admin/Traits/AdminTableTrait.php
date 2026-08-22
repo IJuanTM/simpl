@@ -79,7 +79,7 @@ trait AdminTableTrait
             $widthAttr = $column['width'] ? ' data-width="' . $column['width'] . '"' : '';
             $sortClass = !empty($column['sortable']) ? 'sortable ' . $this->getColumnSortClass($column) : '';
 
-            $html .= '<th class="' . $sortClass . '"' . $widthAttr . '>';
+            $html .= '<th scope="col" class="' . $sortClass . '"' . $widthAttr . '>';
             $html .= !empty($column['sortable'])
                 ? '<a class="table-sort-link" href="' . $href . '">' . $column['label'] . '</a>'
                 : '<p class="table-header-label">' . $column['label'] . '</p>';
@@ -293,7 +293,7 @@ trait AdminTableTrait
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
-     * @param callable $lookup    (int $id): ?array
+     * @param callable $lookup (int $id): ?array
      *
      * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */

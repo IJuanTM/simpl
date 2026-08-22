@@ -8,6 +8,7 @@ use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Pages\ErrorPage;
 use PHPUnit\Framework\TestCase;
+use tests\Support\HeadersAssertionTrait;
 
 /**
  * The invalid-error-code branch calls PageController::error() followed by a real exit,
@@ -17,6 +18,8 @@ use PHPUnit\Framework\TestCase;
  */
 class ErrorPageTest extends TestCase
 {
+    use HeadersAssertionTrait;
+
     public function testValidCodeSetsCodeAndMessage(): void
     {
         $errorPage = new ErrorPage(new Page('error', ['404']));
@@ -59,16 +62,6 @@ class ErrorPageTest extends TestCase
         new ErrorPage(new Page('error', ['404']));
 
         $this->assertTrue($this->headersContain('refresh: 2;'));
-    }
-
-    private function headersContain(string $needle): bool
-    {
-        if (!function_exists('xdebug_get_headers')) {
-            $this->markTestSkipped('xdebug_get_headers() not available');
-        }
-
-        foreach (xdebug_get_headers() as $header) if (str_contains($header, $needle)) return true;
-        return false;
     }
 
     protected function setUp(): void

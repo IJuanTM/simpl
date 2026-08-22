@@ -83,11 +83,16 @@ class ScheduledTask
 
         [$minute, $hour, $day, $month, $weekday] = $parts;
 
+        $dayMatches = $this->matchesCronField((int)date('j'), $day);
+        $weekdayMatches = $this->matchesCronField((int)date('w'), $weekday);
+
+        // Standard cron semantics: day-of-month and weekday OR together when both are restricted, AND otherwise.
+        $dayOrWeekday = $day === '*' || $weekday === '*' ? $dayMatches && $weekdayMatches : $dayMatches || $weekdayMatches;
+
         return $this->matchesCronField((int)date('i'), $minute)
             && $this->matchesCronField((int)date('H'), $hour)
-            && $this->matchesCronField((int)date('j'), $day)
-            && $this->matchesCronField((int)date('n'), $month)
-            && $this->matchesCronField((int)date('w'), $weekday);
+            && $dayOrWeekday
+            && $this->matchesCronField((int)date('n'), $month);
     }
 
     private function matchesCronField(int $current, string $field): bool

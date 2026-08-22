@@ -39,7 +39,6 @@ class UserPage
             return;
         }
 
-        // Load user with role in a single JOIN query.
         $user = AuthController::getUserWithRole($id);
 
         if (!$user) {

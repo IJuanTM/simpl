@@ -50,6 +50,7 @@ auth/
 │   │   ├── Controllers/  # AuthController, MailController, plus patches into App/Alias/Form
 │   │   ├── Cron/         # Scheduled task implementations
 │   │   ├── Database/     # Table/seeder definitions only - run by the db add-on's runners
+│   │   ├── Enums/        # Role, TokenType, UserStatus
 │   │   ├── Mails/        # Email templates (verification, reset, account-created, contact)
 │   │   └── Pages/        # Page controllers (Login, Register, Profile, Users, etc.)
 │   ├── scss/             # Styling for forms, tables, and pages

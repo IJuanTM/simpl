@@ -9,6 +9,7 @@ use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Database\DB;
 use app\Enums\AlertType;
+use app\Enums\Role;
 use app\Models\Page;
 use app\Models\Url;
 use app\Pages\Admin\Traits\AdminTableTrait;
@@ -179,6 +180,11 @@ class Roles
      */
     private function deleteRole(int $id): void
     {
+        if (in_array($this->role['name'], array_column(Role::cases(), 'value'), true)) {
+            FormController::addAlert('This role is required by the framework and cannot be deleted.', AlertType::WARNING);
+            return;
+        }
+
         $userCount = DB::count(
             FROM: 'user_roles',
             WHERE: [
@@ -229,7 +235,7 @@ class Roles
 
         return '<td class="table-actions"><div class="row g-col-0.5 center-y">'
             . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '" aria-label="Edit role ' . $name . '"><i class="fas fa-pen"></i></a>'
-            . '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $name . '" data-role-user-count="' . $row['user_count'] . '" aria-label="Delete role ' . $name . '"><i class="fas fa-trash"></i></button>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $name . '" data-role-user-count="' . $row['user_count'] . '" aria-label="Delete role ' . $name . '"><i class="fas fa-trash"></i></button>'
             . '</div></td>';
     }
 

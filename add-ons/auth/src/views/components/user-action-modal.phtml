@@ -6,14 +6,14 @@ use app\Controllers\AppController;
  * Shared confirmation modal for a single-user action (delete/purge/restore).
  *
  * @var string $triggerAttr Bare data-* attribute that opens this modal, e.g. "data-user-delete-modal"
- * @var string $ariaLabel   Dialog aria-label, e.g. "Delete user"
- * @var string $title       Modal heading, e.g. "Delete user"
- * @var string $question    Confirmation question shown above the user info block
- * @var array  $quotes      List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
- * @var string $formClass   Class on the submit <form>, used by modal.ts to find it
+ * @var string $ariaLabel Dialog aria-label, e.g. "Delete user"
+ * @var string $title Modal heading, e.g. "Delete user"
+ * @var string $question Confirmation question shown above the user info block
+ * @var array  $quotes List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
+ * @var string $formClass Class on the submit <form>, used by modal.ts to find it
  * @var string $buttonClass Class on the submit <button>
- * @var string $icon        Font Awesome icon class for the submit button, e.g. "fa-user-slash"
- * @var string $buttonText  Submit button label, e.g. "Delete user"
+ * @var string $icon Font Awesome icon class for the submit button, e.g. "fa-user-slash"
+ * @var string $buttonText Submit button label, e.g. "Delete user"
  */
 ?>
 <dialog class="row modal-overlay center invisible" <?= AppController::sanitize($triggerAttr) ?> aria-modal="true" aria-label="<?= AppController::sanitize($ariaLabel) ?>">

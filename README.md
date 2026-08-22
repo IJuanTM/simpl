@@ -320,6 +320,11 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Split the database layer and scheduler out of the auth add-on into their own `db` add-on, so any add-on needing persistence or scheduled tasks can depend on it without pulling in auth-specific tables
 * Added a full PHPUnit test suite covering the framework and add-ons
 * Added PHPStan static analysis, configured at level 6
+* Added a `TokenType` enum for token management, replacing loose string literals
+* Fixed rate-limiting, timing-safety and account/token enumeration gaps across the login, registration, password reset, verification and contact flows, plus a set of correctness bugs (remember-me token rotation, session handling, breadcrumb sanitization and more)
+* Updated npm and composer dependencies
+* Accessibility (ARIA) improvements and cross-page HTML/styling consistency pass across all views
+* Additional correctness and security hardening found via a full-project code review (page routing path validation, query builder parameter handling, login rate limiting, password reset throttling, task scheduler timing, and more)
 
 <br>
 

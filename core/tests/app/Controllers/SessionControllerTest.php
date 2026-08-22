@@ -45,8 +45,8 @@ class SessionControllerTest extends TestCase
 
     public function testSettingAKeyToNullReadsBackAsNotPresent(): void
     {
-        // has() uses isset(), which treats a null value the same as absent - get() stays
-        // consistent with that since it checks has() first, so this is intentional, not a leak.
+        // has() uses isset(), which treats a null value the same as absent - get() stays consistent with that since it checks has() first.
+        // This is intentional, not a leak.
         SessionController::set('key', null);
 
         $this->assertFalse(SessionController::has('key'));

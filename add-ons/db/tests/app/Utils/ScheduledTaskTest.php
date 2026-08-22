@@ -136,4 +136,24 @@ class ScheduledTaskTest extends TestCase
         $this->assertFalse($this->matchesCronField(10, '1-10/2'));
         $this->assertFalse($this->matchesCronField(11, '1-10/2'));
     }
+
+    public function testIsCronDueOrsDayOfMonthAndWeekdayWhenBothAreRestricted(): void
+    {
+        $today = (int)date('j');
+        $otherDay = $today === 1 ? 2 : 1;
+        $todayWeekday = (int)date('w');
+        $otherWeekday = ($todayWeekday + 1) % 7;
+
+        $this->assertTrue($this->task()->cron("* * $today * *")->isDue(null));
+        $this->assertTrue($this->task()->cron("* * * * $todayWeekday")->isDue(null));
+        $this->assertTrue($this->task()->cron("* * $today * $otherWeekday")->isDue(null));
+        $this->assertFalse($this->task()->cron("* * $otherDay * $otherWeekday")->isDue(null));
+    }
+
+    public function testIsCronDueAndsDayOfMonthAndWeekdayWhenOneIsWildcard(): void
+    {
+        $otherDay = (int)date('j') === 1 ? 2 : 1;
+
+        $this->assertFalse($this->task()->cron("* * $otherDay * *")->isDue(null));
+    }
 }

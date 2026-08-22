@@ -34,6 +34,7 @@ namespace tests\Controllers {
     use PHPUnit\Framework\TestCase;
     use ReflectionClass;
     use ReflectionMethod;
+    use tests\Support\HeadersAssertionTrait;
 
     /**
      * Only the constructor branches that return before render() are exercised directly
@@ -45,22 +46,14 @@ namespace tests\Controllers {
      */
     class PageControllerTest extends TestCase
     {
+        use HeadersAssertionTrait;
+
         public function testErrorRedirectsToTheCodeSpecificErrorPage(): void
         {
             PageController::error(ErrorCode::NOT_FOUND);
 
             $this->assertSame(302, http_response_code());
             $this->assertTrue($this->headersContain('/error/404'));
-        }
-
-        private function headersContain(string $needle): bool
-        {
-            if (!function_exists('xdebug_get_headers')) {
-                $this->markTestSkipped('xdebug_get_headers() not available');
-            }
-
-            foreach (xdebug_get_headers() as $header) if (str_contains($header, $needle)) return true;
-            return false;
         }
 
         public function testErrorIncludesAnEncodedRedirectParamWhenGiven(): void

@@ -27,7 +27,6 @@ class Page
         $history = self::history();
         $subUrl = $this->subUrl();
 
-        // Push current subUrl to history and keep the last HISTORY_DEPTH entries
         if (end($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -HISTORY_DEPTH));
 
         $this->title = APP_NAME;

@@ -7,6 +7,7 @@ namespace tests\Controllers;
 use app\Controllers\AliasController;
 use app\Models\Alias;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 class AliasControllerTest extends TestCase
 {
@@ -44,5 +45,10 @@ class AliasControllerTest extends TestCase
         $resolved = AliasController::resolve('welcome', []);
 
         $this->assertSame('home', $resolved['page']);
+    }
+
+    protected function setUp(): void
+    {
+        (new ReflectionProperty(AliasController::class, 'aliases'))->setValue(null, []);
     }
 }

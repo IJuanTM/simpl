@@ -140,6 +140,15 @@ class DBTest extends TestCase
         $this->assertSame([], $params);
     }
 
+    public function testCombineWhereDisambiguatesParamNamesThatCollideAcrossAndOrHalves(): void
+    {
+        // AND-side 'or_status' and OR-side 'status' (prefixed 'or_') both normalize to ':or_status'.
+        [$clause, $params] = $this->call('combineWhere', [['or_status' => 'x'], ['status' => 'y']]);
+
+        $this->assertSame('or_status = :or_status AND (status = :or_status_1)', $clause);
+        $this->assertSame([':or_status' => 'x', ':or_status_1' => 'y'], $params);
+    }
+
     public function testBuildJoinFromTheMainTable(): void
     {
         $clause = $this->call('buildJoin', ['users', ['id', ['user_roles', 'user_id']]]);

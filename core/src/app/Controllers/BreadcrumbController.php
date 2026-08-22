@@ -17,18 +17,6 @@ class BreadcrumbController
     private static array $trail = [];
 
     /**
-     * Sets the breadcrumb trail for the current page. A null url marks the current crumb.
-     *
-     * @param array<int, array{label: string, url: string|null}> $trail
-     *
-     * @return void
-     */
-    public static function set(array $trail): void
-    {
-        self::$trail = $trail;
-    }
-
-    /**
      * Builds and sets the breadcrumb trail from the page's URL segments.
      *
      * @return void
@@ -40,12 +28,28 @@ class BreadcrumbController
 
         foreach ([$page->page, ...$page->subpages] as $segment) {
             $path = $path === '' ? $segment : "$path/$segment";
-            $trail[] = ['label' => AppController::sanitize(ucfirst(str_replace('-', ' ', $segment))), 'url' => AppController::sanitize($path)];
+            $trail[] = ['label' => ucfirst(str_replace('-', ' ', $segment)), 'url' => $path];
         }
 
         $trail[array_key_last($trail)]['url'] = null;
 
-        self::$trail = $trail;
+        self::set($trail);
+    }
+
+    /**
+     * Sets the breadcrumb trail for the current page. A null url marks the current crumb.
+     * Sanitizes label/url here, so every caller's output is safe regardless of input.
+     *
+     * @param array<int, array{label: string, url: string|null}> $trail
+     *
+     * @return void
+     */
+    public static function set(array $trail): void
+    {
+        self::$trail = array_map(static fn(array $crumb): array => [
+            'label' => AppController::sanitize($crumb['label']),
+            'url' => $crumb['url'] !== null ? AppController::sanitize($crumb['url']) : null,
+        ], $trail);
     }
 
     /**

@@ -1,6 +1,5 @@
 const inputPassword = document.querySelector('input.input-password') as HTMLInputElement | null;
 const passwordToggleIcon = document.querySelector('i.password-toggle') as HTMLElement | null;
-const passwordWarning = document.querySelector('div.password-warning') as HTMLElement | null;
 const messageWarning = document.querySelector('p.message-warning') as HTMLElement | null;
 
 export const inputModule = {
@@ -13,6 +12,8 @@ export const inputModule = {
   },
 
   capsLockWarning: (event: KeyboardEvent): void => {
+    const input = event.currentTarget as HTMLElement;
+    const passwordWarning = input.closest('.form-group')?.querySelector<HTMLElement>('.password-warning');
     if (!passwordWarning) return;
 
     if (event.getModifierState('CapsLock')) passwordWarning.classList.remove('hidden');
@@ -40,9 +41,8 @@ export const inputModule = {
       field.addEventListener('keydown', () => inputModule.removeError(field as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement))
     );
 
-    if (inputPassword) {
-      passwordToggleIcon?.addEventListener('click', inputModule.togglePassword);
-      inputPassword.addEventListener('keydown', inputModule.capsLockWarning);
-    }
+    if (inputPassword) passwordToggleIcon?.addEventListener('click', inputModule.togglePassword);
+
+    document.querySelectorAll<HTMLInputElement>('input[type="password"]').forEach(input => input.addEventListener('keydown', inputModule.capsLockWarning));
   }
 };

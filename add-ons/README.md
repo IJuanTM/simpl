@@ -8,9 +8,7 @@ Extensions that add functionality to the Simpl framework. Add-ons range from sim
 
 **Database layer and task scheduler**
 
-A modern query builder, schema/migration DDL builder, generic migration/seeder runners, and a
-cron-style scheduler - with no domain-specific tables or tasks of its own, a foundation other
-add-ons can depend on.
+A modern query builder, schema/migration DDL builder, generic migration/seeder runners, and a cron-style scheduler - with no domain-specific tables or tasks of its own, a foundation other add-ons can depend on.
 
 **Includes:**
 

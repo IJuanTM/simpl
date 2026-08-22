@@ -15,13 +15,7 @@ section.cookie {
   border-radius: .5rem;
   background-color: var(--bg-accent);
 
-  @include breakpoint-down(sm) {
-    width: calc(100% - 2rem);
-  }
-
-  @include breakpoint-up(sm) {
-    max-width: 32rem;
-  }
+  @include floating-box-width;
 
   > div.row {
     @include breakpoint-down(sm) {

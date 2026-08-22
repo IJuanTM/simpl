@@ -54,12 +54,17 @@ class RateLimitedFormTest extends TestCase
 
     public function testFirstAttemptWithinTheWindowIsAllowed(): void
     {
-        $host = new RateLimitedFormHost();
-        $prefix = 'contact-' . uniqid();
-        $this->init($host, $prefix);
-        $this->rlKey($host);
+        $host = $this->newSubmittedHost();
 
         $this->assertTrue($this->attemptRateLimit($host, 60));
+    }
+
+    private function newSubmittedHost(): RateLimitedFormHost
+    {
+        $host = new RateLimitedFormHost();
+        $this->init($host, 'contact-' . uniqid());
+        $this->rlKey($host);
+        return $host;
     }
 
     private function attemptRateLimit(RateLimitedFormHost $host, int $windowSeconds): bool
@@ -69,10 +74,7 @@ class RateLimitedFormTest extends TestCase
 
     public function testSecondAttemptWithinTheWindowIsBlockedAndSetsCooldown(): void
     {
-        $host = new RateLimitedFormHost();
-        $prefix = 'contact-' . uniqid();
-        $this->init($host, $prefix);
-        $this->rlKey($host);
+        $host = $this->newSubmittedHost();
 
         $this->attemptRateLimit($host, 60);
         $this->assertFalse($this->attemptRateLimit($host, 60));
@@ -81,10 +83,7 @@ class RateLimitedFormTest extends TestCase
 
     public function testBlockedAttemptQueuesAWarningAlert(): void
     {
-        $host = new RateLimitedFormHost();
-        $prefix = 'contact-' . uniqid();
-        $this->init($host, $prefix);
-        $this->rlKey($host);
+        $host = $this->newSubmittedHost();
 
         $this->attemptRateLimit($host, 60);
         $this->attemptRateLimit($host, 60);

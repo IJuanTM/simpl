@@ -7,10 +7,12 @@ namespace app\Pages;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
+use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\TokenType;
 use app\Models\Page;
+use app\Utils\RateLimiter;
 
 /**
  * ResetPasswordPage
@@ -50,15 +52,52 @@ class ResetPasswordPage
             return;
         }
 
-        // The token must match before any password change is allowed (checked on both GET and POST)
-        if (!AuthController::checkToken($id, $token, TokenType::RESET)) {
-            $this->disableForm = true;
-            FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
-            return;
+        // A token verified earlier in this session is trusted without re-throttling.
+        // Reloading the page or resubmitting the form then can't burn the guess budget on a token that was never re-guessed.
+        $sessionKey = "reset-token-verified-$id";
+        $tokenHash = hash('sha256', strtoupper($token));
+
+        if (SessionController::get($sessionKey) !== $tokenHash) {
+            if ($this->throttle($id)) {
+                $this->disableForm = true;
+                return;
+            }
+
+            if (!AuthController::checkToken($id, $token, TokenType::RESET)) {
+                $this->disableForm = true;
+                FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
+                return;
+            }
+
+            SessionController::set($sessionKey, $tokenHash);
         }
 
         // Reached only once the link's user id and token pass all the checks above.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
+    }
+
+    /**
+     * Records a reset-token check attempt, checking per-account then per-IP limits.
+     *
+     * @param int $id User ID from the reset link
+     *
+     * @return bool True when either attempt limit has been exceeded
+     */
+    private function throttle(int $id): bool
+    {
+        if (!RateLimiter::attempt("reset-attempt-account-$id", PASSWORD_RESET_CONFIG['token_max_attempts'], PASSWORD_RESET_CONFIG['token_attempt_window'])) {
+            FormController::addAlert('Too many reset attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
+            return true;
+        }
+
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+        if (!RateLimiter::attempt("reset-attempt-ip-$ip", PASSWORD_RESET_CONFIG['token_ip_max_attempts'], PASSWORD_RESET_CONFIG['token_ip_attempt_window'])) {
+            FormController::addAlert('Too many reset attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -83,7 +122,7 @@ class ResetPasswordPage
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id       User ID
+     * @param int    $id User ID
      * @param string $password New password
      *
      * @return void
@@ -93,6 +132,7 @@ class ResetPasswordPage
         AuthController::updatePassword($id, $password);
 
         AuthController::deleteToken($id, TokenType::RESET);
+        SessionController::remove("reset-token-verified-$id");
 
         FormController::addAlert('Success! Your password has been reset!', AlertType::SUCCESS);
         PageController::redirect('login', 4);

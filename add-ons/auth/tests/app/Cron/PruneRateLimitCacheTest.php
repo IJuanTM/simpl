@@ -12,6 +12,9 @@ class PruneRateLimitCacheTest extends TestCase
 {
     public function testReportsWhenNothingWasPruned(): void
     {
+        // Clears any stale file left over from other runs/local dev use of this shared directory.
+        RateLimiter::prune(0);
+
         ob_start();
         PruneRateLimitCache::run();
         $output = ob_get_clean();
@@ -30,6 +33,6 @@ class PruneRateLimitCacheTest extends TestCase
         PruneRateLimitCache::run();
         $output = ob_get_clean();
 
-        $this->assertStringContainsString('Pruned 1 stale rate limit file', $output);
+        $this->assertMatchesRegularExpression('/Pruned [1-9]\d* stale rate limit files?/', $output);
     }
 }

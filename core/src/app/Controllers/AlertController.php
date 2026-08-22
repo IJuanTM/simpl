@@ -31,7 +31,7 @@ class AlertController
      * Sets a global alert message in the session with a specified type and optional timeout.
      *
      * @param string    $message The alert message to be displayed.
-     * @param AlertType $type    The type of the alert, indicating its severity or nature.
+     * @param AlertType $type The type of the alert, indicating its severity or nature.
      * @param int       $timeout Seconds until the alert expires. 0 (default) means the alert persists until the next page load.
      *
      * @return void

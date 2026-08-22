@@ -18,6 +18,16 @@ class BreadcrumbControllerTest extends TestCase
         $this->assertSame($trail, BreadcrumbController::get());
     }
 
+    public function testSetSanitizesLabelAndUrl(): void
+    {
+        BreadcrumbController::set([['label' => '<script>', 'url' => '"><script>']]);
+
+        $trail = BreadcrumbController::get();
+
+        $this->assertStringNotContainsString('<script>', $trail[0]['label']);
+        $this->assertStringNotContainsString('<script>', (string)$trail[0]['url']);
+    }
+
     public function testGetReturnsAnEmptyArrayByDefault(): void
     {
         $this->assertSame([], BreadcrumbController::get());

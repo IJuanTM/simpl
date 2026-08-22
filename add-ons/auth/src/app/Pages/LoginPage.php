@@ -110,6 +110,8 @@ class LoginPage
      */
     private function calculateLockout(string $column, mixed $value, array $config): ?int
     {
+        // Rows are newest-first, and only those within one window of the newest are ever counted below.
+        // A generous multiple of max_attempts is more than enough to cover that window, regardless of total attempt history.
         $rows = DB::select(
             SELECT: "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
             FROM: 'login_attempts',
@@ -117,7 +119,8 @@ class LoginPage
                 $column => $value,
                 'success' => 0
             ],
-            ORDER_BY: 'attempt_time DESC'
+            ORDER_BY: 'attempt_time DESC',
+            LIMIT: $config['max_attempts'] * 10
         );
 
         if (!$rows) return null;

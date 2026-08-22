@@ -834,7 +834,9 @@ class AuthController
      * @param int    $id
      * @param string $email
      *
-     * @return bool True on success, false if token generation or sending failed
+     * @return bool True if token generation and email queueing succeeded, false otherwise. Under
+     *               FastCGI the actual delivery is deferred past this call, so true doesn't guarantee
+     *               the email reached the recipient - only that generation and queueing did.
      */
     public static function issueVerificationToken(int $id, string $email): bool
     {
@@ -892,7 +894,7 @@ class AuthController
      * @param string $to
      * @param string $code
      *
-     * @return bool True if the email was sent successfully
+     * @return bool True if the email was sent (or queued) successfully
      */
     public static function sendVerificationMail(int $id, string $to, string $code): bool
     {

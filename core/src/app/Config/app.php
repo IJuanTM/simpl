@@ -16,6 +16,7 @@ const ERROR_AUTO_REDIRECT = true;
 
 const RATE_LIMIT_CACHE_RETENTION = 86400; // seconds; how long stale rate-limit files are kept before pruning
 const HISTORY_DEPTH = 5; // how many prior pages back()/prev() can navigate
+const UI_BUTTON_COOLDOWN = 300; // seconds; shared data-cooldown value for repeat-click-guarded buttons
 
 // ---------------------------------------------------------------- //
 

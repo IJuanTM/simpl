@@ -19,14 +19,15 @@ use app\Models\Url;
               <i class="fas fa-circle-user"></i>
             <?php endif ?>
 
+            <input type="hidden" name="id" value="<?= $this->pageObj->user['id'] ?>">
             <input id="image" type="file" name="image" accept="image/*" data-max-size-mb="<?= PROFILE_IMAGE_CONFIG['max_size_mb'] ?>" hidden>
 
             <div class="profile-image-menu center g-col-1 w-100 h-100">
               <?php if ($this->pageObj->profileImage) : ?>
-                <button class="col profile-action edit f-0" type="button" data-cooldown="300"><i class="fas fa-pen"></i></button>
-                <button class="col profile-action delete f-0" type="submit" formmethod="post" formaction="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i></button>
+                <button class="col profile-action edit f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Change profile image"><i class="fas fa-pen"></i></button>
+                <button class="col profile-action delete f-0" type="submit" formmethod="post" formaction="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>" aria-label="Delete profile image"><i class="fas fa-trash"></i></button>
               <?php else : ?>
-                <button class="col profile-action edit f-0" type="button" data-cooldown="300"><i class="fas fa-plus"></i></button>
+                <button class="col profile-action edit f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Add profile image"><i class="fas fa-plus"></i></button>
               <?php endif ?>
             </div>
           </form>

@@ -46,6 +46,18 @@
 
 // ---------------------------------------------------------------- //
 
+@mixin floating-box-width {
+  @include breakpoint-down(sm) {
+    width: calc(100% - 2rem);
+  }
+
+  @include breakpoint-up(sm) {
+    max-width: 32rem;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
 @mixin hover-focus {
   &:hover,
   &:focus,

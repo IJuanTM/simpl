@@ -50,39 +50,30 @@ class FormController
 
         if ($value === null || $value === '') return true;
 
-        if (isset($rules['minLength']) && strlen($value) < $rules['minLength']) {
-            $_POST[$field] = '';
-            static::addAlert("The input of the $fieldName field is too short!", AlertType::WARNING);
-            return false;
+        $checks = [
+            ['minLength', static fn($v, $r) => strlen($v) < $r, "The input of the $fieldName field is too short!"],
+            ['maxLength', static fn($v, $r) => strlen($v) > $r, "The input of the $fieldName field is too long!"],
+            ['minValue', static fn($v, $r) => !is_numeric($v) || $v < $r, "The input in the $fieldName field is too low!"],
+            ['maxValue', static fn($v, $r) => !is_numeric($v) || $v > $r, "The input in the $fieldName field is too high!"],
+        ];
+
+        foreach ($checks as [$rule, $fails, $message]) {
+            if (isset($rules[$rule]) && $fails($value, $rules[$rule])) {
+                $_POST[$field] = '';
+                static::addAlert($message, AlertType::WARNING);
+                return false;
+            }
         }
 
-        if (isset($rules['maxLength']) && strlen($value) > $rules['maxLength']) {
-            $_POST[$field] = '';
-            static::addAlert("The input of the $fieldName field is too long!", AlertType::WARNING);
-            return false;
-        }
+        $typeFails = match ($rules['type'] ?? null) {
+            'number' => !is_numeric($value),
+            'email' => !filter_var($value, FILTER_VALIDATE_EMAIL),
+            default => false,
+        };
 
-        if (isset($rules['minValue']) && (!is_numeric($value) || $value < $rules['minValue'])) {
+        if ($typeFails) {
             $_POST[$field] = '';
-            static::addAlert("The input in the $fieldName field is too low!", AlertType::WARNING);
-            return false;
-        }
-
-        if (isset($rules['maxValue']) && (!is_numeric($value) || $value > $rules['maxValue'])) {
-            $_POST[$field] = '';
-            static::addAlert("The input in the $fieldName field is too high!", AlertType::WARNING);
-            return false;
-        }
-
-        if (isset($rules['type']) && $rules['type'] === 'number' && !is_numeric($value)) {
-            $_POST[$field] = '';
-            static::addAlert("The input in the $fieldName field is not a number!", AlertType::WARNING);
-            return false;
-        }
-
-        if (isset($rules['type']) && $rules['type'] === 'email' && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
-            $_POST[$field] = '';
-            static::addAlert("The input in the $fieldName field is not a valid email address!", AlertType::WARNING);
+            static::addAlert("The input in the $fieldName field is not " . ($rules['type'] === 'number' ? 'a number' : 'a valid email address') . '!', AlertType::WARNING);
             return false;
         }
 

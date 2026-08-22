@@ -1,4 +1,7 @@
-<?php require_once __DIR__ . '/parts/top.phtml' ?>
+<?php
+use app\Controllers\AppController;
+require_once __DIR__ . '/parts/top.phtml';
+?>
 
 <?php require_once __DIR__ . '/parts/header.phtml' ?>
 
@@ -26,7 +29,7 @@
         </tr>
 
         <tr>
-          <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 20px; color: white; font-weight: bold;" width="100%"><?= $code ?></td>
+          <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 20px; color: white; font-weight: bold;" width="100%"><?= AppController::sanitize($code) ?></td>
         </tr>
 
         <tr>

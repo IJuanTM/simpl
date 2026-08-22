@@ -7,7 +7,7 @@ use app\Controllers\SessionController;
 <!-- Alert -->
 <?php if (SessionController::get('alert') !== null) : ?>
   <?php $alert = SessionController::get('alert') ?>
-  <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert" data-timeout="<?= $alert['timeout'] > 0 ? ($alert['timeout'] - time()) * 1000 : 0 ?>">
+  <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert"<?= $alert['timeout'] > 0 ? ' data-timeout="' . ($alert['timeout'] - time()) * 1000 . '"' : '' ?>>
     <?= $alert['message'] ?>
   </div>
 <?php endif ?>

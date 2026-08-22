@@ -44,6 +44,10 @@ const PASSWORD_RESET_CONFIG = [
     'token_expiry' => 3600,           // seconds
     'account_max_attempts' => 3,      // reset requests per email before blocking
     'account_attempt_window' => 3600, // seconds
+    'token_max_attempts' => 5,        // wrong-token attempts per account before blocking
+    'token_attempt_window' => 300,    // seconds
+    'token_ip_max_attempts' => 20,    // wrong-token attempts per IP before blocking
+    'token_ip_attempt_window' => 900, // seconds
 ];
 
 // Minimum seconds between resubmissions of each form

@@ -20,17 +20,11 @@ div.alert {
     left: 0;
     margin: 2rem;
 
-    @include breakpoint-down(sm) {
-      width: calc(100% - 2rem);
-    }
+    @include floating-box-width;
 
     @include breakpoint-down(md) {
       bottom: 4rem;
       margin: 1rem;
-    }
-
-    @include breakpoint-up(sm) {
-      max-width: 32rem;
     }
   }
 

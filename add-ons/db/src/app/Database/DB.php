@@ -156,8 +156,9 @@ class DB
      */
     private static function combineWhere(array $where, array $orWhere): array
     {
-        [$andClause, $andParams] = self::buildWhere($where);
-        [$orClause, $orParams] = self::buildWhere($orWhere, 'or_', ' OR ');
+        $usedParamNames = [];
+        [$andClause, $andParams] = self::buildWhere($where, '', ' AND ', $usedParamNames);
+        [$orClause, $orParams] = self::buildWhere($orWhere, 'or_', ' OR ', $usedParamNames);
 
         if ($andClause && $orClause) $clause = "$andClause AND ($orClause)";
         else if ($andClause) $clause = $andClause;
@@ -174,25 +175,29 @@ class DB
      * @param array  $where
      * @param string $prefix
      * @param string $separator Logical operator joining conditions ('AND' or 'OR')
+     * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. by
+     *                               combineWhere()'s separate AND/OR calls) so a prefixed and an
+     *                               unprefixed key can't normalize to the same final placeholder.
      *
      * @return array
      */
-    private static function buildWhere(array $where, string $prefix = '', string $separator = ' AND '): array
+    private static function buildWhere(array $where, string $prefix = '', string $separator = ' AND ', array &$usedParamNames = []): array
     {
         if (empty($where)) return ['', []];
 
         $conditions = [];
         $params = [];
-        $usedParamNames = [];
 
         foreach ($where as $key => $value) {
             $column = self::sanitizeColumn($key);
 
             // Two different keys can normalize to the same param name (e.g. 'a.b' and 'a_b'
             // both become 'a_b') - only disambiguate with a suffix when that actually happens.
-            $paramName = str_replace('.', '_', $key);
-            for ($suffix = 1; isset($usedParamNames[$paramName]); $suffix++) $paramName = str_replace('.', '_', $key) . "_$suffix";
+            $base = $prefix . str_replace('.', '_', $key);
+            $paramName = $base;
+            for ($suffix = 1; isset($usedParamNames[$paramName]); $suffix++) $paramName = "{$base}_$suffix";
             $usedParamNames[$paramName] = true;
+            $paramKey = ":$paramName";
 
             if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'])) {
                 $operator = strtoupper($value[0]);
@@ -200,12 +205,10 @@ class DB
 
                 if ($val === null && in_array($operator, ['IS', 'IS NOT'])) $conditions[] = "$column $operator NULL";
                 else {
-                    $paramKey = ":$prefix$paramName";
                     $conditions[] = "$column $operator $paramKey";
                     $params[$paramKey] = $val;
                 }
             } else {
-                $paramKey = ":$prefix$paramName";
                 $conditions[] = "$column = $paramKey";
                 $params[$paramKey] = $value;
             }

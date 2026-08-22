@@ -101,7 +101,7 @@ class UsersSeeder
      * Generates a random date between the given start and end dates.
      *
      * @param string $start The starting date in a valid date format.
-     * @param string $end   The ending date in a valid date format.
+     * @param string $end The ending date in a valid date format.
      *
      * @return string A random date between the start and end dates, formatted as 'Y-m-d H:i:s'.
      * @throws RandomException

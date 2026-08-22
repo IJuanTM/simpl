@@ -27,6 +27,12 @@ class PageController extends Page
         $requestPath = strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')), '?');
         $urlArr = explode('/', $requestPath ?: REDIRECT);
 
+        // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
+        if (in_array('.', $urlArr, true) || in_array('..', $urlArr, true)) {
+            self::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
         $page = array_shift($urlArr);
         $params = $_GET;
 

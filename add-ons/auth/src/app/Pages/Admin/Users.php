@@ -575,10 +575,10 @@ class Users
 
         if ($isActive) {
             $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '" aria-label="Edit user ' . $uemail . '"><i class="fas fa-pen"></i></a>';
-            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="300" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
+            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
         } else {
-            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="300" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>';
-            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="300" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
+            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>';
+            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
         }
 
         return $html . '</div></td>';
