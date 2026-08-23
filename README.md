@@ -111,7 +111,7 @@ Available commands:
 - `npx @ijuantm/simpl-addon --list` - List all available add-ons
 - `npx @ijuantm/simpl-addon --help` - Show help
 
-Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - install the dependency first. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
+Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - the installer resolves and installs dependencies automatically. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
 
 ### Step 6: Start coding!
 

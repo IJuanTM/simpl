@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+fail=0
+
+# PHPStorm's "Optimize imports on commit" treats this use-import as unused, since these placeholder files look standalone to it.
+# Auth's install-time patch is what actually uses the import, spliced in later.
+
+check_import() {
+  local file="$1"
+  local needle="$2"
+  local content
+
+  if ! content=$(git show ":$file" 2>/dev/null); then
+    return
+  fi
+
+  if [[ "$content" != *"$needle"* ]]; then
+    echo "pre-commit: $file is missing required import: $needle" >&2
+    fail=1
+  fi
+}
+
+check_import "add-ons/db/src/app/Config/scheduler.php" 'use app\Utils\Scheduler;'
+check_import "add-ons/db/src/app/Config/seeders.php" 'use app\Database\DatabaseSeeder;'
+
+# core/.gitignore is install-time content for scaffolded projects, not a rule for what this repo itself tracks.
+# Runtime dirs with no auto-mkdir need .gitkeep force-tracked so a fresh install actually has them.
+
+check_gitkeep() {
+  local file="$1"
+
+  if ! git show ":$file" >/dev/null 2>&1; then
+    echo "pre-commit: required install-time file is missing from the index: $file" >&2
+    fail=1
+  fi
+}
+
+check_gitkeep "core/src/app/Cache/ratelimit/.gitkeep"
+check_gitkeep "core/src/app/Logs/.gitkeep"
+check_gitkeep "add-ons/auth/src/public/img/profile/.gitkeep"
+
+# These artifact paths are gitignored, but that's never stopped them from getting force-added by accident after a local verification pass.
+
+check_artifact_path() {
+  local file="$1"
+
+  if [[ "$file" =~ (^|/)(vendor|\.phpunit\.cache|\.phpstan\.cache)(/|$)|(^|/)(composer\.lock|\.phpunit\.result\.cache)$ ]]; then
+    echo "pre-commit: refusing to commit build/test artifact: $file" >&2
+    fail=1
+  fi
+}
+
+# Every @addon-insert: marker needs a matching @addon-end after it, in order, or an add-on's install-time patch silently corrupts the base file it's meant to splice into.
+
+check_addon_markers() {
+  local file="$1"
+  local content line balance=0
+
+  # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
+  case "$file" in
+    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json) ;;
+    *) return ;;
+  esac
+
+  if ! content=$(git show ":$file" 2>/dev/null); then
+    return
+  fi
+
+  while IFS= read -r line; do
+    if [[ "$line" == *'@addon-insert:'* ]]; then
+      balance=$((balance + 1))
+    elif [[ "$line" == *'@addon-end'* ]]; then
+      balance=$((balance - 1))
+
+      if [ "$balance" -lt 0 ]; then
+        echo "pre-commit: $file has an @addon-end with no @addon-insert before it" >&2
+        fail=1
+        return
+      fi
+    fi
+  done <<< "$content"
+
+  if [ "$balance" -gt 0 ]; then
+    echo "pre-commit: $file has $balance @addon-insert marker(s) with no matching @addon-end" >&2
+    fail=1
+  fi
+}
+
+# Lints staged content via a real temp file - piping through `php -l -- -` hangs on this machine's PHP CLI instead of reading stdin.
+
+check_php_syntax() {
+  local file="$1"
+  local content tmp lint_output
+
+  if ! content=$(git show ":$file" 2>/dev/null); then
+    return
+  fi
+
+  tmp=$(mktemp --suffix=.php)
+  printf '%s' "$content" > "$tmp"
+
+  if ! lint_output=$(php -l "$tmp" 2>&1); then
+    echo "pre-commit: $file has a PHP syntax error:" >&2
+    echo "$lint_output" >&2
+    fail=1
+  fi
+
+  rm -f "$tmp"
+}
+
+check_debug_statements() {
+  local file="$1"
+  local added_lines
+
+  if ! added_lines=$(git diff --cached -U0 -- "$file" | grep -E '^\+[^+]'); then
+    return
+  fi
+
+  # The lookbehind excludes $dd(...), ->dd(), and Foo::dd() - "dd" is short enough to collide with a real variable/method/static name, unlike var_dump/print_r.
+  if grep -qP '(?<![$:>])\b(var_dump|print_r|dd)\(' <<< "$added_lines"; then
+    echo "pre-commit: $file adds a debug statement (var_dump/print_r/dd)" >&2
+    fail=1
+  fi
+}
+
+php_available=0
+command -v php >/dev/null 2>&1 && php_available=1
+[ "$php_available" -eq 0 ] && echo "pre-commit: php not found on PATH, skipping syntax lint" >&2
+
+while IFS= read -r staged_file; do
+  check_artifact_path "$staged_file"
+  check_addon_markers "$staged_file"
+
+  if [[ "$staged_file" == *.php ]]; then
+    [ "$php_available" -eq 1 ] && check_php_syntax "$staged_file"
+    check_debug_statements "$staged_file"
+  fi
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [ "$fail" -ne 0 ]; then
+  exit 1
+fi

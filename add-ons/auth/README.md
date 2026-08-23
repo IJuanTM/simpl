@@ -2,7 +2,7 @@
 
 Complete authentication system for Simpl projects with user management, email verification, password reset, and admin controls.
 
-**Depends on the [`db`](../db/README.md) add-on** for its query builder, migration/seeder runners, and scheduler - install that first (or it'll be installed for you automatically, once the installer supports add-on dependencies).
+**Depends on the [`db`](../db/README.md) add-on** for its query builder, migration/seeder runners, and scheduler - the installer resolves this automatically, installing `db` first if it isn't already present.
 
 ## Features
 
@@ -98,6 +98,7 @@ npx @ijuantm/simpl-addon auth
 
 The installer will:
 
+- Install the [`db`](../db/README.md) add-on first automatically if it isn't already present - it's `db`'s composer.json patch that adds the `migrate`/`seed`/`cron:test` commands
 - Copy all new files from the add-on into your project's `src/` and `tests/`
 - Automatically merge files that need integration (PHP, TypeScript, SCSS, `.env`)
 - Skip files that already exist and don't need merging
@@ -105,7 +106,6 @@ The installer will:
 
 **Post-Installation Steps:**
 
-0. Install the [`db`](../db/README.md) add-on first if you haven't already (`npx @ijuantm/simpl-addon db`) - auth depends on it, and it's `db`'s composer.json patch that adds the `migrate`/`seed`/`cron:test` commands
 1. Update `.env` with your database and mail credentials
 2. Run `composer install` (if needed)
 3. Run `composer migrate` to create the database tables, then `composer seed` to populate default roles/data - this picks up auth's registered migrations/seeders automatically

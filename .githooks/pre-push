@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+core_dir="core"
+
+if [ ! -f "$core_dir/src/vendor/autoload.php" ]; then
+  echo "pre-push: $core_dir/src/vendor is missing - run 'composer install' in $core_dir first." >&2
+  exit 1
+fi
+
+run_composer() {
+  local script="$1"
+
+  echo "pre-push: running composer $script in $core_dir..."
+
+  if ! (cd "$core_dir" && composer "$script"); then
+    echo "pre-push: composer $script failed in $core_dir - push aborted." >&2
+    exit 1
+  fi
+}
+
+run_composer test
+run_composer stan
