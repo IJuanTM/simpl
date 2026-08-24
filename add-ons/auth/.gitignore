@@ -1,0 +1,4 @@
+# @addon-insert:append
+# Profile images
+src/public/img/profile/
+# @addon-end

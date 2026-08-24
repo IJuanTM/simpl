@@ -59,7 +59,7 @@ check_addon_markers() {
 
   # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
   case "$file" in
-    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json) ;;
+    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore) ;;
     *) return ;;
   esac
 
