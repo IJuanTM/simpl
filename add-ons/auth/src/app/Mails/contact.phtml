@@ -1,3 +1,7 @@
+<?php
+use app\Controllers\AppController;
+?>
+
 <?php require_once __DIR__ . '/parts/top.phtml' ?>
 
 <?php require_once __DIR__ . '/parts/header.phtml' ?>
@@ -8,7 +12,7 @@
       <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%">
         <tr>
           <td style="padding-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white;" width="100%">
-            <strong><?= $from ?></strong> &bull; <?= $date ?> <?= $time ?>
+            <strong><?= AppController::sanitize($from) ?></strong> (<?= AppController::sanitize($email) ?>) &bull; <?= $date ?> <?= $time ?>
           </td>
         </tr>
 
@@ -18,7 +22,7 @@
 
         <tr>
           <td style="padding-top: 16px; font-family: 'Inter', sans-serif; font-size: 14px; color: white;">
-            <?= $contents ?>
+            <?= nl2br(AppController::sanitize($contents)) ?>
           </td>
         </tr>
       </table>

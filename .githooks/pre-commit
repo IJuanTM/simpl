@@ -52,20 +52,12 @@ check_artifact_path() {
 }
 
 # Every @addon-insert: marker needs a matching @addon-end after it, in order, or an add-on's install-time patch silently corrupts the base file it's meant to splice into.
+# Content is fetched once per staged file by the main loop below and passed in, shared with check_php_syntax, rather than each check re-fetching it independently.
 
 check_addon_markers() {
   local file="$1"
-  local content line balance=0
-
-  # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
-  case "$file" in
-    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore) ;;
-    *) return ;;
-  esac
-
-  if ! content=$(git show ":$file" 2>/dev/null); then
-    return
-  fi
+  local content="$2"
+  local line balance=0
 
   while IFS= read -r line; do
     if [[ "$line" == *'@addon-insert:'* ]]; then
@@ -91,11 +83,8 @@ check_addon_markers() {
 
 check_php_syntax() {
   local file="$1"
-  local content tmp lint_output
-
-  if ! content=$(git show ":$file" 2>/dev/null); then
-    return
-  fi
+  local content="$2"
+  local tmp lint_output
 
   tmp=$(mktemp --suffix=.php)
   printf '%s' "$content" > "$tmp"
@@ -130,10 +119,22 @@ command -v php >/dev/null 2>&1 && php_available=1
 
 while IFS= read -r staged_file; do
   check_artifact_path "$staged_file"
-  check_addon_markers "$staged_file"
+
+  # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention
+  # "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
+  # Fetched once here (not per-check) since check_addon_markers and check_php_syntax both need the same content.
+  content=""
+  fetched=0
+  case "$staged_file" in
+    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore)
+      if content=$(git show ":$staged_file" 2>/dev/null); then fetched=1; fi
+      ;;
+  esac
+
+  [ "$fetched" -eq 1 ] && check_addon_markers "$staged_file" "$content"
 
   if [[ "$staged_file" == *.php ]]; then
-    [ "$php_available" -eq 1 ] && check_php_syntax "$staged_file"
+    [ "$php_available" -eq 1 ] && [ "$fetched" -eq 1 ] && check_php_syntax "$staged_file" "$content"
     check_debug_statements "$staged_file"
   fi
 done < <(git diff --cached --name-only --diff-filter=ACM)

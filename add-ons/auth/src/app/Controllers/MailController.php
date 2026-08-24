@@ -53,23 +53,26 @@ class MailController
      * client (via register_shutdown_function). Otherwise sending is
      * performed synchronously.
      *
-     * @param string $senderName Display name of the sender
-     * @param string $to Recipient email address
-     * @param string $senderEmail Sender email address
-     * @param string $subject Email subject
-     * @param string $message HTML message body
+     * @param string      $senderName Display name of the sender
+     * @param string      $to Recipient email address
+     * @param string      $senderEmail Sender/envelope-from email address
+     * @param string      $subject Email subject
+     * @param string      $message HTML message body
+     * @param string|null $replyTo Reply-To address, defaults to $senderEmail when null
      *
      * @return bool True when the message was sent or queued successfully
      */
-    public static function send(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
+    public static function send(string $senderName, string $to, string $senderEmail, string $subject, string $message, ?string $replyTo = null): bool
     {
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
             Log::warning("Invalid recipient email: \"$to\"");
             return false;
         }
 
+        $replyTo ??= $senderEmail;
+
         if (function_exists('fastcgi_finish_request')) {
-            self::$pendingEmails[] = compact('senderName', 'to', 'senderEmail', 'subject', 'message');
+            self::$pendingEmails[] = compact('senderName', 'to', 'senderEmail', 'subject', 'message', 'replyTo');
 
             static $registered = false;
             if (!$registered) {
@@ -80,7 +83,7 @@ class MailController
             return true;
         }
 
-        return self::sendEmail($senderName, $to, $senderEmail, $subject, $message);
+        return self::sendEmail($senderName, $to, $senderEmail, $subject, $message, $replyTo);
     }
 
     /**
@@ -89,13 +92,14 @@ class MailController
      *
      * @param string $senderName Display name of the sender
      * @param string $to Recipient email address
-     * @param string $senderEmail Sender email address
+     * @param string $senderEmail Sender/envelope-from email address
      * @param string $subject Email subject
      * @param string $message HTML message body
+     * @param string $replyTo Reply-To address
      *
      * @return bool True on success, false on failure
      */
-    private static function sendEmail(string $senderName, string $to, string $senderEmail, string $subject, string $message): bool
+    private static function sendEmail(string $senderName, string $to, string $senderEmail, string $subject, string $message, string $replyTo): bool
     {
         $config = SMTP_CONFIG[DEV ? 'development' : 'production'];
 
@@ -114,7 +118,7 @@ class MailController
             }
 
             $mail->setFrom($senderEmail, $senderName);
-            $mail->addReplyTo($senderEmail);
+            $mail->addReplyTo($replyTo);
             $mail->addAddress($to);
 
             $mail->isHTML(true);
@@ -139,7 +143,7 @@ class MailController
         if (function_exists('fastcgi_finish_request')) fastcgi_finish_request();
 
         foreach (self::$pendingEmails as $email) {
-            self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message']);
+            self::sendEmail($email['senderName'], $email['to'], $email['senderEmail'], $email['subject'], $email['message'], $email['replyTo']);
         }
 
         self::$pendingEmails = [];

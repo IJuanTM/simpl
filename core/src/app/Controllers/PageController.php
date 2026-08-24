@@ -36,6 +36,14 @@ class PageController extends Page
         $page = array_shift($urlArr);
         $params = $_GET;
 
+        // Checked before the $ROUTES short-circuit too, so a registered route can't be used to
+        // dodge CSRF validation on a POST request. A route that genuinely needs session-token-free
+        // POST (e.g. a signed webhook) must verify its own signature before this point instead.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
+            self::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
         global $ROUTES;
         if (isset($ROUTES[$page])) {
             $ROUTES[$page]();
@@ -49,11 +57,6 @@ class PageController extends Page
         if ($api) $page = array_shift($urlArr) ?? '';
 
         parent::__construct($page, $urlArr, $params);
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
-            self::error(ErrorCode::FORBIDDEN);
-            exit;
-        }
 
         $class = 'app\\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
         if (class_exists($class)) $this->pageObj = new $class($this);

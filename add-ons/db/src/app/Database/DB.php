@@ -203,11 +203,23 @@ class DB
                 $operator = strtoupper($value[0]);
                 $val = $value[1];
 
-                if ($val === null && in_array($operator, ['IS', 'IS NOT'])) $conditions[] = "$column $operator NULL";
+                // A null value means IS [NOT] NULL, not "= NULL"/"!= NULL" (which never match in
+                // SQL) - covers every operator with well-defined null semantics, same as the plain
+                // (non-tuple) null case below.
+                $nullOperator = match ($operator) {
+                    '=', 'IS' => 'IS',
+                    '!=', '<>', 'IS NOT' => 'IS NOT',
+                    default => null,
+                };
+
+                if ($val === null && $nullOperator !== null) $conditions[] = "$column $nullOperator NULL";
                 else {
                     $conditions[] = "$column $operator $paramKey";
                     $params[$paramKey] = $val;
                 }
+            } else if ($value === null) {
+                // A plain null value means IS NULL, not "= NULL" (which never matches in SQL).
+                $conditions[] = "$column IS NULL";
             } else {
                 $conditions[] = "$column = $paramKey";
                 $params[$paramKey] = $value;
@@ -474,7 +486,9 @@ class DB
      * @param array  $SET
      * @param array  $WHERE
      *
-     * @return bool
+     * @return bool True when at least one row was actually changed - MySQL/PDO reports rows
+     *               changed, not rows matched, so a matching row whose SET values were already
+     *               equal to the new ones returns false here too.
      */
     public static function update(string $UPDATE, array $SET, array $WHERE): bool
     {
@@ -490,8 +504,7 @@ class DB
         foreach ($SET as $key => $value) $params[":set_$key"] = $value;
         $params = array_merge($params, $whereParams);
 
-        self::execute($query, $params);
-        return true;
+        return self::execute($query, $params)->rowCount() > 0;
     }
 
     /**

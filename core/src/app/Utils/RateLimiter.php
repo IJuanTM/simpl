@@ -56,15 +56,15 @@ class RateLimiter
                 static fn(int $ts) => $now - $ts < $windowSeconds
             ));
 
-            if (count($attempts) >= $max) {
-                // Store when the oldest blocking attempt expires so the view can render data-timeout.
-                self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $attempts[count($attempts) - $max] + $windowSeconds]);
-                return false;
-            }
+            $allowed = count($attempts) < $max;
+            if ($allowed) $attempts[] = $now;
 
-            $attempts[] = $now;
-            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => 0]);
-            return true;
+            // Report the next-allowed time whenever the window is now at capacity, even on an allowed call.
+            // That way the view can render an accurate data-timeout right away, not only after the following (rejected) attempt.
+            $retry = count($attempts) >= $max ? $attempts[count($attempts) - $max] + $windowSeconds : 0;
+            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $retry]);
+
+            return $allowed;
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);

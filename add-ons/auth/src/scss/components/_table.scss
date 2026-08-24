@@ -1,3 +1,4 @@
+@use "../config/abstracts/functions" as *;
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/themes" as *;
 
@@ -19,7 +20,7 @@ div.col-toggle-wrapper {
 
   div.col-toggle-panel {
     position: absolute;
-    z-index: 10;
+    z-index: layer("content", 10);
     top: calc(100% + .5rem);
     right: 0;
     display: none;
@@ -170,7 +171,7 @@ div.table-container {
 
           span.col-resize-handle {
             position: absolute;
-            z-index: 2;
+            z-index: layer("content", 2);
             top: 0;
             right: -.125rem;
             bottom: 0;
@@ -186,6 +187,10 @@ div.table-container {
 
       tbody {
         display: table-row-group;
+
+        &.loading {
+          opacity: .4;
+        }
 
         tr {
           background-color: var(--table-row-odd);

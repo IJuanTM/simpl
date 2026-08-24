@@ -15,6 +15,7 @@ use app\Enums\Role;
 use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
+use PDOException;
 
 /**
  * Users (admin)
@@ -126,7 +127,7 @@ class Users
      */
     private static function getTableColumns(): array
     {
-        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], [
+        return self::buildColumns([
             ['id', 'Id', true, null, true],
             ['username', 'Username', true, 128, true],
             ['email', 'Email', true, 192, true],
@@ -298,27 +299,36 @@ class Users
         $roleRecord = $this->resolveRole();
         if (!$roleRecord) return;
 
-        DB::insert(
-            INTO: 'users',
-            VALUES: [
-                'username' => $_POST['username'] ?: null,
-                'first_name' => $_POST['first_name'] ?: null,
-                'last_name' => $_POST['last_name'] ?: null,
-                'email' => $_POST['email'],
-                'password' => password_hash($this->generatedPassword, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
-                'must_change_password' => 1,
-            ]
-        );
+        DB::beginTransaction();
 
-        $id = AuthController::getUserIdByEmail($_POST['email']);
+        try {
+            DB::insert(
+                INTO: 'users',
+                VALUES: [
+                    'username' => $_POST['username'] ?: null,
+                    'first_name' => $_POST['first_name'] ?: null,
+                    'last_name' => $_POST['last_name'] ?: null,
+                    'email' => $_POST['email'],
+                    'password' => password_hash($this->generatedPassword, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
+                    'must_change_password' => 1,
+                ]
+            );
 
-        DB::insert(
-            INTO: 'user_roles',
-            VALUES: [
-                'user_id' => $id,
-                'role_id' => $roleRecord['id']
-            ]
-        );
+            $id = AuthController::getUserIdByEmail($_POST['email']);
+
+            DB::insert(
+                INTO: 'user_roles',
+                VALUES: [
+                    'user_id' => $id,
+                    'role_id' => $roleRecord['id']
+                ]
+            );
+
+            DB::commit();
+        } catch (PDOException $e) {
+            DB::rollback();
+            throw $e;
+        }
 
         $result = AuthController::sendCreatedUserMail($_POST['email'], $this->generatedPassword);
 
@@ -405,38 +415,47 @@ class Users
         $roleRecord = $this->resolveRole();
         if (!$roleRecord) return;
 
-        DB::update(
-            UPDATE: 'users',
-            SET: [
-                'username' => $_POST['username'] ?: null,
-                'first_name' => $_POST['first_name'] ?: null,
-                'last_name' => $_POST['last_name'] ?: null,
-                'email' => $_POST['email'],
-            ],
-            WHERE: compact('id')
-        );
+        DB::beginTransaction();
 
-        if (DB::exists(
-            FROM: 'user_roles',
-            WHERE: [
-                'user_id' => $id
-            ]
-        )) DB::update(
-            UPDATE: 'user_roles',
-            SET: [
-                'role_id' => $roleRecord['id']
-            ],
-            WHERE: [
-                'user_id' => $id
-            ]
-        );
-        else DB::insert(
-            INTO: 'user_roles',
-            VALUES: [
-                'user_id' => $id,
-                'role_id' => $roleRecord['id']
-            ]
-        );
+        try {
+            DB::update(
+                UPDATE: 'users',
+                SET: [
+                    'username' => $_POST['username'] ?: null,
+                    'first_name' => $_POST['first_name'] ?: null,
+                    'last_name' => $_POST['last_name'] ?: null,
+                    'email' => $_POST['email'],
+                ],
+                WHERE: compact('id')
+            );
+
+            if (DB::exists(
+                FROM: 'user_roles',
+                WHERE: [
+                    'user_id' => $id
+                ]
+            )) DB::update(
+                UPDATE: 'user_roles',
+                SET: [
+                    'role_id' => $roleRecord['id']
+                ],
+                WHERE: [
+                    'user_id' => $id
+                ]
+            );
+            else DB::insert(
+                INTO: 'user_roles',
+                VALUES: [
+                    'user_id' => $id,
+                    'role_id' => $roleRecord['id']
+                ]
+            );
+
+            DB::commit();
+        } catch (PDOException $e) {
+            DB::rollback();
+            throw $e;
+        }
 
         PageController::redirectWithAlert('admin/users', 'Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
@@ -450,6 +469,8 @@ class Users
      */
     private function deleteUser(int $id): void
     {
+        if ($this->blockUnlessActive(requireActive: true)) return;
+
         DB::update(
             UPDATE: 'users',
             SET: [
@@ -462,6 +483,22 @@ class Users
     }
 
     /**
+     * Redirects away (without acting) unless the target user's active state matches
+     * $requireActive - true for delete (must be active), false for purge/restore (must not be).
+     *
+     * @param bool $requireActive
+     *
+     * @return bool True when the redirect fired and the caller should return immediately
+     */
+    private function blockUnlessActive(bool $requireActive): bool
+    {
+        return $this->blockIf(
+            ($this->user['status'] === UserStatus::ACTIVE->value) !== $requireActive,
+            static fn() => PageController::redirect('admin/users', 2)
+        );
+    }
+
+    /**
      * Permanently removes a user and all their data from the database.
      *
      * @param int $id User ID to purge
@@ -470,10 +507,7 @@ class Users
      */
     private function purgeUser(int $id): void
     {
-        if ($this->user['status'] === UserStatus::ACTIVE->value) {
-            PageController::redirect('admin/users', 2);
-            return;
-        }
+        if ($this->blockUnlessActive(requireActive: false)) return;
 
         DB::delete(
             FROM: 'users',
@@ -491,10 +525,7 @@ class Users
      */
     private function restoreUser(int $id): void
     {
-        if ($this->user['status'] === UserStatus::ACTIVE->value) {
-            PageController::redirect('admin/users', 2);
-            return;
-        }
+        if ($this->blockUnlessActive(requireActive: false)) return;
 
         DB::update(
             UPDATE: 'users',

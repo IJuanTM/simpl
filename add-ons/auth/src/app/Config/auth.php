@@ -38,6 +38,7 @@ const VERIFICATION_CONFIG = [
 ];
 
 const REMEMBER_ME_DURATION = 30; // days
+const REMEMBER_ME_TOKEN_LENGTH = 32; // characters
 
 const PASSWORD_RESET_CONFIG = [
     'token_length' => 32,             // characters

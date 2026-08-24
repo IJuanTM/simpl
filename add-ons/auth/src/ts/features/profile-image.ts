@@ -9,7 +9,6 @@ export const profileImageModule = {
 
       reader.onload = () => {
         const image = new Image();
-        image.src = reader.result as string;
 
         image.onload = () => {
           const size = Math.min(image.width, image.height);
@@ -29,6 +28,7 @@ export const profileImageModule = {
         };
 
         image.onerror = () => resolve(null);
+        image.src = reader.result as string;
       };
 
       reader.onerror = () => resolve(null);

@@ -91,7 +91,8 @@ class Log
         if (!$context) return $message;
 
         $replace = [];
-        foreach ($context as $key => $val) if ($val === null || is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) $replace['{' . $key . '}'] = $val;
+        // Strip newlines/control chars so a context value can't inject a fake extra log line.
+        foreach ($context as $key => $val) if ($val === null || is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) $replace['{' . $key . '}'] = preg_replace('/[\x00-\x1F\x7F]+/', ' ', (string)$val);
 
         return strtr($message, $replace);
     }

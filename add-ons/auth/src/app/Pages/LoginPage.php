@@ -228,7 +228,7 @@ class LoginPage
 
         // Handle remember-me checkbox. Skips silently on token-generation failure;
         // the login itself already succeeded regardless.
-        $token = isset($_POST['remember']) ? AuthController::generateToken() : null;
+        $token = isset($_POST['remember']) ? AuthController::generateToken(REMEMBER_ME_TOKEN_LENGTH) : null;
 
         if ($token !== null) {
             $timestamp = time() + (86400 * REMEMBER_ME_DURATION);

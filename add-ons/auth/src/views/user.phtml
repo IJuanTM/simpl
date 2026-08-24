@@ -172,7 +172,7 @@ use app\Models\Url;
       </div>
 
       <div class="row g-2 center-x">
-        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('users/edit?id=' . $this->pageObj->user['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/edit?id=' . $this->pageObj->user['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
       </div>
 
     <?php endif ?>

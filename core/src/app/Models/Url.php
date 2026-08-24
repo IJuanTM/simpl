@@ -13,7 +13,6 @@ use app\Utils\Log;
  */
 class Url
 {
-    private static ?string $baseUrl = null;
     private static ?string $rootDir = null;
 
     /**
@@ -55,22 +54,13 @@ class Url
     }
 
     /**
-     * Initializes the base URL for the application if it is not already set.
-     * The base URL is constructed using the server's protocol, host, and script directory.
+     * Initializes $rootDir, the filesystem root used to resolve public files, if not already set.
      *
      * @return void
      */
     private static function baseUrl(): void
     {
-        if (!self::$baseUrl) {
-            self::$rootDir = rtrim(BASEDIR, '/');
-
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'];
-            $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-
-            self::$baseUrl = "$protocol://$host$scriptDir";
-        }
+        self::$rootDir = rtrim(BASEDIR, '/');
     }
 
     /**

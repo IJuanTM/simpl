@@ -41,7 +41,7 @@ class LoginAttempts
      */
     private static function getTableColumns(): array
     {
-        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], [
+        return self::buildColumns([
             ['id', '#', false, 64, true],
             ['user', 'User', false, 160, true],
             ['ip_address', 'IP address', false, 160, true],

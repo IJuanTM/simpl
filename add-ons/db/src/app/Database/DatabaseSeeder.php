@@ -15,8 +15,12 @@ use Random\RandomException;
  */
 class DatabaseSeeder
 {
+    private const array BOOKKEEPING_TABLES = ['migrations', 'scheduler_runs'];
     /** @var class-string[] */
     private static array $seeders = [];
+
+    // Schema-bookkeeping tables db owns and manages itself - never domain data, so they're
+    // excluded from truncate() (unlike migration files, they have no re-seedable content anyway).
 
     /**
      * Register a seeder class to be run. Call in dependency order - seeders with foreign
@@ -32,7 +36,7 @@ class DatabaseSeeder
     }
 
     /**
-     * Truncates all tables in the database to reset it.
+     * Truncates all tables in the database to reset it, except schema-bookkeeping tables.
      * This should be used with caution as it permanently deletes data.
      */
     public static function truncate(): void
@@ -42,7 +46,14 @@ class DatabaseSeeder
         try {
             Schema::disableForeignKeys();
 
-            $tables = DB::query('SELECT LOWER(table_name) AS table_name FROM information_schema.tables WHERE table_schema = DATABASE()');
+            $placeholders = [];
+            $params = [];
+            foreach (self::BOOKKEEPING_TABLES as $i => $table) {
+                $placeholders[] = ":bookkeeping$i";
+                $params[":bookkeeping$i"] = $table;
+            }
+
+            $tables = DB::query('SELECT LOWER(table_name) AS table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND LOWER(table_name) NOT IN (' . implode(', ', $placeholders) . ')', $params);
             foreach ($tables as $row) DB::query("TRUNCATE TABLE `$row[table_name]`");
 
             Schema::enableForeignKeys();

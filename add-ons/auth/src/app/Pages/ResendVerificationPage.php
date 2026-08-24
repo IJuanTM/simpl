@@ -20,9 +20,23 @@ use app\Utils\RateLimiter;
  */
 class ResendVerificationPage
 {
+    private Page $page;
+
     public function __construct(Page $page)
     {
-        $id = AppController::sanitize($page->subpage() ?? '');
+        $this->page = $page;
+    }
+
+    /**
+     * Only ever reached via /api/resend-verification/{id}.
+     * PageController requires an api() method to exist on any page dispatched through /api/...,
+     * or it 404s instead of rendering this page's redirect.
+     *
+     * @return void
+     */
+    public function api(): void
+    {
+        $id = AppController::sanitize($this->page->subpage() ?? '');
 
         if (empty($id) || !is_numeric($id)) {
             FormController::addAlert('Undefined user id! Please contact an administrator.', AlertType::ERROR);

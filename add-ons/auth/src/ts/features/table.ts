@@ -299,12 +299,12 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
   const paginationRow = section.querySelector<HTMLElement>('.pagination-row');
   const paginationLinks = section.querySelector<HTMLElement>('.table-pagination');
 
-  if (tbody) tbody.style.opacity = '0.4';
+  if (tbody) tbody.classList.add('loading');
 
   try {
     const res = await fetch(apiUrl.toString());
     if (!res.ok) {
-      if (tbody && latestTableRequest.get(table) === requestId) tbody.style.opacity = '';
+      if (tbody && latestTableRequest.get(table) === requestId) tbody.classList.remove('loading');
       return;
     }
 
@@ -325,7 +325,7 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
     }
 
     if (tbody) {
-      tbody.style.opacity = '';
+      tbody.classList.remove('loading');
       tbody.innerHTML = data.tbody;
     }
 
@@ -342,7 +342,7 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
     if (paginationInfo) paginationInfo.textContent = data.info;
 
   } catch {
-    if (tbody && latestTableRequest.get(table) === requestId) tbody.style.opacity = '';
+    if (tbody && latestTableRequest.get(table) === requestId) tbody.classList.remove('loading');
   }
 }
 

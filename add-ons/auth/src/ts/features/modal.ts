@@ -2,12 +2,12 @@ const base = window.location.pathname.split('/').slice(0, 3).join('/');
 
 function openModal(modal: HTMLElement): void {
   modal.classList.remove('invisible');
-  document.body.style.overflow = 'hidden';
+  document.body.classList.add('modal-open');
 }
 
 function closeModal(modal: HTMLElement): void {
   modal.classList.add('invisible');
-  document.body.style.overflow = '';
+  document.body.classList.remove('modal-open');
 }
 
 function bindClose(modal: HTMLElement): void {

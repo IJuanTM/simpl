@@ -64,7 +64,7 @@ class Roles
      */
     private static function getTableColumns(): array
     {
-        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], [
+        return self::buildColumns([
             ['id', 'Id', false, 64, true],
             ['name', 'Name', false, 256, true],
             ['user_count', 'Users', false, 96, true],
@@ -114,6 +114,10 @@ class Roles
      */
     private function createRole(): void
     {
+        // Trimmed before validation so a whitespace-only submission fails the required check
+        // instead of passing it and then trimming down to an empty stored name.
+        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
+
         if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
 
         if (DB::exists(
@@ -145,6 +149,12 @@ class Roles
      */
     private function updateRole(int $id): void
     {
+        if ($this->blockBuiltInRole('renamed')) return;
+
+        // Trimmed before validation so a whitespace-only submission fails the required check
+        // instead of passing it and then trimming down to an empty stored name.
+        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
+
         if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
 
         $existing = DB::single(
@@ -172,6 +182,21 @@ class Roles
     }
 
     /**
+     * Blocks renaming/deleting a built-in role, alerting with the given past-tense verb.
+     *
+     * @param string $action e.g. 'renamed', 'deleted'
+     *
+     * @return bool True when the role is built-in and the action was blocked
+     */
+    private function blockBuiltInRole(string $action): bool
+    {
+        return $this->blockIf(
+            in_array($this->role['name'], array_column(Role::cases(), 'value'), true),
+            static fn() => FormController::addAlert("This role is required by the framework and cannot be $action.", AlertType::WARNING)
+        );
+    }
+
+    /**
      * Deletes a role, rejecting the request if any users are still assigned to it.
      *
      * @param int $id Role ID to delete
@@ -180,10 +205,7 @@ class Roles
      */
     private function deleteRole(int $id): void
     {
-        if (in_array($this->role['name'], array_column(Role::cases(), 'value'), true)) {
-            FormController::addAlert('This role is required by the framework and cannot be deleted.', AlertType::WARNING);
-            return;
-        }
+        if ($this->blockBuiltInRole('deleted')) return;
 
         $userCount = DB::count(
             FROM: 'user_roles',

@@ -71,7 +71,7 @@ class AuthController
         }
 
         // Rotate the token, not just extend its expiry, so a stolen cookie stops working next use.
-        $newToken = self::generateToken();
+        $newToken = self::generateToken(REMEMBER_ME_TOKEN_LENGTH);
 
         // Can't rotate - fail closed like the branches above, rather than leaving the old token valid.
         if ($newToken === null) {
@@ -81,7 +81,9 @@ class AuthController
 
         $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
 
-        DB::update(
+        // A concurrent request may have already rotated this same token.
+        // Only issue the new cookie when this call actually won the rotation, so we never hand out an unpersisted one.
+        if (!DB::update(
             UPDATE: 'tokens',
             SET: [
                 'token' => hash('sha256', $newToken),
@@ -90,7 +92,7 @@ class AuthController
             WHERE: [
                 'token' => $tokenHash
             ]
-        );
+        )) return;
 
         setcookie('remember', $newToken, ['expires' => $timestamp] + AppController::secureCookieFlags());
     }

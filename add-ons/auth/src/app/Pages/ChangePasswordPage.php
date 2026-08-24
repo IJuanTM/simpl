@@ -41,12 +41,14 @@ class ChangePasswordPage
 
         $user = SessionController::get('user');
 
-        if (!RateLimiter::attempt("change-password-{$user['id']}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
-            FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return;
-        }
-
         if (!AuthController::checkPassword($user['email'], $_POST['old-password'])) {
+            // Only wrong-old-password attempts count against the lockout, so a correct password
+            // never burns a slot on an unrelated validation failure elsewhere in the form.
+            if (!RateLimiter::attempt("change-password-{$user['id']}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
+                FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+                return;
+            }
+
             $_POST['old-password'] = '';
             FormController::addAlert('The old password is incorrect!', AlertType::WARNING);
             return;

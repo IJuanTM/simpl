@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\MailController;
 use app\Controllers\PageController;
@@ -66,10 +65,11 @@ class ContactPage
     {
         $contents = MailController::template('contact', [
             'title' => 'New Contact Form Submission',
-            'from' => AppController::sanitize($from),
+            'from' => $from,
+            'email' => $sender,
             'date' => date('Y-m-d'),
             'time' => date('H:i'),
-            'contents' => nl2br(AppController::sanitize($message))
+            'contents' => $message
         ]);
 
         if ($contents === false) {
@@ -77,7 +77,7 @@ class ContactPage
             return;
         }
 
-        $result = MailController::send($from, MAIL_CONFIG['site_address'], $sender, $subject, $contents);
+        $result = MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender);
 
         if ($result) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
         else PageController::redirectWithAlert(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);

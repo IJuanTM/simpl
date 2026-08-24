@@ -52,25 +52,26 @@ class ResetPasswordPage
             return;
         }
 
-        // A token verified earlier in this session is trusted without re-throttling.
-        // Reloading the page or resubmitting the form then can't burn the guess budget on a token that was never re-guessed.
+        // A token verified earlier in this session only skips re-throttling, not the token check.
+        // Reloading or resubmitting the form then can't burn the guess budget on a token that was never re-guessed.
+        // The token itself is still re-checked below on every request, so expiry/revocation still apply.
         $sessionKey = "reset-token-verified-$id";
         $tokenHash = hash('sha256', strtoupper($token));
+        $alreadyVerified = SessionController::get($sessionKey) === $tokenHash;
 
-        if (SessionController::get($sessionKey) !== $tokenHash) {
-            if ($this->throttle($id)) {
-                $this->disableForm = true;
-                return;
-            }
-
-            if (!AuthController::checkToken($id, $token, TokenType::RESET)) {
-                $this->disableForm = true;
-                FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
-                return;
-            }
-
-            SessionController::set($sessionKey, $tokenHash);
+        if (!$alreadyVerified && $this->throttle($id)) {
+            $this->disableForm = true;
+            return;
         }
+
+        if (!AuthController::checkToken($id, $token, TokenType::RESET)) {
+            SessionController::remove($sessionKey);
+            $this->disableForm = true;
+            FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
+            return;
+        }
+
+        if (!$alreadyVerified) SessionController::set($sessionKey, $tokenHash);
 
         // Reached only once the link's user id and token pass all the checks above.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);

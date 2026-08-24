@@ -38,6 +38,18 @@ trait AdminTableTrait
     protected array $filterDefinitions = [];
 
     /**
+     * Builds column definitions from [key, label, sortable, width, visible] tuples.
+     *
+     * @param array<int, array{0: string, 1: string, 2: bool, 3: int|null, 4: bool}> $defs
+     *
+     * @return array<int, array{key: string, label: string, sortable: bool, width: int|null, visible: bool}>
+     */
+    protected static function buildColumns(array $defs): array
+    {
+        return array_map(static fn(array $c): array => ['key' => $c[0], 'label' => $c[1], 'sortable' => $c[2], 'width' => $c[3], 'visible' => $c[4]], $defs);
+    }
+
+    /**
      * JSON-encoded list of column indexes hidden by default, for data-hidden-cols.
      *
      * @throws JsonException
@@ -210,6 +222,24 @@ trait AdminTableTrait
     public function renderPaginationInfo(): string
     {
         return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ' ' . $this->itemLabel;
+    }
+
+    /**
+     * Runs $onBlock() and returns true when $condition is true, otherwise returns false.
+     * Shared shape for a page's own "block this action, alert/redirect, return" guards -
+     * use as `if ($this->blockIf($cond, fn() => ...)) return;`.
+     *
+     * @param bool     $condition True when the action should be blocked
+     * @param callable $onBlock Called with no args when blocked - queue an alert and/or redirect
+     *
+     * @return bool True when blocked (the caller should return immediately)
+     */
+    protected function blockIf(bool $condition, callable $onBlock): bool
+    {
+        if (!$condition) return false;
+
+        $onBlock();
+        return true;
     }
 
     /**
