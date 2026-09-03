@@ -1,22 +1,26 @@
+@use "sass:map";
+
 @use "../config/abstracts/mixins" as *;
+@use "../config/vars/breakpoints" as *;
 @use "../config/vars/colors" as *;
 
-*.card {
+.row:has(> .card) {
+  container: card-row / inline-size;
+}
+
+.card {
   position: relative;
   overflow: hidden;
-  max-width: 32rem !important;
+  min-width: 100%;
+  max-width: 32rem;
   padding: 2rem;
   transition: background-color .15s ease-in-out;
   text-decoration: none;
-  border: .125rem solid var(--border-muted);
-  border-radius: 1rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-lg);
   background-color: var(--bg-section);
 
-  @include breakpoint-down(sm) {
-    min-width: 100%;
-  }
-
-  @include breakpoint-up(sm) {
+  @container card-row (min-width: #{map.get($breakpoints, sm)}) {
     min-width: 24rem;
   }
 
@@ -34,7 +38,7 @@
     }
   }
 
-  *.card-title {
+  .card-title {
     color: $simpl;
   }
 }

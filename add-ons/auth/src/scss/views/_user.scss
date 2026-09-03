@@ -7,8 +7,8 @@ section.user {
   div.user-profile-card {
     position: relative;
     padding: 9rem 2rem 1rem 2rem;
-    border: .125rem solid var(--border-muted);
-    border-radius: .5rem;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-md);
     background-color: var(--bg-accent);
 
     @include breakpoint-up(sm) {
@@ -22,11 +22,11 @@ section.user {
       left: 50%;
       overflow: hidden;
       transform: translateX(-50%);
-      border: .125rem solid var(--border-muted);
+      border: var(--border-width) solid var(--border-muted);
       border-radius: 50%;
       background-color: var(--bg-accent);
 
-      *.profile-image {
+      .profile-image {
         position: relative;
 
         > img {
@@ -44,7 +44,7 @@ section.user {
           border-radius: 50%;
           background-color: rgba(#000, .5);
 
-          > *.profile-action {
+          > .profile-action {
             font-size: 1.5rem;
             cursor: pointer;
 
@@ -129,15 +129,7 @@ section.user {
     }
 
     a.button.change-password {
-      color: #FFF;
-      background-color: $red;
-
-      @include shimmer(true, rgba(#FFF, .25));
-
-      @include hover-focus {
-        color: rgba(#FFF, .75);
-        background-color: $red-dark;
-      }
+      @include action-button($red, $red-dark, rgba(#FFF, .75));
     }
   }
 }

@@ -4,8 +4,8 @@
 div.code-block {
   padding: 1rem;
   text-decoration: none;
-  border: .125rem solid var(--border-muted);
-  border-radius: .5rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
   background-color: var(--bg-section);
 
   code {

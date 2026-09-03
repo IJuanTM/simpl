@@ -1,24 +1,36 @@
-@use "../config/abstracts/functions" as *;
 @use "../config/abstracts/mixins" as *;
 @use "../config/vars/colors" as *;
 
 dialog.modal-overlay {
-  position: fixed;
-  z-index: layer("modal");
-  padding: 2rem;
-  transition: visibility .15s ease-out, opacity .15s ease-out;
-  background-color: rgba(#000, .5);
-  inset: 0;
+  width: min(48rem, 100% - 2rem);
+  max-height: calc(100% - 4rem);
+  padding: 0;
+  border: none;
+  background-color: transparent;
+
+  &, &::backdrop {
+    transition: opacity .15s ease-out, overlay .15s ease-out allow-discrete, display .15s ease-out allow-discrete;
+    opacity: 0;
+  }
+
+  &::backdrop {
+    background-color: rgba(#000, .5);
+  }
+
+  &[open], &[open]::backdrop {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
 
   div.modal {
+    overflow-y: auto;
     padding: 2rem;
-    border: .125rem solid var(--border-muted);
-    border-radius: .5rem;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-md);
     background-color: var(--bg-section);
-
-    @include breakpoint-up(sm) {
-      max-width: 48rem !important;
-    }
 
     div.modal-body {
       p {
@@ -29,8 +41,8 @@ dialog.modal-overlay {
       div.modal-user-info {
         font-size: .875rem;
         padding: .75rem 1rem;
-        border: .125rem solid var(--border-muted);
-        border-radius: .25rem;
+        border: var(--border-width) solid var(--border-muted);
+        border-radius: var(--radius-sm);
         background-color: var(--bg-accent);
 
         span.text-muted {
@@ -41,41 +53,20 @@ dialog.modal-overlay {
 
     button.delete-user,
     button.delete-role {
-      color: #FFF;
-      background-color: $red;
-
-      @include shimmer(true, rgba(#FFF, .25));
+      @include action-button($red, $red-dark, $important: true);
 
       &[inert] {
         color: rgba(#FFF, .5) !important;
         background-color: rgba($red, .5) !important;
       }
-
-      @include hover-focus {
-        background-color: $red-dark !important;
-      }
     }
 
     button.restore-user {
-      color: #FFF;
-      background-color: $green;
-
-      @include shimmer(true, rgba(#FFF, .25));
-
-      @include hover-focus {
-        background-color: $green-dark !important;
-      }
+      @include action-button($green, $green-dark, $important: true);
     }
 
     button.purge-user {
-      color: #FFF;
-      background-color: $magenta;
-
-      @include shimmer(true, rgba(#FFF, .25));
-
-      @include hover-focus {
-        background-color: $magenta-dark !important;
-      }
+      @include action-button($magenta, $magenta-dark, $important: true);
     }
   }
 }

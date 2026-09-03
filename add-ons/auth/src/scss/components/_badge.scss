@@ -7,7 +7,7 @@ span.badge {
   padding: .25rem .5rem;
   white-space: nowrap;
   color: #FFF;
-  border-radius: .25rem;
+  border-radius: var(--radius-sm);
 
   &.badge-success {
     background-color: $green;

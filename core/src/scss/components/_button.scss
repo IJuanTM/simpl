@@ -11,8 +11,8 @@ a.button {
   transition: background-color .15s ease-in-out;
   white-space: nowrap;
   text-decoration: none;
-  border: .125rem solid var(--border-muted);
-  border-radius: .5rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
   background-color: var(--button);
 
   @include touch-device {
@@ -31,14 +31,7 @@ a.button {
   }
 
   &.button-simpl {
-    color: #FFF;
-    background-color: $simpl;
-
-    @include shimmer(true, rgba(#FFF, .25));
-
-    @include hover-focus {
-      background-color: $simpl-dark;
-    }
+    @include action-button($simpl, $simpl-dark);
   }
 
   &[inert] {

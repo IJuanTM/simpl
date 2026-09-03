@@ -1,23 +1,43 @@
+@use "sass:meta";
+
 // CONFIG
 @use "config/config";
 
-// STYLE
-@use "style";
+@layer reset, base, layout, components, utilities;
 
-// VIEWS
-@use "views/error";
+@layer base {
+  @include meta.load-css("style");
+  @include meta.load-css("config/utils/typography");
+  @include meta.load-css("config/utils/scrollbar");
+}
 
-// COMPONENTS
-@use "components/alert";
-@use "components/breadcrumbs";
-@use "components/button";
-@use "components/card";
-@use "components/code-block";
-@use "components/input";
-@use "components/quote";
+@layer layout {
+  @include meta.load-css("config/utils/flex");
+}
 
-// PARTS
-@use "views/parts/content";
-@use "views/parts/cookie";
-@use "views/parts/footer";
-@use "views/parts/header";
+@layer utilities {
+  @include meta.load-css("config/utils/dimensions");
+  @include meta.load-css("config/utils/spacing");
+  @include meta.load-css("config/utils/text");
+  @include meta.load-css("config/utils/visibility");
+}
+
+@layer components {
+  // VIEWS
+  @include meta.load-css("views/error");
+
+  // COMPONENTS
+  @include meta.load-css("components/alert");
+  @include meta.load-css("components/breadcrumbs");
+  @include meta.load-css("components/button");
+  @include meta.load-css("components/card");
+  @include meta.load-css("components/code-block");
+  @include meta.load-css("components/input");
+  @include meta.load-css("components/quote");
+
+  // PARTS
+  @include meta.load-css("views/parts/content");
+  @include meta.load-css("views/parts/cookie");
+  @include meta.load-css("views/parts/footer");
+  @include meta.load-css("views/parts/header");
+}

@@ -16,23 +16,26 @@ i.table-search-clear {
 }
 
 div.col-toggle-wrapper {
-  position: relative;
+  button.col-toggle-btn {
+    anchor-name: --col-toggle;
+  }
 
   div.col-toggle-panel {
-    position: absolute;
-    z-index: layer("content", 10);
-    top: calc(100% + .5rem);
-    right: 0;
-    display: none;
+    position: fixed;
+    top: anchor(bottom, 4rem);
+    right: anchor(right, 1rem);
     overflow-y: auto;
     min-width: 16rem;
     max-height: 20rem;
+    margin-top: .5rem;
     padding: .5rem;
-    border: .125rem solid var(--border-muted);
-    border-radius: .25rem;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
     background-color: var(--bg-section);
+    position-anchor: --col-toggle;
+    inset: auto;
 
-    &.open {
+    &:popover-open {
       display: flex;
       flex-direction: column;
       row-gap: .5rem;
@@ -42,7 +45,7 @@ div.col-toggle-wrapper {
       font-size: .875rem;
       cursor: pointer;
       white-space: nowrap;
-      border-radius: .25rem;
+      border-radius: var(--radius-sm);
 
       > span {
         display: flex;
@@ -75,8 +78,8 @@ div.table-pagination > a {
 
 div.table-container {
   overflow: hidden;
-  border: .125rem solid var(--border-muted);
-  border-radius: .25rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-sm);
 
   > div.col {
     overflow-x: auto;
@@ -109,7 +112,7 @@ div.table-container {
           font-weight: 700;
           position: relative;
           overflow: visible;
-          border-bottom: .125rem solid var(--border-muted);
+          border-bottom: var(--border-width) solid var(--border-muted);
           background-color: var(--table-header);
 
           .table-header-label {
@@ -132,7 +135,7 @@ div.table-container {
           }
 
           &:not(:last-child) {
-            border-right: .0625rem solid var(--border-muted);
+            border-right: var(--border-width-thin) solid var(--border-muted);
           }
 
           &.sortable {
@@ -196,7 +199,7 @@ div.table-container {
           background-color: var(--table-row-odd);
 
           > td:not(:last-child) {
-            border-right: .0625rem solid var(--border-muted);
+            border-right: var(--border-width-thin) solid var(--border-muted);
           }
 
           &:nth-child(even) {

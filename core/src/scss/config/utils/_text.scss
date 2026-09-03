@@ -1,0 +1,37 @@
+@use "sass:math";
+
+@use "../abstracts/functions" as *;
+
+$lh-min: 10;
+$lh-max: 40;
+$lh-step: 2;
+
+@for $i from math.div($lh-min, $lh-step) through math.div($lh-max, $lh-step) {
+  $value: $i * math.div($lh-step, 10);
+
+  .lh-#{decimal-suffix($value)} {
+    line-height: #{$value};
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+.text-center {
+  text-align: center;
+}
+
+.text-end {
+  text-align: end;
+}
+
+// ---------------------------------------------------------------- //
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+// ---------------------------------------------------------------- //
+
+.no-wrap {
+  white-space: nowrap;
+}

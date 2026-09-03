@@ -40,14 +40,7 @@ section.roles {
     }
 
     &.delete-role {
-      color: #FFF;
-      background-color: $red !important;
-
-      @include shimmer(true, rgba(#FFF, .25));
-
-      @include hover-focus {
-        background-color: $red-dark !important;
-      }
+      @include action-button($red, $red-dark, $important: true);
     }
   }
 }

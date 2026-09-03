@@ -1,27 +1,30 @@
 @use "sass:list";
 @use "sass:map";
 
-@use "functions" as *;
 @use "../vars/breakpoints" as *;
 @use "../vars/themes" as *;
 
-@mixin set-themes($default: dark) {
-  @each $name, $theme in $themes {
-    $shaded: shade($theme);
+@mixin set-themes {
+  :root {
+    color-scheme: dark;
 
-    html[data-theme="#{$name}"] {
-      @each $key, $val in $shaded {
-        --#{$key}: #{$val};
-      }
+    @each $key, $pair in $themes {
+      --#{$key}: light-dark(#{list.nth($pair, 1)}, #{list.nth($pair, 2)});
     }
 
-    @if $name == $default {
-      :root {
-        @each $key, $val in $shaded {
-          --#{$key}: #{$val};
-        }
-      }
-    }
+    --text-5: rgb(from var(--text) r g b / .05);
+    --text-25: rgb(from var(--text) r g b / .25);
+    --text-50: rgb(from var(--text) r g b / .5);
+    --text-75: rgb(from var(--text) r g b / .75);
+    --border-50: rgb(from var(--border) r g b / .5);
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
   }
 }
 
@@ -120,6 +123,25 @@
         left: 110%;
         transition: left .5s ease-in-out;
       }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin action-button($bg, $bg-hover, $hover-color: null, $important: false) {
+  color: #FFF;
+  background-color: $bg;
+
+  @include shimmer(true, rgba(#FFF, .25));
+
+  @include hover-focus {
+    color: $hover-color;
+
+    @if $important {
+      background-color: $bg-hover !important;
+    } @else {
+      background-color: $bg-hover;
     }
   }
 }

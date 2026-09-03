@@ -1,0 +1,48 @@
+@use "sass:math";
+
+@use "../abstracts/functions" as *;
+
+.f-0 {
+  flex: 0 1 auto;
+  max-width: none;
+}
+
+// ---------------------------------------------------------------- //
+
+$maxGrow: 4;
+
+@for $i from 0 through $maxGrow {
+  .f-g-#{$i} {
+    flex-grow: $i;
+  }
+}
+
+$maxShrink: 4;
+
+@for $i from 0 through $maxShrink {
+  .f-s-#{$i} {
+    flex-shrink: $i;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+$max: 8; // rem
+$step: 25; // x.25, x.5, x.75
+
+@for $i from 0 through math.div($max * 100, $step) {
+  $value: math.div($i * $step, 100);
+  $suffix: decimal-suffix($value);
+
+  .g-#{$suffix} {
+    gap: #{$value}rem;
+  }
+
+  .g-row-#{$suffix} {
+    row-gap: #{$value}rem;
+  }
+
+  .g-col-#{$suffix} {
+    column-gap: #{$value}rem;
+  }
+}

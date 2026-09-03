@@ -11,8 +11,8 @@ section.cookie {
   margin: 1rem;
   padding: 2rem;
   transition: visibility .15s ease-out, opacity .15s ease-out;
-  border: .125rem solid var(--border-muted);
-  border-radius: .5rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
   background-color: var(--bg-accent);
 
   @include floating-box-width;
@@ -25,15 +25,8 @@ section.cookie {
     button {
       padding: 1rem;
       cursor: pointer;
-      color: #FFF;
-      background-color: $green;
 
-      @include shimmer(true, rgba(#FFF, .25));
-
-      @include hover-focus {
-        color: rgba(#FFF, .75);
-        background-color: $green-dark;
-      }
+      @include action-button($green, $green-dark, rgba(#FFF, .75));
     }
   }
 }

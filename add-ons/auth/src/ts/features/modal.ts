@@ -1,16 +1,14 @@
 const base = window.location.pathname.split('/').slice(0, 3).join('/');
 
-function openModal(modal: HTMLElement): void {
-  modal.classList.remove('invisible');
-  document.body.classList.add('modal-open');
+function openModal(modal: HTMLDialogElement): void {
+  modal.showModal();
 }
 
-function closeModal(modal: HTMLElement): void {
-  modal.classList.add('invisible');
-  document.body.classList.remove('modal-open');
+function closeModal(modal: HTMLDialogElement): void {
+  modal.close();
 }
 
-function bindClose(modal: HTMLElement): void {
+function bindClose(modal: HTMLDialogElement): void {
   modal.addEventListener('click', e => {
     if (e.target === modal) closeModal(modal);
   });
@@ -26,7 +24,7 @@ interface UserActionModalConfig {
 
 // Delegated on document, not the trigger buttons, so rows added after an AJAX table refresh still work.
 function initUserActionModal(config: UserActionModalConfig): void {
-  const modal = document.querySelector<HTMLElement>(config.modalSelector);
+  const modal = document.querySelector<HTMLDialogElement>(config.modalSelector);
   if (!modal) return;
 
   const form = modal.querySelector<HTMLFormElement>(config.formSelector);
@@ -49,7 +47,7 @@ function initUserActionModal(config: UserActionModalConfig): void {
 }
 
 function initRoleDeleteModal(): void {
-  const modal = document.querySelector<HTMLElement>('[data-role-delete-modal]');
+  const modal = document.querySelector<HTMLDialogElement>('[data-role-delete-modal]');
   if (!modal) return;
 
   const deleteForm = modal.querySelector<HTMLFormElement>('.modal-delete-role-form');

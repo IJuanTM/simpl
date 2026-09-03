@@ -1,14 +1,14 @@
 // @addon-insert:after('// VIEWS')
-@use "views/user";
-@use "views/admin/users";
-@use "views/admin/roles";
-@use "views/admin/login-attempts";
-@use "views/verify-account";
+@include meta.load-css("views/user");
+@include meta.load-css("views/admin/users");
+@include meta.load-css("views/admin/roles");
+@include meta.load-css("views/admin/login-attempts");
+@include meta.load-css("views/verify-account");
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')
-@use "components/form";
-@use "components/table";
-@use "components/modal";
-@use "components/badge";
+@include meta.load-css("components/form");
+@include meta.load-css("components/table");
+@include meta.load-css("components/modal");
+@include meta.load-css("components/badge");
 // @addon-end

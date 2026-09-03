@@ -128,8 +128,6 @@ function initColToggle(table: HTMLTableElement, container: Element, hiddenKey: s
   const panel = container.querySelector<HTMLElement>('.col-toggle-panel');
   if (!btn || !panel) return;
 
-  panel.addEventListener('click', e => e.stopPropagation());
-
   for (const cb of Array.from(panel.querySelectorAll<HTMLInputElement>('input[data-col]'))) {
     const col = Number.parseInt(cb.dataset.col!, 10);
 
@@ -157,14 +155,7 @@ function initColToggle(table: HTMLTableElement, container: Element, hiddenKey: s
     });
   }
 
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    btn.setAttribute('aria-expanded', String(panel.classList.toggle('open')));
-  });
-  document.addEventListener('click', () => {
-    panel.classList.remove('open');
-    btn.setAttribute('aria-expanded', 'false');
-  });
+  panel.addEventListener('toggle', e => btn.setAttribute('aria-expanded', String((e as ToggleEvent).newState === 'open')));
 }
 
 function addResizeHandle(table: HTMLTableElement, th: HTMLTableCellElement, col: number, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void): void {

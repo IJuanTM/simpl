@@ -1,10 +1,8 @@
-@use "sass:math";
-
-*.row {
+.row {
   display: flex;
   flex-wrap: wrap;
 
-  > *.col {
+  > .col {
     flex: 1 1 0;
     max-width: 100%;
   }
@@ -12,44 +10,19 @@
 
 // ---------------------------------------------------------------- //
 
-*.f-row {
+.f-row {
   display: flex;
   flex-direction: row;
 }
 
-*.f-col {
+.f-col {
   display: flex;
   flex-direction: column;
 }
 
 // ---------------------------------------------------------------- //
 
-*.f-0 {
-  flex: 0 1 auto !important;
-  max-width: none !important;
-}
-
-// ---------------------------------------------------------------- //
-
-$maxGrow: 4;
-
-@for $i from 0 through $maxGrow {
-  *.f-g-#{$i} {
-    flex-grow: $i !important;
-  }
-}
-
-$maxShrink: 4;
-
-@for $i from 0 through $maxShrink {
-  *.f-s-#{$i} {
-    flex-shrink: $i !important;
-  }
-}
-
-// ---------------------------------------------------------------- //
-
-*.center {
+.center {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -57,12 +30,12 @@ $maxShrink: 4;
 
 // ---------------------------------------------------------------- //
 
-*.start-x {
+.start-x {
   display: flex;
   justify-content: flex-start;
 }
 
-*.center-x {
+.center-x {
   display: flex;
   justify-content: center;
 
@@ -71,7 +44,7 @@ $maxShrink: 4;
   }
 }
 
-*.end-x {
+.end-x {
   display: flex;
   justify-content: flex-end;
 
@@ -80,40 +53,40 @@ $maxShrink: 4;
   }
 }
 
-*.between-x {
+.between-x {
   display: flex;
   justify-content: space-between;
 }
 
-*.around-x {
+.around-x {
   display: flex;
   justify-content: space-around;
 }
 
 // ---------------------------------------------------------------- //
 
-*.start-y {
+.start-y {
   display: flex;
   align-items: flex-start;
 }
 
-*.center-y {
+.center-y {
   display: flex;
   align-items: center;
 }
 
-*.end-y {
+.end-y {
   display: flex;
   align-items: flex-end;
 }
 
-*.between-y {
+.between-y {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-*.around-y {
+.around-y {
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -121,42 +94,12 @@ $maxShrink: 4;
 
 // ---------------------------------------------------------------- //
 
-*.f-wrap {
+.f-wrap {
   display: flex;
   flex-wrap: wrap;
 }
 
-*.f-nowrap {
+.f-nowrap {
   display: flex;
   flex-wrap: nowrap;
-}
-
-// ---------------------------------------------------------------- //
-
-$max: 8; // rem
-$step: 25; // x.25, x.5, x.75
-
-@for $i from 0 through math.div($max * 100, $step) {
-  $value: math.div($i * $step, 100);
-  $floor: math.floor($value);
-  $frac: math.round(($value - $floor) * 100);
-
-  $suffix: "#{$floor}";
-  @if $frac == 50 {
-    $suffix: "#{$floor}\\\.5";
-  } @else if $frac != 0 {
-    $suffix: "#{$floor}\\\.#{$frac}";
-  }
-
-  *.g-#{$suffix} {
-    gap: #{$value}rem !important;
-  }
-
-  *.g-row-#{$suffix} {
-    row-gap: #{$value}rem !important;
-  }
-
-  *.g-col-#{$suffix} {
-    column-gap: #{$value}rem !important;
-  }
 }

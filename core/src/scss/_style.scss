@@ -10,12 +10,21 @@
 // Generate CSS variables for themes set in config
 @include set-themes();
 
+:root {
+  --border-width: .125rem;
+  --border-width-thin: .0625rem;
+  --radius-sm: .25rem;
+  --radius-md: .5rem;
+  --radius-lg: 1rem;
+}
+
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 html {
   font-size: clamp(.75rem, .25vw + .75rem, 1rem);
   line-height: 1.6;
   scroll-behavior: smooth;
+  accent-color: $simpl;
 
   @media (max-height: map.get($breakpoints, lg)) {
     font-size: clamp(.675rem, .25vw + .75rem, .875rem);
@@ -27,10 +36,10 @@ body {
   font-size: 100%;
   color: var(--text);
   background-color: var(--bg-main);
+}
 
-  &.modal-open {
-    overflow: hidden;
-  }
+html:has(dialog[open]) {
+  overflow: hidden;
 }
 
 // -------------------------------------------------------------------------------------------------------------------------------- //
@@ -62,5 +71,18 @@ hr {
 
   &.muted {
     background-color: var(--border-muted);
+  }
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
   }
 }

@@ -1,14 +1,14 @@
-*.hidden {
+.hidden {
   display: none;
 }
 
-*.invisible {
+.invisible {
   visibility: hidden;
   opacity: 0;
 }
 
 // Off-screen but still focusable/selectable, unlike .hidden or .invisible.
-*.offscreen {
+.offscreen {
   position: fixed;
   top: 0;
   left: -9999px;
@@ -25,7 +25,7 @@
   }
 
   &:not(.button) {
-    color: var(--text-25) !important;
+    color: var(--text-25);
   }
 }
 

@@ -12,7 +12,7 @@ header {
     z-index: layer("layout");
     height: $header-height;
     padding: 2rem 3rem 1rem;
-    border-bottom: .125rem solid var(--border-muted);
+    border-bottom: var(--border-width) solid var(--border-muted);
     background-color: var(--bg-section);
 
     @include breakpoint-down(md) {
@@ -47,10 +47,14 @@ header {
         transition: max-height .15s ease-in-out;
         background-color: var(--bg-section);
 
+        &.extended {
+          max-height: 100dvh;
+        }
+
         > div.nav-list {
           flex-direction: column;
 
-          *.nav-item {
+          .nav-item {
             height: 4rem;
           }
         }
@@ -60,10 +64,10 @@ header {
         top: calc($header-height - 1rem);
       }
 
-      > div.nav-list > *.nav-item {
+      > div.nav-list > .nav-item {
         padding: 0 1rem;
         white-space: pre-wrap;
-        border-radius: .5rem;
+        border-radius: var(--radius-md);
         column-gap: .5rem;
 
         @include breakpoint-down(lg) {
@@ -170,7 +174,7 @@ header {
               height: calc(100% - 2rem);
               content: "";
               transition: height .15s ease-in-out;
-              border-radius: .25rem;
+              border-radius: var(--radius-sm);
               background-color: var(--text-50);
 
               @include breakpoint-down(md) {
@@ -214,7 +218,7 @@ header {
         }
       }
 
-      &.extended > div.nav-list > *.nav-item.profile {
+      &.extended > div.nav-list > .nav-item.profile {
         > img {
           width: 2rem;
         }

@@ -1,6 +1,5 @@
 @use "../abstracts/mixins" as *;
 @use "../vars/fonts" as *;
-@use "sass:math";
 
 h1, [data-typo="h1"],
 h2, [data-typo="h2"],
@@ -9,6 +8,7 @@ h4, [data-typo="h4"],
 h5, [data-typo="h5"] {
   font-family: $head;
   font-weight: 700;
+  text-wrap: balance;
 }
 
 h1, [data-typo="h1"] {
@@ -33,6 +33,7 @@ h5, [data-typo="h5"] {
 
 p, [data-typo="p"] {
   font-size: 1rem;
+  text-wrap: pretty;
 }
 
 small, [data-typo="small"] {
@@ -66,46 +67,4 @@ a.link,
   @include hover-focus {
     color: var(--text-75);
   }
-}
-
-$lh-min: 10;
-$lh-max: 40;
-$lh-step: 2;
-
-@for $i from math.div($lh-min, $lh-step) through math.div($lh-max, $lh-step) {
-  $value: $i * math.div($lh-step, 10);
-  $floor: math.floor($value);
-  $decimal: ($value - $floor) * 10;
-
-  @if $decimal == 0 {
-    *.lh-#{$floor} {
-      line-height: #{$value} !important;
-    }
-  } @else {
-    *.lh-#{$floor}\.#{$decimal} {
-      line-height: #{$value} !important;
-    }
-  }
-}
-
-// ---------------------------------------------------------------- //
-
-*.text-center {
-  text-align: center;
-}
-
-*.text-end {
-  text-align: end;
-}
-
-// ---------------------------------------------------------------- //
-
-*.text-muted {
-  color: var(--text-muted) !important;
-}
-
-// ---------------------------------------------------------------- //
-
-*.no-wrap {
-  white-space: nowrap;
 }

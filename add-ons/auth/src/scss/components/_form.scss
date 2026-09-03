@@ -27,8 +27,8 @@ form {
     }
 
     div.input-group {
-      border: .125rem solid var(--border-muted);
-      border-radius: .25rem;
+      border: var(--border-width) solid var(--border-muted);
+      border-radius: var(--radius-sm);
 
       > :is(div.input-prepend, div.input-append) {
         width: 2.5rem;
@@ -45,8 +45,8 @@ form {
       }
 
       > div.input-prepend {
-        border-right: .125rem solid var(--border-muted);
-        border-radius: .25rem 0 0 .25rem;
+        border-right: var(--border-width) solid var(--border-muted);
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm);
 
         + :is(input, textarea, select) {
           border-top-left-radius: 0;
@@ -60,8 +60,8 @@ form {
       }
 
       > div.input-append {
-        border-left: .125rem solid var(--border-muted);
-        border-radius: 0 .25rem .25rem 0;
+        border-left: var(--border-width) solid var(--border-muted);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
       }
 
       &.error > :is(div.input-prepend, input, textarea) {

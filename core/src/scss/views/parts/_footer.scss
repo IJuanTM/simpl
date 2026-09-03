@@ -10,7 +10,7 @@ footer {
     font-size: .875rem;
     height: $footer-height;
     padding: 1rem 4rem 2rem;
-    border-top: .125rem solid var(--border-muted);
+    border-top: var(--border-width) solid var(--border-muted);
     background-color: var(--bg-section);
 
     @include breakpoint-down(md) {

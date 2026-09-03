@@ -14,15 +14,14 @@ export const timeoutModule = {
   },
 
   collapseAlert: (item: HTMLElement): void => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return item.remove();
+
     item.style.maxHeight = `${item.scrollHeight}px`;
     void item.offsetHeight;
     item.classList.add('collapsing');
-    item.addEventListener('transitionend', function handler(e) {
-      if (e.propertyName === 'max-height') {
-        item.remove();
-        item.removeEventListener('transitionend', handler);
-      }
-    });
+    item.addEventListener('transitionend', e => {
+      if (e.propertyName === 'max-height') item.remove();
+    }, {once: true});
   },
 
   onLoad: (): void => {

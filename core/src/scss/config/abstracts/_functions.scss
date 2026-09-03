@@ -30,22 +30,18 @@ $z-layers: (
 
 // ---------------------------------------------------------------- //
 
-@function shade($theme, $keys: null) {
-  @if $keys == null {
-    $keys: (text, text-inverse, shadow, border);
+// Class-name suffix for a fractional value, e.g. 1.5 -> "1\.5", 2 -> "2".
+@function decimal-suffix($value) {
+  $floor: math.floor($value);
+  $frac: math.round(($value - $floor) * 100);
+
+  @if $frac == 0 {
+    @return "#{$floor}";
   }
 
-  $out: $theme;
-
-  @each $key in $keys {
-    $val: map.get($theme, $key);
-
-    @if $val {
-      @each $pct in (5, 10, 25, 50, 75) {
-        $out: map.merge($out, (#{$key}-#{$pct}: rgba($val, math.div($pct, 100))));
-      }
-    }
+  @if $frac % 10 == 0 {
+    $frac: math.div($frac, 10);
   }
 
-  @return $out;
+  @return "#{$floor}\\.#{$frac}";
 }

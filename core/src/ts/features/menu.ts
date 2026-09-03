@@ -3,17 +3,6 @@ const navItems = navMenu?.querySelectorAll('*.nav-item') as NodeListOf<HTMLEleme
 const menuHamburger = document.querySelector('button.hamburger') as HTMLElement | null;
 
 export const menuModule = {
-  updateHeight: (): void => {
-    if (!navMenu || !navItems || !menuHamburger) return;
-
-    if (menuHamburger.classList.contains('is-active')) {
-      let menuHeight = 0;
-
-      navItems.forEach(item => menuHeight += item.offsetHeight);
-      navMenu.style.maxHeight = `${menuHeight}px`;
-    } else navMenu.style.maxHeight = '';
-  },
-
   setMenuState: (isOpen: boolean): void => {
     if (!navMenu || !navItems || !menuHamburger) return;
 
@@ -24,7 +13,6 @@ export const menuModule = {
     else menuHamburger.removeAttribute('aria-expanded');
 
     navItems.forEach(item => item.setAttribute('tabindex', isOpen ? '0' : '-1'));
-    menuModule.updateHeight();
   },
 
   toggle: (): void => {
