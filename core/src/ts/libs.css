@@ -1,6 +1,6 @@
 /* Vite bundles this into css/libs.min.css. */
-@layer reset, base, layout, components, utilities;
+@layer reset, vendor, base, layout, components, utilities;
 
 @import "the-new-css-reset/css/reset.css" layer(reset);
-@import "@fortawesome/fontawesome-free/css/all.min.css";
-@import "hamburgers/dist/hamburgers.min.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css" layer(vendor);
+@import "hamburgers/dist/hamburgers.min.css" layer(vendor);

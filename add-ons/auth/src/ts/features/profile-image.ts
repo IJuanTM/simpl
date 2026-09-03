@@ -1,97 +1,77 @@
-const profileImage = document.querySelector('form.profile-image') as HTMLFormElement | null;
-const editProfileImage = document.querySelector('button.profile-action.edit') as HTMLButtonElement | null;
-const profileImageInput = profileImage?.querySelector('input[type="file"]') as HTMLInputElement | null;
+import {showAlert} from '../utils/alert.ts';
 
-export const profileImageModule = {
-  processImage: async (file: File): Promise<Blob | null> => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
+function cropToSquarePng(file: File): Promise<Blob | null> {
+  return new Promise(resolve => {
+    const reader = new FileReader();
 
-      reader.onload = () => {
-        const image = new Image();
+    reader.onload = () => {
+      const image = new Image();
 
-        image.onload = () => {
-          const size = Math.min(image.width, image.height);
-          const x = (image.width - size) / 2;
-          const y = (image.height - size) / 2;
+      image.onload = () => {
+        const size = Math.min(image.width, image.height);
+        const x = (image.width - size) / 2;
+        const y = (image.height - size) / 2;
 
-          const canvas = document.createElement('canvas');
-          canvas.width = size;
-          canvas.height = size;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = size;
 
-          const context = canvas.getContext('2d');
+        const context = canvas.getContext('2d');
+        if (!context) return resolve(null);
 
-          if (context) {
-            context.drawImage(image, x, y, size, size, 0, 0, size, size);
-            canvas.toBlob(blob => resolve(blob));
-          } else resolve(null);
-        };
-
-        image.onerror = () => resolve(null);
-        image.src = reader.result as string;
+        context.drawImage(image, x, y, size, size, 0, 0, size, size);
+        canvas.toBlob(blob => resolve(blob));
       };
 
-      reader.onerror = () => resolve(null);
+      image.onerror = () => resolve(null);
+      image.src = reader.result as string;
+    };
 
-      reader.readAsDataURL(file);
-    });
-  },
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+}
 
-  uploadImage: async (): Promise<void> => {
-    if (!profileImage || !profileImageInput) return;
+export const profileImageModule = {
+  init(): void {
+    const form = document.querySelector<HTMLFormElement>('form.profile-image');
+    const editButton = document.querySelector<HTMLButtonElement>('button.profile-action.edit');
+    const fileInput = form?.querySelector<HTMLInputElement>('input[type="file"]');
+    if (!form || !editButton || !fileInput) return;
 
-    profileImage.classList.add('loading');
+    const fail = (message: string): void => {
+      form.classList.remove('loading');
+      showAlert(message, 'error');
+    };
 
-    const file = profileImageInput.files?.[0];
+    const upload = async (): Promise<void> => {
+      form.classList.add('loading');
 
-    if (!file) {
-      profileImage.classList.remove('loading');
-      return;
-    }
+      const file = fileInput.files?.[0];
+      if (!file) {
+        form.classList.remove('loading');
+        return;
+      }
 
-    const maxSizeMb = Number(profileImageInput.dataset.maxSizeMb ?? 2);
+      const maxSizeMb = Number(fileInput.dataset.maxSizeMb ?? 2);
+      if (file.size > maxSizeMb * 1024 * 1024) return fail(`The image size is too large. Please choose an image that is less than ${maxSizeMb}MB.`);
+      if (!file.type.startsWith('image/')) return fail('The file you selected is not an image. Please select an image file.');
 
-    if (file.size > maxSizeMb * 1024 * 1024) {
-      profileImage.classList.remove('loading');
-      alert(`The image size is too large. Please choose an image that is less than ${maxSizeMb}MB.`);
-      return;
-    }
+      const blob = await cropToSquarePng(file);
+      if (!blob) return fail('Failed to process the image. Please try again.');
 
-    if (!file.type.startsWith('image/')) {
-      profileImage.classList.remove('loading');
-      alert('The file you selected is not an image. Please select an image file.');
-      return;
-    }
+      const formData = new FormData(form);
+      formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
 
-    const blob = await profileImageModule.processImage(file);
+      try {
+        const response = await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {method: 'POST', body: formData});
+        if (response.ok) window.location.reload();
+        else fail('An error occurred while uploading the image. Please try again.');
+      } catch {
+        fail('An error occurred while uploading the image. Please try again.');
+      }
+    };
 
-    if (!blob) {
-      profileImage.classList.remove('loading');
-      alert('Failed to process the image. Please try again.');
-      return;
-    }
-
-    const formData = new FormData(profileImage);
-    formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
-
-    try {
-      const response = await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) window.location.reload();
-      else alert('An error occurred while uploading the image. Please try again.');
-    } catch {
-      profileImage.classList.remove('loading');
-      alert('An error occurred while uploading the image. Please try again.');
-    }
-  },
-
-  init: (): void => {
-    if (!editProfileImage || !profileImageInput) return;
-
-    editProfileImage.addEventListener('click', () => profileImageInput.click());
-    profileImageInput.addEventListener('change', profileImageModule.uploadImage);
+    editButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', upload);
   }
 };

@@ -3,7 +3,7 @@
 // CONFIG
 @use "config/config";
 
-@layer reset, base, layout, components, utilities;
+@layer reset, vendor, base, layout, components, utilities;
 
 @layer base {
   @include meta.load-css("style");

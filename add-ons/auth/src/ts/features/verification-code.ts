@@ -1,72 +1,54 @@
-const codeInput = document.getElementById('code') as HTMLInputElement | null;
-const digitInputs = document.querySelectorAll('input.digit') as NodeListOf<HTMLInputElement>;
-
 export const verificationModule = {
-  updateHiddenInput: (): void => {
-    if (!codeInput) return;
-    codeInput.value = Array.from(digitInputs).map(input => input.value).join('');
-  },
-
-  prefillDigits: (): void => {
-    if (!codeInput || !codeInput.value) return;
-    [...codeInput.value].forEach((char, i) => {
-      if (i < digitInputs.length) digitInputs[i].value = char;
-    });
-  },
-
-  handleInput: (input: HTMLInputElement, index: number): void => {
-    input.value = input.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-
-    if (input.value.length === 1 && index < digitInputs.length - 1) {
-      digitInputs[index + 1].focus();
-    }
-
-    verificationModule.updateHiddenInput();
-  },
-
-  handleBackspace: (e: KeyboardEvent, input: HTMLInputElement, index: number): void => {
-    if (e.key === 'Backspace' && input.value === '' && index > 0) {
-      digitInputs[index - 1].focus();
-    }
-  },
-
-  handlePaste: (e: ClipboardEvent): void => {
-    e.preventDefault();
-
-    const pasteData = e.clipboardData?.getData('text');
-    if (!pasteData) return;
-
-    const alphanumericData = pasteData.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
-
-    [...alphanumericData].forEach((char, i) => {
-      if (i < digitInputs.length) digitInputs[i].value = char;
-    });
-
-    verificationModule.updateHiddenInput();
-
-    const nextEmpty = Array.from(digitInputs).findIndex(input => !input.value);
-
-    if (nextEmpty !== -1) {
-      digitInputs[nextEmpty].focus();
-      return;
-    }
-
-    digitInputs[digitInputs.length - 1].focus();
-
-    const form = codeInput?.form;
-    const submitButton = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
-    if (form && submitButton) form.requestSubmit(submitButton);
-  },
-
-  init: (): void => {
+  init(): void {
+    const codeInput = document.querySelector<HTMLInputElement>('#code');
+    const digitInputs = document.querySelectorAll<HTMLInputElement>('input.digit');
     if (!codeInput || !digitInputs.length) return;
 
-    verificationModule.prefillDigits();
+    const syncHidden = (): void => {
+      codeInput.value = Array.from(digitInputs, input => input.value).join('');
+    };
+
+    const fill = (chars: string): void => {
+      Array.from(chars).forEach((char, i) => {
+        const digit = digitInputs.item(i);
+        if (digit) digit.value = char;
+      });
+      syncHidden();
+    };
+
+    // #code carries a server-rendered value after a failed submit.
+    if (codeInput.value) fill(codeInput.value);
 
     digitInputs.forEach((input, index) => {
-      input.addEventListener('input', () => verificationModule.handleInput(input, index));
-      input.addEventListener('keydown', (e) => verificationModule.handleBackspace(e, input, index));
-      input.addEventListener('paste', verificationModule.handlePaste);
+      input.addEventListener('input', () => {
+        input.value = input.value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
+        if (input.value.length === 1) digitInputs.item(index + 1)?.focus();
+        syncHidden();
+      });
+
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && input.value === '') digitInputs.item(index - 1)?.focus();
+      });
+
+      input.addEventListener('paste', e => {
+        e.preventDefault();
+
+        const pasted = e.clipboardData?.getData('text');
+        if (!pasted) return;
+
+        fill(pasted.replace(/[^0-9A-Za-z]/g, '').toUpperCase());
+
+        const firstEmpty = Array.from(digitInputs).find(digit => !digit.value);
+        if (firstEmpty) {
+          firstEmpty.focus();
+          return;
+        }
+
+        digitInputs.item(digitInputs.length - 1)?.focus();
+
+        const submitButton = codeInput.form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (codeInput.form && submitButton) codeInput.form.requestSubmit(submitButton);
+      });
     });
   }
 };

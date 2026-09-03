@@ -34,7 +34,7 @@ function initPasswordCheckField(checkInput: HTMLInputElement, quote: HTMLElement
 }
 
 export const passwordPolicyModule = {
-  init: (): void => {
+  init(): void {
     document.querySelectorAll<HTMLElement>('[data-password-quote]').forEach(quote => {
       const quoteText = quote.querySelector<HTMLElement>('.quote-text');
       const form = quote.closest('form');

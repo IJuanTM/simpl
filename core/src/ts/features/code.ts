@@ -1,50 +1,32 @@
 export const codeModule = {
-  onLoad: (): void => {
-    document.querySelectorAll('.code-block').forEach(container => {
+  init(): void {
+    document.querySelectorAll<HTMLElement>('.code-block').forEach(container => {
       const codeElement = container.querySelector('code');
-      const copyButton = container.querySelector('.copy-code') as HTMLElement | null;
-      const copyIcon = copyButton?.querySelector('i') as HTMLElement | null;
+      if (!codeElement) return;
 
-      if (codeElement) {
-        codeElement.addEventListener('click', () => {
-          const selection = window.getSelection();
-          if (!selection) return;
+      codeElement.addEventListener('click', () => {
+        const selection = window.getSelection();
+        if (!selection) return;
 
-          const range = document.createRange();
-          range.selectNodeContents(codeElement);
-          selection.removeAllRanges();
-          selection.addRange(range);
+        const range = document.createRange();
+        range.selectNodeContents(codeElement);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+
+      const copyButton = container.querySelector<HTMLElement>('.copy-code');
+      const copyIcon = copyButton?.querySelector('i');
+      if (!copyButton || !copyIcon) return;
+
+      copyButton.addEventListener('click', e => {
+        e.stopPropagation();
+
+        navigator.clipboard.writeText(codeElement.textContent ?? '').then(() => {
+          copyIcon.classList.replace('fa-copy', 'fa-check');
+          setTimeout(() => copyIcon.classList.replace('fa-check', 'fa-copy'), 2000);
+        }).catch(() => {
         });
-      }
-
-      if (copyButton && copyIcon && codeElement) {
-        copyButton.addEventListener('click', (e) => {
-          e.stopPropagation();
-
-          const text = codeElement.textContent || '';
-          const updateIcon = () => {
-            copyIcon.classList.replace('fa-copy', 'fa-check');
-            setTimeout(() => copyIcon.classList.replace('fa-check', 'fa-copy'), 2000);
-          };
-
-          if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(updateIcon);
-          else {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.classList.add('offscreen');
-            textarea.setAttribute('readonly', '');
-
-            document.body.appendChild(textarea);
-
-            textarea.select();
-            document.execCommand('copy');
-
-            document.body.removeChild(textarea);
-
-            updateIcon();
-          }
-        });
-      }
+      });
     });
   }
 };

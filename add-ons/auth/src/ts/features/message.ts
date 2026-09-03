@@ -1,32 +1,24 @@
 import {inputModule} from './input.ts';
 
-const messageTextarea = document.querySelector('textarea.message-field') as HTMLTextAreaElement | null;
-const clearMessageButton = document.querySelector('p.clear-message') as HTMLElement | null;
-
 export const messageModule = {
-  updateClearButton: (): void => {
-    if (!messageTextarea || !clearMessageButton) return;
+  init(): void {
+    const messageTextarea = document.querySelector<HTMLTextAreaElement>('textarea.message-field');
+    const clearButton = document.querySelector<HTMLElement>('p.clear-message');
+    if (!messageTextarea || !clearButton) return;
 
-    if (messageTextarea.value.length > 0) clearMessageButton.removeAttribute('inert');
-    else clearMessageButton.setAttribute('inert', '');
-  },
-
-  clear: (): void => {
-    if (!messageTextarea || !clearMessageButton) return;
-
-    messageTextarea.value = '';
-    inputModule.checkMessageLength(messageTextarea);
-    clearMessageButton.setAttribute('inert', '');
-  },
-
-  init: (): void => {
-    if (!messageTextarea || !clearMessageButton) return;
+    const syncClearButton = (): void => {
+      clearButton.toggleAttribute('inert', messageTextarea.value.length === 0);
+    };
 
     messageTextarea.addEventListener('keyup', () => {
       inputModule.checkMessageLength(messageTextarea);
-      messageModule.updateClearButton();
+      syncClearButton();
     });
 
-    clearMessageButton.addEventListener('click', messageModule.clear);
+    clearButton.addEventListener('click', () => {
+      messageTextarea.value = '';
+      inputModule.checkMessageLength(messageTextarea);
+      syncClearButton();
+    });
   }
 };
