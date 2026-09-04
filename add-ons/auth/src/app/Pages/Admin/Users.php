@@ -299,9 +299,7 @@ class Users
         $roleRecord = $this->resolveRole();
         if (!$roleRecord) return;
 
-        DB::beginTransaction();
-
-        try {
+        $this->runInTransaction(function () use ($roleRecord): void {
             DB::insert(
                 INTO: 'users',
                 VALUES: [
@@ -314,21 +312,14 @@ class Users
                 ]
             );
 
-            $id = AuthController::getUserIdByEmail($_POST['email']);
-
             DB::insert(
                 INTO: 'user_roles',
                 VALUES: [
-                    'user_id' => $id,
+                    'user_id' => (int)DB::lastInsertId(),
                     'role_id' => $roleRecord['id']
                 ]
             );
-
-            DB::commit();
-        } catch (PDOException $e) {
-            DB::rollback();
-            throw $e;
-        }
+        });
 
         $result = AuthController::sendCreatedUserMail($_POST['email'], $this->generatedPassword);
 
@@ -374,6 +365,22 @@ class Users
     }
 
     /**
+     * Runs $fn inside a transaction, rolling back and re-throwing on a PDOException.
+     */
+    private function runInTransaction(callable $fn): void
+    {
+        DB::beginTransaction();
+
+        try {
+            $fn();
+            DB::commit();
+        } catch (PDOException $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
+    /**
      * Dispatches the POST request to the appropriate action handler.
      *
      * @return void
@@ -415,9 +422,7 @@ class Users
         $roleRecord = $this->resolveRole();
         if (!$roleRecord) return;
 
-        DB::beginTransaction();
-
-        try {
+        $this->runInTransaction(function () use ($id, $roleRecord): void {
             DB::update(
                 UPDATE: 'users',
                 SET: [
@@ -450,12 +455,7 @@ class Users
                     'role_id' => $roleRecord['id']
                 ]
             );
-
-            DB::commit();
-        } catch (PDOException $e) {
-            DB::rollback();
-            throw $e;
-        }
+        });
 
         PageController::redirectWithAlert('admin/users', 'Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
@@ -541,7 +541,7 @@ class Users
     /**
      * Renders a user row's cell for the given column.
      */
-    public function renderCell(array $column, array $row): string
+    final public function renderCell(array $column, array $row): string
     {
         $check = '<i class="fas fa-check"></i>';
         $times = '<i class="fas fa-times"></i>';
@@ -569,7 +569,7 @@ class Users
     /**
      * Overrides the trait default to add the "/ totalAllUsers" count when filtered.
      */
-    public function renderPaginationInfo(): string
+    final public function renderPaginationInfo(): string
     {
         return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ($this->hasActiveFilters ? ' / ' . $this->totalAllUsers : '') . ' users';
     }

@@ -23,8 +23,9 @@ class Timebox
      *
      * @return mixed The callback's return value
      */
-    public function call(callable $callback, int $microseconds): mixed
+    final public function call(callable $callback, int $microseconds): mixed
     {
+        $this->returnEarly = false;
         $start = hrtime(true);
 
         try {
@@ -42,7 +43,7 @@ class Timebox
      *
      * @return void
      */
-    public function returnEarly(): void
+    final public function returnEarly(): void
     {
         $this->returnEarly = true;
     }

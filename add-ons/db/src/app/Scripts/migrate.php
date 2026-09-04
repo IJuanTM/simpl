@@ -20,10 +20,7 @@ if (in_array('--rollback', $_SERVER['argv'] ?? [], true)) {
     try {
         $rolled = DatabaseMigrator::rollback();
     } catch (Exception $e) {
-        Console::line();
-        Console::error("Rollback failed: " . $e->getMessage());
-        Console::line();
-        exit(1);
+        Console::fail("Rollback failed: " . $e->getMessage());
     }
 
     Console::divider();
@@ -48,9 +45,7 @@ if (in_array('--fresh', $_SERVER['argv'] ?? [], true)) {
     try {
         DatabaseMigrator::drop();
     } catch (Exception $e) {
-        Console::error("Failed to drop database: " . $e->getMessage());
-        Console::line();
-        exit(1);
+        Console::fail("Failed to drop database: " . $e->getMessage());
     }
 
     Console::success("Existing database dropped");
@@ -62,10 +57,7 @@ Console::task("🏗️ Running migrations...");
 try {
     $applied = DatabaseMigrator::run();
 } catch (Exception $e) {
-    Console::line();
-    Console::error("Migration failed: " . $e->getMessage());
-    Console::line();
-    exit(1);
+    Console::fail("Migration failed: " . $e->getMessage());
 }
 
 Console::divider();

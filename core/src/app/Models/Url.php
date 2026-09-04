@@ -36,9 +36,8 @@ class Url
             return $url;
         }
 
-        // Ensure we always get two parts when exploding on fragment (#)
-        [$url, $fragment] = explode('#', $url . '#', 2);
-        return $url . (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($filePath) . ($fragment ? "#$fragment" : '');
+        [$path, $fragment] = str_contains($url, '#') ? explode('#', $url, 2) : [$url, ''];
+        return $path . (str_contains($path, '?') ? '&' : '?') . 'v=' . filemtime($filePath) . ($fragment !== '' ? "#$fragment" : '');
     }
 
     /**

@@ -1,12 +1,11 @@
 <?php
-use app\Controllers\SessionController;
+use app\Controllers\AlertController;
 ?>
 
 </main>
 
 <!-- Alert -->
-<?php if (SessionController::get('alert') !== null) : ?>
-  <?php $alert = SessionController::get('alert') ?>
+<?php if (($alert = AlertController::pull()) !== null) : ?>
   <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert"<?= $alert['timeout'] > 0 ? ' data-timeout="' . ($alert['timeout'] - time()) * 1000 . '"' : '' ?>>
     <?= $alert['message'] ?>
   </div>

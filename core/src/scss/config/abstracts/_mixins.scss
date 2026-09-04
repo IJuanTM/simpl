@@ -145,3 +145,10 @@
     }
   }
 }
+
+// ---------------------------------------------------------------- //
+
+@mixin fa-icon {
+  font-family: "Font Awesome 7 Free", sans-serif;
+  font-weight: 900;
+}

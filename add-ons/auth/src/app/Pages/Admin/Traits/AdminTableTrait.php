@@ -30,7 +30,6 @@ trait AdminTableTrait
     public ?string $sortDirection = null;
     public string $itemLabel = 'items';
 
-    // Column defs: array{key, label, sortable, width, visible}[]
     public array $tableColumns = [];
     // Active filter values, keyed by param name
     public array $filters = [];
@@ -51,12 +50,12 @@ trait AdminTableTrait
 
     /**
      * JSON-encoded list of column indexes hidden by default, for data-hidden-cols.
-     *
-     * @throws JsonException
      */
-    public function hiddenColumnsJson(): string
+    final public function hiddenColumnsJson(): string
     {
-        return json_encode(array_keys(array_filter($this->tableColumns, static fn(array $c): bool => empty($c['visible']))), JSON_THROW_ON_ERROR);
+        return array_filter($this->tableColumns, static fn(array $c): bool => empty($c['visible']))
+                |> array_keys(...)
+                |> (static fn($x) => json_encode($x, JSON_THROW_ON_ERROR));
     }
 
     /**
@@ -81,7 +80,7 @@ trait AdminTableTrait
      * Renders the table header row, with sortable column links where applicable.
      * Called directly from views for the initial render, and from api() for AJAX.
      */
-    public function renderThead(): string
+    final public function renderThead(): string
     {
         $html = '<tr>';
 
@@ -133,7 +132,7 @@ trait AdminTableTrait
     /**
      * Row renderer: renderCell() per column, 'actions' column via renderActionsCell().
      */
-    public function renderTbody(): string
+    final public function renderTbody(): string
     {
         $rows = $this->pageRows();
         if (!$rows) return $this->renderEmptyRow();
@@ -205,7 +204,7 @@ trait AdminTableTrait
      * Renders previous/next pagination links with active query params preserved.
      * Called directly from views for the initial render, and from api() for AJAX.
      */
-    public function renderPagination(): string
+    final public function renderPagination(): string
     {
         $cls = 'class="col link lh-1 g-col-0.5 center f-0"';
         $prev = $this->routePath() . '?' . http_build_query(['page' => $this->page - 1] + $this->activeQueryParams);
@@ -219,7 +218,7 @@ trait AdminTableTrait
      * Renders the "X - Y of Z <items>" info string for the current page.
      * Called directly from views for the initial render, and from api() for AJAX.
      */
-    public function renderPaginationInfo(): string
+    final public function renderPaginationInfo(): string
     {
         return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ' ' . $this->itemLabel;
     }
@@ -234,7 +233,7 @@ trait AdminTableTrait
      *
      * @return bool True when blocked (the caller should return immediately)
      */
-    protected function blockIf(bool $condition, callable $onBlock): bool
+    final protected function blockIf(bool $condition, callable $onBlock): bool
     {
         if (!$condition) return false;
 
@@ -283,7 +282,7 @@ trait AdminTableTrait
     {
         if ($page->param('page') !== null) $this->page = max(0, (int)$page->param('page'));
         if ($page->param('per_page') !== null && in_array((int)$page->param('per_page'), $this->perPageOptions, true)) $this->perPage = (int)$page->param('per_page');
-        if ($page->param('search') !== null) $this->search = trim((string)$page->param('search'));
+        if (is_string($search = $page->param('search'))) $this->search = trim($search);
     }
 
     /**

@@ -41,18 +41,21 @@ class RegisterPage
             !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
-        // Rate limit after validation, before email-existence check to prevent enumeration
+        // Runs before the rate limiter: a policy or mismatch failure touches no account data.
+        // It must not spend the single registration attempt or sit inside the enumeration timebox.
+        if (!FormController::validatePasswords('password', 'password-check')) return;
+
+        // Rate limit before the email-existence check to prevent enumeration.
         if (!$this->attemptRateLimit(RESEND_TIMEOUTS['register'])) return;
 
         // Timeboxed so the response takes the same time whether or not the email is already registered.
-        (new Timebox())->call(function () {
+        new Timebox()->call(function () {
             if (AuthController::checkEmail($_POST['email'])) {
-                $_POST['email'] = '';
-                FormController::addAlert('An account with this email already exists! Try logging in!', AlertType::WARNING);
+                // Redirects like a fresh registration instead of alerting inline, closing the status-code/body tell.
+                // The Location can still differ when verification is required - a separate, harder gap to close.
+                PageController::redirectWithAlert('login', 'An account with this email already exists! Try logging in!', AlertType::WARNING, 4);
                 return;
             }
-
-            if (!FormController::validatePasswords('password', 'password-check')) return;
 
             $this->register($_POST['email'], $_POST['password']);
         }, TIMING_FLOOR_MS['register'] * 1000);
@@ -88,7 +91,7 @@ class RegisterPage
             ]
         );
 
-        $id = AuthController::getUserIdByEmail($email);
+        $id = (int)DB::lastInsertId();
 
         DB::insert(
             'user_roles',

@@ -23,7 +23,6 @@ class ErrorPage
             exit;
         }
 
-        // $errorCode->value is an int backed enum value; cast to string for storage
         $this->code = (string)$errorCode->value;
         $this->message = $errorCode->message();
 

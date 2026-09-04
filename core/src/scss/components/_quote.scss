@@ -43,8 +43,7 @@ p.quote {
   }
 
   &::before {
-    font-family: "Font Awesome 7 Free", sans-serif;
-    font-weight: 900;
+    @include fa-icon;
     position: absolute;
     top: .5rem;
     left: 0;

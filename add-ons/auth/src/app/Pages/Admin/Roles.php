@@ -25,9 +25,7 @@ class Roles
 {
     use AdminTableTrait;
 
-    // AdminTableTrait's pagination methods are never called here (see class docblock), but the
-    // trait still expects the host to declare these - undeclared, they'd silently read as null
-    // if pagination is ever added later without remembering to add them.
+    // Required by AdminTableTrait; this page never enables pagination, so the values are nominal.
     public int $perPage = 25;
     public array $perPageOptions = [25];
 
@@ -114,11 +112,7 @@ class Roles
      */
     private function createRole(): void
     {
-        // Trimmed before validation so a whitespace-only submission fails the required check
-        // instead of passing it and then trimming down to an empty stored name.
-        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
-
-        if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
+        if (!$this->validateRoleName()) return;
 
         if (DB::exists(
             FROM: 'roles',
@@ -141,6 +135,16 @@ class Roles
     }
 
     /**
+     * Trims $_POST['name'] before validating, so a whitespace-only submission fails the required
+     * check instead of passing it and then being stored as an empty name.
+     */
+    private function validateRoleName(): bool
+    {
+        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
+        return FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH]);
+    }
+
+    /**
      * Validates and updates an existing role's name.
      *
      * @param int $id Role ID to update
@@ -151,11 +155,7 @@ class Roles
     {
         if ($this->blockBuiltInRole('renamed')) return;
 
-        // Trimmed before validation so a whitespace-only submission fails the required check
-        // instead of passing it and then trimming down to an empty stored name.
-        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
-
-        if (!FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH])) return;
+        if (!$this->validateRoleName()) return;
 
         $existing = DB::single(
             SELECT: 'id',
@@ -230,7 +230,7 @@ class Roles
     /**
      * Renders a role row's cell for the given column.
      */
-    public function renderCell(array $column, array $row): string
+    final public function renderCell(array $column, array $row): string
     {
         return match ($column['key']) {
             'id' => (string)$row['id'],

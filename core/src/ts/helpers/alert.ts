@@ -1,3 +1,5 @@
+import {prefersReducedMotion} from './motion.ts';
+
 type AlertType = 'success' | 'warning' | 'error' | 'info';
 
 export function showAlert(message: string, type: AlertType = 'info', timeoutMs = 6000): void {
@@ -8,7 +10,7 @@ export function showAlert(message: string, type: AlertType = 'info', timeoutMs =
   document.body.appendChild(el);
 
   setTimeout(() => {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return el.remove();
+    if (prefersReducedMotion()) return el.remove();
 
     el.classList.add('invisible');
     el.addEventListener('transitionend', () => el.remove(), {once: true});

@@ -63,6 +63,17 @@ class Console
         self::out(self::pad() . Ansi::wrap($symbol, $color) . ' ' . ($bold ? self::styled($message, Ansi::BOLD) : ($dim ? self::styled($message, Ansi::DIM) : $message)));
     }
 
+    /**
+     * Prints $message as an error and exits with status 1.
+     */
+    public static function fail(string $message): never
+    {
+        self::line();
+        self::error($message);
+        self::line();
+        exit(1);
+    }
+
     public static function error(string $message, bool $bold = false): void
     {
         self::prefixed('✕', Ansi::RED, $message, bold: $bold);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace app\Utils;
 
+use LogicException;
+
 class ScheduledTask
 {
     public string $name;
@@ -17,14 +19,14 @@ class ScheduledTask
         $this->callback = $callback;
     }
 
-    public function cron(string $expression): static
+    final public function cron(string $expression): static
     {
         $this->cronExpression = $expression;
         $this->intervalSeconds = null;
         return $this;
     }
 
-    public function everyMinutes(int $n = 1): static
+    final public function everyMinutes(int $n = 1): static
     {
         return $this->interval($n * 60);
     }
@@ -36,39 +38,43 @@ class ScheduledTask
         return $this;
     }
 
-    public function hourly(): static
+    final public function hourly(): static
     {
         return $this->everyHours();
     }
 
-    public function everyHours(int $n = 1): static
+    final public function everyHours(int $n = 1): static
     {
         return $this->interval($n * 3600);
     }
 
-    public function daily(): static
+    final public function daily(): static
     {
         return $this->everyDays();
     }
 
-    public function everyDays(int $n = 1): static
+    final public function everyDays(int $n = 1): static
     {
         return $this->interval($n * 86400);
     }
 
-    public function weekly(): static
+    final public function weekly(): static
     {
         return $this->everyWeeks();
     }
 
-    public function everyWeeks(int $n = 1): static
+    final public function everyWeeks(int $n = 1): static
     {
         return $this->interval($n * 604800);
     }
 
-    public function isDue(?string $lastRun): bool
+    final public function isDue(?string $lastRun): bool
     {
         if ($this->cronExpression !== null) return $this->isCronDue($this->cronExpression);
+
+        if ($this->intervalSeconds === null) {
+            throw new LogicException("Scheduled task \"$this->name\" has no schedule (call cron() or an interval helper).");
+        }
 
         if ($lastRun === null) return true;
 
@@ -83,8 +89,12 @@ class ScheduledTask
 
         [$minute, $hour, $day, $month, $weekday] = $parts;
 
+        $currentWeekday = (int)date('w');
+
         $dayMatches = $this->matchesCronField((int)date('j'), $day);
-        $weekdayMatches = $this->matchesCronField((int)date('w'), $weekday);
+        // date('w') is 0-6; standard cron also accepts 7 for Sunday.
+        $weekdayMatches = $this->matchesCronField($currentWeekday, $weekday)
+            || ($currentWeekday === 0 && $this->matchesCronField(7, $weekday));
 
         // Standard cron semantics: day-of-month and weekday OR together when both are restricted, AND otherwise.
         $dayOrWeekday = $day === '*' || $weekday === '*' ? $dayMatches && $weekdayMatches : $dayMatches || $weekdayMatches;

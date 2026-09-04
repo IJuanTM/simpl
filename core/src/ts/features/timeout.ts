@@ -1,5 +1,7 @@
+import {prefersReducedMotion} from '../helpers/motion.ts';
+
 function collapseAlert(item: HTMLElement): void {
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return item.remove();
+  if (prefersReducedMotion()) return item.remove();
 
   item.style.maxHeight = `${item.scrollHeight}px`;
   void item.offsetHeight;
@@ -34,7 +36,13 @@ export const timeoutModule = {
     });
 
     document.querySelectorAll<HTMLFormElement>('form').forEach(form =>
-      form.addEventListener('submit', () => form.querySelector<HTMLButtonElement>('button[type="submit"]')?.setAttribute('inert', ''))
+      form.addEventListener('submit', event => {
+        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        if (!button) return;
+        button.setAttribute('inert', '');
+        // A cancelled submit (a script-driven form that never navigates) would otherwise leave the button dead.
+        setTimeout(() => event.defaultPrevented && button.removeAttribute('inert'));
+      })
     );
   }
 };

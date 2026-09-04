@@ -15,6 +15,8 @@ use PDOException;
 
 class DB
 {
+    // MySQL requires a row count before OFFSET; this is its documented "unlimited" maximum (2^64 - 1).
+    private const string NO_LIMIT = '18446744073709551615';
     private static ?PDO $pdo = null;
     private static bool $pdoHasDatabase = false;
 
@@ -47,7 +49,7 @@ class DB
             . ($whereClause ? " WHERE $whereClause" : '')
             . ($groupByClause ? " $groupByClause" : '')
             . ($orderByClause ? " $orderByClause" : '')
-            . ($LIMIT !== null ? " LIMIT $LIMIT" : '')
+            . ($LIMIT !== null ? " LIMIT $LIMIT" : ($OFFSET !== null ? ' LIMIT ' . self::NO_LIMIT : ''))
             . ($OFFSET !== null ? " OFFSET $OFFSET" : '');
 
         return self::execute($query, $params)->fetchAll();
@@ -266,7 +268,7 @@ class DB
      */
     private static function groupByClause(string|array|null $group): string
     {
-        if ($group === null) return '';
+        if ($group === null || $group === '') return '';
 
         $cols = self::normalizeColumnsList($group);
 
@@ -297,7 +299,7 @@ class DB
      */
     private static function orderByClause(string|array|null $order): string
     {
-        if ($order === null) return '';
+        if ($order === null || $order === '') return '';
 
         $parts = is_array($order) ? $order : array_map('trim', explode(',', $order));
         $sanitized = array_map([self::class, 'sanitizeOrderElement'], $parts);
@@ -471,12 +473,21 @@ class DB
         if (empty($VALUES)) throw new PDOException('Cannot insert empty values');
 
         $table = self::sanitize($INTO);
-        $columns = implode(', ', array_map(static fn($col) => self::sanitize($col), array_keys($VALUES)));
+        $columns = self::sanitizedColumnList(array_keys($VALUES), static fn($col) => self::sanitize($col));
         $placeholders = ':' . implode(', :', array_keys($VALUES));
         $query = "INSERT INTO $table ($columns) VALUES ($placeholders)";
 
         self::execute($query, $VALUES);
         return true;
+    }
+
+    /**
+     * Sanitizes each key via $format (identifier-checked through self::sanitize()) and joins
+     * the results with ', '. Shared by insert()'s column list and update()'s SET clause.
+     */
+    private static function sanitizedColumnList(array $keys, callable $format): string
+    {
+        return implode(', ', array_map($format, $keys));
     }
 
     /**
@@ -496,7 +507,7 @@ class DB
         if (empty($WHERE)) throw new PDOException('UPDATE requires WHERE clause for safety');
 
         $table = self::sanitize($UPDATE);
-        $setClause = implode(', ', array_map(static fn($key) => self::sanitize($key) . " = :set_$key", array_keys($SET)));
+        $setClause = self::sanitizedColumnList(array_keys($SET), static fn($key) => self::sanitize($key) . " = :set_$key");
         [$whereClause, $whereParams] = self::buildWhere($WHERE, 'where_');
         $query = "UPDATE $table SET $setClause WHERE $whereClause";
 
@@ -539,7 +550,7 @@ class DB
     {
         $table = self::sanitize($FROM);
         [$whereClause, $params] = self::buildWhere($WHERE);
-        $query = "SELECT 1 FROM $table WHERE $whereClause LIMIT 1";
+        $query = "SELECT 1 FROM $table" . ($whereClause ? " WHERE $whereClause" : '') . ' LIMIT 1';
 
         return self::execute($query, $params)->fetch() !== false;
     }

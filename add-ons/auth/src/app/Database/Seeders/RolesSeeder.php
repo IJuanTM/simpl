@@ -11,17 +11,6 @@ class RolesSeeder
 {
     public static function run(): void
     {
-        DB::insert(
-            'roles',
-            [
-                'name' => Role::ADMIN->value
-            ]
-        );
-        DB::insert(
-            'roles',
-            [
-                'name' => Role::USER->value
-            ]
-        );
+        foreach (Role::cases() as $role) DB::insert('roles', ['name' => $role->value]);
     }
 }

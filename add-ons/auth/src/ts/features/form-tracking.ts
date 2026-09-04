@@ -1,14 +1,21 @@
+type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function fieldState(field: FormField): string {
+  return field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')
+    ? String(field.checked)
+    : field.value;
+}
+
 function trackChanges(): void {
   document.querySelectorAll<HTMLFormElement>('form[data-track-form]').forEach(form => {
-    const inputFields = form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>('input:not([type="submit"]), textarea, select');
+    const inputFields = Array.from(form.querySelectorAll<FormField>('input:not([type="submit"]), textarea, select'));
     const submitButton = form.querySelector<HTMLButtonElement>('button[type="submit"], input[type="submit"]');
     if (!submitButton) return;
 
-    const initialValues = new Map<string, string>();
-    inputFields.forEach(field => initialValues.set(field.name, field.value));
+    const initialState = inputFields.map(fieldState);
 
     const checkChanges = (): void => {
-      const changed = Array.from(inputFields).some(field => field.value !== initialValues.get(field.name));
+      const changed = inputFields.some((field, index) => fieldState(field) !== initialState[index]);
       submitButton.toggleAttribute('inert', !changed);
     };
 

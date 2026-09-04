@@ -44,4 +44,18 @@ class AlertController
             'timeout' => $timeout > 0 ? time() + $timeout : 0
         ]);
     }
+
+    /**
+     * Returns the pending alert and consumes a non-expiring (timeout 0) one so it renders once.
+     * Skipped on a 302 body, whose output the browser discards - that alert belongs to the redirect target.
+     * Timed alerts are left in the session for the constructor to expire on their own schedule.
+     *
+     * @return array{message: string, type: string, timeout: int}|null
+     */
+    public static function pull(): ?array
+    {
+        $alert = SessionController::get('alert');
+        if ($alert !== null && $alert['timeout'] === 0 && http_response_code() !== 302) SessionController::remove('alert');
+        return $alert;
+    }
 }

@@ -10,8 +10,7 @@ export const menuModule = {
       menuHamburger.classList.toggle('is-active', isOpen);
       navMenu.classList.toggle('extended', isOpen);
 
-      if (isOpen) menuHamburger.setAttribute('aria-expanded', 'true');
-      else menuHamburger.removeAttribute('aria-expanded');
+      menuHamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
 
       navItems.forEach(item => item.setAttribute('tabindex', isOpen ? '0' : '-1'));
     };
@@ -35,7 +34,9 @@ export const menuModule = {
     };
 
     menuHamburger.addEventListener('click', toggle);
-    document.querySelectorAll('a.nav-item').forEach(link => link.addEventListener('click', toggle));
+    document.querySelectorAll('a.nav-item').forEach(link => link.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) setMenuState(false);
+    }));
     window.addEventListener('resize', syncTabIndex);
 
     setActive();

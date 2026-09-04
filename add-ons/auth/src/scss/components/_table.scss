@@ -31,7 +31,6 @@ div.col-toggle-wrapper {
     border-radius: var(--radius-sm);
     background-color: var(--bg-section);
     position-anchor: --col-toggle;
-    inset: auto;
 
     &:popover-open {
       display: flex;
@@ -142,9 +141,8 @@ div.table-container {
             user-select: none;
 
             &::after {
-              font-family: "Font Awesome 7 Free", sans-serif;
+              @include fa-icon;
               font-size: .625rem;
-              font-weight: 900;
               position: absolute;
               top: 0;
               right: 0;

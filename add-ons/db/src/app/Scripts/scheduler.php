@@ -12,10 +12,7 @@ require_once 'start.php';
 /* ---------------------------------------------------------------- */
 
 try {
-    Scheduler::run(in_array('--test', $_SERVER['argv'] ?? [], true));
+    if (Scheduler::run(in_array('--test', $_SERVER['argv'] ?? [], true)) > 0) exit(1);
 } catch (Exception $e) {
-    Console::line();
-    Console::error("Scheduler failed: " . $e->getMessage());
-    Console::line();
-    exit(1);
+    Console::fail("Scheduler failed: " . $e->getMessage());
 }

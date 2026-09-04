@@ -26,8 +26,6 @@ class AuthController
 
     public function __construct()
     {
-        // If a "remember" cookie is present and no user session exists,
-        // attempt to rehydrate the session from the persistent token.
         if (isset($_COOKIE['remember']) && !SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
     }
 
@@ -65,7 +63,14 @@ class AuthController
 
         $user = self::getUserWithRole($token['user_id']);
 
-        if (!$user || !self::setUserSession($user)) {
+        // Auto-login must clear the same bars the login form does.
+        // A stale cookie must not revive a since-deactivated or re-unverified account.
+        if (
+            !$user
+            || $user['status'] !== UserStatus::ACTIVE->value
+            || (VERIFICATION_CONFIG['required'] && !self::isVerified((int)$user['id']))
+            || !self::setUserSession($user)
+        ) {
             self::invalidateRememberToken($tokenHash);
             return;
         }
@@ -149,6 +154,40 @@ class AuthController
     }
 
     /**
+     * Return whether the account is verified (no pending verification token).
+     *
+     * @param int $id
+     *
+     * @return bool True when verified, false otherwise
+     */
+    public static function isVerified(int $id): bool
+    {
+        // Account considered verified when there is no verification token row.
+        return !DB::exists(
+            FROM: 'tokens',
+            WHERE: [
+                'user_id' => $id,
+                'type' => TokenType::VERIFICATION->value
+            ]
+        );
+    }
+
+    /**
+     * Determine whether a user exists by id.
+     *
+     * @param int $id
+     *
+     * @return bool
+     */
+    public static function exists(int $id): bool
+    {
+        return DB::exists(
+            FROM: 'users',
+            WHERE: compact('id')
+        );
+    }
+
+    /**
      * Create the session entry for an authenticated user and ensure a role
      * is attached. Removes the password field before storing user data in
      * the session.
@@ -165,7 +204,6 @@ class AuthController
         if (!$role) {
             Log::error("No user role is set for user with id \"{$user['id']}\"");
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             return false;
         }
 
@@ -297,9 +335,7 @@ class AuthController
             exit;
         }
 
-        $freshRole = $fresh['role'] ?? null;
-
-        if (!$freshRole) {
+        if (empty($fresh['role'])) {
             SessionController::remove('user');
             PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;
@@ -354,7 +390,7 @@ class AuthController
      */
     private static function isSafeRedirectPath(string $uri): bool
     {
-        return (bool)preg_match('#^/(?!/|\\\\)#', $uri);
+        return (bool)preg_match('#^/(?![/\\\\])#', $uri);
     }
 
     /**
@@ -395,7 +431,6 @@ class AuthController
             PASSWORD_CONFIG['require_special_character'] ? ['(?=.*[^a-zA-Z\d])', '1 special character'] : null,
         ]);
 
-        // Anchored regex enforcing all required character classes plus the minimum length.
         $pattern = '/^' . implode('', array_column($rules, 0)) . '.{' . PASSWORD_CONFIG['min_length'] . ',}$/';
 
         $messages = array_column($rules, 1);
@@ -499,21 +534,6 @@ class AuthController
     }
 
     /**
-     * Determine whether a user exists by id.
-     *
-     * @param int $id
-     *
-     * @return bool
-     */
-    public static function exists(int $id): bool
-    {
-        return DB::exists(
-            FROM: 'users',
-            WHERE: compact('id')
-        );
-    }
-
-    /**
      * Whether an account exists and still has a pending verification. Shared by every page
      * that must respond identically to a missing account and an already-verified one, so
      * they can't be used to enumerate account existence/verification status.
@@ -525,25 +545,6 @@ class AuthController
     public static function needsVerification(int $id): bool
     {
         return self::exists($id) && !self::isVerified($id);
-    }
-
-    /**
-     * Return whether the account is verified (no pending verification token).
-     *
-     * @param int $id
-     *
-     * @return bool True when verified, false otherwise
-     */
-    public static function isVerified(int $id): bool
-    {
-        // Account considered verified when there is no verification token row.
-        return !DB::exists(
-            FROM: 'tokens',
-            WHERE: [
-                'user_id' => $id,
-                'type' => TokenType::VERIFICATION->value
-            ]
-        );
     }
 
     /**
@@ -637,7 +638,10 @@ class AuthController
         if ($row['expires'] !== null && strtotime((string)$row['expires']) < time()) return false;
 
         // Constant-time comparison to prevent timing attacks; case-insensitive for human-readable tokens.
-        return hash_equals($row['token'], hash('sha256', strtoupper($token)));
+        return $token
+                |> strtoupper(...)
+                |> (static fn($x) => hash('sha256', $x))
+                |> (static fn($x) => hash_equals($row['token'], $x));
     }
 
     /**
@@ -651,7 +655,7 @@ class AuthController
      */
     public static function checkPassword(string $email, string $password): bool
     {
-        return (new Timebox())->call(function (Timebox $timebox) use ($email, $password) {
+        return new Timebox()->call(function (Timebox $timebox) use ($email, $password) {
             $hash = DB::single(
                 SELECT: 'password',
                 FROM: 'users',
@@ -680,7 +684,7 @@ class AuthController
      */
     public static function verifyCredentials(string $identifier, string $password): ?array
     {
-        return (new Timebox())->call(function (Timebox $timebox) use ($identifier, $password) {
+        return new Timebox()->call(function (Timebox $timebox) use ($identifier, $password) {
             $user = self::getUserByIdentifier($identifier);
 
             if ($user) {
@@ -750,6 +754,9 @@ class AuthController
             ],
             WHERE: compact('id')
         );
+
+        // A password change must not leave any persistent auto-login alive on other devices.
+        self::deleteToken($id, TokenType::REMEMBER);
     }
 
     /**
@@ -806,8 +813,7 @@ class AuthController
      */
     public static function getUserIdByIdentifier(string $identifier): int|null
     {
-        $user = self::getUserByIdentifier($identifier);
-        return $user ? (int)$user['id'] : null;
+        return self::getUserIdByEmail($identifier) ?? self::getUserIdByUsername($identifier);
     }
 
     /**

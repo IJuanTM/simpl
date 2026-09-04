@@ -21,6 +21,7 @@ class CreateTokensTable
             $t->primary('id');
             $t->foreign('user_id', 'users');
             $t->index('idx_user_type_expires', ['user_id', 'type', 'expires']);
+            $t->index('idx_token', ['token']);
         });
     }
 

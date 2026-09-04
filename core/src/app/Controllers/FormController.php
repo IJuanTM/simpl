@@ -50,11 +50,17 @@ class FormController
 
         if ($value === null || $value === '') return true;
 
+        if ((isset($rules['minValue']) || isset($rules['maxValue'])) && !is_numeric($value)) {
+            $_POST[$field] = '';
+            static::addAlert("The input in the $fieldName field is not a number!", AlertType::WARNING);
+            return false;
+        }
+
         $checks = [
             ['minLength', static fn($v, $r) => strlen($v) < $r, "The input of the $fieldName field is too short!"],
             ['maxLength', static fn($v, $r) => strlen($v) > $r, "The input of the $fieldName field is too long!"],
-            ['minValue', static fn($v, $r) => !is_numeric($v) || $v < $r, "The input in the $fieldName field is too low!"],
-            ['maxValue', static fn($v, $r) => !is_numeric($v) || $v > $r, "The input in the $fieldName field is too high!"],
+            ['minValue', static fn($v, $r) => $v < $r, "The input in the $fieldName field is too low!"],
+            ['maxValue', static fn($v, $r) => $v > $r, "The input in the $fieldName field is too high!"],
         ];
 
         foreach ($checks as [$rule, $fails, $message]) {
@@ -94,7 +100,7 @@ class FormController
      */
     public static function addAlert(string $message, AlertType $type, ?int $timeout = null): void
     {
-        static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">" . htmlspecialchars($message, ENT_QUOTES | ENT_HTML5, 'UTF-8') . "</div>";
+        static::$alerts[] = "<div class='alert $type->value' role='alert'" . ($timeout !== null ? " data-timeout='$timeout'" : "") . ">" . AppController::sanitize($message) . "</div>";
     }
 
     /**

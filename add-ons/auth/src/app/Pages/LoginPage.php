@@ -218,8 +218,10 @@ class LoginPage
 
         AuthController::updateLastLogin($user['email']);
 
-        // Set user session; setUserSession() already redirects with its own alert on failure
-        if (!AuthController::setUserSession($user)) return;
+        if (!AuthController::setUserSession($user)) {
+            PageController::redirectWithAlert(REDIRECT, AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            exit;
+        }
 
         if ($user['must_change_password']) {
             PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);

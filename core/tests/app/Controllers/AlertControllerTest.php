@@ -70,8 +70,44 @@ class AlertControllerTest extends TestCase
         $this->assertFalse(SessionController::has('alert'));
     }
 
+    public function testPullReturnsAndConsumesANeverExpiringAlertOnANormalResponse(): void
+    {
+        SessionController::set('alert', ['message' => 'hi', 'type' => 'info', 'timeout' => 0]);
+
+        $alert = AlertController::pull();
+
+        $this->assertSame('hi', $alert['message']);
+        $this->assertFalse(SessionController::has('alert'));
+    }
+
+    public function testPullKeepsANeverExpiringAlertWhileTheResponseIsARedirect(): void
+    {
+        SessionController::set('alert', ['message' => 'hi', 'type' => 'info', 'timeout' => 0]);
+        http_response_code(302);
+
+        $alert = AlertController::pull();
+
+        $this->assertSame('hi', $alert['message']);
+        $this->assertTrue(SessionController::has('alert'));
+    }
+
+    public function testPullNeverConsumesATimedAlert(): void
+    {
+        SessionController::set('alert', ['message' => 'hi', 'type' => 'info', 'timeout' => time() + 30]);
+
+        AlertController::pull();
+
+        $this->assertTrue(SessionController::has('alert'));
+    }
+
+    public function testPullReturnsNullWhenNoAlertIsSet(): void
+    {
+        $this->assertNull(AlertController::pull());
+    }
+
     protected function setUp(): void
     {
         $_SESSION = [];
+        http_response_code(200);
     }
 }

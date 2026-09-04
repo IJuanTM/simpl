@@ -44,6 +44,12 @@ class VerifyAccountPage
 
         $this->resendCooldown = RateLimiter::retryAfterMs('resend-verification-' . $id);
 
+        // Handled before the URL-code path so a wrong/truncated code in the link doesn't block the manual entry form.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+            $this->post($id);
+            return;
+        }
+
         $code = AppController::sanitize($page->subpage(1) ?? '');
 
         if (!empty($code)) {
@@ -60,10 +66,38 @@ class VerifyAccountPage
             }
 
             $this->verify($id);
+        }
+    }
+
+    /**
+     * Handles manual verification code submission from a form.
+     *
+     * @param int $userId User ID
+     *
+     * @return void
+     */
+    private function post(int $userId): void
+    {
+        $code = RequestController::rawPost('code');
+
+        if (empty($code)) {
+            FormController::addAlert('Please enter the verification code received in your mail!', AlertType::WARNING);
             return;
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
+        if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
+            FormController::addAlert('The verification code is too long!', AlertType::WARNING);
+            return;
+        }
+
+        if ($this->throttle($userId)) return;
+
+        if (!AuthController::checkToken($userId, $code, TokenType::VERIFICATION)) {
+            FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
+            return;
+        }
+
+        $this->verify($userId);
     }
 
     /**
@@ -102,36 +136,5 @@ class VerifyAccountPage
         AuthController::deleteToken($id, TokenType::VERIFICATION);
 
         PageController::redirectWithAlert('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
-    }
-
-    /**
-     * Handles manual verification code submission from a form.
-     *
-     * @param int $userId User ID
-     *
-     * @return void
-     */
-    private function post(int $userId): void
-    {
-        $code = RequestController::rawPost('code');
-
-        if (empty($code)) {
-            FormController::addAlert('Please enter the verification code received in your mail!', AlertType::WARNING);
-            return;
-        }
-
-        if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
-            FormController::addAlert('The verification code is too long!', AlertType::WARNING);
-            return;
-        }
-
-        if ($this->throttle($userId)) return;
-
-        if (!AuthController::checkToken($userId, $code, TokenType::VERIFICATION)) {
-            FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
-            return;
-        }
-
-        $this->verify($userId);
     }
 }

@@ -1,3 +1,5 @@
+@use "../config" as *;
+
 section.verify-account input.digit {
   font-size: 2rem;
   width: 4rem;

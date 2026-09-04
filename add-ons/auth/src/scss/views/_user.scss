@@ -73,9 +73,8 @@ section.user {
           pointer-events: none;
 
           &::after {
-            font-family: "Font Awesome 7 Free", sans-serif;
+            @include fa-icon;
             font-size: 2rem;
-            font-weight: 900;
             position: absolute;
             display: flex;
             align-items: center;

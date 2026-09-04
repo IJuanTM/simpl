@@ -65,7 +65,7 @@ class MailController
     public static function send(string $senderName, string $to, string $senderEmail, string $subject, string $message, ?string $replyTo = null): bool
     {
         if (empty($to) || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
-            Log::warning("Invalid recipient email: \"$to\"");
+            Log::warning('Invalid recipient email: "{to}"', ['to' => $to]);
             return false;
         }
 

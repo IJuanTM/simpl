@@ -13,7 +13,10 @@ class Scheduler
     /** @var ScheduledTask[] */
     private static array $tasks = [];
 
-    public static function run(bool $test = false): void
+    /**
+     * @return int Number of tasks that threw during this run (0 when all succeeded).
+     */
+    public static function run(bool $test = false): int
     {
         $title = 'Scheduler - ' . date('Y-m-d H:i:s');
         if ($test) $title .= ' [TEST]';
@@ -22,6 +25,7 @@ class Scheduler
         Console::line();
 
         $ran = 0;
+        $failed = 0;
 
         foreach (self::$tasks as $task) {
             $record = DB::single(
@@ -47,6 +51,7 @@ class Scheduler
             } catch (Throwable $e) {
                 $status = 'failed';
                 $error = $e->getMessage();
+                $failed++;
                 Console::error($e->getMessage());
             }
 
@@ -80,8 +85,11 @@ class Scheduler
 
         Console::divider();
         Console::line();
-        Console::success("Scheduler completed!", true);
+        if ($failed > 0) Console::error("Scheduler finished with $failed failed task(s).");
+        else Console::success("Scheduler completed!", true);
         Console::line();
+
+        return $failed;
     }
 
     public static function task(string $name, callable $callback): ScheduledTask

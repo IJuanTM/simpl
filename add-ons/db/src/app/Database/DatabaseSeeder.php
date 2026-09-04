@@ -5,8 +5,6 @@ declare(strict_types=1);
 namespace app\Database;
 
 use app\Database\Migrations\Schema;
-use PDOException;
-use Random\RandomException;
 
 /**
  * Handles the execution of database seeding operations.
@@ -15,12 +13,11 @@ use Random\RandomException;
  */
 class DatabaseSeeder
 {
+    // db's own schema bookkeeping, not domain data - truncate() must leave these intact.
     private const array BOOKKEEPING_TABLES = ['migrations', 'scheduler_runs'];
+
     /** @var class-string[] */
     private static array $seeders = [];
-
-    // Schema-bookkeeping tables db owns and manages itself - never domain data, so they're
-    // excluded from truncate() (unlike migration files, they have no re-seedable content anyway).
 
     /**
      * Register a seeder class to be run. Call in dependency order - seeders with foreign
@@ -55,19 +52,14 @@ class DatabaseSeeder
 
             $tables = DB::query('SELECT LOWER(table_name) AS table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND LOWER(table_name) NOT IN (' . implode(', ', $placeholders) . ')', $params);
             foreach ($tables as $row) DB::query("TRUNCATE TABLE `$row[table_name]`");
-
+        } finally {
             Schema::enableForeignKeys();
-        } catch (PDOException $e) {
-            Schema::enableForeignKeys();
-            throw $e;
         }
     }
 
     /**
      * Executes the database seeding operations.
      * Runs each registered seeder in turn to populate the database with core data.
-     *
-     * @throws RandomException
      */
     public static function run(): void
     {

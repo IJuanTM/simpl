@@ -141,6 +141,12 @@ class UserPage
         // Profile image actions change state and act on the logged-in user; require authentication.
         AuthController::requireAuth();
 
+        // State-changing only: a GET would run these without passing PageController's CSRF check.
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            PageController::error(ErrorCode::METHOD_NOT_ALLOWED);
+            return;
+        }
+
         if ($page->subpage(1) !== null) switch ($page->subpage(1)) {
             case 'update-profile-image':
                 self::updateProfileImage();
@@ -200,13 +206,6 @@ class UserPage
 
         $id = SessionController::get('user')['id'];
         $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'];
-
-        $old = DB::single(
-            SELECT: 'profile_img',
-            FROM: 'users',
-            WHERE: compact('id')
-        )['profile_img'] ?? null;
-
         $name = "{$id}_" . time() . ".$extension";
 
         if (!move_uploaded_file($file['tmp_name'], $path . $name)) {
@@ -214,8 +213,8 @@ class UserPage
             return;
         }
 
-        // Remove the old file only after the new one is confirmed written, so a failed upload can't orphan the DB reference.
-        if ($old && is_file($path . $old)) unlink($path . $old);
+        // Remove the previous file only after the new one is confirmed written, so a failed upload can't orphan the DB reference.
+        self::unlinkStoredProfileImage((int)$id);
 
         DB::update(
             UPDATE: 'users',
@@ -241,21 +240,30 @@ class UserPage
     }
 
     /**
-     * Deletes user's profile image from filesystem and database.
-     *
-     * @return void
+     * Deletes the on-disk file backing the user's current profile_img, if one is set.
      */
-    private static function deleteProfileImage(): void
+    private static function unlinkStoredProfileImage(int $id): void
     {
-        $id = SessionController::get('user')['id'];
-
         $old = DB::single(
             SELECT: 'profile_img',
             FROM: 'users',
             WHERE: compact('id')
         )['profile_img'] ?? null;
 
-        if ($old && is_file($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'] . $old)) unlink($_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'] . $old);
+        $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'];
+        if ($old && is_file($path . $old)) unlink($path . $old);
+    }
+
+    /**
+     * Deletes user's profile image from filesystem and database.
+     *
+     * @return void
+     */
+    private static function deleteProfileImage(): void
+    {
+        $id = (int)SessionController::get('user')['id'];
+
+        self::unlinkStoredProfileImage($id);
 
         DB::update(
             UPDATE: 'users',
