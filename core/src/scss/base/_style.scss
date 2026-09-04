@@ -1,11 +1,6 @@
 @use "sass:map";
 
-@use "config/abstracts/functions" as *;
-@use "config/abstracts/mixins" as *;
-@use "config/vars/colors" as *;
-@use "config/vars/fonts" as *;
-@use "config/vars/sizes" as *;
-@use "config/vars/breakpoints" as *;
+@use "../config" as *;
 
 // Generate CSS variables for themes set in config
 @include set-themes();

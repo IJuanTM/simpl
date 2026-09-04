@@ -1,5 +1,4 @@
-@use "../abstracts/mixins" as *;
-@use "../vars/fonts" as *;
+@use "../config" as *;
 
 h1, [data-typo="h1"],
 h2, [data-typo="h2"],

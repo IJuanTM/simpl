@@ -1,4 +1,4 @@
-@use "../vars/sizes" as *;
+@use "../config" as *;
 
 @each $abbr, $prop in (h: height, w: width) {
   .#{$abbr}-100 {

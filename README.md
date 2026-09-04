@@ -14,9 +14,9 @@
 [![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
 [![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
 [![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.102.0-CC6699?logo=sass)](https://sass-lang.com/)
+[![Sass logo](https://img.shields.io/badge/sass-1.103.1-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-7.0.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-8.2.1-646CFF?logo=vite)](https://vite.dev/)
+[![Vite logo](https://img.shields.io/badge/vite-8.2.2-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -151,17 +151,19 @@ In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` fol
 
 Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
 
-There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class, which is used for logging errors and other information to log files.
+There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class for writing errors and other information to log files, and the `RateLimiter`.
+
+Generated runtime data lives outside `app`: log files in `src/logs`, the rate limiter's cache in `src/cache`. Both directories are created automatically and are safe to delete.
 
 #### Views
 
-You can find the HTML code in the `src/views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containing the `header.phtml` and `footer.phtml` files.
+The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at the root (`home.phtml`, `error.phtml`, ...). The `parts` folder holds the pieces the framework assembles around every page and loads with `$this->part()` - `parts/layout` for the header, footer and cookie bar, `parts/index` for the `<head>` includes. The `components` folder holds reusable fragments a template drops in itself with `$this->component()`, like the breadcrumbs.
 
 #### Styling and TypeScript
 
-The styling is located in the `src/scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
+The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, cards, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
 
-The TypeScript code is located in the `src/ts` folder. Simpl makes use of Vite to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
+The TypeScript is in the `src/ts` folder - feature modules in `features/` (each exposing an `init()` that `main.ts` calls), shared helpers in `helpers/`. Vite bundles it all starting from `main.ts`.
 
 #### Public
 
@@ -325,6 +327,10 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Updated npm and composer dependencies
 * Accessibility (ARIA) improvements and cross-page HTML/styling consistency pass across all views
 * Additional correctness and security hardening found via a full-project code review (page routing path validation, query builder parameter handling, login rate limiting, password reset throttling, task scheduler timing, and more)
+* Modernised all styling: CSS cascade layers, `light-dark()` theming, native `<dialog>` modals, a popover + CSS-anchor-positioned column menu, container queries, `field-sizing`, `text-wrap: balance`, `accent-color`, and a `prefers-reduced-motion` pass
+* Restructured the `scss` folder - `config/` now holds only Sass definitions (re-exported through a `config/_index.scss` barrel), with `base/`, `utilities/` and `components/` alongside `views/`; visible page chrome moved to `views/parts/layout/`
+* Reworked the TypeScript into one consistent module shape (private helpers, a single `init()` per feature), dropped the `window.load` handler, switched clipboard copy to `navigator.clipboard`, and added a client-side alert helper in place of native `alert()`
+* Documented the `part()` vs `component()` split on `PageController`, renamed `ts/utils` to `ts/helpers`, and moved generated runtime data out of `app/` into `src/cache` and `src/logs`
 
 <br>
 

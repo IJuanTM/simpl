@@ -83,7 +83,7 @@ class RateLimiterTest extends TestCase
         $key = $this->key('prune');
         RateLimiter::attempt($key, 5, 60);
 
-        $file = BASEDIR . '/app/Cache/ratelimit/' . hash('sha256', $key) . '.json';
+        $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
         $this->assertFileExists($file);
 
         touch($file, time() - 1000);

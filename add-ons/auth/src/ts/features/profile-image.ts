@@ -1,4 +1,4 @@
-import {showAlert} from '../utils/alert.ts';
+import {showAlert} from '../helpers/alert.ts';
 
 function cropToSquarePng(file: File): Promise<Blob | null> {
   return new Promise(resolve => {

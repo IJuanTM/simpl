@@ -1,5 +1,4 @@
-@use "../config/abstracts/mixins" as *;
-@use "../config/vars/colors" as *;
+@use "../config" as *;
 
 dialog.modal-overlay {
   width: min(48rem, 100% - 2rem);

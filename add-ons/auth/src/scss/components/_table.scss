@@ -1,6 +1,4 @@
-@use "../config/abstracts/functions" as *;
-@use "../config/abstracts/mixins" as *;
-@use "../config/vars/themes" as *;
+@use "../config" as *;
 
 form.table-tools-form {
   max-width: unset !important;

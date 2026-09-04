@@ -109,7 +109,7 @@ The installer will:
 1. Update `.env` with your database and mail credentials
 2. Run `composer install` (if needed)
 3. Run `composer migrate` to create the database tables, then `composer seed` to populate default roles/data - this picks up auth's registered migrations/seeders automatically
-4. Manually merge `src/views/parts/header.phtml` for navigation links (if needed)
+4. Manually merge `src/views/parts/layout/header.phtml` for navigation links (if needed)
 5. Run `npm run build` to compile assets
 
 **Manual Method (If needed):**

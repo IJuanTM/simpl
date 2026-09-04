@@ -230,7 +230,7 @@ class Users
     /**
      * Returns a normalized sort value for the given user and column.
      *
-     * @param array<string, mixed> $user User row
+     * @param array<string, mixed> $user   User row
      * @param string               $column Column key
      *
      * @return int|string

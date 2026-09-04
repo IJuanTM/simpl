@@ -174,7 +174,7 @@ class DB
      *
      * @param array  $where
      * @param string $prefix
-     * @param string $separator Logical operator joining conditions ('AND' or 'OR')
+     * @param string $separator      Logical operator joining conditions ('AND' or 'OR')
      * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. by
      *                               combineWhere()'s separate AND/OR calls) so a prefixed and an
      *                               unprefixed key can't normalize to the same final placeholder.

@@ -1,5 +1,4 @@
-@use "../../config/abstracts/mixins" as *;
-@use "../../config/vars/colors" as *;
+@use "../../config" as *;
 
 section.roles {
   div.roles-table {

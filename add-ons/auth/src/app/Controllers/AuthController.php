@@ -205,7 +205,7 @@ class AuthController
      * The token length is trimmed to $length. If $uppercase is true the
      * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int  $length Number of characters to return
+     * @param int  $length    Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
@@ -245,9 +245,9 @@ class AuthController
      * shown after the redirect, when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message Optional flash alert message to show after redirecting
-     * @param AlertType   $type Alert type, used only when $message is given
-     * @param int         $timeout Alert timeout in seconds, used only when $message is given
+     * @param string|null $message  Optional flash alert message to show after redirecting
+     * @param AlertType   $type     Alert type, used only when $message is given
+     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
      *
      * @return void
      */
@@ -269,7 +269,7 @@ class AuthController
      * If password change is required and not explicitly allowed this will
      * redirect the user to the change-password flow.
      *
-     * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
+     * @param Role[]|null $allowedRoles        Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
@@ -334,7 +334,7 @@ class AuthController
      * redirect back into themselves). The only way to write 'intended_url' to the session,
      * so every call site is guaranteed the safety check.
      *
-     * @param string $uri Request URI to store
+     * @param string $uri            Request URI to store
      * @param string $excludePattern preg_match() pattern for routes to skip storing
      *
      * @return void
@@ -616,9 +616,9 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type, and hasn't expired. Comparison is case-insensitive.
      *
-     * @param int       $id User id
+     * @param int       $id    User id
      * @param string    $token Token to check
-     * @param TokenType $type Token type
+     * @param TokenType $type  Token type
      *
      * @return bool True if tokens match and the token hasn't expired
      */
@@ -674,7 +674,7 @@ class AuthController
      * when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
-     * @param string $password Plaintext password to verify
+     * @param string $password   Plaintext password to verify
      *
      * @return array|null Matched user row on success, null on any failure
      */

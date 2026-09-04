@@ -1,6 +1,6 @@
 @use "sass:math";
 
-@use "../abstracts/functions" as *;
+@use "../config" as *;
 
 $lh-min: 10;
 $lh-max: 40;

@@ -1,4 +1,4 @@
-import {storage} from '../utils/storage.ts';
+import {storage} from '../helpers/storage.ts';
 
 const themes = [
   {name: 'light', icon: 'fa-sun'},

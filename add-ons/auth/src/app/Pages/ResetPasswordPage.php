@@ -123,7 +123,7 @@ class ResetPasswordPage
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id User ID
+     * @param int    $id       User ID
      * @param string $password New password
      *
      * @return void

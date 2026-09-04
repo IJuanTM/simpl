@@ -1,25 +1,25 @@
 @use "sass:meta";
 
-// CONFIG
-@use "config/config";
-
 @layer reset, vendor, base, layout, components, utilities;
 
+@include meta.load-css("base/keyframes");
+
 @layer base {
-  @include meta.load-css("style");
-  @include meta.load-css("config/utils/typography");
-  @include meta.load-css("config/utils/scrollbar");
+  @include meta.load-css("base/style");
+  @include meta.load-css("base/typography");
+  @include meta.load-css("base/scrollbar");
 }
 
+// .row/.col get their own layer so utilities (.f-0, .g-*) win over them.
 @layer layout {
-  @include meta.load-css("config/utils/flex");
+  @include meta.load-css("utilities/flex");
 }
 
 @layer utilities {
-  @include meta.load-css("config/utils/dimensions");
-  @include meta.load-css("config/utils/spacing");
-  @include meta.load-css("config/utils/text");
-  @include meta.load-css("config/utils/visibility");
+  @include meta.load-css("utilities/dimensions");
+  @include meta.load-css("utilities/spacing");
+  @include meta.load-css("utilities/text");
+  @include meta.load-css("utilities/visibility");
 }
 
 @layer components {
@@ -36,8 +36,8 @@
   @include meta.load-css("components/quote");
 
   // PARTS
-  @include meta.load-css("views/parts/content");
-  @include meta.load-css("views/parts/cookie");
-  @include meta.load-css("views/parts/footer");
-  @include meta.load-css("views/parts/header");
+  @include meta.load-css("views/parts/layout/content");
+  @include meta.load-css("views/parts/layout/cookie");
+  @include meta.load-css("views/parts/layout/footer");
+  @include meta.load-css("views/parts/layout/header");
 }

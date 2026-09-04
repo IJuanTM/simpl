@@ -1,0 +1,8 @@
+// Barrel for every vars/abstracts member, so a partial only needs `@use "../config" as *`.
+@forward "vars/breakpoints";
+@forward "vars/colors";
+@forward "vars/fonts";
+@forward "vars/sizes";
+@forward "vars/themes";
+@forward "abstracts/functions";
+@forward "abstracts/mixins";

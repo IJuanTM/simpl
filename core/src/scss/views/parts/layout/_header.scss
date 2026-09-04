@@ -1,7 +1,4 @@
-@use "../../config/abstracts/functions" as *;
-@use "../../config/abstracts/mixins" as *;
-@use "../../config/vars/colors" as *;
-@use "../../config/vars/sizes" as *;
+@use "../../../config" as *;
 
 header {
   position: relative;

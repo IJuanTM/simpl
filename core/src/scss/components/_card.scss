@@ -1,8 +1,6 @@
 @use "sass:map";
 
-@use "../config/abstracts/mixins" as *;
-@use "../config/vars/breakpoints" as *;
-@use "../config/vars/colors" as *;
+@use "../config" as *;
 
 .row:has(> .card) {
   container: card-row / inline-size;

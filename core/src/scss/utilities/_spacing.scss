@@ -1,6 +1,6 @@
 @use "sass:math";
 
-@use "../abstracts/functions" as *;
+@use "../config" as *;
 
 .f-0 {
   flex: 0 1 auto;

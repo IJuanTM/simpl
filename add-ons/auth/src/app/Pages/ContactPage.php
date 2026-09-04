@@ -54,8 +54,8 @@ class ContactPage
     /**
      * Sends contact form email to site administrator.
      *
-     * @param string $from Sender's name
-     * @param string $sender Sender's email address
+     * @param string $from    Sender's name
+     * @param string $sender  Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
      *

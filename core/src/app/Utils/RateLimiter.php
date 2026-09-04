@@ -31,8 +31,8 @@ class RateLimiter
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
-     * @param string $key Unique identifier for the action being limited
-     * @param int    $max Maximum number of attempts allowed in the window
+     * @param string $key           Unique identifier for the action being limited
+     * @param int    $max           Maximum number of attempts allowed in the window
      * @param int    $windowSeconds Rolling time window in seconds
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded
@@ -80,7 +80,7 @@ class RateLimiter
      */
     private static function path(string $key): string
     {
-        $dir = BASEDIR . '/app/Cache/ratelimit';
+        $dir = BASEDIR . '/cache/ratelimit';
 
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
             throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
@@ -169,7 +169,7 @@ class RateLimiter
      */
     public static function prune(int $olderThanSeconds = RATE_LIMIT_CACHE_RETENTION): int
     {
-        $dir = BASEDIR . '/app/Cache/ratelimit';
+        $dir = BASEDIR . '/cache/ratelimit';
         if (!is_dir($dir)) return 0;
 
         $cutoff = time() - $olderThanSeconds;

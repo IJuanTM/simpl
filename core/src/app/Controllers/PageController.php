@@ -81,7 +81,7 @@ class PageController extends Page
      * This method constructs an error URL based on the provided error code and an optional
      * redirect URL. The user is then redirected to the generated error page.
      *
-     * @param ErrorCode   $code The specific error code used to determine the error page.
+     * @param ErrorCode   $code     The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
@@ -98,7 +98,7 @@ class PageController extends Page
      * An optional refresh delay can be specified to control the time before the redirection occurs.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -166,12 +166,15 @@ class PageController extends Page
     /**
      * Loads and includes a view part file based on the given name.
      *
-     * This method attempts to locate the corresponding partial view file within the predefined
-     * directory. If the file exists, it is included. If the file is not found, a warning message
-     * is logged, and feedback is provided either visibly or as a hidden comment depending on
-     * the environment configuration.
+     * Parts are the fixed page skeleton (header, footer, cookie, the index/ head fragments) that
+     * the render pipeline assembles itself - never called from a view template, hence protected.
+     * Each is included once per request and takes no data. For template-invoked, repeatable,
+     * prop-taking fragments use component() instead.
      *
-     * @param string $name The name of the view part to load.
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV or as an
+     * HTML comment otherwise.
+     *
+     * @param string $name The name of the view part to load, relative to views/parts/.
      *
      * @return void
      */
@@ -196,10 +199,10 @@ class PageController extends Page
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message The alert message to show after redirecting.
-     * @param AlertType $type Visual type/style for the alert.
-     * @param int       $timeout Seconds until the alert expires. 0 means it persists until the next page load.
-     * @param int|null  $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param string    $message  The alert message to show after redirecting.
+     * @param AlertType $type     Visual type/style for the alert.
+     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -239,6 +242,22 @@ class PageController extends Page
         self::redirect(end($updated) ?: REDIRECT);
     }
 
+    /**
+     * Loads and includes a view component file, extracting the given props into its scope.
+     *
+     * Components are reusable fragments (breadcrumbs, modals, column-toggle, ...) that a view
+     * template drops in via $this->component() wherever it wants them, hence public. Unlike a
+     * part, a component may be rendered more than once per request and receives per-call data
+     * through $props. For the fixed, framework-assembled page skeleton use part() instead.
+     *
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV or as an
+     * HTML comment otherwise.
+     *
+     * @param string $name  The name of the view component to load, relative to views/components/.
+     * @param array  $props Associative array of values extracted into the component's local scope.
+     *
+     * @return void
+     */
     final public function component(string $name, array $props = []): void
     {
         $file = BASEDIR . "/views/components/$name.phtml";

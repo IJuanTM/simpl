@@ -1,4 +1,4 @@
-import {storage} from '../utils/storage.ts';
+import {storage} from '../helpers/storage.ts';
 
 const HIDDEN_KEY = 'table-hidden-cols';
 const MIN_COL_WIDTH = 64;

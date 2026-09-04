@@ -19,10 +19,10 @@ src/public/css/
 src/public/js/
 
 # Logs
-src/app/Logs/
+src/logs/
 
 # Cache (rate limiter, etc.)
-src/app/Cache/
+src/cache/
 
 # PHPUnit
 .phpunit.cache/

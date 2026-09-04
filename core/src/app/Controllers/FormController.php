@@ -87,7 +87,7 @@ class FormController
      * attribute that front-end code may use to auto-dismiss the alert.
      *
      * @param string    $message The message text to show
-     * @param AlertType $type Visual type/style for the alert
+     * @param AlertType $type    Visual type/style for the alert
      * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void

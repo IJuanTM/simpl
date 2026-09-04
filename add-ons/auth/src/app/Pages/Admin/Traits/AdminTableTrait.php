@@ -230,7 +230,7 @@ trait AdminTableTrait
      * use as `if ($this->blockIf($cond, fn() => ...)) return;`.
      *
      * @param bool     $condition True when the action should be blocked
-     * @param callable $onBlock Called with no args when blocked - queue an alert and/or redirect
+     * @param callable $onBlock   Called with no args when blocked - queue an alert and/or redirect
      *
      * @return bool True when blocked (the caller should return immediately)
      */
@@ -323,7 +323,7 @@ trait AdminTableTrait
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
-     * @param callable $lookup (int $id): ?array
+     * @param callable $lookup    (int $id): ?array
      *
      * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */
