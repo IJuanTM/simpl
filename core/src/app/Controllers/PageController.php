@@ -9,6 +9,8 @@ use app\Enums\ErrorCode;
 use app\Models\Page;
 use app\Models\Url;
 use app\Utils\Log;
+use JsonException;
+use Random\RandomException;
 
 /**
  * Represents the controller responsible for handling incoming page requests, routing,
@@ -21,6 +23,10 @@ use app\Utils\Log;
  */
 class PageController extends Page
 {
+    /**
+     * @throws RandomException
+     * @throws JsonException
+     */
     public function __construct()
     {
         // strtok() runs first so a bare "?query" root URL also falls back to REDIRECT.
@@ -28,9 +34,12 @@ class PageController extends Page
         $urlArr = explode('/', $requestPath ?: REDIRECT);
 
         // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
-        if (in_array('.', $urlArr, true) || in_array('..', $urlArr, true)) {
-            self::error(ErrorCode::NOT_FOUND);
-            return;
+        // A backslash-containing segment is rejected too - splitting only on "/" would let one through untouched, and it's a path separator on Windows.
+        foreach ($urlArr as $segment) {
+            if ($segment === '.' || $segment === '..' || str_contains($segment, '\\')) {
+                self::error(ErrorCode::NOT_FOUND);
+                return;
+            }
         }
 
         $page = array_shift($urlArr);
@@ -76,19 +85,40 @@ class PageController extends Page
     }
 
     /**
-     * Handles errors by redirecting to an appropriate error page.
+     * Handles errors: redirects to the matching error page for a normal request, or responds with a JSON error body for an API request.
+     * A redirect would otherwise send an API client's fetch() into an HTML page instead of the error it expected.
      *
-     * This method constructs an error URL based on the provided error code and an optional
-     * redirect URL. The user is then redirected to the generated error page.
-     *
-     * @param ErrorCode   $code     The specific error code used to determine the error page.
+     * @param ErrorCode   $code The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
+     * @throws JsonException
      */
     public static function error(ErrorCode $code, ?string $redirect = null): void
     {
+        if (self::isApiRequest()) {
+            http_response_code($code->value);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $code->message()], JSON_THROW_ON_ERROR);
+            return;
+        }
+
         self::redirect("error/$code->value" . ($redirect ? '?redirect=' . urlencode($redirect) : ''));
+    }
+
+    /**
+     * Whether the current request's raw URL starts with the api/ segment.
+     * Reads $_SERVER directly (with the same normalization the constructor applies) instead of the constructor's own $api flag.
+     * That also covers error() callers reached before $api is set, or with no PageController instance constructed at all (e.g. tests).
+     *
+     * @return bool
+     */
+    private static function isApiRequest(): bool
+    {
+        $requestPath = trim($_SERVER['REQUEST_URI'] ?? '', '/')
+                |> strtolower(...)
+                |> (static fn($x) => strtok($x, '?'));
+        return explode('/', $requestPath ?: REDIRECT, 2)[0] === 'api';
     }
 
     /**
@@ -98,7 +128,7 @@ class PageController extends Page
      * An optional refresh delay can be specified to control the time before the redirection occurs.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -127,6 +157,7 @@ class PageController extends Page
      * it logs an error (in development mode) and triggers a "Not Found" error response.
      *
      * @return void
+     * @throws JsonException
      */
     private function render(): void
     {
@@ -167,7 +198,7 @@ class PageController extends Page
      * Loads and includes a view part file based on the given name.
      *
      * Parts are the fixed page skeleton (header, footer, cookie, the index/ head fragments) that
-     * the render pipeline assembles itself - never called from a view template, hence protected.
+     * the render pipeline assembles itself - never called from a view template, hence private.
      * Each is included once per request and takes no data. For template-invoked, repeatable,
      * prop-taking fragments use component() instead.
      *
@@ -178,7 +209,7 @@ class PageController extends Page
      *
      * @return void
      */
-    final protected function part(string $name): void
+    private function part(string $name): void
     {
         $file = BASEDIR . "/views/parts/$name.phtml";
 
@@ -187,11 +218,7 @@ class PageController extends Page
             return;
         }
 
-        $message = "Part \"$name\" not found";
-        Log::warning($message);
-
-        if (DEV) echo $message;
-        else echo "<!-- $message -->";
+        echo Log::missingAsset('Part', $name);
     }
 
     /**
@@ -199,10 +226,10 @@ class PageController extends Page
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message  The alert message to show after redirecting.
-     * @param AlertType $type     Visual type/style for the alert.
-     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
-     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param string    $message The alert message to show after redirecting.
+     * @param AlertType $type Visual type/style for the alert.
+     * @param int       $timeout Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -253,7 +280,7 @@ class PageController extends Page
      * If the file is not found, a warning is logged and feedback is shown visibly in DEV or as an
      * HTML comment otherwise.
      *
-     * @param string $name  The name of the view component to load, relative to views/components/.
+     * @param string $name The name of the view component to load, relative to views/components/.
      * @param array  $props Associative array of values extracted into the component's local scope.
      *
      * @return void
@@ -268,10 +295,6 @@ class PageController extends Page
             return;
         }
 
-        $message = "Component \"$name\" not found";
-        Log::warning($message);
-
-        if (DEV) echo $message;
-        else echo "<!-- $message -->";
+        echo Log::missingAsset('Component', $name);
     }
 }

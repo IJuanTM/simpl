@@ -6,10 +6,11 @@ namespace app\Utils;
 
 use app\Enums\LogLevel;
 use JsonException;
-use RuntimeException;
 
 class Log
 {
+    use EnsuresDirectory;
+
     /**
      * Log an error-level message.
      *
@@ -26,9 +27,9 @@ class Log
     /**
      * Write a log entry to the appropriate level file, optionally including a trace.
      *
-     * @param LogLevel $level        Log severity
-     * @param string   $message      Message template
-     * @param array    $context      Context values for interpolation
+     * @param LogLevel $level Log severity
+     * @param string   $message Message template
+     * @param array    $context Context values for interpolation
      * @param bool     $includeTrace Whether to include a filtered stack trace
      *
      * @return void
@@ -36,10 +37,7 @@ class Log
     private static function log(LogLevel $level, string $message, array $context = [], bool $includeTrace = true): void
     {
         $dir = BASEDIR . '/logs';
-
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
-        }
+        self::ensureDirectory($dir);
 
         $timestamp = date('Y-m-d H:i:s.v P');
         $interpolated = self::interpolate($message, $context);
@@ -95,6 +93,23 @@ class Log
         foreach ($context as $key => $val) if ($val === null || is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) $replace['{' . $key . '}'] = preg_replace('/[\x00-\x1F\x7F]+/', ' ', (string)$val);
 
         return strtr($message, $replace);
+    }
+
+    /**
+     * Logs a warning for a missing named asset (view part/component, SVG icon, ...) and returns the fallback text to show for it.
+     * The fallback is visible in DEV, hidden inside an HTML comment otherwise.
+     * Shared by every "not found" caller so that DEV/comment behavior can't drift between them.
+     *
+     * @param string $what The kind of asset that's missing, e.g. "Part", "Component", "SVG"
+     * @param string $name The name that was looked up
+     *
+     * @return string
+     */
+    public static function missingAsset(string $what, string $name): string
+    {
+        $message = "$what \"$name\" not found";
+        self::warning($message);
+        return DEV ? $message : "<!-- $message -->";
     }
 
     /**

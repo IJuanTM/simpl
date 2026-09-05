@@ -27,13 +27,15 @@ const TIMING_FLOOR_MS = [
 
 const VERIFICATION_CONFIG = [
     'required' => true,
-    'token_length' => 8,             // characters
-    'token_expiry' => 86400,         // seconds
-    'account_max_attempts' => 5,     // wrong-code attempts per account before blocking
-    'account_attempt_window' => 300, // seconds
-    'ip_max_attempts' => 20,         // wrong-code attempts per IP before blocking
-    'ip_attempt_window' => 900,      // seconds
-    'resend_ip_max_attempts' => 10,  // resend requests per IP before blocking
+    'token_length' => 8,               // characters
+    'token_expiry' => 86400,           // seconds
+    'account_max_attempts' => 5,       // wrong-code attempts per burst before a backoff lockout starts
+    'account_attempt_window' => 300,   // seconds; attempts must land within this of each other to count as one burst
+    'account_min_lockout' => 120,      // seconds; first lockout once a burst hits account_max_attempts
+    'account_max_lockout' => 900,      // seconds; lockout duration ceiling after repeated bursts
+    'ip_max_attempts' => 20,           // wrong-code attempts per IP before blocking
+    'ip_attempt_window' => 900,        // seconds
+    'resend_ip_max_attempts' => 10,    // resend requests per IP before blocking
     'resend_ip_attempt_window' => 900, // seconds
 ];
 
@@ -45,8 +47,10 @@ const PASSWORD_RESET_CONFIG = [
     'token_expiry' => 3600,           // seconds
     'account_max_attempts' => 3,      // reset requests per email before blocking
     'account_attempt_window' => 3600, // seconds
-    'token_max_attempts' => 5,        // wrong-token attempts per account before blocking
-    'token_attempt_window' => 300,    // seconds
+    'token_max_attempts' => 5,        // wrong-token attempts per burst before a backoff lockout starts
+    'token_attempt_window' => 300,    // seconds; attempts must land within this of each other to count as one burst
+    'token_min_lockout' => 120,       // seconds; first lockout once a burst hits token_max_attempts
+    'token_max_lockout' => 900,       // seconds; lockout duration ceiling after repeated bursts
     'token_ip_max_attempts' => 20,    // wrong-token attempts per IP before blocking
     'token_ip_attempt_window' => 900, // seconds
 ];

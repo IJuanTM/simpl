@@ -19,7 +19,8 @@ function trackChanges(): void {
       submitButton.toggleAttribute('inert', !changed);
     };
 
-    inputFields.forEach(field => ['keyup', 'change'].forEach(event => field.addEventListener(event, checkChanges)));
+    // 'input' catches paste/drag-drop/IME changes that 'keyup' misses; 'change' still covers select/checkbox/radio.
+    inputFields.forEach(field => ['input', 'change'].forEach(event => field.addEventListener(event, checkChanges)));
   });
 }
 

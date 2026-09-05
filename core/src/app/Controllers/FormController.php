@@ -57,8 +57,8 @@ class FormController
         }
 
         $checks = [
-            ['minLength', static fn($v, $r) => strlen($v) < $r, "The input of the $fieldName field is too short!"],
-            ['maxLength', static fn($v, $r) => strlen($v) > $r, "The input of the $fieldName field is too long!"],
+            ['minLength', static fn($v, $r) => mb_strlen($v) < $r, "The input of the $fieldName field is too short!"],
+            ['maxLength', static fn($v, $r) => mb_strlen($v) > $r, "The input of the $fieldName field is too long!"],
             ['minValue', static fn($v, $r) => $v < $r, "The input in the $fieldName field is too low!"],
             ['maxValue', static fn($v, $r) => $v > $r, "The input in the $fieldName field is too high!"],
         ];
@@ -93,7 +93,7 @@ class FormController
      * attribute that front-end code may use to auto-dismiss the alert.
      *
      * @param string    $message The message text to show
-     * @param AlertType $type    Visual type/style for the alert
+     * @param AlertType $type Visual type/style for the alert
      * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void

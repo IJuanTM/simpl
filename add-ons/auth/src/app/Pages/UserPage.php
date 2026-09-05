@@ -26,7 +26,7 @@ use app\Utils\RateLimiter;
 class UserPage
 {
     public array $user;
-    public string|null $profileImage = null;
+    public ?string $profileImage = null;
     public bool $isOwner = false;
     public bool $isAdmin = false;
 
@@ -171,6 +171,12 @@ class UserPage
 
         $file = $_FILES['new_img'];
 
+        // Checked before finfo/getimagesize inspect the file, so an oversized upload is rejected without spending work parsing it.
+        if ($file['size'] > PROFILE_IMAGE_CONFIG['max_size_mb'] * 1024 * 1024) {
+            self::uploadFailed('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_CONFIG['max_size_mb'] . 'MB.');
+            return;
+        }
+
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         $mimeType = finfo_file($finfo, $file['tmp_name']);
         finfo_close($finfo);
@@ -196,11 +202,6 @@ class UserPage
 
         if (getimagesize($file['tmp_name']) === false) {
             self::uploadFailed('The uploaded file is not a valid image.');
-            return;
-        }
-
-        if ($file['size'] > PROFILE_IMAGE_CONFIG['max_size_mb'] * 1024 * 1024) {
-            self::uploadFailed('The image size is too large. Please choose an image that is less than ' . PROFILE_IMAGE_CONFIG['max_size_mb'] . 'MB.');
             return;
         }
 

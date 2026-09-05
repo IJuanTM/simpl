@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Controllers;
 
 use app\Utils\Log;
+use Random\RandomException;
 
 /**
  * The AppController class serves as the main application controller.
@@ -30,6 +31,7 @@ class AppController
      * (the latter lets fetch-based API calls authenticate without a form body).
      *
      * @return bool
+     * @throws RandomException
      */
     public static function validateCsrf(): bool
     {
@@ -41,6 +43,7 @@ class AppController
      * Retrieve the CSRF token from the session, generating and storing one if it does not exist.
      *
      * @return string The CSRF token.
+     * @throws RandomException
      */
     private static function csrfToken(): string
     {
@@ -53,6 +56,7 @@ class AppController
      * with fetch requests via the X-CSRF-Token header.
      *
      * @return string
+     * @throws RandomException
      */
     public static function csrfMeta(): string
     {
@@ -92,17 +96,14 @@ class AppController
      *
      * @param string $name
      *
-     * @return string The SVG file contents as a string, or a boolean false if the file does not exist.
+     * @return bool|string The SVG file contents when found, or the "not found" fallback text otherwise.
+     *                     Can also be boolean false on a read failure after existence was already confirmed (e.g. a permissions/deletion race).
      */
     public static function svg(string $name): bool|string
     {
         $file = BASEDIR . "/public/img/svg/$name.svg";
 
-        if (!file_exists($file)) {
-            $message = "SVG \"$name\" not found";
-            Log::warning($message);
-            return DEV ? $message : "<!-- $message -->";
-        }
+        if (!file_exists($file)) return Log::missingAsset('SVG', $name);
 
         return file_get_contents($file);
     }
@@ -113,6 +114,7 @@ class AppController
      * @param string $output The raw HTML output buffer.
      *
      * @return string The HTML with CSRF hidden fields injected after each POST form's opening tag.
+     * @throws RandomException
      */
     private static function injectCsrf(string $output): string
     {

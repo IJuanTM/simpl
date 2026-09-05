@@ -10,7 +10,8 @@ export const messageModule = {
       clearButton.toggleAttribute('inert', messageTextarea.value.length === 0);
     };
 
-    messageTextarea.addEventListener('keyup', () => {
+    // 'input' catches paste/drag-drop/IME changes that 'keyup' misses.
+    messageTextarea.addEventListener('input', () => {
       inputModule.checkMessageLength(messageTextarea);
       syncClearButton();
     });

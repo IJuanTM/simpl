@@ -53,12 +53,12 @@ class MailController
      * client (via register_shutdown_function). Otherwise sending is
      * performed synchronously.
      *
-     * @param string      $senderName  Display name of the sender
-     * @param string      $to          Recipient email address
+     * @param string      $senderName Display name of the sender
+     * @param string      $to Recipient email address
      * @param string      $senderEmail Sender/envelope-from email address
-     * @param string      $subject     Email subject
-     * @param string      $message     HTML message body
-     * @param string|null $replyTo     Reply-To address, defaults to $senderEmail when null
+     * @param string      $subject Email subject
+     * @param string      $message HTML message body
+     * @param string|null $replyTo Reply-To address, defaults to $senderEmail when null
      *
      * @return bool True when the message was sent or queued successfully
      */
@@ -90,12 +90,12 @@ class MailController
      * Perform the actual email delivery over SMTP via PHPMailer, using SMTP_CONFIG's
      * development or production settings depending on the DEV flag.
      *
-     * @param string $senderName  Display name of the sender
-     * @param string $to          Recipient email address
+     * @param string $senderName Display name of the sender
+     * @param string $to Recipient email address
      * @param string $senderEmail Sender/envelope-from email address
-     * @param string $subject     Email subject
-     * @param string $message     HTML message body
-     * @param string $replyTo     Reply-To address
+     * @param string $subject Email subject
+     * @param string $message HTML message body
+     * @param string $replyTo Reply-To address
      *
      * @return bool True on success, false on failure
      */
@@ -128,7 +128,7 @@ class MailController
             $mail->send();
             return true;
         } catch (PHPMailerException) {
-            Log::error("Failed to send email from \"$senderEmail\" to \"$to\": {$mail->ErrorInfo}");
+            Log::error('Failed to send email from "{from}" to "{to}": {error}', ['from' => $senderEmail, 'to' => $to, 'error' => $mail->ErrorInfo]);
             return false;
         }
     }

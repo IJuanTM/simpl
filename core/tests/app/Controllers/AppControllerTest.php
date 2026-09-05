@@ -68,7 +68,7 @@ class AppControllerTest extends TestCase
 
     public function testSvgReturnsAPlaceholderWhenMissing(): void
     {
-        $this->assertIsString(AppController::svg('does-not-exist'));
+        $this->assertStringContainsString('SVG "does-not-exist" not found', AppController::svg('does-not-exist'));
     }
 
     protected function setUp(): void

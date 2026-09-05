@@ -21,7 +21,10 @@ export const menuModule = {
       const currentPath = window.location.pathname.replace(/\/+$/, '') || '/home';
 
       navItems.forEach(item => {
-        const itemPath = new URL(item.getAttribute('href') || '', location.origin).pathname.replace(/\/+$/, '') || '/home';
+        const href = item.getAttribute('href');
+        if (href === null) return;
+
+        const itemPath = new URL(href, location.origin).pathname.replace(/\/+$/, '') || '/home';
         item.classList.toggle('active', itemPath === currentPath);
       });
     };
@@ -34,7 +37,7 @@ export const menuModule = {
     };
 
     menuHamburger.addEventListener('click', toggle);
-    document.querySelectorAll('a.nav-item').forEach(link => link.addEventListener('click', () => {
+    navItems.forEach(item => item.addEventListener('click', () => {
       if (window.innerWidth <= 1024) setMenuState(false);
     }));
     window.addEventListener('resize', syncTabIndex);

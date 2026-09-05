@@ -54,18 +54,12 @@ class ResendVerificationPage
             return;
         }
 
-        if (!RateLimiter::attempt('resend-verification-' . $id, 1, RESEND_TIMEOUTS['verification'])) {
-            FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
-            PageController::redirect(REDIRECT, 2);
-            return;
-        }
+        // The account-scoped limit fails silently behind the same generic response as a genuine resend, unlike the IP limit above.
+        // A party who only knows this account's id can't use a distinct "too many attempts" response to confirm they're suppressing its real resends.
+        $withinAccountLimit = RateLimiter::attempt('resend-verification-' . $id, 1, RESEND_TIMEOUTS['verification']);
 
-        if (!AuthController::needsVerification($id)) {
-            PageController::redirectWithAlert("verify-account/$id", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
-            return;
-        }
-
-        $this->resendVerification($id);
+        if ($withinAccountLimit && AuthController::needsVerification($id)) $this->resendVerification($id);
+        else PageController::redirectWithAlert("verify-account/$id", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
     }
 
     /**

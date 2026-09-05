@@ -12,6 +12,7 @@ use app\Controllers\SessionController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
+use app\Enums\TokenType;
 use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
@@ -29,13 +30,28 @@ class Users
     use AdminTableTrait;
 
     private const string SORT_ASC = 'asc';
-    private const string SORT_DESC = 'desc';
     private const array PER_PAGE_OPTIONS = [25, 50, 100, 250];
+
+    // Maps a sortable column key to the SQL expression ORDER BY should sort on.
+    // Either a real column or a SELECT-list alias - MySQL allows ordering by either.
+    private const array SORT_COLUMNS = [
+        'id' => 'users.id',
+        'username' => 'users.username',
+        'email' => 'users.email',
+        'first_name' => 'users.first_name',
+        'last_name' => 'users.last_name',
+        'role' => 'role_name',
+        'is_verified' => 'is_verified',
+        'must_change_password' => 'users.must_change_password',
+        'last_login' => 'users.last_login',
+        'created_at' => 'users.created_at',
+        'last_update' => 'users.last_update',
+        'status' => 'users.status',
+        'inactive_since' => 'users.inactive_since',
+    ];
 
     public ?string $subAction;
     public array $user = [];
-    public array $allUsers = [];
-    public array $users = [];
     public array $pagedUsers = [];
     public string $generatedPassword = '';
     public int $perPage = 25;
@@ -72,14 +88,15 @@ class Users
         if ($subAction === null) {
             $this->initTable($page);
             $this->loadUsers();
-            $this->filterUsers();
-            $this->sortUsers();
-            $this->buildPagedUsers();
             return;
         }
 
         if ($subAction === 'create') {
-            $password = AuthController::generatePassword();
+            $isSubmit = $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit']);
+
+            // Generated once per form round-trip and resubmitted via the readonly password field, so the value the admin sees on screen is always the one that actually gets applied.
+            // Regenerating fresh on the POST request itself would silently create the account with a different password than what was displayed.
+            $password = $isSubmit && !empty($_POST['password']) ? $_POST['password'] : AuthController::generatePassword();
 
             if ($password === null) {
                 FormController::addAlert('Could not generate a password. Please try again.', AlertType::ERROR);
@@ -88,7 +105,7 @@ class Users
             }
 
             $this->generatedPassword = $password;
-            if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->createUser();
+            if ($isSubmit) $this->createUser();
             return;
         }
 
@@ -146,133 +163,90 @@ class Users
     }
 
     /**
-     * Loads all users from the database and resolves their role and verification status.
+     * Loads the current page of users matching the active search/filters, entirely in SQL
+     * (search/filter/sort/pagination pushed down to the query, mirroring LoginAttempts) rather
+     * than loading the whole table and processing it in PHP on every render and every api() poll.
      *
      * @return void
      */
     private function loadUsers(): void
     {
-        $this->allUsers = DB::select(
+        $join = [
+            ['id', ['user_roles', 'user_id']],
+            [['user_roles', 'role_id'], ['roles', 'id']],
+        ];
+
+        $where = [];
+        if ($this->filters['role'] !== '') $where['roles.name'] = $this->filters['role'];
+        if ($this->filters['status'] !== '') $where['users.status'] = $this->filters['status'];
+
+        if ($this->filters['verified'] !== '') {
+            // Users with an outstanding verification token are the unverified ones.
+            $unverifiedIds = array_column(DB::select(
+                SELECT: 'DISTINCT user_id',
+                FROM: 'tokens',
+                WHERE: ['type' => TokenType::VERIFICATION->value]
+            ), 'user_id');
+
+            $where['users.id'] = [$this->filters['verified'] === 'yes' ? 'NOT IN' : 'IN', $unverifiedIds];
+        }
+
+        $orWhere = [];
+        if ($this->search !== '') {
+            // Escape LIKE wildcards so a literal '%' or '_' in the search term isn't treated as a pattern.
+            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $this->search);
+            $like = ['LIKE', '%' . $escapedSearch . '%'];
+            $orWhere = [
+                'users.id' => $like,
+                'users.username' => $like,
+                'users.email' => $like,
+                'users.first_name' => $like,
+                'users.last_name' => $like,
+            ];
+        }
+
+        $this->totalAllUsers = DB::count(FROM: 'users');
+
+        $total = DB::count(
+            FROM: 'users',
+            JOIN: $join,
+            WHERE: $where,
+            OR_WHERE: $orWhere
+        );
+
+        $offset = $this->applyPagination($total);
+
+        $orderBy = $this->sortColumn && $this->sortDirection
+            ? (self::SORT_COLUMNS[$this->sortColumn] ?? 'users.id') . ' ' . strtoupper($this->sortDirection)
+            : null;
+
+        $rows = DB::select(
             SELECT: [
                 'users.*',
                 'roles.name AS role_name',
                 '(CASE WHEN EXISTS (SELECT 1 FROM tokens WHERE tokens.user_id = users.id AND tokens.type = \'verification\') THEN 0 ELSE 1 END) AS is_verified',
             ],
             FROM: 'users',
-            JOIN: [
-                ['id', ['user_roles', 'user_id']],
-                [['user_roles', 'role_id'], ['roles', 'id']],
-            ]
+            JOIN: $join,
+            WHERE: $where,
+            OR_WHERE: $orWhere,
+            ORDER_BY: $orderBy,
+            LIMIT: $this->perPage,
+            OFFSET: $offset
         );
 
-        foreach ($this->allUsers as $key => $user) {
-            $this->allUsers[$key]['role'] = isset($user['role_name']) ? Role::tryFrom($user['role_name']) : null;
-            $this->allUsers[$key]['is_verified'] = (int)$user['is_verified'];
+        foreach ($rows as $key => $user) {
+            $rows[$key]['role'] = isset($user['role_name']) ? Role::tryFrom($user['role_name']) : null;
+            $rows[$key]['is_verified'] = (int)$user['is_verified'];
+
+            if ($user['username'] !== null) $rows[$key]['username'] = AppController::sanitize($user['username']);
+            $rows[$key]['email'] = AppController::sanitize($user['email']);
+            if ($user['first_name'] !== null) $rows[$key]['first_name'] = AppController::sanitize($user['first_name']);
+            if ($user['last_name'] !== null) $rows[$key]['last_name'] = AppController::sanitize($user['last_name']);
+            if ($user['role_name'] !== null) $rows[$key]['role_name'] = AppController::sanitize($user['role_name']);
         }
 
-        $this->users = $this->allUsers;
-    }
-
-    /**
-     * Filters the user list by search query, role, status, and verification state.
-     *
-     * @return void
-     */
-    private function filterUsers(): void
-    {
-        if ($this->search !== '') {
-            $needle = strtolower($this->search);
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => array_any([
-                (string)$user['id'],
-                (string)($user['username'] ?? ''),
-                (string)($user['email'] ?? ''),
-                (string)($user['first_name'] ?? ''),
-                (string)($user['last_name'] ?? ''),
-            ], static fn(string $v): bool => str_contains(strtolower($v), $needle))));
-        }
-
-        if ($this->filters['role'] !== '') {
-            $role = $this->filters['role'];
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => ($user['role_name'] ?? '') === $role));
-        }
-
-        if ($this->filters['status'] !== '') {
-            $status = $this->filters['status'];
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => $user['status'] === $status));
-        }
-
-        if ($this->filters['verified'] !== '') {
-            $verified = $this->filters['verified'] === 'yes' ? 1 : 0;
-            $this->users = array_values(array_filter($this->users, static fn(array $user): bool => (int)($user['is_verified'] ?? 0) === $verified));
-        }
-    }
-
-    /**
-     * Sorts the filtered user list by the active column and direction.
-     *
-     * @return void
-     */
-    private function sortUsers(): void
-    {
-        if (!$this->sortColumn || !$this->sortDirection) return;
-
-        $col = $this->sortColumn;
-        $desc = $this->sortDirection === self::SORT_DESC;
-
-        usort($this->users, function (array $a, array $b) use ($col, $desc): int {
-            $va = $this->getSortValue($a, $col);
-            $vb = $this->getSortValue($b, $col);
-            $result = is_int($va) && is_int($vb) ? $va <=> $vb : strcmp((string)$va, (string)$vb);
-            return $desc ? -$result : $result;
-        });
-    }
-
-    /**
-     * Returns a normalized sort value for the given user and column.
-     *
-     * @param array<string, mixed> $user   User row
-     * @param string               $column Column key
-     *
-     * @return int|string
-     */
-    private function getSortValue(array $user, string $column): int|string
-    {
-        return match ($column) {
-            'id' => (int)$user['id'],
-            'username' => strtolower((string)($user['username'] ?? '')),
-            'email' => strtolower((string)$user['email']),
-            'first_name' => strtolower((string)($user['first_name'] ?? '')),
-            'last_name' => strtolower((string)($user['last_name'] ?? '')),
-            'role' => strtolower((string)($user['role_name'] ?? '')),
-            'is_verified' => (int)($user['is_verified'] ?? 0),
-            'must_change_password' => (int)$user['must_change_password'],
-            'last_login' => $user['last_login'] ? (int)strtotime((string)$user['last_login']) : 0,
-            'created_at' => (int)strtotime((string)$user['created_at']),
-            'last_update' => (int)strtotime((string)$user['last_update']),
-            'status' => (string)$user['status'],
-            'inactive_since' => $user['inactive_since'] ? (int)strtotime((string)$user['inactive_since']) : 0,
-            default => 0,
-        };
-    }
-
-    /**
-     * Slices the sorted user list into the current page and sanitizes display fields.
-     *
-     * @return void
-     */
-    private function buildPagedUsers(): void
-    {
-        $this->totalAllUsers = count($this->allUsers);
-        $offset = $this->applyPagination(count($this->users));
-        $this->pagedUsers = array_slice($this->users, $offset, $this->perPage);
-
-        foreach ($this->pagedUsers as $key => $user) {
-            if ($user['username'] !== null) $this->pagedUsers[$key]['username'] = AppController::sanitize($user['username']);
-            $this->pagedUsers[$key]['email'] = AppController::sanitize($user['email']);
-            if ($user['first_name'] !== null) $this->pagedUsers[$key]['first_name'] = AppController::sanitize($user['first_name']);
-            if ($user['last_name'] !== null) $this->pagedUsers[$key]['last_name'] = AppController::sanitize($user['last_name']);
-            if ($user['role_name'] !== null) $this->pagedUsers[$key]['role_name'] = AppController::sanitize($user['role_name']);
-        }
+        $this->pagedUsers = $rows;
     }
 
     /**

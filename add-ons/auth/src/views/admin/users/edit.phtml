@@ -22,72 +22,72 @@ use app\Controllers\SessionController;
         <?= FormController::formAlerts() ?>
 
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.25" inert>
-            <div class="row">
-              <label class="col" for="id">Id:</label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-hashtag"></i></div>
-              <input class="col" id="id" type="number" name="id" value="<?= $this->pageObj->user['id'] ?>" readonly>
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'id',
+              'label' => 'Id',
+              'icon' => 'hashtag',
+              'type' => 'number',
+              'value' => $this->pageObj->user['id'],
+              'readonly' => true,
+              'inert' => true,
+          ]) ?>
 
-          <div class="col form-group g-row-0.25" inert>
-            <div class="row">
-              <label class="col" for="last_update">Last update:</label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-calendar-check"></i></div>
-              <input class="col" id="last_update" type="text" name="last_update" value="<?= $this->pageObj->user['last_update'] ?>" readonly>
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'last_update',
+              'label' => 'Last update',
+              'icon' => 'calendar-check',
+              'value' => $this->pageObj->user['last_update'],
+              'readonly' => true,
+              'inert' => true,
+          ]) ?>
         </div>
 
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="username">Username:</label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-              <input class="col" id="username" type="text" name="username" maxlength="<?= MAX_USERNAME_LENGTH ?>" placeholder="Enter username:" value="<?= RequestController::post('username') ?? $this->pageObj->user['username'] ?? '' ?>">
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'username',
+              'label' => 'Username',
+              'icon' => 'user',
+              'maxlength' => MAX_USERNAME_LENGTH,
+              'placeholder' => 'Enter username:',
+              'value' => RequestController::post('username') ?? $this->pageObj->user['username'] ?? '',
+          ]) ?>
         </div>
 
         <div class="row form-row connected-row">
           <div class="row">
-            <div class="col form-group g-row-0.25">
-              <div class="row">
-                <label class="col" for="first_name">First name:</label>
-              </div>
-              <div class="row input-group">
-                <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
-                <input class="col" id="first_name" type="text" name="first_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter first name:" value="<?= RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '' ?>">
-              </div>
-            </div>
+            <?php $this->component('form-input', [
+                'id' => 'first_name',
+                'label' => 'First name',
+                'icon' => 'address-card',
+                'maxlength' => MAX_NAME_LENGTH,
+                'placeholder' => 'Enter first name:',
+                'value' => RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '',
+            ]) ?>
           </div>
 
-          <div class="col form-group g-row-0.25 f-g-2">
-            <div class="row">
-              <label class="col" for="last_name">Last name:</label>
-            </div>
-            <div class="row input-group">
-              <input class="col" id="last_name" type="text" name="last_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter last name:" value="<?= RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '' ?>">
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'last_name',
+              'label' => 'Last name',
+              'icon' => 'address-card',
+              'maxlength' => MAX_NAME_LENGTH,
+              'placeholder' => 'Enter last name:',
+              'value' => RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '',
+              'groupClass' => 'f-g-2',
+          ]) ?>
         </div>
 
         <div class="row">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="email">Email: <span class="required">*</span></label>
-            </div>
-            <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
-              <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-              <input class="col" id="email" type="email" name="email" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter email:" value="<?= RequestController::post('email') ?? $this->pageObj->user['email'] ?? '' ?>">
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'email',
+              'label' => 'Email',
+              'required' => true,
+              'icon' => 'at',
+              'type' => 'email',
+              'maxlength' => MAX_EMAIL_LENGTH,
+              'placeholder' => 'Enter email:',
+              'value' => RequestController::post('email') ?? $this->pageObj->user['email'] ?? '',
+              'error' => isset($_POST['submit']) && empty($_POST['email']),
+          ]) ?>
         </div>
 
         <div class="row form-row g-1">
@@ -105,15 +105,14 @@ use app\Controllers\SessionController;
             </div>
           </div>
 
-          <div class="col form-group g-row-0.25" inert>
-            <div class="row">
-              <label class="col" for="verified">Verified:</label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-check"></i></div>
-              <input class="col" id="verified" type="text" name="verified" value="<?= AuthController::isVerified($this->pageObj->user['id']) ? 'True' : 'False' ?>" readonly>
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'verified',
+              'label' => 'Verified',
+              'icon' => 'check',
+              'value' => AuthController::isVerified($this->pageObj->user['id']) ? 'True' : 'False',
+              'readonly' => true,
+              'inert' => true,
+          ]) ?>
         </div>
 
         <div class="row g-2 center-x">

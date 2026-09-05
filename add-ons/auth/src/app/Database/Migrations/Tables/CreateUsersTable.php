@@ -18,6 +18,7 @@ class CreateUsersTable
             $t->varchar('last_name', MAX_NAME_LENGTH);
             $t->varchar('email', MAX_EMAIL_LENGTH, notNull: true)->unique();
             $t->varchar('password', notNull: true);
+            $t->timestamp('password_changed_at');
             $t->varchar('profile_img', 50);
             $t->tinyint('must_change_password', notNull: true, default: 0);
             $t->timestamp('last_login');

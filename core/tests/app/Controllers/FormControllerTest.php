@@ -48,6 +48,21 @@ class FormControllerTest extends TestCase
         $this->assertSame('', $_POST['username']);
     }
 
+    public function testMaxLengthCountsMultibyteCharactersNotBytes(): void
+    {
+        // Each character is 2 bytes in UTF-8 but must count as 1 character against the limit.
+        $_POST['username'] = 'абвг';
+
+        $this->assertTrue(FormController::validate('username', ['maxLength' => 4]));
+    }
+
+    public function testMinLengthCountsMultibyteCharactersNotBytes(): void
+    {
+        $_POST['username'] = 'а';
+
+        $this->assertFalse(FormController::validate('username', ['minLength' => 3]));
+    }
+
     public function testMinValueRejectsATooLowNumber(): void
     {
         $_POST['age'] = '5';

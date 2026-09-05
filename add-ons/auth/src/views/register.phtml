@@ -16,54 +16,57 @@ use app\Models\Url;
     <?= FormController::formAlerts() ?>
 
     <div class="row">
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="email">Email: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
-          <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-          <input class="col" id="email" type="email" name="email" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter email:" value="<?= RequestController::post('email') ?? '' ?>" autocomplete="email" aria-label="Email input field">
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'email',
+          'label' => 'Email',
+          'required' => true,
+          'icon' => 'at',
+          'type' => 'email',
+          'maxlength' => MAX_EMAIL_LENGTH,
+          'placeholder' => 'Enter email:',
+          'value' => RequestController::post('email') ?? '',
+          'autocomplete' => 'email',
+          'ariaLabel' => 'Email input field',
+          'error' => isset($_POST['submit']) && empty($_POST['email']),
+      ]) ?>
     </div>
 
     <div class="row">
       <div class="col form-group g-row-0.25">
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="password">Password: <span class="required">*</span></label>
-              <div class="col password-warning end-x hidden">Caps lock is on!</div>
-            </div>
-            <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password'])) ? 'error' : '' ?>">
-              <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-              <input class="col input-password" id="password" type="password" name="password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter password:" autocomplete="new-password" aria-label="Password input field" data-password-pattern="<?= AuthController::getPasswordPatternSource() ?>" data-password-message="<?= AuthController::getPasswordRequirements() ?>">
-              <div class="col input-append center f-0"><i class="fas fa-eye password-toggle input-icon-clickable"></i></div>
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'password',
+              'label' => 'Password',
+              'required' => true,
+              'icon' => 'key',
+              'type' => 'password',
+              'maxlength' => MAX_PASSWORD_LENGTH,
+              'placeholder' => 'Enter password:',
+              'autocomplete' => 'new-password',
+              'ariaLabel' => 'Password input field',
+              'error' => isset($_POST['submit']) && empty($_POST['password']),
+              'capsLockWarning' => true,
+              'inputClass' => 'input-password',
+              'appendIcon' => 'eye password-toggle input-icon-clickable',
+              'extraAttrs' => 'data-password-pattern="' . AuthController::getPasswordPatternSource() . '" data-password-message="' . AuthController::getPasswordRequirements() . '"',
+          ]) ?>
 
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="password-check">Repeat password: <span class="required">*</span></label>
-            </div>
-            <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['password-check'])) ? 'error' : '' ?>">
-              <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-              <input class="col" id="password-check" type="password" name="password-check" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Repeat password:" autocomplete="new-password" aria-label="Repeat password input field" data-match="password">
-            </div>
-          </div>
+          <?php $this->component('form-input', [
+              'id' => 'password-check',
+              'label' => 'Repeat password',
+              'required' => true,
+              'icon' => 'key',
+              'type' => 'password',
+              'maxlength' => MAX_PASSWORD_LENGTH,
+              'placeholder' => 'Repeat password:',
+              'autocomplete' => 'new-password',
+              'ariaLabel' => 'Repeat password input field',
+              'error' => isset($_POST['submit']) && empty($_POST['password-check']),
+              'extraAttrs' => 'data-match="password"',
+          ]) ?>
         </div>
 
-        <div class="row">
-          <div class="col">
-            <p class="form-details"><?= AuthController::getPasswordRequirements() ?></p>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col">
-            <p class="quote warning hidden" data-password-quote><span class="quote-text"></span></p>
-          </div>
-        </div>
+        <?php $this->component('password-hint') ?>
       </div>
     </div>
 

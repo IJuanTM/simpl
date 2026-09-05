@@ -16,15 +16,16 @@ use app\Controllers\RequestController;
     <?= FormController::formAlerts() ?>
 
     <div class="row">
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="name">Name: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['name'])) ? 'error' : '' ?>">
-          <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-          <input class="col" id="name" type="text" name="name" maxlength="<?= MAX_ROLE_NAME_LENGTH ?>" placeholder="Enter role name:" value="<?= RequestController::post('name') ?? '' ?>">
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'name',
+          'label' => 'Name',
+          'required' => true,
+          'icon' => 'user-group',
+          'maxlength' => MAX_ROLE_NAME_LENGTH,
+          'placeholder' => 'Enter role name:',
+          'value' => RequestController::post('name') ?? '',
+          'error' => isset($_POST['submit']) && empty($_POST['name']),
+      ]) ?>
     </div>
 
     <div class="row g-2 center-x">

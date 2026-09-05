@@ -78,6 +78,49 @@ class RateLimiterTest extends TestCase
         if ($previous !== null) $_SERVER['REMOTE_ADDR'] = $previous;
     }
 
+    public function testBackoffAllowsAttemptsUpToTheMax(): void
+    {
+        $key = $this->key('backoff-attempt');
+
+        $this->assertTrue(RateLimiter::attemptWithBackoff($key, 3, 60, 10, 100));
+        $this->assertTrue(RateLimiter::attemptWithBackoff($key, 3, 60, 10, 100));
+        $this->assertTrue(RateLimiter::attemptWithBackoff($key, 3, 60, 10, 100));
+    }
+
+    public function testBackoffBlocksOnceTheBurstIsExceeded(): void
+    {
+        $key = $this->key('backoff-block');
+
+        RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+        RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+
+        $this->assertFalse(RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100));
+    }
+
+    public function testBackoffRejectedAttemptDoesNotExtendTheLockout(): void
+    {
+        $key = $this->key('backoff-no-extend');
+
+        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        $firstRetry = RateLimiter::retryAfterMs($key);
+
+        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        $secondRetry = RateLimiter::retryAfterMs($key);
+
+        $this->assertGreaterThan(0, $firstRetry);
+        $this->assertEqualsWithDelta($firstRetry, $secondRetry, 1000);
+    }
+
+    public function testBackoffRetryAfterMsIsZeroWhenNotLimited(): void
+    {
+        $key = $this->key('backoff-retry-ok');
+
+        RateLimiter::attemptWithBackoff($key, 5, 60, 10, 100);
+
+        $this->assertSame(0, RateLimiter::retryAfterMs($key));
+    }
+
     public function testPruneRemovesFilesOlderThanTheThreshold(): void
     {
         $key = $this->key('prune');

@@ -1,0 +1,49 @@
+<?php
+/**
+ * @var string      $id
+ * @var string|null $fieldName HTML "name" attribute, defaults to $id.
+ * @var string      $label
+ * @var bool        $required Adds the red "*" marker after the label.
+ * @var string      $icon Font Awesome icon suffix for the prepend icon, e.g. "user".
+ * @var string      $type Input type, default "text".
+ * @var int|null    $maxlength
+ * @var string|null $placeholder
+ * @var string      $value
+ * @var string|null $autocomplete
+ * @var string|null $ariaLabel
+ * @var bool        $readonly
+ * @var bool        $error Adds the "error" class to the input-group.
+ * @var bool        $inert Marks the whole form-group inert.
+ * @var string      $groupClass Extra classes for the form-group wrapper, e.g. "f-g-2".
+ * @var string      $groupAttrs Raw extra attributes for the form-group wrapper, e.g. data-timeout="0".
+ * @var bool        $capsLockWarning Adds the "Caps lock is on!" label-row warning.
+ * @var string|null $appendIcon Font Awesome icon suffix (with any extra classes) for an append icon, e.g. "eye password-toggle input-icon-clickable".
+ * @var string      $extraAttrs Raw extra attributes for the input, e.g. data-match="...".
+ * @var string      $inputClass Extra classes for the input itself, e.g. "input-password".
+ *
+ * $fieldName is not called "name": that would collide with component()'s own $name parameter, since require() shares its scope.
+ */
+
+$fieldName ??= $id;
+$type ??= 'text';
+$value ??= '';
+$inputClass ??= '';
+$extraAttrs ??= '';
+$groupClass ??= '';
+$groupAttrs ??= '';
+?>
+<div class="col form-group g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>
+  <div class="row">
+    <label class="col" for="<?= $id ?>"><?= $label ?>:<?= !empty($required) ? ' <span class="required">*</span>' : '' ?></label>
+    <?php if (!empty($capsLockWarning)) : ?>
+      <div class="col password-warning end-x hidden">Caps lock is on!</div>
+    <?php endif ?>
+  </div>
+  <div class="row input-group<?= !empty($error) ? ' error' : '' ?>">
+    <div class="col input-prepend center f-0"><i class="fas fa-<?= $icon ?>"></i></div>
+    <input class="col<?= $inputClass ? " $inputClass" : '' ?>" id="<?= $id ?>" type="<?= $type ?>" name="<?= $fieldName ?>"<?= isset($maxlength) ? ' maxlength="' . $maxlength . '"' : '' ?><?= isset($placeholder) ? ' placeholder="' . $placeholder . '"' : '' ?> value="<?= $value ?>"<?= isset($autocomplete) ? ' autocomplete="' . $autocomplete . '"' : '' ?><?= isset($ariaLabel) ? ' aria-label="' . $ariaLabel . '"' : '' ?><?= !empty($readonly) ? ' readonly' : '' ?><?= $extraAttrs ? " $extraAttrs" : '' ?>>
+    <?php if (!empty($appendIcon)) : ?>
+      <div class="col input-append center f-0"><i class="fas fa-<?= $appendIcon ?>"></i></div>
+    <?php endif ?>
+  </div>
+</div>

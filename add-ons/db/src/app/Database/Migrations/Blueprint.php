@@ -39,7 +39,7 @@ class Blueprint
         DB::raw($sql . ';');
     }
 
-    public function bigintUnsigned(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function bigintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` BIGINT UNSIGNED", $notNull, $default);
     }
@@ -48,7 +48,7 @@ class Blueprint
     {
         if ($notNull) $definition .= ' NOT NULL';
 
-        if ($default !== PHP_INT_MIN) {
+        if ($default !== NoDefault::VALUE) {
             $definition .= match (true) {
                 $default === null => ' DEFAULT NULL',
                 $default === 'CURRENT_TIMESTAMP' => ' DEFAULT CURRENT_TIMESTAMP',
@@ -61,27 +61,27 @@ class Blueprint
         return $this;
     }
 
-    public function smallintUnsigned(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function smallintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` SMALLINT UNSIGNED", $notNull, $default);
     }
 
-    public function int(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function int(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` INT", $notNull, $default);
     }
 
-    public function intUnsigned(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function intUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` INT UNSIGNED", $notNull, $default);
     }
 
-    public function tinyint(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function tinyint(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` TINYINT", $notNull, $default);
     }
 
-    public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` VARCHAR($length)", $notNull, $default);
     }
@@ -89,15 +89,15 @@ class Blueprint
     public function text(string $name, bool $notNull = false): static
     {
         // TEXT columns do not support DEFAULT values in MySQL/MariaDB
-        return $this->addColumn("`$name` TEXT", $notNull, PHP_INT_MIN);
+        return $this->addColumn("`$name` TEXT", $notNull, NoDefault::VALUE);
     }
 
-    public function timestamp(string $name, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function timestamp(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` TIMESTAMP", $notNull, $default);
     }
 
-    public function enum(string $name, array $values, bool $notNull = false, mixed $default = PHP_INT_MIN): static
+    public function enum(string $name, array $values, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         $list = implode(', ', array_map(static fn($v) => "'" . str_replace("'", "''", $v) . "'", $values));
         return $this->addColumn("`$name` ENUM($list)", $notNull, $default);

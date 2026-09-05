@@ -89,6 +89,17 @@ function persistWidths(table: HTMLTableElement, hiddenKey: string, defaultWidths
   storage.set(widthsKeyFor(hiddenKey), JSON.stringify(widths));
 }
 
+// Compares the persisted widths themselves against the defaults, unlike hasWidthChanges() below (which reads live offsetWidth).
+// Needed at page-load time, before restoreState() has applied any stored widths to the DOM.
+// A resize handle clicked without being dragged persists widths equal to the defaults, so comparing values here (not just presence) keeps that from being reported as a real customization.
+function hasStoredWidthChanges(table: HTMLTableElement, defaultWidths: number[], hiddenKey: string): boolean {
+  const stored = getStoredWidths(hiddenKey);
+  if (!stored) return false;
+
+  const hidden = new Set(getHiddenCols(hiddenKey, table));
+  return getHeaders(table).some((_, col) => !hidden.has(col) && (stored[col] ?? defaultWidths[col] ?? 100) !== defaultWidths[col]);
+}
+
 function hasWidthChanges(table: HTMLTableElement, defaultWidths: number[], hiddenKey: string): boolean {
   const hidden = new Set(getHiddenCols(hiddenKey, table));
   return getHeaders(table).some((th, i) => !hidden.has(i) && th.offsetWidth !== defaultWidths[i]);
@@ -349,7 +360,7 @@ function initTable(table: HTMLTableElement): { defaultWidths: number[]; widthsSt
   const hiddenKey = `${HIDDEN_KEY}-${id}`;
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = container.querySelector<HTMLButtonElement>('.table-reset-btn');
-  const widthsState: WidthsState = {hasCustomWidths: getStoredWidths(hiddenKey) !== null};
+  const widthsState: WidthsState = {hasCustomWidths: hasStoredWidthChanges(table, defaultWidths, hiddenKey)};
 
   const syncState = (): void => {
     syncColToggleState(table, container, hiddenKey);

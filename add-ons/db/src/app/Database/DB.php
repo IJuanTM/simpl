@@ -37,6 +37,22 @@ class DB
      */
     public static function select(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], array $OR_WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null, int|null $LIMIT = null, int|null $OFFSET = null): array
     {
+        [$query, $params] = self::buildSelectQuery($SELECT, $FROM, $JOIN, $WHERE, $OR_WHERE, $GROUP_BY, $ORDER_BY);
+
+        $query .= ($LIMIT !== null ? " LIMIT $LIMIT" : ($OFFSET !== null ? ' LIMIT ' . self::NO_LIMIT : ''))
+            . ($OFFSET !== null ? " OFFSET $OFFSET" : '');
+
+        return self::execute($query, $params)->fetchAll();
+    }
+
+    /**
+     * Builds the shared SELECT/FROM/JOIN/WHERE/GROUP BY/ORDER BY clause used by both select() and single().
+     * They otherwise only differ in their LIMIT/OFFSET handling and the fetch()/fetchAll() call.
+     *
+     * @return array{0: string, 1: array} The query built so far, and its bound params
+     */
+    private static function buildSelectQuery(string|array $SELECT, string $FROM, array $JOIN, array $WHERE, array $OR_WHERE, string|array|null $GROUP_BY, string|array|null $ORDER_BY): array
+    {
         $cols = self::columns($SELECT);
         $table = self::sanitize($FROM);
         $joinClause = self::buildJoin($table, $JOIN);
@@ -48,11 +64,9 @@ class DB
             . ($joinClause ? " $joinClause" : '')
             . ($whereClause ? " WHERE $whereClause" : '')
             . ($groupByClause ? " $groupByClause" : '')
-            . ($orderByClause ? " $orderByClause" : '')
-            . ($LIMIT !== null ? " LIMIT $LIMIT" : ($OFFSET !== null ? ' LIMIT ' . self::NO_LIMIT : ''))
-            . ($OFFSET !== null ? " OFFSET $OFFSET" : '');
+            . ($orderByClause ? " $orderByClause" : '');
 
-        return self::execute($query, $params)->fetchAll();
+        return [$query, $params];
     }
 
     /**
@@ -173,10 +187,13 @@ class DB
     /**
      * This method is for constructing the WHERE clause of an SQL query.
      * Keys support 'col' and 'table.col' forms.
+     * A value can be a plain scalar (equality), null (IS NULL), or a [operator, value] tuple.
+     * Operator is one of '=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT', 'IN', 'NOT IN'.
+     * For IN/NOT IN, value is an array; an empty array is encoded directly (matches nothing for IN, everything for NOT IN) rather than emitting the invalid "IN ()".
      *
      * @param array  $where
      * @param string $prefix
-     * @param string $separator      Logical operator joining conditions ('AND' or 'OR')
+     * @param string $separator Logical operator joining conditions ('AND' or 'OR')
      * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. by
      *                               combineWhere()'s separate AND/OR calls) so a prefixed and an
      *                               unprefixed key can't normalize to the same final placeholder.
@@ -201,13 +218,27 @@ class DB
             $usedParamNames[$paramName] = true;
             $paramKey = ":$paramName";
 
-            if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT'])) {
+            if (is_array($value) && count($value) === 2 && in_array($value[0], ['=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT', 'IN', 'NOT IN'])) {
                 $operator = strtoupper($value[0]);
                 $val = $value[1];
 
-                // A null value means IS [NOT] NULL, not "= NULL"/"!= NULL" (which never match in
-                // SQL) - covers every operator with well-defined null semantics, same as the plain
-                // (non-tuple) null case below.
+                if ($operator === 'IN' || $operator === 'NOT IN') {
+                    // "IN ()" is invalid SQL, so an empty list is encoded directly instead: matches nothing for IN, everything for NOT IN.
+                    if (!$val) $conditions[] = $operator === 'IN' ? '1 = 0' : '1 = 1';
+                    else {
+                        $placeholders = [];
+                        foreach (array_values($val) as $i => $item) {
+                            $itemKey = "{$paramKey}_$i";
+                            $placeholders[] = $itemKey;
+                            $params[$itemKey] = $item;
+                        }
+                        $conditions[] = "$column $operator (" . implode(', ', $placeholders) . ')';
+                    }
+                    continue;
+                }
+
+                // A null value means IS [NOT] NULL, not "= NULL"/"!= NULL" (which never match in SQL).
+                // Covers every operator with well-defined null semantics, same as the plain (non-tuple) null case below.
                 $nullOperator = match ($operator) {
                     '=', 'IS' => 'IS',
                     '!=', '<>', 'IS NOT' => 'IS NOT',
@@ -444,20 +475,9 @@ class DB
      */
     public static function single(string|array $SELECT, string $FROM, array $JOIN = [], array $WHERE = [], array $OR_WHERE = [], string|array|null $GROUP_BY = null, string|array|null $ORDER_BY = null): ?array
     {
-        $cols = self::columns($SELECT);
-        $table = self::sanitize($FROM);
-        $joinClause = self::buildJoin($table, $JOIN);
-        [$whereClause, $params] = self::combineWhere($WHERE, $OR_WHERE);
-        $groupByClause = self::groupByClause($GROUP_BY);
-        $orderByClause = self::orderByClause($ORDER_BY);
-        $query = "SELECT $cols FROM $table"
-            . ($joinClause ? " $joinClause" : '')
-            . ($whereClause ? " WHERE $whereClause" : '')
-            . ($groupByClause ? " $groupByClause" : '')
-            . ($orderByClause ? " $orderByClause" : '')
-            . ' LIMIT 1';
+        [$query, $params] = self::buildSelectQuery($SELECT, $FROM, $JOIN, $WHERE, $OR_WHERE, $GROUP_BY, $ORDER_BY);
 
-        return self::execute($query, $params)->fetch() ?: null;
+        return self::execute($query . ' LIMIT 1', $params)->fetch() ?: null;
     }
 
     /**

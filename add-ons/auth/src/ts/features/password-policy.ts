@@ -8,12 +8,20 @@ function hideQuote(quote: HTMLElement): void {
 }
 
 function initValidatedField(input: HTMLInputElement, quote: HTMLElement, quoteText: HTMLElement, isValid: (value: string) => boolean, message: string): void {
+  // The password and password-check fields on these forms share one quote element.
+  // Only the field currently "owning" a shown message may hide it, so switching focus between them can't clobber a still-relevant warning from the other field.
   input.addEventListener('blur', () => {
-    if (input.value === '' || isValid(input.value)) hideQuote(quote);
-    else showQuote(quote, quoteText, message);
+    if (input.value === '' || isValid(input.value)) {
+      if (quote.dataset.activeFor === input.id) hideQuote(quote);
+    } else {
+      quote.dataset.activeFor = input.id;
+      showQuote(quote, quoteText, message);
+    }
   });
 
-  input.addEventListener('focus', () => hideQuote(quote));
+  input.addEventListener('focus', () => {
+    if (quote.dataset.activeFor === input.id) hideQuote(quote);
+  });
 }
 
 function initPasswordField(passwordInput: HTMLInputElement, quote: HTMLElement, quoteText: HTMLElement): void {

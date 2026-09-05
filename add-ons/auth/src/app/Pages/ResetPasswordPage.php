@@ -86,7 +86,7 @@ class ResetPasswordPage
      */
     private function throttle(int $id): bool
     {
-        if (!RateLimiter::attempt("reset-attempt-account-$id", PASSWORD_RESET_CONFIG['token_max_attempts'], PASSWORD_RESET_CONFIG['token_attempt_window'])) {
+        if (!RateLimiter::attemptWithBackoff("reset-attempt-account-$id", PASSWORD_RESET_CONFIG['token_max_attempts'], PASSWORD_RESET_CONFIG['token_attempt_window'], PASSWORD_RESET_CONFIG['token_min_lockout'], PASSWORD_RESET_CONFIG['token_max_lockout'])) {
             FormController::addAlert('Too many reset attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
             return true;
         }
@@ -123,7 +123,7 @@ class ResetPasswordPage
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id       User ID
+     * @param int    $id User ID
      * @param string $password New password
      *
      * @return void

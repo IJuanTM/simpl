@@ -16,15 +16,14 @@ use app\Controllers\RequestController;
     <?= FormController::formAlerts() ?>
 
     <div class="row form-row g-1">
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="username">Username:</label>
-        </div>
-        <div class="row input-group">
-          <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-          <input class="col" id="username" type="text" name="username" maxlength="<?= MAX_USERNAME_LENGTH ?>" placeholder="Enter username:" value="<?= RequestController::post('username') ?? '' ?>">
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'username',
+          'label' => 'Username',
+          'icon' => 'user',
+          'maxlength' => MAX_USERNAME_LENGTH,
+          'placeholder' => 'Enter username:',
+          'value' => RequestController::post('username') ?? '',
+      ]) ?>
 
       <div class="col form-group g-row-0.25">
         <div class="row">
@@ -43,25 +42,25 @@ use app\Controllers\RequestController;
 
     <div class="row form-row connected-row">
       <div class="row">
-        <div class="col form-group g-row-0.25">
-          <div class="row">
-            <label class="col" for="first_name">First name:</label>
-          </div>
-          <div class="row input-group">
-            <div class="col input-prepend center f-0"><i class="fas fa-address-card"></i></div>
-            <input class="col" id="first_name" type="text" name="first_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter first name:" value="<?= RequestController::post('first_name') ?? '' ?>">
-          </div>
-        </div>
+        <?php $this->component('form-input', [
+            'id' => 'first_name',
+            'label' => 'First name',
+            'icon' => 'address-card',
+            'maxlength' => MAX_NAME_LENGTH,
+            'placeholder' => 'Enter first name:',
+            'value' => RequestController::post('first_name') ?? '',
+        ]) ?>
       </div>
 
-      <div class="col form-group g-row-0.25 f-g-2">
-        <div class="row">
-          <label class="col" for="last_name">Last name:</label>
-        </div>
-        <div class="row input-group">
-          <input class="col" id="last_name" type="text" name="last_name" maxlength="<?= MAX_NAME_LENGTH ?>" placeholder="Enter last name:" value="<?= RequestController::post('last_name') ?? '' ?>">
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'last_name',
+          'label' => 'Last name',
+          'icon' => 'address-card',
+          'maxlength' => MAX_NAME_LENGTH,
+          'placeholder' => 'Enter last name:',
+          'value' => RequestController::post('last_name') ?? '',
+          'groupClass' => 'f-g-2',
+      ]) ?>
     </div>
 
     <div class="row">
@@ -82,15 +81,17 @@ use app\Controllers\RequestController;
     </div>
 
     <div class="row">
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="password">Password: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group">
-          <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-          <input class="col" id="password" type="text" name="password" maxlength="<?= PASSWORD_CONFIG['generated_length'] ?>" placeholder="Enter password:" value="<?= $this->pageObj->generatedPassword ?>" readonly>
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'password',
+          'label' => 'Password',
+          'required' => true,
+          'icon' => 'key',
+          'type' => 'text',
+          'maxlength' => PASSWORD_CONFIG['generated_length'],
+          'placeholder' => 'Enter password:',
+          'value' => $this->pageObj->generatedPassword,
+          'readonly' => true,
+      ]) ?>
     </div>
 
     <div class="row g-2 center-x">

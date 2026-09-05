@@ -23,6 +23,8 @@ class ErrorPage
             exit;
         }
 
+        http_response_code($errorCode->value);
+
         $this->code = (string)$errorCode->value;
         $this->message = $errorCode->message();
 

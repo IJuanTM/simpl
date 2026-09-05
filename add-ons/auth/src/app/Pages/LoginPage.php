@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Pages;
 
-use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
@@ -35,11 +34,11 @@ class LoginPage
      * IP-based, so it can't be used to confirm an identifier maps to a real account.
      *
      * @param string|null $identifier Username/email for fresh lockout check
-     * @param int|null    $userId     Pre-resolved user id, to skip a redundant lookup
+     * @param int|null    $userId Pre-resolved user id, to skip a redundant lookup
      *
      * @return bool True if locked out
      */
-    private function checkLockedOut(string|null $identifier = null, ?int $userId = null): bool
+    private function checkLockedOut(?string $identifier = null, ?int $userId = null): bool
     {
         if ($identifier === null) {
             $timeout = SessionController::get('lockout-timeout');
@@ -81,8 +80,8 @@ class LoginPage
      * Calculates remaining lockout duration for user and IP address, whichever is longer.
      *
      * @param string   $identifier Username or email
-     * @param string   $ip         IP address
-     * @param int|null $userId     Pre-resolved user id, to skip a redundant lookup
+     * @param string   $ip IP address
+     * @param int|null $userId Pre-resolved user id, to skip a redundant lookup
      *
      * @return int Seconds remaining on the lockout, or 0 when not locked out
      */
@@ -103,7 +102,7 @@ class LoginPage
      * Calculates lockout end timestamp based on failed attempts.
      *
      * @param string                                                                                              $column Database column to query (user_id or ip_address)
-     * @param mixed                                                                                               $value  Value to match
+     * @param mixed                                                                                               $value Value to match
      * @param array{max_attempts: int, min_duration_minutes: int, max_duration_minutes: int, window_minutes: int} $config
      *
      * @return int|null Lockout end timestamp or null if not locked
@@ -186,10 +185,10 @@ class LoginPage
      * (which shows its own alert), and otherwise clears the submitted credentials
      * and shows the given alert.
      *
-     * @param string    $reason  Failure reason recorded in the login_attempts log
+     * @param string    $reason Failure reason recorded in the login_attempts log
      * @param string    $message Alert message to show when this didn't trigger a lockout
-     * @param AlertType $type    Alert type for $message
-     * @param int|null  $userId  Pre-resolved user id, to skip redundant lookups
+     * @param AlertType $type Alert type for $message
+     * @param int|null  $userId Pre-resolved user id, to skip redundant lookups
      *
      * @return void
      */
@@ -233,9 +232,9 @@ class LoginPage
         $token = isset($_POST['remember']) ? AuthController::generateToken(REMEMBER_ME_TOKEN_LENGTH) : null;
 
         if ($token !== null) {
-            $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
+            $timestamp = AuthController::rememberCookieExpiry();
 
-            setcookie('remember', $token, ['expires' => $timestamp] + AppController::secureCookieFlags());
+            AuthController::setRememberCookie($token, $timestamp);
 
             // Store SHA-256 hash of the token in the DB; the raw token stays only in the cookie.
             AuthController::createToken((int)$user['id'], hash('sha256', $token), TokenType::REMEMBER, date('Y-m-d H:i:s', $timestamp));

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Utils;
 
+use JsonException;
 use RuntimeException;
 
 /**
@@ -15,6 +16,8 @@ use RuntimeException;
  */
 class RateLimiter
 {
+    use EnsuresDirectory;
+
     /**
      * Builds a rate-limit key scoped to the client's IP address (falls back to 'unknown').
      *
@@ -31,8 +34,8 @@ class RateLimiter
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
-     * @param string $key           Unique identifier for the action being limited
-     * @param int    $max           Maximum number of attempts allowed in the window
+     * @param string $key Unique identifier for the action being limited
+     * @param int    $max Maximum number of attempts allowed in the window
      * @param int    $windowSeconds Rolling time window in seconds
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded
@@ -42,14 +45,14 @@ class RateLimiter
         $now = time();
         $file = self::path($key);
 
-        $handle = fopen($file, 'c+');
+        $handle = fopen($file, 'cb+');
         if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
 
         try {
             flock($handle, LOCK_EX);
 
             $raw = stream_get_contents($handle);
-            $data = $raw ? json_decode($raw, true) : null;
+            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
 
             $attempts = array_values(array_filter(
                 is_array($data) ? ($data['attempts'] ?? []) : [],
@@ -81,10 +84,7 @@ class RateLimiter
     private static function path(string $key): string
     {
         $dir = BASEDIR . '/cache/ratelimit';
-
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
-        }
+        self::ensureDirectory($dir);
 
         return $dir . '/' . hash('sha256', $key) . '.json';
     }
@@ -96,13 +96,79 @@ class RateLimiter
      * @param array    $data
      *
      * @return void
+     * @throws JsonException
      */
     private static function writeLocked($handle, array $data): void
     {
         rewind($handle);
         ftruncate($handle, 0);
-        fwrite($handle, json_encode($data));
+        fwrite($handle, json_encode($data, JSON_THROW_ON_ERROR));
         fflush($handle);
+    }
+
+    /**
+     * Record an attempt using capped exponential backoff instead of attempt()'s flat window.
+     * A flat window can be kept permanently full by a party with no proof of identity, e.g. a guessable public id.
+     * Same escalating-lockout shape as LoginPage::calculateLockout(), on the file-based storage attempt() already uses instead of a dedicated DB table.
+     *
+     * @param string $key Unique identifier for the action being limited
+     * @param int    $maxAttempts Attempts allowed in one burst before a lockout starts
+     * @param int    $windowSeconds Burst window: attempts must land within this of the newest to count together
+     * @param int    $minDurationSeconds First lockout duration
+     * @param int    $maxDurationSeconds Lockout duration ceiling
+     *
+     * @return bool True if the attempt is allowed, false if currently within a backoff lockout
+     */
+    public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool
+    {
+        $now = time();
+        $file = self::path($key);
+
+        $handle = fopen($file, 'cb+');
+        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
+
+        try {
+            flock($handle, LOCK_EX);
+
+            $raw = stream_get_contents($handle);
+            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
+
+            $attempts = array_values(array_filter(
+                is_array($data) ? ($data['attempts'] ?? []) : [],
+                static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION
+            ));
+
+            // Counts a consecutive burst against the fixed newest timestamp, walking newest-first.
+            // A burst that's aged out of the window doesn't count toward the next one.
+            $newest = $attempts ? max($attempts) : $now;
+            $count = 0;
+            for ($i = count($attempts) - 1; $i >= 0; $i--) {
+                if ($newest - $attempts[$i] > $windowSeconds) break;
+                $count++;
+            }
+
+            $blocks = intdiv($count, $maxAttempts);
+            $allowed = $blocks === 0;
+
+            // Only a permitted attempt gets recorded, same as attempt().
+            // A request rejected while already locked out can't extend or escalate that lockout any further.
+            if ($allowed) {
+                $attempts[] = $now;
+
+                // Bound file growth while keeping far more history than the backoff math ever needs.
+                $cap = $maxAttempts * 20;
+                if (count($attempts) > $cap) $attempts = array_slice($attempts, -$cap);
+            }
+
+            $retry = $blocks > 0 ? $newest + min($minDurationSeconds * (2 ** ($blocks - 1)), $maxDurationSeconds) : 0;
+
+            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $retry]);
+
+            return $allowed;
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
     }
 
     /**
@@ -112,6 +178,7 @@ class RateLimiter
      * @param string $key
      *
      * @return int
+     * @throws JsonException
      */
     public static function retryAfterMs(string $key): int
     {
@@ -126,13 +193,14 @@ class RateLimiter
      * @param string $key
      *
      * @return array
+     * @throws JsonException
      */
     private static function read(string $key): array
     {
         $file = self::path($key);
         if (!is_file($file)) return [];
 
-        $handle = fopen($file, 'r');
+        $handle = fopen($file, 'rb');
         if ($handle === false) return [];
 
         try {
@@ -143,7 +211,7 @@ class RateLimiter
             fclose($handle);
         }
 
-        $data = json_decode((string)$raw, true);
+        $data = json_decode((string)$raw, true, 512, JSON_THROW_ON_ERROR);
         return is_array($data) ? $data : [];
     }
 

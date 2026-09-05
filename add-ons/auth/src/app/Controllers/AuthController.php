@@ -14,6 +14,7 @@ use app\Models\Url;
 use app\Utils\Log;
 use app\Utils\Timebox;
 use Exception;
+use JsonException;
 
 /**
  * Provides user authentication helpers: session management, token creation
@@ -84,7 +85,7 @@ class AuthController
             return;
         }
 
-        $timestamp = time() + (86400 * REMEMBER_ME_DURATION);
+        $timestamp = self::rememberCookieExpiry();
 
         // A concurrent request may have already rotated this same token.
         // Only issue the new cookie when this call actually won the rotation, so we never hand out an unpersisted one.
@@ -99,7 +100,7 @@ class AuthController
             ]
         )) return;
 
-        setcookie('remember', $newToken, ['expires' => $timestamp] + AppController::secureCookieFlags());
+        self::setRememberCookie($newToken, $timestamp);
     }
 
     /**
@@ -140,7 +141,7 @@ class AuthController
      *
      * @return array|null
      */
-    public static function getUserWithRole(int $id): array|null
+    public static function getUserWithRole(int $id): ?array
     {
         return DB::single(
             SELECT: ['users.*', 'roles.name AS role'],
@@ -243,12 +244,12 @@ class AuthController
      * The token length is trimmed to $length. If $uppercase is true the
      * returned string is uppercased to be more human-readable in some cases.
      *
-     * @param int  $length    Number of characters to return
+     * @param int  $length Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
      */
-    public static function generateToken(int $length = PASSWORD_RESET_CONFIG['token_length'], bool $uppercase = true): string|null
+    public static function generateToken(int $length = PASSWORD_RESET_CONFIG['token_length'], bool $uppercase = true): ?string
     {
         try {
             $bytes = random_bytes((int)ceil($length / 2));
@@ -261,13 +262,36 @@ class AuthController
     }
 
     /**
+     * Expiry timestamp that a freshly-issued remember-me cookie (and its matching token row) should use.
+     *
+     * @return int
+     */
+    public static function rememberCookieExpiry(): int
+    {
+        return time() + (86400 * REMEMBER_ME_DURATION);
+    }
+
+    /**
+     * Sets the remember-me cookie. Shared by every call site that issues one, so the cookie flags can't independently drift between them.
+     *
+     * @param string $token Raw (unhashed) remember-me token
+     * @param int    $expiresAt Unix timestamp to expire the cookie at
+     *
+     * @return void
+     */
+    public static function setRememberCookie(string $token, int $expiresAt): void
+    {
+        setcookie('remember', $token, ['expires' => $expiresAt] + AppController::secureCookieFlags());
+    }
+
+    /**
      * Retrieve a user row by id.
      *
      * @param int $id User primary key
      *
      * @return array|null Database row as associative array or null if missing
      */
-    public static function getUserById(int $id): array|null
+    public static function getUserById(int $id): ?array
     {
         return DB::single(
             SELECT: '*',
@@ -283,9 +307,9 @@ class AuthController
      * shown after the redirect, when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message  Optional flash alert message to show after redirecting
-     * @param AlertType   $type     Alert type, used only when $message is given
-     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
+     * @param string|null $message Optional flash alert message to show after redirecting
+     * @param AlertType   $type Alert type, used only when $message is given
+     * @param int         $timeout Alert timeout in seconds, used only when $message is given
      *
      * @return void
      */
@@ -307,12 +331,13 @@ class AuthController
      * If password change is required and not explicitly allowed this will
      * redirect the user to the change-password flow.
      *
-     * @param Role[]|null $allowedRoles        Roles that are allowed, or null to allow any authenticated user
+     * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
+     * @throws JsonException
      */
-    public static function requireAuth(array|null $allowedRoles = null, bool $allowPasswordChange = false): void
+    public static function requireAuth(?array $allowedRoles = null, bool $allowPasswordChange = false): void
     {
         $user = SessionController::get('user');
 
@@ -338,6 +363,14 @@ class AuthController
         if (empty($fresh['role'])) {
             SessionController::remove('user');
             PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            exit;
+        }
+
+        // A password change invalidates every session issued before it, on any device.
+        // Not just the remember-me token updatePassword() already revokes.
+        if (($user['password_changed_at'] ?? null) !== ($fresh['password_changed_at'] ?? null)) {
+            SessionController::remove('user');
+            PageController::redirectWithAlert('login', 'Your password was changed. Please log in again.', AlertType::INFO, 4);
             exit;
         }
 
@@ -370,7 +403,7 @@ class AuthController
      * redirect back into themselves). The only way to write 'intended_url' to the session,
      * so every call site is guaranteed the safety check.
      *
-     * @param string $uri            Request URI to store
+     * @param string $uri Request URI to store
      * @param string $excludePattern preg_match() pattern for routes to skip storing
      *
      * @return void
@@ -470,7 +503,7 @@ class AuthController
      *
      * @return string|null Path relative to public root (e.g. 'img/profile/...') or null
      */
-    public static function getProfileImage(int $id): string|null
+    public static function getProfileImage(int $id): ?string
     {
         $profile_img = DB::single(
             SELECT: 'profile_img',
@@ -489,7 +522,7 @@ class AuthController
      *
      * @return string|null Generated password or null on failure
      */
-    public static function generatePassword(int $length = PASSWORD_CONFIG['generated_length']): string|null
+    public static function generatePassword(int $length = PASSWORD_CONFIG['generated_length']): ?string
     {
         $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         $lower = 'abcdefghijkmnpqrstuvwxyz';
@@ -569,7 +602,7 @@ class AuthController
      *
      * @return int|null Id or null when not found
      */
-    public static function getUserIdByEmail(string $email): int|null
+    public static function getUserIdByEmail(string $email): ?int
     {
         $user = DB::single(
             SELECT: 'id',
@@ -602,7 +635,7 @@ class AuthController
      *
      * @return int|null Id or null when not found
      */
-    public static function getUserIdByUsername(string $username): int|null
+    public static function getUserIdByUsername(string $username): ?int
     {
         $user = DB::single(
             SELECT: 'id',
@@ -617,9 +650,9 @@ class AuthController
      * Verify that a provided token matches the stored token for the given
      * user id and token type, and hasn't expired. Comparison is case-insensitive.
      *
-     * @param int       $id    User id
+     * @param int       $id User id
      * @param string    $token Token to check
-     * @param TokenType $type  Token type
+     * @param TokenType $type Token type
      *
      * @return bool True if tokens match and the token hasn't expired
      */
@@ -678,7 +711,7 @@ class AuthController
      * when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
-     * @param string $password   Plaintext password to verify
+     * @param string $password Plaintext password to verify
      *
      * @return array|null Matched user row on success, null on any failure
      */
@@ -705,7 +738,7 @@ class AuthController
      *
      * @return array|null DB row or null
      */
-    public static function getUserByIdentifier(string $identifier): array|null
+    public static function getUserByIdentifier(string $identifier): ?array
     {
         $user = self::getUserByEmail($identifier);
         if ($user) return $user;
@@ -726,7 +759,7 @@ class AuthController
      *
      * @return array|null
      */
-    public static function getUserByEmail(string $email): array|null
+    public static function getUserByEmail(string $email): ?array
     {
         return DB::single(
             SELECT: '*',
@@ -742,21 +775,27 @@ class AuthController
      * @param int    $id
      * @param string $password Plaintext new password (will be hashed)
      *
-     * @return void
+     * @return string The new password_changed_at value.
+     *                A caller with a live session for this user (e.g. ChangePasswordPage) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
      */
-    public static function updatePassword(int $id, string $password): void
+    public static function updatePassword(int $id, string $password): string
     {
+        $passwordChangedAt = date('Y-m-d H:i:s');
+
         DB::update(
             UPDATE: 'users',
             SET: [
                 'password' => password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
-                'must_change_password' => 0
+                'must_change_password' => 0,
+                'password_changed_at' => $passwordChangedAt
             ],
             WHERE: compact('id')
         );
 
         // A password change must not leave any persistent auto-login alive on other devices.
         self::deleteToken($id, TokenType::REMEMBER);
+
+        return $passwordChangedAt;
     }
 
     /**
@@ -790,7 +829,7 @@ class AuthController
      *
      * @return void
      */
-    public static function recordLoginAttempt(string $identifier, bool $success, string|null $failedReason = null, ?int $userId = null): void
+    public static function recordLoginAttempt(string $identifier, bool $success, ?string $failedReason = null, ?int $userId = null): void
     {
         DB::insert(
             INTO: 'login_attempts',
@@ -811,7 +850,7 @@ class AuthController
      *
      * @return int|null
      */
-    public static function getUserIdByIdentifier(string $identifier): int|null
+    public static function getUserIdByIdentifier(string $identifier): ?int
     {
         return self::getUserIdByEmail($identifier) ?? self::getUserIdByUsername($identifier);
     }
@@ -871,7 +910,7 @@ class AuthController
      *
      * @return void
      */
-    public static function createToken(int $userId, string $token, TokenType $type, string|null $expires = null): void
+    public static function createToken(int $userId, string $token, TokenType $type, ?string $expires = null): void
     {
         DB::delete(
             FROM: 'tokens',
@@ -966,7 +1005,7 @@ class AuthController
         ]);
 
         if ($contents === false) {
-            Log::error("Account-created email template failed to render for \"$to\"");
+            Log::error('Account-created email template failed to render for "{to}"', ['to' => $to]);
             return false;
         }
 

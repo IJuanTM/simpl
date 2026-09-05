@@ -109,7 +109,7 @@ class VerifyAccountPage
      */
     private function throttle(int $id): bool
     {
-        if (!RateLimiter::attempt("verify-attempt-account-$id", VERIFICATION_CONFIG['account_max_attempts'], VERIFICATION_CONFIG['account_attempt_window'])) {
+        if (!RateLimiter::attemptWithBackoff("verify-attempt-account-$id", VERIFICATION_CONFIG['account_max_attempts'], VERIFICATION_CONFIG['account_attempt_window'], VERIFICATION_CONFIG['account_min_lockout'], VERIFICATION_CONFIG['account_max_lockout'])) {
             FormController::addAlert('Too many verification attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
             return true;
         }

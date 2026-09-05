@@ -86,6 +86,38 @@ class DBTest extends TestCase
         $this->assertSame([], $params);
     }
 
+    public function testBuildWhereSupportsIn(): void
+    {
+        [$clause, $params] = $this->call('buildWhere', [['role_id' => ['IN', [1, 2, 3]]]]);
+
+        $this->assertSame('role_id IN (:role_id_0, :role_id_1, :role_id_2)', $clause);
+        $this->assertSame([':role_id_0' => 1, ':role_id_1' => 2, ':role_id_2' => 3], $params);
+    }
+
+    public function testBuildWhereSupportsNotIn(): void
+    {
+        [$clause, $params] = $this->call('buildWhere', [['role_id' => ['NOT IN', [1, 2]]]]);
+
+        $this->assertSame('role_id NOT IN (:role_id_0, :role_id_1)', $clause);
+        $this->assertSame([':role_id_0' => 1, ':role_id_1' => 2], $params);
+    }
+
+    public function testBuildWhereEmptyInListMatchesNothingWithoutBoundParameters(): void
+    {
+        [$clause, $params] = $this->call('buildWhere', [['role_id' => ['IN', []]]]);
+
+        $this->assertSame('1 = 0', $clause);
+        $this->assertSame([], $params);
+    }
+
+    public function testBuildWhereEmptyNotInListMatchesEverythingWithoutBoundParameters(): void
+    {
+        [$clause, $params] = $this->call('buildWhere', [['role_id' => ['NOT IN', []]]]);
+
+        $this->assertSame('1 = 1', $clause);
+        $this->assertSame([], $params);
+    }
+
     public function testBuildWhereJoinsMultipleConditionsWithTheGivenSeparator(): void
     {
         [$clause] = $this->call('buildWhere', [['a' => 1, 'b' => 2], '', ' OR ']);
@@ -109,8 +141,7 @@ class DBTest extends TestCase
 
     public function testBuildWhereDisambiguatesParamNamesThatCollideAfterNormalization(): void
     {
-        // 'a.b' and 'a_b' both normalize to the same param name - the second must not
-        // silently overwrite the first's bound value.
+        // 'a.b' and 'a_b' both normalize to the same param name; the second must not silently overwrite the first's bound value.
         [$clause, $params] = $this->call('buildWhere', [['a.b' => 1, 'a_b' => 2]]);
 
         $this->assertSame('a.b = :a_b AND a_b = :a_b_1', $clause);

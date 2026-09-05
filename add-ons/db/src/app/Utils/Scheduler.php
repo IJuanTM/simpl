@@ -71,7 +71,9 @@ class Scheduler
                 else DB::insert(INTO: 'scheduler_runs', VALUES: ['task_name' => $task->name, ...$set]);
             } catch (PDOException $e) {
                 // A concurrent scheduler run for this task can win the insert race; fall back to an update.
-                if ($record || $e->getCode() !== '23000') throw $e;
+                // DB::handleError() re-throws via the standard Exception constructor, which always coerces the code to int.
+                // It's never the SQLSTATE string, even though PDO's own driver exceptions sometimes carry it as one.
+                if ($record || (int)$e->getCode() !== 23000) throw $e;
                 DB::update(UPDATE: 'scheduler_runs', SET: $set, WHERE: $where);
             }
 

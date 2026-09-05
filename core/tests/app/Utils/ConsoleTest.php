@@ -66,6 +66,11 @@ class ConsoleTest extends TestCase
         $this->assertStringContainsString('◌', $this->captured(static fn() => Console::info('note')));
     }
 
+    public function testTaskOutputsThePaddedMessage(): void
+    {
+        $this->assertSame("  a task\n", $this->captured(static fn() => Console::task('a task')));
+    }
+
     public function testItemPrefixesWithABullet(): void
     {
         $this->assertStringContainsString('•', $this->captured(static fn() => Console::item('thing')));

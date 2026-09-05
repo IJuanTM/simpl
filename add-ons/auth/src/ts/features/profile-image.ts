@@ -60,6 +60,7 @@ export const profileImageModule = {
       if (!blob) return fail('Failed to process the image. Please try again.');
 
       const formData = new FormData(form);
+      formData.delete('image'); // only the cropped version below is ever read server-side
       formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
 
       try {

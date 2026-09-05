@@ -48,6 +48,9 @@ namespace tests\Controllers {
     {
         use HeadersAssertionTrait;
 
+        private string $originalRequestUri;
+        private ?string $originalRequestMethod;
+
         public function testErrorRedirectsToTheCodeSpecificErrorPage(): void
         {
             PageController::error(ErrorCode::NOT_FOUND);
@@ -61,6 +64,23 @@ namespace tests\Controllers {
             PageController::error(ErrorCode::FORBIDDEN, '/some/page?x=1');
 
             $this->assertTrue($this->headersContain('redirect=' . urlencode('/some/page?x=1')));
+        }
+
+        public function testErrorRespondsWithJsonForAnApiRequest(): void
+        {
+            $previous = $_SERVER['REQUEST_URI'];
+            $_SERVER['REQUEST_URI'] = '/api/user/999';
+
+            try {
+                ob_start();
+                PageController::error(ErrorCode::NOT_FOUND);
+                $body = ob_get_clean();
+
+                $this->assertSame(404, http_response_code());
+                $this->assertSame(['error' => ErrorCode::NOT_FOUND->message()], json_decode($body, true));
+            } finally {
+                $_SERVER['REQUEST_URI'] = $previous;
+            }
         }
 
         public function testRedirectSendsAnImmediate302ByDefault(): void
@@ -156,6 +176,17 @@ namespace tests\Controllers {
             $this->assertSame("Component \"$name\" not found", $output);
         }
 
+        public function testConstructorRejectsABackslashEmbeddedSegment(): void
+        {
+            $_SERVER['REQUEST_URI'] = "/..\\..\\secrets";
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            new PageController();
+
+            $this->assertSame(302, http_response_code());
+            $this->assertTrue($this->headersContain('/error/404'));
+        }
+
         public function testRoutesShortCircuitBeforeAnyPageResolution(): void
         {
             global $ROUTES;
@@ -183,15 +214,17 @@ namespace tests\Controllers {
             $this->assertTrue(PageControllerFixturePage::$apiCalled);
         }
 
-        public function testApiDispatchWithNoMatchingPageRedirectsToNotFound(): void
+        public function testApiDispatchWithNoMatchingPageRespondsWithJsonNotFound(): void
         {
             $_SERVER['REQUEST_URI'] = '/api/no-such-fixture-' . uniqid();
             $_SERVER['REQUEST_METHOD'] = 'GET';
 
+            ob_start();
             new PageController();
+            $body = ob_get_clean();
 
-            $this->assertSame(302, http_response_code());
-            $this->assertTrue($this->headersContain('/error/404'));
+            $this->assertSame(404, http_response_code());
+            $this->assertSame(['error' => ErrorCode::NOT_FOUND->message()], json_decode($body, true));
         }
 
         protected function setUp(): void
@@ -201,12 +234,17 @@ namespace tests\Controllers {
             $_POST = [];
             http_response_code(200);
             PageControllerFixturePage::$apiCalled = false;
+            $this->originalRequestUri = $_SERVER['REQUEST_URI'];
+            $this->originalRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
         }
 
         protected function tearDown(): void
         {
             global $ROUTES;
             $ROUTES = null;
+            $_SERVER['REQUEST_URI'] = $this->originalRequestUri;
+            if ($this->originalRequestMethod === null) unset($_SERVER['REQUEST_METHOD']);
+            else $_SERVER['REQUEST_METHOD'] = $this->originalRequestMethod;
         }
     }
 }

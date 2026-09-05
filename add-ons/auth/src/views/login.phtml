@@ -3,6 +3,9 @@ use app\Controllers\FormController;
 use app\Controllers\RequestController;
 use app\Controllers\SessionController;
 use app\Models\Url;
+
+$lockoutTimeout = SessionController::get('lockout-timeout');
+$lockoutTimeoutMs = $lockoutTimeout !== null ? ($lockoutTimeout - time()) * 1000 : 0;
 ?>
 
 <section class="row login center-x">
@@ -16,19 +19,24 @@ use app\Models\Url;
     <?= FormController::formAlerts() ?>
 
     <div class="row">
-      <div class="col form-group g-row-0.25" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
-        <div class="row">
-          <label class="col" for="identifier">Username or Email: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['identifier'])) ? 'error' : '' ?>">
-          <div class="col input-prepend center f-0"><i class="fas fa-user"></i></div>
-          <input class="col" id="identifier" type="text" name="identifier" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter username or email:" value="<?= RequestController::post('identifier') ?? '' ?>" autocomplete="username" aria-label="Username or email input field">
-        </div>
-      </div>
+      <?php $this->component('form-input', [
+          'id' => 'identifier',
+          'label' => 'Username or Email',
+          'required' => true,
+          'icon' => 'user',
+          'maxlength' => MAX_EMAIL_LENGTH,
+          'placeholder' => 'Enter username or email:',
+          'value' => RequestController::post('identifier') ?? '',
+          'autocomplete' => 'username',
+          'ariaLabel' => 'Username or email input field',
+          'error' => isset($_POST['submit']) && empty($_POST['identifier']),
+          'groupAttrs' => 'data-timeout="' . $lockoutTimeoutMs . '"',
+          'inert' => true,
+      ]) ?>
     </div>
 
     <div class="row">
-      <div class="col form-group g-row-0.25" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
+      <div class="col form-group g-row-0.25" data-timeout="<?= $lockoutTimeoutMs ?>" inert>
         <div class="row">
           <label class="col" for="password">Password: <span class="required">*</span></label>
           <div class="col password-warning end-x hidden">Caps lock is on!</div>
@@ -54,7 +62,7 @@ use app\Models\Url;
       </div>
     </div>
 
-    <div class="row g-col-1 center" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert>
+    <div class="row g-col-1 center" data-timeout="<?= $lockoutTimeoutMs ?>" inert>
       <div class="col f-0">
         <p>Stay logged in?</p>
       </div>
@@ -64,7 +72,7 @@ use app\Models\Url;
     </div>
 
     <div class="row g-2 center-x">
-      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= SessionController::get('lockout-timeout') !== null ? (SessionController::get('lockout-timeout') - time()) * 1000 : 0 ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= $lockoutTimeoutMs ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
     </div>
   </form>
 </section>

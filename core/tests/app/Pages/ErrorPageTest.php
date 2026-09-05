@@ -28,6 +28,13 @@ class ErrorPageTest extends TestCase
         $this->assertSame(ErrorCode::NOT_FOUND->message(), $errorPage->message);
     }
 
+    public function testSetsTheMatchingHttpResponseCode(): void
+    {
+        new ErrorPage(new Page('error', ['403']));
+
+        $this->assertSame(403, http_response_code());
+    }
+
     public function testSetsASubtitleIncludingTheCode(): void
     {
         $page = new Page('error', ['403']);

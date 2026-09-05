@@ -61,7 +61,9 @@ class ChangePasswordPage
 
         if (!FormController::validatePasswords('new-password', 'new-password-check')) return;
 
-        AuthController::updatePassword($user['id'], $_POST['new-password']);
+        // Copied into this session's own cached user data too.
+        // Otherwise requireAuth() would treat this very session as stale on its very next request.
+        $user['password_changed_at'] = AuthController::updatePassword($user['id'], $_POST['new-password']);
 
         $user['must_change_password'] = 0;
         SessionController::set('user', $user);
