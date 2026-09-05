@@ -15,9 +15,7 @@ use app\Models\Url;
 use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
- * Roles (admin)
- *
- * Handles role listing, creation, editing, and deletion for the admin panel.
+ * Admin page: handles role listing, creation, editing, and deletion.
  * Delete is POST-only via a modal confirmation dialog. Uses AdminTableTrait
  * for column rendering only - no search, filters, sort or pagination.
  */
@@ -34,6 +32,18 @@ class Roles
     public array $role = [];
 
     public function __construct(Page $page)
+    {
+        $this->route($page);
+    }
+
+    /**
+     * Loads the role list, then runs the edit/delete sub-action for a specific role if requested.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function route(Page $page): void
     {
         $this->subAction = $page->subpage(1);
         $this->tableColumns = self::getTableColumns();

@@ -18,10 +18,10 @@ class SessionController
     }
 
     /**
-     * Stores a value in the session associated with the specified key.
+     * Stores a value in the session under the given key.
      *
-     * @param string $key   The key to associate the value with.
-     * @param mixed  $value The value to store in the session.
+     * @param string $key
+     * @param mixed  $value
      *
      * @return void
      */
@@ -31,11 +31,11 @@ class SessionController
     }
 
     /**
-     * Retrieves the value associated with the specified key from the session.
+     * Returns the value stored under the given key, or null if the key is absent.
      *
-     * @param string $key The key to retrieve the value for.
+     * @param string $key
      *
-     * @return mixed Returns the value associated with the key if it exists, or null otherwise.
+     * @return mixed
      */
     public static function get(string $key): mixed
     {
@@ -43,11 +43,11 @@ class SessionController
     }
 
     /**
-     * Check if a session key is set.
+     * Whether a value is set under the given session key.
      *
-     * @param string $key The session key to check.
+     * @param string $key
      *
-     * @return bool Returns true if the session key is set, false otherwise.
+     * @return bool
      */
     public static function has(string $key): bool
     {
@@ -55,9 +55,9 @@ class SessionController
     }
 
     /**
-     * Remove a session value by its key.
+     * Removes the value stored under the given session key.
      *
-     * @param string $key The key identifying the session value to remove.
+     * @param string $key
      *
      * @return void
      */

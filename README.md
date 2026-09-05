@@ -327,6 +327,10 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Updated npm and composer dependencies
 * Accessibility (ARIA) improvements and cross-page HTML/styling consistency pass across all views
 * Additional correctness and security hardening found via a full-project code review (page routing path validation, query builder parameter handling, login rate limiting, password reset throttling, task scheduler timing, and more)
+* Changing a password now invalidates every session for that account, on any device, not just its remember-me token
+* Verification and password-reset lockouts now back off exponentially the more repeated bursts of wrong attempts land, instead of a single fixed lockout duration
+* Added `IN`/`NOT IN` support to the query builder's WHERE clause
+* Admin user/role tables now push filtering, sorting and pagination down into the database query instead of fetching everything and filtering in PHP
 * Modernised all styling: CSS cascade layers, `light-dark()` theming, native `<dialog>` modals, a popover + CSS-anchor-positioned column menu, container queries, `field-sizing`, `text-wrap: balance`, `accent-color`, and a `prefers-reduced-motion` pass
 * Restructured the `scss` folder - `config/` now holds only Sass definitions (re-exported through a `config/_index.scss` barrel), with `base/`, `utilities/` and `components/` alongside `views/`; visible page chrome moved to `views/parts/layout/`
 * Reworked the TypeScript into one consistent module shape (private helpers, a single `init()` per feature), dropped the `window.load` handler, switched clipboard copy to `navigator.clipboard`, and added a client-side alert helper in place of native `alert()`

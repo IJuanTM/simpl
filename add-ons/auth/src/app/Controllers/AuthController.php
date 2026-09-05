@@ -17,8 +17,7 @@ use Exception;
 use JsonException;
 
 /**
- * Provides user authentication helpers: session management, token creation
- * and validation, password handling, and email notifications.
+ * Provides user authentication helpers: session management, token creation and validation, password handling, and email notifications.
  */
 class AuthController
 {
@@ -32,8 +31,7 @@ class AuthController
 
     /**
      * Try to automatically log a user in using a persistent "remember" token.
-     * If token is missing, expired or invalid the cookie and database token
-     * are cleaned up.
+     * If the token is missing, expired or invalid, the cookie and database token are cleaned up.
      *
      * @param string $rememberToken Token value read from the user's cookie
      *
@@ -114,8 +112,8 @@ class AuthController
     }
 
     /**
-     * Delete a remember token row and clear the client's cookie, used by every
-     * rememberLogin() failure branch past the initial "token not found" check.
+     * Delete a remember token row and clear the client's cookie.
+     * Used by every rememberLogin() failure branch past the initial "token not found" check.
      *
      * @param string $tokenHash Hashed token value, as stored in the 'tokens' table
      *
@@ -189,9 +187,8 @@ class AuthController
     }
 
     /**
-     * Create the session entry for an authenticated user and ensure a role
-     * is attached. Removes the password field before storing user data in
-     * the session.
+     * Create the session entry for an authenticated user, ensuring a role is attached.
+     * Removes the password field before storing the user data in the session.
      *
      * @param array $user Associative user row from DB (expects 'id' present)
      *
@@ -240,9 +237,8 @@ class AuthController
     }
 
     /**
-     * Generate a cryptographically secure random token (hex characters).
-     * The token length is trimmed to $length. If $uppercase is true the
-     * returned string is uppercased to be more human-readable in some cases.
+     * Generate a cryptographically secure random token (hex characters), trimmed to $length.
+     * When $uppercase is true the returned string is uppercased, which reads more clearly in some places.
      *
      * @param int  $length Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
@@ -301,10 +297,9 @@ class AuthController
     }
 
     /**
-     * Redirect to the originally requested URL saved by requireAuth(), or to
-     * $fallback when none was stored. Clears the stored URL after use so it
-     * cannot be replayed by a second call. Optionally queues a flash alert,
-     * shown after the redirect, when $message is given.
+     * Redirect to the originally requested URL saved by requireAuth(), or to $fallback when none was stored.
+     * Clears the stored URL after use so a second call can't replay it.
+     * Queues a flash alert shown after the redirect when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
      * @param string|null $message Optional flash alert message to show after redirecting
@@ -323,18 +318,15 @@ class AuthController
     }
 
     /**
-     * Ensure the current request is performed by an authenticated user and
-     * optionally enforce role-based access.
-     *
-     * If the user is unauthenticated, the intended URL is stored in session
-     * and the user is redirected to the login page.
-     * If password change is required and not explicitly allowed this will
-     * redirect the user to the change-password flow.
+     * Ensure the current request is performed by an authenticated user, optionally enforcing role-based access.
+     * An unauthenticated user has the intended URL stored in session and is redirected to the login page.
+     * A user who must change their password, on a route that doesn't explicitly allow it, is redirected to the change-password flow.
      *
      * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
+     *
      * @throws JsonException
      */
     public static function requireAuth(?array $allowedRoles = null, bool $allowPasswordChange = false): void
@@ -398,10 +390,9 @@ class AuthController
     }
 
     /**
-     * Store $uri as the post-login/post-password-change redirect target, unless it fails
-     * isSafeRedirectPath() or matches $excludePattern (the route(s) that would otherwise
-     * redirect back into themselves). The only way to write 'intended_url' to the session,
-     * so every call site is guaranteed the safety check.
+     * Store $uri as the post-login/post-password-change redirect target.
+     * Skips storing when $uri fails isSafeRedirectPath() or matches $excludePattern (a route that would redirect back into itself).
+     * The only path that writes 'intended_url' to the session, so every call site gets the safety check.
      *
      * @param string $uri Request URI to store
      * @param string $excludePattern preg_match() pattern for routes to skip storing
@@ -447,8 +438,7 @@ class AuthController
     }
 
     /**
-     * Build and cache the regular expression used to validate passwords
-     * according to PASSWORD_CONFIG. Returns an array with [pattern, humanMessage].
+     * Build and cache the regular expression used to validate passwords against PASSWORD_CONFIG.
      *
      * @return array{0:string,1:string} [regex pattern, error message]
      */
@@ -484,9 +474,8 @@ class AuthController
     }
 
     /**
-     * Return the password regex pattern's source (anchors included, no delimiters), for
-     * client-side use with the JS RegExp constructor. Kept in sync with validatePassword()
-     * since both come from the same cached getPasswordRules() pattern.
+     * Return the password regex pattern's source (anchors included, no delimiters), for client-side use with the JS RegExp constructor.
+     * Stays in sync with validatePassword() since both read the same cached getPasswordRules() pattern.
      *
      * @return string
      */
@@ -567,9 +556,8 @@ class AuthController
     }
 
     /**
-     * Whether an account exists and still has a pending verification. Shared by every page
-     * that must respond identically to a missing account and an already-verified one, so
-     * they can't be used to enumerate account existence/verification status.
+     * Whether an account exists and still has a pending verification.
+     * Shared by every page that must respond identically to a missing account and an already-verified one, so neither can be used to enumerate account existence or verification status.
      *
      * @param int $id
      *
@@ -581,8 +569,7 @@ class AuthController
     }
 
     /**
-     * Whether $email belongs to a user other than $excludeId - the check a
-     * profile/edit form needs before saving a changed email address.
+     * Whether $email belongs to a user other than $excludeId - the check a profile/edit form needs before saving a changed email address.
      *
      * @param string $email
      * @param int    $excludeId User id allowed to already have this email
@@ -614,8 +601,7 @@ class AuthController
     }
 
     /**
-     * Whether $username belongs to a user other than $excludeId - the check a
-     * profile/edit form needs before saving a changed username.
+     * Whether $username belongs to a user other than $excludeId - the check a profile/edit form needs before saving a changed username.
      *
      * @param string $username
      * @param int    $excludeId User id allowed to already have this username
@@ -647,8 +633,8 @@ class AuthController
     }
 
     /**
-     * Verify that a provided token matches the stored token for the given
-     * user id and token type, and hasn't expired. Comparison is case-insensitive.
+     * Verify that a provided token matches the stored token for the given user id and token type, and hasn't expired.
+     * Comparison is case-insensitive.
      *
      * @param int       $id User id
      * @param string    $token Token to check
@@ -678,8 +664,7 @@ class AuthController
     }
 
     /**
-     * Check provided plaintext password against the stored hash for the
-     * user identified by email.
+     * Check a provided plaintext password against the stored hash for the user identified by email.
      *
      * @param string $email
      * @param string $password Plaintext password to verify
@@ -706,9 +691,8 @@ class AuthController
     }
 
     /**
-     * Verify credentials for an identifier that may be an email or username. Any
-     * failure path takes at least TIMING_FLOOR_MS['login'] (hashing a dummy password
-     * when the identifier doesn't resolve), so timing can't reveal why it failed.
+     * Verify credentials for an identifier that may be an email or username.
+     * Every failure path takes at least TIMING_FLOOR_MS['login'] (hashing a dummy password when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
      * @param string $password Plaintext password to verify
@@ -818,9 +802,8 @@ class AuthController
     }
 
     /**
-     * Persist a login attempt record including IP, user agent and whether it
-     * succeeded. The user_id will be resolved from the provided identifier
-     * (email or username) when not already known.
+     * Persist a login attempt record with IP, user agent and success flag.
+     * The user_id is resolved from the provided identifier (email or username) when not already known.
      *
      * @param string      $identifier
      * @param bool        $success
@@ -874,16 +857,14 @@ class AuthController
     }
 
     /**
-     * Generates a verification token, stores it, and emails it to the user. Used by both
-     * the initial registration flow and the resend flow, which only differ in the alert
-     * message shown for each outcome, so the caller still picks that based on the result.
+     * Generates a verification token, stores it, and emails it to the user.
+     * Used by both the initial registration flow and the resend flow, which only differ in the alert message shown for each outcome, so the caller still picks that based on the result.
      *
      * @param int    $id
      * @param string $email
      *
-     * @return bool True if token generation and email queueing succeeded, false otherwise. Under
-     *               FastCGI the actual delivery is deferred past this call, so true doesn't guarantee
-     *               the email reached the recipient - only that generation and queueing did.
+     * @return bool True if token generation and email queueing succeeded, false otherwise.
+     *              Under FastCGI the actual delivery is deferred past this call, so true only guarantees generation and queueing, not that the email reached the recipient.
      */
     public static function issueVerificationToken(int $id, string $email): bool
     {
@@ -900,8 +881,8 @@ class AuthController
     }
 
     /**
-     * Create or replace a token of the given type for a user. Existing tokens
-     * of the same type for that user are removed before insertion.
+     * Create or replace a token of the given type for a user.
+     * Any existing token of the same type for that user is removed before insertion.
      *
      * @param int         $userId
      * @param string      $token
@@ -960,10 +941,8 @@ class AuthController
     }
 
     /**
-     * Send a password reset email with a tokenized link to the reset form. Failures are
-     * logged rather than shown to the user: ForgotPasswordPage always shows the same
-     * generic response regardless of outcome, so this endpoint can't be used to check
-     * which emails are registered.
+     * Send a password reset email with a tokenized link to the reset form.
+     * Failures are logged, not shown to the user: ForgotPasswordPage always shows the same generic response regardless of outcome, so this endpoint can't be used to check which emails are registered.
      *
      * @param int    $id
      * @param string $to
@@ -987,9 +966,8 @@ class AuthController
     }
 
     /**
-     * Notify a newly-created user by email with a temporary password. Does not redirect;
-     * the caller owns the single post-creation redirect and picks its message based on
-     * the returned result (see Admin\Users::createUser()).
+     * Notify a newly-created user by email with a temporary password.
+     * Does not redirect; the caller owns the single post-creation redirect and picks its message from the returned result (see Admin\Users::createUser()).
      *
      * @param string $to
      * @param string $password Temporary plaintext password

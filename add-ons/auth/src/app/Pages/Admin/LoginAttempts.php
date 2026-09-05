@@ -10,9 +10,7 @@ use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
- * LoginAttempts (admin)
- *
- * Displays a paginated, filterable log of login attempts with user and IP context.
+ * Admin page: displays a paginated, filterable log of login attempts with user and IP context.
  */
 class LoginAttempts
 {

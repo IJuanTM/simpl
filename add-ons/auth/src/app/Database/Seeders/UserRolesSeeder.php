@@ -9,6 +9,9 @@ use app\Enums\Role;
 
 class UserRolesSeeder
 {
+    /**
+     * Assigns the admin role to admin@example.com and the user role to every other seeded user.
+     */
     public static function run(): void
     {
         $adminRoleId = DB::single(

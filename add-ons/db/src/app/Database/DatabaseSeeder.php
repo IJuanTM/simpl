@@ -7,9 +7,8 @@ namespace app\Database;
 use app\Database\Migrations\Schema;
 
 /**
- * Handles the execution of database seeding operations.
- * Runs seeder classes registered via register(), in the order they were registered. Add-ons
- * register their own seeders, in dependency order, from their own Config file.
+ * Runs seeder classes registered via register(), in the order they were registered.
+ * Add-ons register their own seeders, in dependency order, from their own Config file.
  */
 class DatabaseSeeder
 {
@@ -20,8 +19,7 @@ class DatabaseSeeder
     private static array $seeders = [];
 
     /**
-     * Register a seeder class to be run. Call in dependency order - seeders with foreign
-     * keys must be registered after the tables they reference.
+     * Register a seeder class to be run. Call in dependency order: a seeder with foreign keys must be registered after the tables it references.
      *
      * @param class-string $seeder
      *

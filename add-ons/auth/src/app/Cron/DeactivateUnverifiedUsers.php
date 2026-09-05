@@ -11,6 +11,11 @@ use app\Utils\Console;
 
 class DeactivateUnverifiedUsers
 {
+    /**
+     * Deactivates ACTIVE users whose verification token has outlived the configured window.
+     *
+     * @return void
+     */
     public static function run(): void
     {
         // A user with no verification token is already verified, so only join-matched rows qualify.

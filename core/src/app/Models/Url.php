@@ -7,9 +7,8 @@ namespace app\Models;
 use app\Utils\Log;
 
 /**
- * Provides utility methods for generating and managing URLs within the application.
- * Includes functionalities for resolving URLs to public files, constructing normalized paths,
- * and retrieving the application's base URL.
+ * URL helpers: root-relative path normalization, cache-busted public-file URLs, and absolute URLs off APP_URL.
+ * Every $subUrl argument tolerates an optional leading slash.
  */
 class Url
 {
@@ -17,11 +16,11 @@ class Url
 
     /**
      * Generates a URL to a file within the public directory, appending a version query parameter based on the file's modification time.
-     * Logs a warning if the specified file does not exist.
+     * Logs a warning and returns the unversioned URL if the file does not exist.
      *
-     * @param string $subUrl The sub-path to the file, optionally starting with a slash.
+     * @param string $subUrl
      *
-     * @return string The URL to the file with a version query parameter for cache busting, or the base URL if the file is missing.
+     * @return string
      */
     public static function file(string $subUrl = ''): string
     {
@@ -41,11 +40,11 @@ class Url
     }
 
     /**
-     * Constructs a normalized URL by ensuring it starts with a single forward slash.
+     * Normalizes $subUrl to start with exactly one forward slash.
      *
-     * @param string $subUrl The sub-path to be appended, optionally starting with a slash.
+     * @param string $subUrl
      *
-     * @return string The resulting URL starting with a single forward slash.
+     * @return string
      */
     public static function to(string $subUrl = ''): string
     {
@@ -63,12 +62,12 @@ class Url
     }
 
     /**
-     * Constructs an absolute URL based on the configured APP_URL. Use for links that leave the
-     * application (e.g. emails), where a root-relative path would not resolve.
+     * Constructs an absolute URL based on the configured APP_URL.
+     * Use for links that leave the application (e.g. emails), where a root-relative path would not resolve.
      *
-     * @param string $subUrl The sub-path to be appended, optionally starting with a slash.
+     * @param string $subUrl
      *
-     * @return string The absolute URL.
+     * @return string
      */
     public static function absolute(string $subUrl = ''): string
     {

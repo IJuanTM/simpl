@@ -7,6 +7,9 @@ namespace app\Utils;
 use app\Enums\LogLevel;
 use JsonException;
 
+/**
+ * Writes leveled log entries (error/warning/info/debug) to per-level files in src/logs.
+ */
 class Log
 {
     use EnsuresDirectory;
@@ -89,6 +92,7 @@ class Log
         if (!$context) return $message;
 
         $replace = [];
+
         // Strip newlines/control chars so a context value can't inject a fake extra log line.
         foreach ($context as $key => $val) if ($val === null || is_scalar($val) || (is_object($val) && method_exists($val, '__toString'))) $replace['{' . $key . '}'] = preg_replace('/[\x00-\x1F\x7F]+/', ' ', (string)$val);
 

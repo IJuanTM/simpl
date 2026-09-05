@@ -17,10 +17,8 @@ use app\Models\Page;
 use app\Utils\RateLimiter;
 
 /**
- * UserPage
- *
- * Profile view for a user identified by /user/{id}. Visitors see only the
- * username and profile image. The profile owner sees an inline edit form.
+ * Profile view for a user identified by /user/{id}.
+ * Visitors see only the username and profile image. The profile owner sees an inline edit form.
  * Admins see a read-only extended view with an admin edit link.
  */
 class UserPage
@@ -31,6 +29,18 @@ class UserPage
     public bool $isAdmin = false;
 
     public function __construct(Page $page)
+    {
+        $this->loadUser($page);
+    }
+
+    /**
+     * Loads and sanitizes the target user, resolves owner/admin viewing rights, and processes the profile edit form if the owner submitted it.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function loadUser(Page $page): void
     {
         $id = (int)AppController::sanitize($page->subpage() ?? '');
 

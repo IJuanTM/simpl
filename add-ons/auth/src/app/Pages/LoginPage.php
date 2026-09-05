@@ -14,10 +14,7 @@ use app\Enums\TokenType;
 use app\Enums\UserStatus;
 
 /**
- * LoginPage
- *
- * Handles the login form flow including lockout checks, credential
- * verification, and optional remember-me token creation.
+ * Handles the login form flow: lockout checks, credential verification, and optional remember-me token creation.
  */
 class LoginPage
 {
@@ -30,8 +27,7 @@ class LoginPage
 
     /**
      * Checks if user or IP address is locked out due to failed login attempts.
-     * The message deliberately doesn't say whether the lockout is account- or
-     * IP-based, so it can't be used to confirm an identifier maps to a real account.
+     * The message deliberately doesn't say whether the lockout is account-based or IP-based, so it can't be used to confirm an identifier maps to a real account.
      *
      * @param string|null $identifier Username/email for fresh lockout check
      * @param int|null    $userId Pre-resolved user id, to skip a redundant lookup

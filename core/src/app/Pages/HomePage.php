@@ -6,6 +6,9 @@ namespace app\Pages;
 
 use app\Models\Page;
 
+/**
+ * Page class for the home view.
+ */
 class HomePage
 {
     public function __construct(Page $page)

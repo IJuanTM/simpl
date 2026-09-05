@@ -15,8 +15,6 @@ use app\Models\Page;
 use app\Utils\RateLimiter;
 
 /**
- * ResetPasswordPage
- *
  * Handles password reset via tokenized links and processes the reset form.
  */
 class ResetPasswordPage
@@ -24,6 +22,19 @@ class ResetPasswordPage
     public bool $disableForm = false;
 
     public function __construct(Page $page)
+    {
+        $this->verifyLink($page);
+    }
+
+    /**
+     * Validates the reset link's user id and token (throttled, with a session-cached
+     * "already verified" skip), then processes the form if submitted.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function verifyLink(Page $page): void
     {
         $id = $page->subpage();
         $token = $page->subpage(1);

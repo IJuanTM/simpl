@@ -6,6 +6,10 @@ namespace app\Utils;
 
 use LogicException;
 
+/**
+ * A named, callable task with a schedule - either a cron expression or a fixed interval - set
+ * via cron()/everyMinutes()/hourly()/etc. and checked against the last run time by isDue().
+ */
 class ScheduledTask
 {
     public string $name;
@@ -19,6 +23,9 @@ class ScheduledTask
         $this->callback = $callback;
     }
 
+    /**
+     * Schedules the task by a standard 5-field cron expression, clearing any interval schedule.
+     */
     final public function cron(string $expression): static
     {
         $this->cronExpression = $expression;
@@ -26,11 +33,17 @@ class ScheduledTask
         return $this;
     }
 
+    /**
+     * Schedules the task to run every $n minutes.
+     */
     final public function everyMinutes(int $n = 1): static
     {
         return $this->interval($n * 60);
     }
 
+    /**
+     * Schedules the task on a fixed interval, clearing any cron schedule.
+     */
     private function interval(int $seconds): static
     {
         $this->intervalSeconds = $seconds;
@@ -38,36 +51,59 @@ class ScheduledTask
         return $this;
     }
 
+    /**
+     * Schedules the task to run every hour.
+     */
     final public function hourly(): static
     {
         return $this->everyHours();
     }
 
+    /**
+     * Schedules the task to run every $n hours.
+     */
     final public function everyHours(int $n = 1): static
     {
         return $this->interval($n * 3600);
     }
 
+    /**
+     * Schedules the task to run once a day.
+     */
     final public function daily(): static
     {
         return $this->everyDays();
     }
 
+    /**
+     * Schedules the task to run every $n days.
+     */
     final public function everyDays(int $n = 1): static
     {
         return $this->interval($n * 86400);
     }
 
+    /**
+     * Schedules the task to run once a week.
+     */
     final public function weekly(): static
     {
         return $this->everyWeeks();
     }
 
+    /**
+     * Schedules the task to run every $n weeks.
+     */
     final public function everyWeeks(int $n = 1): static
     {
         return $this->interval($n * 604800);
     }
 
+    /**
+     * Whether the task is due to run now, given $lastRun (null if it has never run).
+     *
+     * @throws LogicException if no schedule was ever set
+     */
     final public function isDue(?string $lastRun): bool
     {
         if ($this->cronExpression !== null) return $this->isCronDue($this->cronExpression);
@@ -81,6 +117,9 @@ class ScheduledTask
         return (time() - strtotime($lastRun)) >= $this->intervalSeconds;
     }
 
+    /**
+     * Whether the current time matches a standard 5-field cron expression.
+     */
     private function isCronDue(string $expression): bool
     {
         $parts = explode(' ', trim($expression));
@@ -92,6 +131,7 @@ class ScheduledTask
         $currentWeekday = (int)date('w');
 
         $dayMatches = $this->matchesCronField((int)date('j'), $day);
+
         // date('w') is 0-6; standard cron also accepts 7 for Sunday.
         $weekdayMatches = $this->matchesCronField($currentWeekday, $weekday)
             || ($currentWeekday === 0 && $this->matchesCronField(7, $weekday));
@@ -105,6 +145,9 @@ class ScheduledTask
             && $this->matchesCronField((int)date('n'), $month);
     }
 
+    /**
+     * Whether $current matches a single cron field - a wildcard, comma-list, step (/), range (-), or literal value.
+     */
     private function matchesCronField(int $current, string $field): bool
     {
         if ($field === '*') return true;

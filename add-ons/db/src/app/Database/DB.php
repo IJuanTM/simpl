@@ -13,6 +13,9 @@ use DateTimeZone;
 use PDO;
 use PDOException;
 
+/**
+ * PDO-backed query builder: select/single/insert/update/delete/exists/count/query/raw, with identifier sanitization and parameterized values throughout.
+ */
 class DB
 {
     // MySQL requires a row count before OFFSET; this is its documented "unlimited" maximum (2^64 - 1).
@@ -21,7 +24,7 @@ class DB
     private static bool $pdoHasDatabase = false;
 
     /**
-     * This method is for selecting records from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY, ORDER BY, LIMIT and OFFSET.
+     * Selects records from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY, ORDER BY, LIMIT and OFFSET.
      *
      * @param string|array      $SELECT
      * @param string            $FROM
@@ -70,12 +73,10 @@ class DB
     }
 
     /**
-     * This method is for sanitizing and formatting column names for SQL queries.
+     * Sanitizes and formats column names for SQL queries.
      *
-     * Simple identifiers (matching \w+) are validated; anything else (e.g. "roles.name AS role",
-     * aggregates, or subqueries) is passed through unchanged to support expressions. Because of
-     * this, the SELECT column list must only ever contain developer-defined literals - never
-     * request input.
+     * Simple identifiers (matching \w+) are validated; anything else (e.g. "roles.name AS role", aggregates, or subqueries) is passed through unchanged to support expressions.
+     * Because of that pass-through, the SELECT column list must only ever contain developer-defined literals, never request input.
      *
      * @param string|array $columns
      *
@@ -96,7 +97,7 @@ class DB
     }
 
     /**
-     * This method is for sanitizing SQL identifiers like table and column names.
+     * Sanitizes SQL identifiers like table and column names.
      *
      * @param string $identifier
      *
@@ -139,9 +140,8 @@ class DB
     }
 
     /**
-     * Whether $item is one join spec rather than a list of them. Ambiguous only when
-     * $item has 2 elements; distinguished by $item[1] - a flat [table, col] pair
-     * means $item is a single spec, a nested spec means $item is a list of two.
+     * Whether $item is one join spec rather than a list of them.
+     * Only ambiguous when $item has 2 elements, so $item[1] decides: a flat [table, col] pair means one spec, a nested spec means a list of two.
      *
      * @param array $item
      *
@@ -185,7 +185,7 @@ class DB
     }
 
     /**
-     * This method is for constructing the WHERE clause of an SQL query.
+     * Constructs the WHERE clause of an SQL query.
      * Keys support 'col' and 'table.col' forms.
      * A value can be a plain scalar (equality), null (IS NULL), or a [operator, value] tuple.
      * Operator is one of '=', '!=', '<>', '>', '>=', '<', '<=', 'LIKE', 'NOT LIKE', 'IS', 'IS NOT', 'IN', 'NOT IN'.
@@ -194,9 +194,8 @@ class DB
      * @param array  $where
      * @param string $prefix
      * @param string $separator Logical operator joining conditions ('AND' or 'OR')
-     * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. by
-     *                               combineWhere()'s separate AND/OR calls) so a prefixed and an
-     *                               unprefixed key can't normalize to the same final placeholder.
+     * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. combineWhere()'s separate
+     *                               AND/OR calls) so a prefixed key and an unprefixed key can't normalize to the same placeholder.
      *
      * @return array
      */
@@ -339,7 +338,7 @@ class DB
     }
 
     /**
-     * This method is for preparing and executing a query with optional parameters.
+     * Prepares and executes a query with optional parameters.
      *
      * @param string $query
      * @param array  $params
@@ -367,7 +366,7 @@ class DB
     }
 
     /**
-     * This method is for establishing a database connection using PDO.
+     * Establishes a database connection using PDO.
      * When $withDatabase is false, no schema is selected (used during migrations).
      *
      * @param bool $withDatabase
@@ -407,7 +406,7 @@ class DB
     }
 
     /**
-     * This method is for switching the active database on the current connection.
+     * Switches the active database on the current connection.
      *
      * @param string $name
      *
@@ -427,10 +426,9 @@ class DB
     }
 
     /**
-     * Validate an identifier that will be interpolated backtick-quoted (unlike sanitize()'s
-     * \w+ whitelist, needed where identifiers are interpolated unquoted elsewhere in this
-     * class). A real database name can contain characters \w+ would reject (e.g. a hyphen),
-     * so only the backtick itself - which would let the value escape its quoting - is unsafe.
+     * Validate an identifier that will be interpolated backtick-quoted.
+     * Unlike sanitize()'s \w+ whitelist (which suits identifiers interpolated unquoted elsewhere in this class), a real database name can contain characters \w+ would reject, such as a hyphen.
+     * So only the backtick itself, which would let the value escape its quoting, is treated as unsafe.
      *
      * @param string $identifier
      *
@@ -443,7 +441,7 @@ class DB
     }
 
     /**
-     * This method is for handling database errors by logging the error and redirecting to an error page.
+     * Logs a database error and redirects to the error page - or, on CLI, rethrows so the script exits non-zero.
      *
      * @param PDOException $e
      *
@@ -461,7 +459,7 @@ class DB
     }
 
     /**
-     * This method is for selecting a single record from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY and ORDER BY.
+     * Selects a single record from a table with optional JOIN, WHERE, OR_WHERE, GROUP BY and ORDER BY.
      *
      * @param string|array      $SELECT
      * @param string            $FROM
@@ -481,7 +479,7 @@ class DB
     }
 
     /**
-     * This method is for inserting records into a table with specific VALUES.
+     * Inserts a record into a table with the given VALUES.
      *
      * @param string $INTO
      * @param array  $VALUES
@@ -511,7 +509,7 @@ class DB
     }
 
     /**
-     * This method is for updating records in a table with specific SET values and WHERE conditions.
+     * Updates records matching WHERE with the given SET values.
      *
      * @param string $UPDATE
      * @param array  $SET
@@ -539,7 +537,7 @@ class DB
     }
 
     /**
-     * This method is for deleting records from a table with specific WHERE conditions.
+     * Deletes records from a table matching WHERE.
      *
      * @param string $FROM
      * @param array  $WHERE
@@ -559,7 +557,7 @@ class DB
     }
 
     /**
-     * This method is for checking the existence of a record in a table with specific WHERE conditions.
+     * Checks whether a record matching WHERE exists in a table.
      *
      * @param string $FROM
      * @param array  $WHERE
@@ -576,8 +574,7 @@ class DB
     }
 
     /**
-     * This method is for counting rows in a table with optional JOIN, WHERE and OR_WHERE conditions.
-     * If $GROUP_BY is provided, the count of groups is returned.
+     * Counts rows in a table with optional JOIN, WHERE and OR_WHERE conditions, or counts the groups when $GROUP_BY is given.
      *
      * @param string            $FROM
      * @param array             $JOIN
@@ -611,7 +608,7 @@ class DB
     }
 
     /**
-     * This method is for executing a raw DDL statement.
+     * Executes a raw DDL statement.
      *
      * @param string $sql
      *
@@ -628,7 +625,7 @@ class DB
     }
 
     /**
-     * This method is for executing a raw query and returning the result set as an array.
+     * Executes a raw query and returns the result set as an array.
      *
      * @param string $query
      * @param array  $params
@@ -640,21 +637,33 @@ class DB
         return self::execute($query, $params)->fetchAll();
     }
 
+    /**
+     * The auto-increment id generated by the last INSERT on this connection.
+     */
     public static function lastInsertId(): string
     {
         return self::connect()->lastInsertId();
     }
 
+    /**
+     * Starts a transaction on the current connection.
+     */
     public static function beginTransaction(): bool
     {
         return self::connect()->beginTransaction();
     }
 
+    /**
+     * Commits the current transaction.
+     */
     public static function commit(): bool
     {
         return self::connect()->commit();
     }
 
+    /**
+     * Rolls back the current transaction.
+     */
     public static function rollback(): bool
     {
         return self::connect()->rollBack();

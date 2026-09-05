@@ -10,6 +10,11 @@ use app\Utils\Console;
 
 class DeleteDeactivatedUsers
 {
+    /**
+     * Deletes auto-deactivated accounts past the configured retention window.
+     *
+     * @return void
+     */
     public static function run(): void
     {
         $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['deletion_after_days'] . ' days'));

@@ -8,8 +8,9 @@ The dividing line: this add-on owns the *generic engine*, never domain-specific 
 ## What's included
 
 - **`DB`** - `select`/`single`/`insert`/`update`/`delete`/`exists`/`count`/`query`/`raw`, with identifier sanitization (whitelist regex) and parameterized values throughout. Supports `=`,
-  `!=`, `<>`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`, `IS`, `IS NOT` as WHERE operators, plus
-  `JOIN`, `GROUP BY`, `ORDER BY`, `OR WHERE`, transactions, and `useDatabase()`/`lastInsertId()`.
+  `!=`, `<>`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`, `IS`, `IS NOT`, `IN`, `NOT IN` as WHERE
+  operators, plus `JOIN`, `GROUP BY`, `ORDER BY`, `OR WHERE`, transactions, and `useDatabase()`/
+  `lastInsertId()`.
 - **`Blueprint`** / **`Schema`** - a small fluent DDL builder (`varchar`, `int`, `timestamp`,
   `enum`, `foreign`, `index`, `primary`, `unique`, `autoIncrement`, ...) for defining tables inside a migration's `Schema::create('table', function (Blueprint $table) { ... })` callback.
 - **`DatabaseMigrator`** - runs migration classes registered via `DatabaseMigrator::register(SomeMigration::class)`, tracking what's already run in its own `migrations` table. Add an add-on's own migrations from its own Config file, in dependency order.

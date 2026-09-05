@@ -19,11 +19,26 @@ enum Ansi: string
     case BOLD = "\x1b[1m";
     case DIM = "\x1b[2m";
 
+    /**
+     * Wraps $message in the given style sequences, followed by a reset code (no-op when $styles is empty).
+     *
+     * @param string $message
+     * @param self   ...$styles
+     *
+     * @return string
+     */
     public static function wrap(string $message, self ...$styles): string
     {
         return empty($styles) ? $message : self::sequence(...$styles) . $message . self::RESET->value;
     }
 
+    /**
+     * Concatenates the escape sequences for the given styles into one combined sequence.
+     *
+     * @param self ...$styles
+     *
+     * @return string
+     */
     public static function sequence(self ...$styles): string
     {
         return implode('', array_map(static fn(self $s): string => $s->value, $styles));

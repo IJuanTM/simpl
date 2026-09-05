@@ -11,16 +11,13 @@ use app\Enums\AlertType;
 use app\Utils\RateLimiter;
 
 /**
- * ChangePasswordPage
- *
- * Allows authenticated users to change their password and clears the
- * must_change_password flag on success.
+ * Allows authenticated users to change their password, clearing the must_change_password flag on success.
  */
 class ChangePasswordPage
 {
     public function __construct()
     {
-        // Require authentication, allow access even if password change is required
+        // Allow access mid-forced-password-change: this is the page that resolves it.
         AuthController::requireAuth(null, true);
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();

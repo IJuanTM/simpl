@@ -23,16 +23,15 @@ class Alias
     }
 
     /**
-     * Evaluates and processes the parameters by applying provided callback functions or default values.
+     * Resolves each configured param to its override in $params, or to its default (calling the default if it's a Closure).
      *
-     * @param array $params An associative array of input parameters to be evaluated.
+     * @param array $params Overrides keyed by param name
      *
-     * @return array The resulting array after processing each parameter with its associated logic.
+     * @return array
      */
     final public function evaluate(array $params): array
     {
-        // array_map() re-indexes numerically when given multiple arrays, so the string
-        // keys are restored with array_combine() rather than lost from the result.
+        // array_map() with multiple arrays re-indexes numerically, so array_combine() restores the original string keys.
         return array_combine(
             array_keys($this->params),
             array_map(static fn($value, $key) => $params[$key] ?? ($value instanceof Closure ? $value() : $value), $this->params, array_keys($this->params))

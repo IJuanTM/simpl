@@ -9,6 +9,9 @@ use app\Database\Migrations\Schema;
 
 class CreateUserRolesTable
 {
+    /**
+     * Creates the user_roles pivot table linking users to roles.
+     */
     public static function up(): void
     {
         Schema::create('user_roles', static function (Blueprint $t) {
@@ -21,6 +24,9 @@ class CreateUserRolesTable
         });
     }
 
+    /**
+     * Drops the user_roles table.
+     */
     public static function down(): void
     {
         Schema::drop('user_roles');

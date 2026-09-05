@@ -15,16 +15,27 @@ use app\Models\Page;
 use app\Utils\RateLimiter;
 
 /**
- * VerifyAccountPage
- *
- * Handles account verification using a token supplied in the URL or via a
- * manual form. Validates input and provides user-facing feedback via alerts.
+ * Handles account verification using a token supplied in the URL or via a manual form.
+ * Validates input and provides user-facing feedback via alerts.
  */
 class VerifyAccountPage
 {
     public int $resendCooldown = 0;
 
     public function __construct(Page $page)
+    {
+        $this->checkUrlCode($page);
+    }
+
+    /**
+     * Validates the target user id, checks whether verification is still needed, and either
+     * checks a code supplied in the URL or processes the manual form if submitted.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function checkUrlCode(Page $page): void
     {
         $id = AppController::sanitize($page->subpage() ?? '');
 
@@ -65,7 +76,7 @@ class VerifyAccountPage
                 return;
             }
 
-            $this->verify($id);
+            $this->complete($id);
         }
     }
 
@@ -97,7 +108,7 @@ class VerifyAccountPage
             return;
         }
 
-        $this->verify($userId);
+        $this->complete($userId);
     }
 
     /**
@@ -131,7 +142,7 @@ class VerifyAccountPage
      *
      * @return void
      */
-    private function verify(int $id): void
+    private function complete(int $id): void
     {
         AuthController::deleteToken($id, TokenType::VERIFICATION);
 

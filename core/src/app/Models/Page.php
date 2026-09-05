@@ -24,19 +24,29 @@ class Page
         $this->subpages = $subpages;
         $this->params = $params;
 
-        $history = self::history();
-        $subUrl = $this->subUrl();
-
-        if (end($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -HISTORY_DEPTH));
+        $this->recordHistory();
 
         $this->title = APP_NAME;
         $this->subtitle = $this->getSubtitle();
     }
 
     /**
-     * Retrieves and returns the browsing history from the session.
+     * Appends this page's URL to the navigation history, unless it's already the most recent entry.
      *
-     * @return array The history data stored in the session, or an empty array if no history exists.
+     * @return void
+     */
+    private function recordHistory(): void
+    {
+        $history = self::history();
+        $subUrl = $this->subUrl();
+
+        if (end($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -HISTORY_DEPTH));
+    }
+
+    /**
+     * The navigation history from the session, or an empty array if none exists.
+     *
+     * @return array
      */
     public static function history(): array
     {
@@ -44,9 +54,9 @@ class Page
     }
 
     /**
-     * Constructs and returns a formatted URL string composed of the page, subpages, and query parameters.
+     * The root-relative URL for this page: /page/subpage/subpage?query.
      *
-     * @return string The generated URL derived from the URL components.
+     * @return string
      */
     final public function subUrl(): string
     {
@@ -57,9 +67,9 @@ class Page
     }
 
     /**
-     * Constructs and returns the subtitle by transforming the page value.
+     * The page subtitle: the page slug with hyphens turned to spaces and each word capitalized.
      *
-     * @return string The formatted subtitle derived from the page URL segment.
+     * @return string
      */
     private function getSubtitle(): string
     {
@@ -68,16 +78,25 @@ class Page
 
     /**
      * Returns the nth URL subpage segment, or null if it doesn't exist.
+     *
+     * @param int $n 0-based index.
+     *
+     * @return string|null
      */
-    public function subpage(int $n = 0): ?string
+    final public function subpage(int $n = 0): ?string
     {
         return isset($this->subpages[$n]) ? (string)$this->subpages[$n] : null;
     }
 
     /**
      * Returns a query parameter value, or $default if the key is absent.
+     *
+     * @param string $key
+     * @param mixed  $default
+     *
+     * @return mixed
      */
-    public function param(string $key, mixed $default = null): mixed
+    final public function param(string $key, mixed $default = null): mixed
     {
         return $this->params[$key] ?? $default;
     }

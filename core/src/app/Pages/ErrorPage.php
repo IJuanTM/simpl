@@ -7,7 +7,11 @@ namespace app\Pages;
 use app\Controllers\PageController;
 use app\Enums\ErrorCode;
 use app\Models\Page;
+use JsonException;
 
+/**
+ * Page class for the error view; $message, $code and $redirectPage are populated by resolve() for the template to render.
+ */
 class ErrorPage
 {
     public string $message;
@@ -15,6 +19,21 @@ class ErrorPage
     public string $redirectPage;
 
     public function __construct(Page $page)
+    {
+        $this->resolve($page);
+    }
+
+    /**
+     * Resolves the error code from the URL subpage segment (404 if invalid), sets the HTTP
+     * response code, message and redirect target, and triggers the configured auto-redirect if enabled.
+     *
+     * @param Page $page The page model containing the subpage and parameters.
+     *
+     * @return void
+     *
+     * @throws JsonException
+     */
+    private function resolve(Page $page): void
     {
         $errorCode = ErrorCode::tryFrom((int)($page->subpage() ?? 0));
 

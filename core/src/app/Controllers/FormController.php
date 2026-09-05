@@ -33,8 +33,7 @@ class FormController
     {
         $fieldName = str_replace('-', ' ', $field);
 
-        // Reject a field submitted as an array (e.g. name="x[]") - an optional field has
-        // no rule below that would otherwise catch it before a raw $_POST read elsewhere.
+        // Reject a field submitted as an array (e.g. name="x[]"): an optional field has no rule below that would catch it before a raw $_POST read elsewhere.
         if (isset($_POST[$field]) && !is_string($_POST[$field])) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is invalid!", AlertType::WARNING);

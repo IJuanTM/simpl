@@ -8,31 +8,37 @@ use app\Cron\PruneRateLimitCache;
 use app\Utils\RateLimiter;
 use PHPUnit\Framework\TestCase;
 
-class PruneRateLimitCacheTest extends TestCase
+final class PruneRateLimitCacheTest extends TestCase
 {
     public function testReportsWhenNothingWasPruned(): void
     {
+        // Arrange
         // Clears any stale file left over from other runs/local dev use of this shared directory.
         RateLimiter::prune(0);
 
+        // Act
         ob_start();
         PruneRateLimitCache::run();
         $output = ob_get_clean();
 
+        // Assert
         $this->assertStringContainsString('No stale rate limit files to prune', $output);
     }
 
     public function testReportsHowManyFilesWerePruned(): void
     {
+        // Arrange
         $key = 'prune-cron-test-' . uniqid();
         RateLimiter::attempt($key, 5, 60);
         $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
         touch($file, time() - 90000); // older than prune()'s default 86400s (1 day) threshold
 
+        // Act
         ob_start();
         PruneRateLimitCache::run();
         $output = ob_get_clean();
 
+        // Assert
         $this->assertMatchesRegularExpression('/Pruned [1-9]\d* stale rate limit files?/', $output);
     }
 }

@@ -9,34 +9,19 @@ use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
 /**
- * run() calls DB::single() unconditionally as the first thing inside its task loop, for every
- * registered task regardless of isDue() - only safely testable here with zero tasks registered,
- * so $tasks is reset in setUp() to stay independent of whatever other tests may have registered.
+ * run() calls DB::single() unconditionally for every registered task in its loop, regardless of isDue().
+ * It is only safely testable with zero tasks registered, so setUp() resets $tasks to stay independent of whatever other tests registered.
  */
-class SchedulerTest extends TestCase
+final class SchedulerTest extends TestCase
 {
     private ReflectionProperty $tasksProp;
 
-    public function testTaskRegistersAScheduledTaskUnderTheGivenName(): void
-    {
-        $task = Scheduler::task('my-task', static fn() => null);
-
-        $this->assertSame('my-task', $task->name);
-        $this->assertCount(1, $this->tasksProp->getValue());
-        $this->assertSame($task, $this->tasksProp->getValue()[0]);
-    }
-
-    public function testTaskReturnsTheTaskForFluentChaining(): void
-    {
-        $task = Scheduler::task('my-task', static fn() => null)->daily();
-
-        $this->assertSame(86400, $task->intervalSeconds);
-    }
-
     public function testRunWithNoRegisteredTasksReportsNoneDue(): void
     {
+        // Act
         $output = $this->captured(static fn() => Scheduler::run());
 
+        // Assert
         $this->assertStringContainsString('No tasks due', $output);
     }
 
@@ -49,9 +34,31 @@ class SchedulerTest extends TestCase
 
     public function testRunPrintsATestLabelInTestMode(): void
     {
+        // Act
         $output = $this->captured(static fn() => Scheduler::run(true));
 
+        // Assert
         $this->assertStringContainsString('[TEST]', $output);
+    }
+
+    public function testTaskRegistersAScheduledTaskUnderTheGivenName(): void
+    {
+        // Act
+        $task = Scheduler::task('my-task', static fn() => null);
+
+        // Assert
+        $this->assertSame('my-task', $task->name);
+        $this->assertCount(1, $this->tasksProp->getValue());
+        $this->assertSame($task, $this->tasksProp->getValue()[0]);
+    }
+
+    public function testTaskReturnsTheTaskForFluentChaining(): void
+    {
+        // Act
+        $task = Scheduler::task('my-task', static fn() => null)->daily();
+
+        // Assert
+        $this->assertSame(86400, $task->intervalSeconds);
     }
 
     protected function setUp(): void

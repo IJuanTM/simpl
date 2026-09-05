@@ -8,12 +8,14 @@ use app\Utils\Log;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
-class LogTest extends TestCase
+final class LogTest extends TestCase
 {
     public function testErrorWritesToTheErrorLogFile(): void
     {
+        // Act
         Log::error('something broke');
 
+        // Assert
         $this->assertStringContainsString('ERROR: something broke', $this->lastLine('error'));
     }
 
@@ -23,45 +25,21 @@ class LogTest extends TestCase
         return end($lines);
     }
 
-    public function testWarningWritesToTheWarningLogFile(): void
-    {
-        Log::warning('careful now');
-
-        $this->assertStringContainsString('WARNING: careful now', $this->lastLine('warning'));
-    }
-
-    public function testInfoWritesToTheInfoLogFile(): void
-    {
-        Log::info('fyi');
-
-        $this->assertStringContainsString('INFO: fyi', $this->lastLine('info'));
-    }
-
-    public function testDebugWritesToTheDebugLogFile(): void
-    {
-        Log::debug('trace this');
-
-        $this->assertStringContainsString('DEBUG: trace this', $this->lastLine('debug'));
-    }
-
-    public function testMessageIsPrefixedWithATimestamp(): void
-    {
-        Log::info('hi');
-
-        $this->assertMatchesRegularExpression('/^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ [+-]\d{2}:\d{2}\]/', $this->lastLine('info'));
-    }
-
     public function testContextValuesAreInterpolatedIntoPlaceholders(): void
     {
+        // Act
         Log::error('user {id} failed', ['id' => 42]);
 
+        // Assert
         $this->assertStringContainsString('user 42 failed', $this->lastLine('error'));
     }
 
     public function testContextIsAppendedAsJson(): void
     {
+        // Act
         Log::error('failed', ['id' => 42, 'reason' => 'timeout']);
 
+        // Assert
         $line = $this->lastLine('error');
         $this->assertStringContainsString('Context:', $line);
         $this->assertStringContainsString('"id":42', $line);
@@ -70,39 +48,86 @@ class LogTest extends TestCase
 
     public function testNoContextMeansNoContextLine(): void
     {
+        // Act
         Log::error('failed');
 
+        // Assert
         $this->assertStringNotContainsString('Context:', $this->lastLine('error'));
     }
 
     public function testIncludesAStackTraceByDefault(): void
     {
+        // Act
         Log::error('failed');
 
+        // Assert
         $this->assertStringContainsString('Stack trace:', $this->lastLine('error'));
     }
 
-    public function testDebugCanSkipTheStackTrace(): void
+    public function testMessageIsPrefixedWithATimestamp(): void
     {
-        Log::debug('failed', [], false);
+        // Act
+        Log::info('hi');
 
-        $this->assertStringNotContainsString('Stack trace:', $this->lastLine('debug'));
+        // Assert
+        $this->assertMatchesRegularExpression('/^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d+ [+-]\d{2}:\d{2}\]/', $this->lastLine('info'));
     }
 
     public function testInterpolateOnlySubstitutesScalarAndStringableValues(): void
     {
+        // Arrange
         $method = new ReflectionMethod(Log::class, 'interpolate');
 
+        // Act
         $result = $method->invoke(null, 'a={a} b={b} c={c}', ['a' => 1, 'b' => [1, 2], 'c' => null]);
 
+        // Assert
         $this->assertSame('a=1 b={b} c=', $result);
     }
 
     public function testInterpolateWithNoContextReturnsTheMessageUnchanged(): void
     {
+        // Arrange
         $method = new ReflectionMethod(Log::class, 'interpolate');
 
+        // Act + Assert
         $this->assertSame('hello {name}', $method->invoke(null, 'hello {name}', []));
+    }
+
+    public function testWarningWritesToTheWarningLogFile(): void
+    {
+        // Act
+        Log::warning('careful now');
+
+        // Assert
+        $this->assertStringContainsString('WARNING: careful now', $this->lastLine('warning'));
+    }
+
+    public function testInfoWritesToTheInfoLogFile(): void
+    {
+        // Act
+        Log::info('fyi');
+
+        // Assert
+        $this->assertStringContainsString('INFO: fyi', $this->lastLine('info'));
+    }
+
+    public function testDebugWritesToTheDebugLogFile(): void
+    {
+        // Act
+        Log::debug('trace this');
+
+        // Assert
+        $this->assertStringContainsString('DEBUG: trace this', $this->lastLine('debug'));
+    }
+
+    public function testDebugCanSkipTheStackTrace(): void
+    {
+        // Act
+        Log::debug('failed', [], false);
+
+        // Assert
+        $this->assertStringNotContainsString('Stack trace:', $this->lastLine('debug'));
     }
 
     protected function tearDown(): void

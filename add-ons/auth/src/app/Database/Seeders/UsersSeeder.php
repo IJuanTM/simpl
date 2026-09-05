@@ -49,6 +49,9 @@ class UsersSeeder
     ];
 
     /**
+     * Inserts the admin and demo user accounts, then a batch of randomly generated users (some
+     * soft-deleted) for exercising the admin panel's listing/filtering.
+     *
      * @throws RandomException
      */
     public static function run(): void
@@ -103,9 +106,10 @@ class UsersSeeder
      * Generates a random date between the given start and end dates.
      *
      * @param string $start The starting date in a valid date format.
-     * @param string $end   The ending date in a valid date format.
+     * @param string $end The ending date in a valid date format.
      *
      * @return string A random date between the start and end dates, formatted as 'Y-m-d H:i:s'.
+     *
      * @throws RandomException
      */
     private static function randomDate(string $start, string $end): string
@@ -119,6 +123,7 @@ class UsersSeeder
      * @param string $createdAt The creation date to evaluate.
      *
      * @return string|null A randomly generated date string if the condition is met, or null otherwise.
+     *
      * @throws RandomException
      */
     private static function maybeDeleted(string $createdAt): ?string

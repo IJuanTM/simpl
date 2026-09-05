@@ -2,7 +2,6 @@
 
 @use "../config" as *;
 
-// Generate CSS variables for themes set in config
 @include set-themes();
 
 :root {

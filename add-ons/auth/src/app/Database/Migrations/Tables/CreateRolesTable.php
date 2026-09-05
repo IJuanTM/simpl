@@ -9,6 +9,9 @@ use app\Database\Migrations\Schema;
 
 class CreateRolesTable
 {
+    /**
+     * Creates the roles table.
+     */
     public static function up(): void
     {
         Schema::create('roles', static function (Blueprint $t) {
@@ -18,6 +21,9 @@ class CreateRolesTable
         });
     }
 
+    /**
+     * Drops the roles table.
+     */
     public static function down(): void
     {
         Schema::drop('roles');

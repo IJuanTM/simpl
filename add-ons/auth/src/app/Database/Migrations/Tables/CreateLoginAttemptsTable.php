@@ -9,6 +9,9 @@ use app\Database\Migrations\Schema;
 
 class CreateLoginAttemptsTable
 {
+    /**
+     * Creates the login_attempts table, recording every login attempt for lockout tracking and the admin audit log.
+     */
     public static function up(): void
     {
         Schema::create('login_attempts', static function (Blueprint $t) {
@@ -26,6 +29,9 @@ class CreateLoginAttemptsTable
         });
     }
 
+    /**
+     * Drops the login_attempts table.
+     */
     public static function down(): void
     {
         Schema::drop('login_attempts');

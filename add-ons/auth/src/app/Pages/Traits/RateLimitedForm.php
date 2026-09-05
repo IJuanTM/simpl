@@ -10,8 +10,7 @@ use app\Utils\RateLimiter;
 
 /**
  * IP-scoped rate limiting for single-submit forms (contact, forgot-password, register, ...).
- * Host class calls initRateLimitedForm() from its constructor - it returns whether the
- * request should be dispatched to post() - and attemptRateLimit() from within post().
+ * The host class calls initRateLimitedForm() from its constructor (it returns whether the request should be dispatched to post()), and attemptRateLimit() from within post().
  */
 trait RateLimitedForm
 {

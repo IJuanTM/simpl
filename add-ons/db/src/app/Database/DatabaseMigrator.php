@@ -7,10 +7,8 @@ namespace app\Database;
 use app\Database\Migrations\Schema;
 
 /**
- * Handles the execution of database migration operations.
- * Runs migration classes registered via register(), tracking which have already run in a
- * `migrations` table it creates for itself. Add-ons register their own migrations, in
- * dependency order, from their own Config file.
+ * Runs migration classes registered via register(), tracking which have already run in a `migrations` table it creates for itself.
+ * Add-ons register their own migrations, in dependency order, from their own Config file.
  */
 class DatabaseMigrator
 {
@@ -18,8 +16,7 @@ class DatabaseMigrator
     private static array $migrations = [];
 
     /**
-     * Register a migration class to be run. Call in dependency order - migrations with
-     * foreign keys must be registered after the tables they reference.
+     * Register a migration class to be run. Call in dependency order: a migration with foreign keys must be registered after the tables it references.
      *
      * @param class-string $migration
      *
@@ -67,6 +64,9 @@ class DatabaseMigrator
         return $applied;
     }
 
+    /**
+     * Creates the migrations bookkeeping table if it doesn't already exist.
+     */
     private static function ensureMigrationsTable(): void
     {
         DB::raw(
@@ -80,6 +80,9 @@ class DatabaseMigrator
         );
     }
 
+    /**
+     * Names of migrations already recorded as run.
+     */
     private static function getRanMigrations(): array
     {
         return array_column(DB::select(
@@ -89,12 +92,17 @@ class DatabaseMigrator
         ), 'migration');
     }
 
+    /**
+     * Fully-qualified class name to record/compare against - not the basename, so migrations from different add-ons can't collide.
+     */
     private static function name(string $class): string
     {
-        // Full name, not basename, so migrations from different add-ons can't collide.
         return ltrim($class, '\\');
     }
 
+    /**
+     * The next migration batch number.
+     */
     private static function nextBatch(): int
     {
         return (int)DB::single(
@@ -103,6 +111,9 @@ class DatabaseMigrator
         )['next'];
     }
 
+    /**
+     * Records a migration as run, in the given batch.
+     */
     private static function record(string $name, int $batch): void
     {
         DB::insert(
@@ -143,6 +154,9 @@ class DatabaseMigrator
         return $rolled;
     }
 
+    /**
+     * The most recent migration batch number, or null if none have run.
+     */
     private static function lastBatch(): ?int
     {
         $val = DB::single(
@@ -152,6 +166,9 @@ class DatabaseMigrator
         return $val !== null ? (int)$val : null;
     }
 
+    /**
+     * Names of migrations that ran in the given batch.
+     */
     private static function batchMigrations(int $batch): array
     {
         return array_column(DB::select(
@@ -162,6 +179,9 @@ class DatabaseMigrator
         ), 'migration');
     }
 
+    /**
+     * Deletes a migration's run record (used when rolling it back).
+     */
     private static function remove(string $name): void
     {
         DB::delete(

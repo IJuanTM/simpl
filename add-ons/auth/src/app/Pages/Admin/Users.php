@@ -19,9 +19,7 @@ use app\Pages\Admin\Traits\AdminTableTrait;
 use PDOException;
 
 /**
- * Users (admin)
- *
- * Handles user listing with search, filtering, sorting, and pagination, as well
+ * Admin page: handles user listing with search, filtering, sorting, and pagination, as well
  * as user creation, editing, soft-deletion, restoration, and permanent purge.
  * The table data is served via an API endpoint used by the front-end JS.
  */
@@ -61,6 +59,19 @@ class Users
     public array $availableRoles = [];
 
     public function __construct(Page $page)
+    {
+        $this->route($page);
+    }
+
+    /**
+     * Loads the available roles, sets up the table columns, and runs create/edit/delete
+     * sub-actions or the default listing based on the URL.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function route(Page $page): void
     {
         $this->subAction = $page->subpage(1);
         $this->currentUserId = (int)SessionController::get('user')['id'];

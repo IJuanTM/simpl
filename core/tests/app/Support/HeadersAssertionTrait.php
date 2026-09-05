@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace tests\Support;
 
 /**
- * Shared by tests that assert on sent header content. Requires Xdebug (CLI doesn't
- * track headers_list() without it); degrades to a skipped test rather than a false pass.
+ * Shared by tests that assert on sent header content.
+ * Requires Xdebug (CLI doesn't track headers_list() without it); degrades to a skipped test rather than a false pass.
  */
 trait HeadersAssertionTrait
 {

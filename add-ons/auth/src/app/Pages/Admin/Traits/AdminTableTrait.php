@@ -10,9 +10,8 @@ use app\Models\Page;
 use JsonException;
 
 /**
- * Shared search, filter, sort, pagination and table-rendering logic for admin
- * table pages. A page opts in by calling initTable()/applyPagination(), or
- * opts out by simply not calling them.
+ * Shared search, filter, sort, pagination and table-rendering logic for admin table pages.
+ * A page opts in by calling initTable()/applyPagination(), or opts out by simply not calling them.
  */
 trait AdminTableTrait
 {
@@ -31,8 +30,10 @@ trait AdminTableTrait
     public string $itemLabel = 'items';
 
     public array $tableColumns = [];
+
     // Active filter values, keyed by param name
     public array $filters = [];
+
     // Filter param => allowed values ([] means any value is accepted)
     protected array $filterDefinitions = [];
 
@@ -229,7 +230,7 @@ trait AdminTableTrait
      * use as `if ($this->blockIf($cond, fn() => ...)) return;`.
      *
      * @param bool     $condition True when the action should be blocked
-     * @param callable $onBlock   Called with no args when blocked - queue an alert and/or redirect
+     * @param callable $onBlock Called with no args when blocked - queue an alert and/or redirect
      *
      * @return bool True when blocked (the caller should return immediately)
      */
@@ -322,7 +323,7 @@ trait AdminTableTrait
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
-     * @param callable $lookup    (int $id): ?array
+     * @param callable $lookup (int $id): ?array
      *
      * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */

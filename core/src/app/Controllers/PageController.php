@@ -13,21 +13,26 @@ use JsonException;
 use Random\RandomException;
 
 /**
- * Represents the controller responsible for handling incoming page requests, routing,
- * and rendering the appropriate page or response.
- *
- * This class interprets the request URI, identifies the intended page or API endpoint,
- * initializes the required page handler or model, and manages the lifecycle of the request.
- * For API calls, it invokes specific API methods. For standard pages, it renders
- * the corresponding view.
+ * The framework's central request dispatcher, constructed once per request by AppController.
+ * Extends Page so pageObj/history/title stay available to the rest of the render pipeline.
  */
 class PageController extends Page
 {
+    public function __construct()
+    {
+        $this->route();
+    }
+
     /**
+     * Parses the request URI into page/subpage/params, validates CSRF on POST requests, and resolves aliases and registered routes.
+     * Then dispatches to the matching Page class, either its api() method or the normal render() pipeline.
+     *
+     * @return void
+     *
      * @throws RandomException
      * @throws JsonException
      */
-    public function __construct()
+    private function route(): void
     {
         // strtok() runs first so a bare "?query" root URL also falls back to REDIRECT.
         $requestPath = strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')), '?');
@@ -45,9 +50,8 @@ class PageController extends Page
         $page = array_shift($urlArr);
         $params = $_GET;
 
-        // Checked before the $ROUTES short-circuit too, so a registered route can't be used to
-        // dodge CSRF validation on a POST request. A route that genuinely needs session-token-free
-        // POST (e.g. a signed webhook) must verify its own signature before this point instead.
+        // Checked before the $ROUTES short-circuit too, so a registered route can't dodge CSRF validation on a POST request.
+        // A route that genuinely needs session-token-free POST (e.g. a signed webhook) must verify its own signature before this point instead.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
             self::error(ErrorCode::FORBIDDEN);
             exit;
@@ -92,6 +96,7 @@ class PageController extends Page
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
+     *
      * @throws JsonException
      */
     public static function error(ErrorCode $code, ?string $redirect = null): void
@@ -108,7 +113,7 @@ class PageController extends Page
 
     /**
      * Whether the current request's raw URL starts with the api/ segment.
-     * Reads $_SERVER directly (with the same normalization the constructor applies) instead of the constructor's own $api flag.
+     * Reads $_SERVER directly (with the same normalization route() applies) instead of route()'s own $api flag.
      * That also covers error() callers reached before $api is set, or with no PageController instance constructed at all (e.g. tests).
      *
      * @return bool
@@ -122,10 +127,7 @@ class PageController extends Page
     }
 
     /**
-     * Redirects the user to the specified location with an optional refresh delay.
-     *
-     * This method sends a header to redirect the user's browser to a given URL.
-     * An optional refresh delay can be specified to control the time before the redirection occurs.
+     * Redirects the user's browser to the given location, via an immediate 302 or a delayed refresh header.
      *
      * @param string   $location The target location URL for the redirect.
      * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
@@ -148,15 +150,12 @@ class PageController extends Page
     }
 
     /**
-     * Renders the current page by including the corresponding view file and surrounding HTML parts.
-     *
-     * This method determines the appropriate view file based on the requested page and subpage.
-     * If a subpage is specified and its view file exists, it will be preferred over the main page view.
-     * The method outputs the top HTML part (e.g., header) before including the view file,
-     * and concludes with the bottom HTML part (e.g., footer). If the view file cannot be located,
-     * it logs an error (in development mode) and triggers a "Not Found" error response.
+     * Renders the current page: emits the top part, includes the most specific matching view file
+     * for the page/subpage chain (falling back to the page's own view), then the bottom part.
+     * Falls through to a "Not Found" error if no matching view file exists.
      *
      * @return void
+     *
      * @throws JsonException
      */
     private function render(): void
@@ -197,13 +196,11 @@ class PageController extends Page
     /**
      * Loads and includes a view part file based on the given name.
      *
-     * Parts are the fixed page skeleton (header, footer, cookie, the index/ head fragments) that
-     * the render pipeline assembles itself - never called from a view template, hence private.
-     * Each is included once per request and takes no data. For template-invoked, repeatable,
-     * prop-taking fragments use component() instead.
+     * Parts are the fixed page skeleton (header, footer, cookie, the index/ head fragments) that the render pipeline assembles itself.
+     * Never called from a view template, hence private. Each is included once per request and takes no data.
+     * For template-invoked, repeatable, prop-taking fragments use component() instead.
      *
-     * If the file is not found, a warning is logged and feedback is shown visibly in DEV or as an
-     * HTML comment otherwise.
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
      *
      * @param string $name The name of the view part to load, relative to views/parts/.
      *
@@ -240,12 +237,9 @@ class PageController extends Page
     }
 
     /**
-     * Retrieves the URL of the previous page in the user's navigation history.
+     * URL of the second-to-last entry in the user's navigation history, or a default fallback if there isn't one.
      *
-     * This method accesses the user's navigation history and returns the URL of the
-     * second-to-last entry. If no valid previous entry exists, it returns a default URL.
-     *
-     * @return string The URL of the previous page or a default fallback URL.
+     * @return string
      */
     public static function prev(): string
     {
@@ -254,11 +248,7 @@ class PageController extends Page
     }
 
     /**
-     * Navigates back to the previous page in the user's navigation history.
-     *
-     * This method updates the user's navigation history by removing the last entry
-     * and redirects the user to the new last entry in the history. If no history is available,
-     * it redirects to a default location.
+     * Pops the last entry off the navigation history and redirects to what's now the last entry (or a default fallback if history is now empty).
      *
      * @return void
      */
@@ -272,13 +262,11 @@ class PageController extends Page
     /**
      * Loads and includes a view component file, extracting the given props into its scope.
      *
-     * Components are reusable fragments (breadcrumbs, modals, column-toggle, ...) that a view
-     * template drops in via $this->component() wherever it wants them, hence public. Unlike a
-     * part, a component may be rendered more than once per request and receives per-call data
-     * through $props. For the fixed, framework-assembled page skeleton use part() instead.
+     * Components are reusable fragments (breadcrumbs, modals, column-toggle, ...) that a view template drops in via $this->component() wherever it wants them, hence public.
+     * Unlike a part, a component may be rendered more than once per request and receives per-call data through $props.
+     * For the fixed, framework-assembled page skeleton use part() instead.
      *
-     * If the file is not found, a warning is logged and feedback is shown visibly in DEV or as an
-     * HTML comment otherwise.
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
      *
      * @param string $name The name of the view component to load, relative to views/components/.
      * @param array  $props Associative array of values extracted into the component's local scope.

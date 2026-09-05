@@ -11,90 +11,53 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use ReflectionProperty;
 
-class RateLimitedFormHost
+final class RateLimitedFormHost
 {
     use RateLimitedForm;
 }
 
-class RateLimitedFormTest extends TestCase
+final class RateLimitedFormTest extends TestCase
 {
     private array $keys = [];
 
     public function testGetRequestIsNotTreatedAsASubmission(): void
     {
+        // Arrange
         $host = new RateLimitedFormHost();
-        $prefix = 'contact-' . uniqid();
+        $prefix = 'contact-' . uniqid('', true);
 
+        // Act + Assert
         $this->assertFalse($this->init($host, $prefix));
         $this->rlKey($host);
     }
 
     private function init(RateLimitedFormHost $host, string $prefix): bool
     {
-        return (new ReflectionMethod(RateLimitedFormHost::class, 'initRateLimitedForm'))->invoke($host, $prefix);
+        return new ReflectionMethod(RateLimitedFormHost::class, 'initRateLimitedForm')->invoke($host, $prefix);
     }
 
-    private function rlKey(RateLimitedFormHost $host): string
+    private function rlKey(RateLimitedFormHost $host): void
     {
-        $key = (new ReflectionProperty(RateLimitedFormHost::class, 'rlKey'))->getValue($host);
-        $this->keys[] = $key;
-        return $key;
+        $this->keys[] = new ReflectionProperty(RateLimitedFormHost::class, 'rlKey')->getValue($host);
     }
 
     public function testPostWithSubmitFlagIsTreatedAsASubmission(): void
     {
+        // Arrange
         $host = new RateLimitedFormHost();
-        $prefix = 'contact-' . uniqid();
+        $prefix = 'contact-' . uniqid('', true);
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST['submit'] = '1';
 
+        // Act + Assert
         $this->assertTrue($this->init($host, $prefix));
         $this->rlKey($host);
     }
 
-    public function testFirstAttemptWithinTheWindowIsAllowed(): void
-    {
-        $host = $this->newSubmittedHost();
-
-        $this->assertTrue($this->attemptRateLimit($host, 60));
-    }
-
-    private function newSubmittedHost(): RateLimitedFormHost
-    {
-        $host = new RateLimitedFormHost();
-        $this->init($host, 'contact-' . uniqid());
-        $this->rlKey($host);
-        return $host;
-    }
-
-    private function attemptRateLimit(RateLimitedFormHost $host, int $windowSeconds): bool
-    {
-        return (new ReflectionMethod(RateLimitedFormHost::class, 'attemptRateLimit'))->invoke($host, $windowSeconds);
-    }
-
-    public function testSecondAttemptWithinTheWindowIsBlockedAndSetsCooldown(): void
-    {
-        $host = $this->newSubmittedHost();
-
-        $this->attemptRateLimit($host, 60);
-        $this->assertFalse($this->attemptRateLimit($host, 60));
-        $this->assertGreaterThan(0, $host->cooldown);
-    }
-
-    public function testBlockedAttemptQueuesAWarningAlert(): void
-    {
-        $host = $this->newSubmittedHost();
-
-        $this->attemptRateLimit($host, 60);
-        $this->attemptRateLimit($host, 60);
-
-        $this->assertNotNull(FormController::formAlerts());
-    }
-
     public function testNonSubmittingRequestReadsAnExistingCooldown(): void
     {
-        $prefix = 'contact-' . uniqid();
-
+        // Arrange
+        $prefix = 'contact-' . uniqid('', true);
         $submitting = new RateLimitedFormHost();
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST['submit'] = '1';
@@ -103,12 +66,62 @@ class RateLimitedFormTest extends TestCase
         $this->attemptRateLimit($submitting, 60);
         $this->attemptRateLimit($submitting, 60);
 
+        // Act
         $viewer = new RateLimitedFormHost();
         $_SERVER['REQUEST_METHOD'] = 'GET';
         unset($_POST['submit']);
         $this->init($viewer, $prefix);
 
+        // Assert
         $this->assertGreaterThan(0, $viewer->cooldown);
+    }
+
+    private function attemptRateLimit(RateLimitedFormHost $host, int $windowSeconds): bool
+    {
+        return (new ReflectionMethod(RateLimitedFormHost::class, 'attemptRateLimit'))->invoke($host, $windowSeconds);
+    }
+
+    public function testFirstAttemptWithinTheWindowIsAllowed(): void
+    {
+        // Arrange
+        $host = $this->newSubmittedHost();
+
+        // Act + Assert
+        $this->assertTrue($this->attemptRateLimit($host, 60));
+    }
+
+    private function newSubmittedHost(): RateLimitedFormHost
+    {
+        $host = new RateLimitedFormHost();
+        $this->init($host, 'contact-' . uniqid('', true));
+        $this->rlKey($host);
+        return $host;
+    }
+
+    public function testSecondAttemptWithinTheWindowIsBlockedAndSetsCooldown(): void
+    {
+        // Arrange
+        $host = $this->newSubmittedHost();
+
+        // Act
+        $this->attemptRateLimit($host, 60);
+
+        // Assert
+        $this->assertFalse($this->attemptRateLimit($host, 60));
+        $this->assertGreaterThan(0, $host->cooldown);
+    }
+
+    public function testBlockedAttemptQueuesAWarningAlert(): void
+    {
+        // Arrange
+        $host = $this->newSubmittedHost();
+
+        // Act
+        $this->attemptRateLimit($host, 60);
+        $this->attemptRateLimit($host, 60);
+
+        // Assert
+        $this->assertNotNull(FormController::formAlerts());
     }
 
     protected function setUp(): void

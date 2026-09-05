@@ -7,9 +7,7 @@ namespace app\Controllers;
 use app\Models\Alias;
 
 /**
- * Handles the creation and management of aliases within the application.
- * Aliases can be registered and resolved to map them to specific pages,
- * subpages, and associated parameters.
+ * Registry of URL aliases: each maps a name to a target page, subpages, and (lazily evaluated) params.
  */
 class AliasController
 {
@@ -21,10 +19,10 @@ class AliasController
     }
 
     /**
-     * Registers a new alias by associating it with the specified alias object.
+     * Registers an alias under the given name.
      *
-     * @param string $alias The name of the alias to register.
-     * @param Alias  $aliasObj The alias object to associate with the given alias.
+     * @param string $alias
+     * @param Alias  $aliasObj
      *
      * @return void
      */
@@ -34,13 +32,12 @@ class AliasController
     }
 
     /**
-     * Resolves the specified alias to retrieve associated information, including
-     * the page, subpages, and evaluated parameters.
+     * Resolves an alias to its page, subpages, and params (evaluated against $params), or null if the name is unknown.
      *
-     * @param string $alias The alias to resolve.
-     * @param array  $params An array of parameters to evaluate with the alias.
+     * @param string $alias
+     * @param array  $params Overrides passed to the alias's param evaluation
      *
-     * @return array|null Returns an associative array with the resolved information or null if the alias cannot be resolved.
+     * @return array{page: string, subpages: array, params: array}|null
      */
     public static function resolve(string $alias, array $params): ?array
     {

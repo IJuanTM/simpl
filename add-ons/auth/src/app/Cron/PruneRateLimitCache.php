@@ -9,6 +9,11 @@ use app\Utils\RateLimiter;
 
 class PruneRateLimitCache
 {
+    /**
+     * Prunes stale rate-limit cache files and reports how many were deleted.
+     *
+     * @return void
+     */
     public static function run(): void
     {
         $deleted = RateLimiter::prune();

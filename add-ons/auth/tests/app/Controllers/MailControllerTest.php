@@ -11,10 +11,11 @@ use PHPUnit\Framework\TestCase;
  * Only "template not found" is covered here - the happy path reads from BASEDIR/app/Mails,
  * which only lines up with this add-on's own templates after a real install-time merge.
  */
-class MailControllerTest extends TestCase
+final class MailControllerTest extends TestCase
 {
     public function testTemplateReturnsFalseWhenTheFileDoesNotExist(): void
     {
+        // Act + Assert
         $this->assertFalse(MailController::template('does-not-exist-' . uniqid(), []));
     }
 }

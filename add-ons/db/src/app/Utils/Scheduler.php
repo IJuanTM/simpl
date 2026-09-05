@@ -8,12 +8,18 @@ use app\Database\DB;
 use PDOException;
 use Throwable;
 
+/**
+ * Registry and runner for cron-style scheduled tasks, with run history persisted in scheduler_runs.
+ */
 class Scheduler
 {
     /** @var ScheduledTask[] */
     private static array $tasks = [];
 
     /**
+     * Runs every registered task that's due (or all of them, when $test is true), recording each
+     * outcome in scheduler_runs.
+     *
      * @return int Number of tasks that threw during this run (0 when all succeeded).
      */
     public static function run(bool $test = false): int
@@ -94,6 +100,9 @@ class Scheduler
         return $failed;
     }
 
+    /**
+     * Registers a named task, returning it so its schedule can be set fluently (e.g. ->daily()).
+     */
     public static function task(string $name, callable $callback): ScheduledTask
     {
         $task = new ScheduledTask($name, $callback);

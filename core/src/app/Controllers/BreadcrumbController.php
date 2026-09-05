@@ -19,6 +19,8 @@ class BreadcrumbController
     /**
      * Builds and sets the breadcrumb trail from the page's URL segments.
      *
+     * @param Page $page
+     *
      * @return void
      */
     public static function generate(Page $page): void

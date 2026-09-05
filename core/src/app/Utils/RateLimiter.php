@@ -10,9 +10,8 @@ use RuntimeException;
 /**
  * File-based sliding window rate limiter.
  *
- * Attempt timestamps are stored on disk keyed by a hash of the caller's key, so limits
- * survive across requests and cannot be reset by clearing the session cookie. Callers that
- * need per-client scoping should include the client IP (or user id) in the key.
+ * Attempt timestamps are stored on disk keyed by a hash of the caller's key, so limits survive across requests and cannot be reset by clearing the session cookie.
+ * A caller that needs per-client scoping should include the client IP (or user id) in the key.
  */
 class RateLimiter
 {
@@ -96,6 +95,7 @@ class RateLimiter
      * @param array    $data
      *
      * @return void
+     *
      * @throws JsonException
      */
     private static function writeLocked($handle, array $data): void
@@ -109,6 +109,9 @@ class RateLimiter
     /**
      * Record an attempt using capped exponential backoff instead of attempt()'s flat window.
      * A flat window can be kept permanently full by a party with no proof of identity, e.g. a guessable public id.
+     * Each filled burst doubles the lockout (capped at $maxDurationSeconds); a lockout lifts on its own once its duration elapses.
+     * The escalation tier carries across bursts on purpose: serving a lockout doesn't reset it, so a fresh over-limit burst hours later still escalates.
+     * It only clears when the whole record ages out of RATE_LIMIT_CACHE_RETENTION.
      * Same escalating-lockout shape as LoginPage::calculateLockout(), on the file-based storage attempt() already uses instead of a dedicated DB table.
      *
      * @param string $key Unique identifier for the action being limited
@@ -131,40 +134,47 @@ class RateLimiter
             flock($handle, LOCK_EX);
 
             $raw = stream_get_contents($handle);
-            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
+            $data = json_decode($raw ?: 'null', true, 512, JSON_THROW_ON_ERROR);
+            $data = is_array($data) ? $data : [];
 
             $attempts = array_values(array_filter(
-                is_array($data) ? ($data['attempts'] ?? []) : [],
+                $data['attempts'] ?? [],
                 static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION
             ));
+            $tier = (int)($data['tier'] ?? 0);
+            $retry = (int)($data['retry'] ?? 0);
 
-            // Counts a consecutive burst against the fixed newest timestamp, walking newest-first.
-            // A burst that's aged out of the window doesn't count toward the next one.
-            $newest = $attempts ? max($attempts) : $now;
+            // Inside an active lockout: reject without recording, so a rejected attempt can't extend or escalate it.
+            if ($retry > $now) {
+                self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+                return false;
+            }
+
+            // A served lockout resets the burst, so only attempts since $retry (the last lockout's end) count toward the next one.
+            $burst = array_values(array_filter($attempts, static fn(int $ts) => $ts >= $retry));
+            $newest = $burst ? max($burst) : $now;
             $count = 0;
-            for ($i = count($attempts) - 1; $i >= 0; $i--) {
-                if ($newest - $attempts[$i] > $windowSeconds) break;
+            for ($i = count($burst) - 1; $i >= 0; $i--) {
+                if ($newest - $burst[$i] > $windowSeconds) break;
                 $count++;
             }
 
-            $blocks = intdiv($count, $maxAttempts);
-            $allowed = $blocks === 0;
-
-            // Only a permitted attempt gets recorded, same as attempt().
-            // A request rejected while already locked out can't extend or escalate that lockout any further.
-            if ($allowed) {
-                $attempts[] = $now;
-
-                // Bound file growth while keeping far more history than the backoff math ever needs.
-                $cap = $maxAttempts * 20;
-                if (count($attempts) > $cap) $attempts = array_slice($attempts, -$cap);
+            if ($count >= $maxAttempts) {
+                // Next tier: the exponent is capped so the doubling can't overflow before min() clamps it to $maxDurationSeconds.
+                $retry = $now + min($minDurationSeconds * (2 ** min($tier, 30)), $maxDurationSeconds);
+                $tier++;
+                self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+                return false;
             }
 
-            $retry = $blocks > 0 ? $newest + min($minDurationSeconds * (2 ** ($blocks - 1)), $maxDurationSeconds) : 0;
+            $attempts[] = $now;
 
-            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $retry]);
+            // Bound file growth while keeping far more history than the backoff math ever needs.
+            $cap = $maxAttempts * 20;
+            if (count($attempts) > $cap) $attempts = array_slice($attempts, -$cap);
 
-            return $allowed;
+            self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+            return true;
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
@@ -178,6 +188,7 @@ class RateLimiter
      * @param string $key
      *
      * @return int
+     *
      * @throws JsonException
      */
     public static function retryAfterMs(string $key): int
@@ -193,6 +204,7 @@ class RateLimiter
      * @param string $key
      *
      * @return array
+     *
      * @throws JsonException
      */
     private static function read(string $key): array

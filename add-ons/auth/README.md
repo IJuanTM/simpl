@@ -29,7 +29,7 @@ Complete authentication system for Simpl projects with user management, email ve
 - **Password Policy Enforcement** - Configurable length/complexity requirements, validated live as you type and again server-side
 - **Password Hashing** - Secure bcrypt/Argon2id hashing with configurable cost
 - **CSRF Protection** - Form validation and sanitization
-- **Session Security** - Secure session handling with timezone support
+- **Session Security** - Secure session handling with timezone support; changing a password invalidates every session for that account, on any device
 - **SQL Injection Prevention** - Parameterized queries with operator support
 
 ## Database
@@ -45,8 +45,7 @@ auth/
 ├── README.md
 ├── src/                 # Merges into a project's src/
 │   ├── app/
-│   │   ├── Config/       # auth.php, mail.php, lockout.php, upload.php, validation.php,
-│   │   │                 #   migrations.php/seeders.php/scheduler.php (patches into db's base files)
+│   │   ├── Config/       # auth.php, mail.php, lockout.php, upload.php, validation.php, migrations.php/seeders.php/scheduler.php (patches into db's base files)
 │   │   ├── Controllers/  # AuthController, MailController, plus patches into App/Alias/Form
 │   │   ├── Cron/         # Scheduled task implementations
 │   │   ├── Database/     # Table/seeder definitions only - run by the db add-on's runners

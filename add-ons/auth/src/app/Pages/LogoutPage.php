@@ -12,8 +12,6 @@ use app\Enums\AlertType;
 use app\Enums\TokenType;
 
 /**
- * LogoutPage
- *
  * API endpoint to log the current user out by clearing session and remember cookie.
  * Only responds to CSRF-protected POST requests to prevent forced logout via GET.
  */

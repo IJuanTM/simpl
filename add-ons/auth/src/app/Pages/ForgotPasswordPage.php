@@ -13,8 +13,6 @@ use app\Utils\RateLimiter;
 use app\Utils\Timebox;
 
 /**
- * ForgotPasswordPage
- *
  * Handles requests for password reset tokens and enforces resend timeouts.
  */
 class ForgotPasswordPage

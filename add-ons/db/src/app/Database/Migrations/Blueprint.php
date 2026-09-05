@@ -6,6 +6,10 @@ namespace app\Database\Migrations;
 
 use app\Database\DB;
 
+/**
+ * Fluent builder for a CREATE TABLE statement's column/index/foreign-key definitions, built up
+ * via a Schema::create() callback and materialized by build().
+ */
 class Blueprint
 {
     private array $columns = [];
@@ -39,11 +43,18 @@ class Blueprint
         DB::raw($sql . ';');
     }
 
+    /**
+     * Adds a BIGINT UNSIGNED column.
+     */
     public function bigintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` BIGINT UNSIGNED", $notNull, $default);
     }
 
+    /**
+     * Appends a column definition, applying NOT NULL and DEFAULT clauses (NoDefault::VALUE means
+     * no DEFAULT clause at all - see its docblock).
+     */
     private function addColumn(string $definition, bool $notNull, mixed $default): static
     {
         if ($notNull) $definition .= ' NOT NULL';
@@ -61,48 +72,74 @@ class Blueprint
         return $this;
     }
 
+    /**
+     * Adds a SMALLINT UNSIGNED column.
+     */
     public function smallintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` SMALLINT UNSIGNED", $notNull, $default);
     }
 
+    /**
+     * Adds an INT column.
+     */
     public function int(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` INT", $notNull, $default);
     }
 
+    /**
+     * Adds an INT UNSIGNED column.
+     */
     public function intUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` INT UNSIGNED", $notNull, $default);
     }
 
+    /**
+     * Adds a TINYINT column.
+     */
     public function tinyint(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` TINYINT", $notNull, $default);
     }
 
+    /**
+     * Adds a VARCHAR($length) column.
+     */
     public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` VARCHAR($length)", $notNull, $default);
     }
 
+    /**
+     * Adds a TEXT column. TEXT columns don't support DEFAULT values in MySQL/MariaDB, so none can be given.
+     */
     public function text(string $name, bool $notNull = false): static
     {
-        // TEXT columns do not support DEFAULT values in MySQL/MariaDB
         return $this->addColumn("`$name` TEXT", $notNull, NoDefault::VALUE);
     }
 
+    /**
+     * Adds a TIMESTAMP column.
+     */
     public function timestamp(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         return $this->addColumn("`$name` TIMESTAMP", $notNull, $default);
     }
 
+    /**
+     * Adds an ENUM column restricted to the given values.
+     */
     public function enum(string $name, array $values, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         $list = implode(', ', array_map(static fn($v) => "'" . str_replace("'", "''", $v) . "'", $values));
         return $this->addColumn("`$name` ENUM($list)", $notNull, $default);
     }
 
+    /**
+     * Marks the most recently added column AUTO_INCREMENT, optionally starting from $startAt.
+     */
     public function autoIncrement(int $startAt = 1): static
     {
         $this->columns[array_key_last($this->columns)] .= ' AUTO_INCREMENT';
@@ -110,6 +147,9 @@ class Blueprint
         return $this;
     }
 
+    /**
+     * Adds a UNIQUE index on the most recently added column.
+     */
     public function unique(): static
     {
         preg_match('/`(\w+)`/', $this->columns[array_key_last($this->columns)], $m);
@@ -117,24 +157,36 @@ class Blueprint
         return $this;
     }
 
+    /**
+     * Adds ON UPDATE CURRENT_TIMESTAMP to the most recently added column.
+     */
     public function onUpdateCurrentTimestamp(): static
     {
         $this->columns[array_key_last($this->columns)] .= ' ON UPDATE CURRENT_TIMESTAMP';
         return $this;
     }
 
+    /**
+     * Sets the table's primary key to the given column(s).
+     */
     public function primary(string ...$columns): static
     {
         $this->primaryKey = implode(', ', array_map(static fn($c) => "`$c`", $columns));
         return $this;
     }
 
+    /**
+     * Adds a foreign key on $column referencing $refTable.$refColumn, with the given ON DELETE behavior.
+     */
     public function foreign(string $column, string $refTable, string $refColumn = DB_SCHEMA_DEFAULTS['primary_key'], string $onDelete = DB_SCHEMA_DEFAULTS['foreign_key_on_delete']): static
     {
         $this->foreigns[] = "FOREIGN KEY (`$column`) REFERENCES `$refTable` (`$refColumn`) ON DELETE $onDelete";
         return $this;
     }
 
+    /**
+     * Adds a named index on the given columns.
+     */
     public function index(string $name, array $columns): static
     {
         $cols = implode(', ', array_map(static fn($c) => "`$c`", $columns));

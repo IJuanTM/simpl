@@ -8,9 +8,7 @@ use app\Utils\Log;
 use Random\RandomException;
 
 /**
- * The AppController class serves as the main application controller.
- * It initializes essential controllers needed for core functionality
- * and provides utility methods for application-specific operations.
+ * Boots the core controllers on construction and provides app-wide helpers: CSRF validation, output sanitization, secure-cookie flags, and SVG inlining.
  */
 class AppController
 {
@@ -31,6 +29,7 @@ class AppController
      * (the latter lets fetch-based API calls authenticate without a form body).
      *
      * @return bool
+     *
      * @throws RandomException
      */
     public static function validateCsrf(): bool
@@ -43,6 +42,7 @@ class AppController
      * Retrieve the CSRF token from the session, generating and storing one if it does not exist.
      *
      * @return string The CSRF token.
+     *
      * @throws RandomException
      */
     private static function csrfToken(): string
@@ -52,10 +52,10 @@ class AppController
     }
 
     /**
-     * Build a <meta> tag carrying the CSRF token so client-side scripts can send it
-     * with fetch requests via the X-CSRF-Token header.
+     * Build a <meta> tag carrying the CSRF token, so client-side scripts can send it on fetch requests via the X-CSRF-Token header.
      *
      * @return string
+     *
      * @throws RandomException
      */
     public static function csrfMeta(): string
@@ -114,6 +114,7 @@ class AppController
      * @param string $output The raw HTML output buffer.
      *
      * @return string The HTML with CSRF hidden fields injected after each POST form's opening tag.
+     *
      * @throws RandomException
      */
     private static function injectCsrf(string $output): string

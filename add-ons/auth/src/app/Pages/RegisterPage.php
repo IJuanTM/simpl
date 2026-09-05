@@ -15,8 +15,6 @@ use app\Utils\Log;
 use app\Utils\Timebox;
 
 /**
- * RegisterPage
- *
  * Handles new account creation and optional email verification flow.
  */
 class RegisterPage
@@ -64,7 +62,7 @@ class RegisterPage
     /**
      * Creates new user account and sends verification email if required.
      *
-     * @param string $email    User email
+     * @param string $email User email
      * @param string $password User password (will be hashed)
      *
      * @return void

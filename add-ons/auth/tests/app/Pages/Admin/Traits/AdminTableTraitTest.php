@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 use ReflectionProperty;
 
-class AdminTableTraitHost
+final class AdminTableTraitHost
 {
     use AdminTableTrait;
 
@@ -37,18 +37,21 @@ class AdminTableTraitHost
     }
 }
 
-class AdminTableTraitTest extends TestCase
+final class AdminTableTraitTest extends TestCase
 {
-    public function testApplyPaginationOnAFullPage(): void
+    public function testBuildColumnsMapsPositionalTuplesToNamedKeys(): void
     {
-        $host = new AdminTableTraitHost();
+        // Act
+        $columns = $this->call(new AdminTableTraitHost(), 'buildColumns', [[
+            ['id', 'ID', true, 60, false],
+            ['name', 'Name', false, null, true],
+        ]]);
 
-        $offset = $this->call($host, 'applyPagination', [25]);
-
-        $this->assertSame(0, $offset);
-        $this->assertSame(2, $host->maxPage);
-        $this->assertSame(1, $host->startIndex);
-        $this->assertSame(10, $host->endIndex);
+        // Assert
+        $this->assertSame([
+            ['key' => 'id', 'label' => 'ID', 'sortable' => true, 'width' => 60, 'visible' => false],
+            ['key' => 'name', 'label' => 'Name', 'sortable' => false, 'width' => null, 'visible' => true],
+        ], $columns);
     }
 
     private function call(AdminTableTraitHost $host, string $method, array $args = []): mixed
@@ -56,189 +59,9 @@ class AdminTableTraitTest extends TestCase
         return (new ReflectionMethod(AdminTableTraitHost::class, $method))->invoke($host, ...$args);
     }
 
-    public function testApplyPaginationClampsAnOutOfRangePage(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->page = 99;
-
-        $offset = $this->call($host, 'applyPagination', [25]);
-
-        $this->assertSame(2, $host->page);
-        $this->assertSame(20, $offset);
-        $this->assertSame(25, $host->endIndex);
-    }
-
-    public function testApplyPaginationWithNoRows(): void
-    {
-        $host = new AdminTableTraitHost();
-
-        $this->call($host, 'applyPagination', [0]);
-
-        $this->assertSame(0, $host->maxPage);
-        $this->assertSame(0, $host->startIndex);
-        $this->assertSame(0, $host->endIndex);
-    }
-
-    public function testReadTableParamsReadsPageAndSearch(): void
-    {
-        $host = new AdminTableTraitHost();
-        $page = new Page('admin', ['test'], ['page' => '2', 'search' => '  foo  ']);
-
-        $this->call($host, 'readTableParams', [$page]);
-
-        $this->assertSame(2, $host->page);
-        $this->assertSame('foo', $host->search);
-    }
-
-    public function testReadTableParamsIgnoresAPerPageValueNotInTheAllowList(): void
-    {
-        $host = new AdminTableTraitHost();
-        $page = new Page('admin', ['test'], ['per_page' => '999']);
-
-        $this->call($host, 'readTableParams', [$page]);
-
-        $this->assertSame(10, $host->perPage);
-    }
-
-    public function testReadTableParamsAcceptsAnAllowedPerPageValue(): void
-    {
-        $host = new AdminTableTraitHost();
-        $page = new Page('admin', ['test'], ['per_page' => '25']);
-
-        $this->call($host, 'readTableParams', [$page]);
-
-        $this->assertSame(25, $host->perPage);
-    }
-
-    public function testReadFiltersRejectsAValueNotInTheAllowedList(): void
-    {
-        $host = new AdminTableTraitHost();
-        $this->setFilterDefinitions($host, ['status' => ['active', 'inactive']]);
-        $page = new Page('admin', ['test'], ['status' => 'bogus']);
-
-        $this->call($host, 'readFilters', [$page]);
-
-        $this->assertSame('', $host->filters['status']);
-    }
-
-    private function setFilterDefinitions(AdminTableTraitHost $host, array $definitions): void
-    {
-        (new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions'))->setValue($host, $definitions);
-    }
-
-    public function testReadFiltersAcceptsAnyValueWhenNoAllowListIsDefined(): void
-    {
-        $host = new AdminTableTraitHost();
-        $this->setFilterDefinitions($host, ['role' => []]);
-        $page = new Page('admin', ['test'], ['role' => 'admin']);
-
-        $this->call($host, 'readFilters', [$page]);
-
-        $this->assertSame('admin', $host->filters['role']);
-    }
-
-    public function testReadFiltersLeavesAMissingParamAsEmpty(): void
-    {
-        $host = new AdminTableTraitHost();
-        $this->setFilterDefinitions($host, ['role' => []]);
-        $page = new Page('admin', ['test'], []);
-
-        $this->call($host, 'readFilters', [$page]);
-
-        $this->assertSame('', $host->filters['role']);
-    }
-
-    public function testResolveSortSetsColumnAndNormalizesDirection(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->tableColumns = [['key' => 'name', 'sortable' => true]];
-
-        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'DESC']]);
-
-        $this->assertSame('name', $host->sortColumn);
-        $this->assertSame('desc', $host->sortDirection);
-    }
-
-    public function testResolveSortDefaultsToAscendingWhenDirIsInvalid(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->tableColumns = [['key' => 'name', 'sortable' => true]];
-
-        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'sideways']]);
-
-        $this->assertSame('asc', $host->sortDirection);
-    }
-
-    public function testResolveSortIgnoresANonSortableColumn(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->tableColumns = [['key' => 'name', 'sortable' => false]];
-
-        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'asc']]);
-
-        $this->assertNull($host->sortColumn);
-    }
-
-    public function testGetNextSortParamsStartsAscendingForAnUnsortedColumn(): void
-    {
-        $host = new AdminTableTraitHost();
-
-        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
-
-        $this->assertSame(['sort' => 'name', 'dir' => 'asc'], $params);
-    }
-
-    public function testGetNextSortParamsTogglesFromAscToDesc(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->sortColumn = 'name';
-        $host->sortDirection = 'asc';
-
-        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
-
-        $this->assertSame(['sort' => 'name', 'dir' => 'desc'], $params);
-    }
-
-    public function testGetNextSortParamsClearsSortFromDesc(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->sortColumn = 'name';
-        $host->sortDirection = 'desc';
-
-        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
-
-        $this->assertSame([], $params);
-    }
-
-    public function testGetNextSortParamsIgnoresANonSortableColumn(): void
-    {
-        $host = new AdminTableTraitHost();
-
-        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => false]]);
-
-        $this->assertSame([], $params);
-    }
-
-    public function testGetColumnSortClassForTheActiveAscendingColumn(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->sortColumn = 'name';
-        $host->sortDirection = 'asc';
-
-        $this->assertSame('sort-asc', $this->call($host, 'getColumnSortClass', [['key' => 'name', 'sortable' => true]]));
-    }
-
-    public function testGetColumnSortClassForAnInactiveColumn(): void
-    {
-        $host = new AdminTableTraitHost();
-        $host->sortColumn = 'name';
-        $host->sortDirection = 'asc';
-
-        $this->assertSame('', $this->call($host, 'getColumnSortClass', [['key' => 'email', 'sortable' => true]]));
-    }
-
     public function testHiddenColumnsJsonListsThePositionalIndexesOfHiddenColumns(): void
     {
+        // Arrange
         // Returns array positions (for data-hidden-cols), not the columns' 'key' values.
         $host = new AdminTableTraitHost();
         $host->tableColumns = [
@@ -246,72 +69,223 @@ class AdminTableTraitTest extends TestCase
             ['key' => 'internal_note', 'visible' => false],
         ];
 
+        // Act + Assert
         $this->assertSame('[1]', $host->hiddenColumnsJson());
     }
 
-    public function testRenderPaginationInfoFormatsTheRange(): void
+    public function testRenderTheadLinksSortableColumnsAndPlainLabelsOtherwise(): void
     {
+        // Arrange
         $host = new AdminTableTraitHost();
-        $host->startIndex = 1;
-        $host->endIndex = 10;
-        $host->total = 42;
+        $host->tableColumns = [
+            ['key' => 'name', 'label' => 'Name', 'sortable' => true, 'width' => 120],
+            ['key' => 'actions', 'label' => 'Actions', 'sortable' => false, 'width' => null],
+        ];
+
+        // Act
+        $html = $host->renderThead();
+
+        // Assert
+        $this->assertStringContainsString('<a class="table-sort-link" href="/admin/test?sort=name&dir=asc">Name</a>', $html);
+        $this->assertStringContainsString('data-width="120"', $html);
+        $this->assertStringContainsString('<p class="table-header-label">Actions</p>', $html);
+        $this->assertStringNotContainsString('sort=actions', $html);
+    }
+
+    public function testGetNextSortParamsStartsAscendingForAnUnsortedColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+
+        // Act
+        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
+
+        // Assert
+        $this->assertSame(['sort' => 'name', 'dir' => 'asc'], $params);
+    }
+
+    public function testGetNextSortParamsTogglesFromAscToDesc(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->sortColumn = 'name';
+        $host->sortDirection = 'asc';
+
+        // Act
+        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
+
+        // Assert
+        $this->assertSame(['sort' => 'name', 'dir' => 'desc'], $params);
+    }
+
+    public function testGetNextSortParamsClearsSortFromDesc(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->sortColumn = 'name';
+        $host->sortDirection = 'desc';
+
+        // Act
+        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => true]]);
+
+        // Assert
+        $this->assertSame([], $params);
+    }
+
+    public function testGetNextSortParamsIgnoresANonSortableColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+
+        // Act
+        $params = $this->call($host, 'getNextSortParams', [['key' => 'name', 'sortable' => false]]);
+
+        // Assert
+        $this->assertSame([], $params);
+    }
+
+    public function testGetColumnSortClassForTheActiveAscendingColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->sortColumn = 'name';
+        $host->sortDirection = 'asc';
+
+        // Act + Assert
+        $this->assertSame('sort-asc', $this->call($host, 'getColumnSortClass', [['key' => 'name', 'sortable' => true]]));
+    }
+
+    public function testGetColumnSortClassForAnInactiveColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->sortColumn = 'name';
+        $host->sortDirection = 'asc';
+
+        // Act + Assert
+        $this->assertSame('', $this->call($host, 'getColumnSortClass', [['key' => 'email', 'sortable' => true]]));
+    }
+
+    public function testRenderTbodyShowsTheEmptyRowWhenThereAreNoRows(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost([]);
+        $host->tableColumns = [['key' => 'name']];
         $host->itemLabel = 'users';
 
-        $this->assertSame('1 - 10 of 42 users', $host->renderPaginationInfo());
+        // Act + Assert
+        $this->assertStringContainsString('No users found.', $host->renderTbody());
+    }
+
+    public function testRenderTbodyShowsTheFilteredEmptyMessageWhenFiltersAreActive(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost([]);
+        $host->tableColumns = [['key' => 'name']];
+        $host->itemLabel = 'users';
+        $host->hasActiveFilters = true;
+
+        // Act + Assert
+        $this->assertStringContainsString('No users match your search or filters.', $host->renderTbody());
+    }
+
+    public function testRenderTbodyRendersACellPerColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost([['name' => 'Alice']]);
+        $host->tableColumns = [['key' => 'name']];
+
+        // Act + Assert
+        $this->assertSame('<tr><td>Alice</td></tr>', $host->renderTbody());
     }
 
     public function testRenderPaginationMarksPreviousInertOnTheFirstPage(): void
     {
+        // Arrange
         $host = new AdminTableTraitHost();
         $host->page = 0;
         $host->maxPage = 2;
 
+        // Act
         $html = $host->renderPagination();
 
+        // Assert
         $this->assertMatchesRegularExpression('/href="[^"]*page=-1[^"]*" inert>/', $html);
         $this->assertDoesNotMatchRegularExpression('/href="[^"]*page=1[^"]*" inert>/', $html);
     }
 
     public function testRenderPaginationMarksNextInertOnTheLastPage(): void
     {
+        // Arrange
         $host = new AdminTableTraitHost();
         $host->page = 2;
         $host->maxPage = 2;
 
+        // Act
         $html = $host->renderPagination();
 
+        // Assert
         $this->assertMatchesRegularExpression('/href="[^"]*page=3[^"]*" inert>/', $html);
     }
 
-    public function testRenderTbodyShowsTheEmptyRowWhenThereAreNoRows(): void
+    public function testRenderPaginationInfoFormatsTheRange(): void
     {
-        $host = new AdminTableTraitHost([]);
-        $host->tableColumns = [['key' => 'name']];
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->startIndex = 1;
+        $host->endIndex = 10;
+        $host->total = 42;
         $host->itemLabel = 'users';
 
-        $this->assertStringContainsString('No users found.', $host->renderTbody());
+        // Act + Assert
+        $this->assertSame('1 - 10 of 42 users', $host->renderPaginationInfo());
     }
 
-    public function testRenderTbodyShowsTheFilteredEmptyMessageWhenFiltersAreActive(): void
+    public function testBlockIfRunsTheCallbackAndReturnsTrueWhenBlocked(): void
     {
-        $host = new AdminTableTraitHost([]);
-        $host->tableColumns = [['key' => 'name']];
-        $host->itemLabel = 'users';
-        $host->hasActiveFilters = true;
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $ran = false;
 
-        $this->assertStringContainsString('No users match your search or filters.', $host->renderTbody());
+        // Act
+        $blocked = $this->call($host, 'blockIf', [true, function () use (&$ran): void {
+            $ran = true;
+        }]);
+
+        // Assert
+        $this->assertTrue($blocked);
+        $this->assertTrue($ran);
     }
 
-    public function testRenderTbodyRendersACellPerColumn(): void
+    public function testBlockIfSkipsTheCallbackAndReturnsFalseWhenNotBlocked(): void
     {
-        $host = new AdminTableTraitHost([['name' => 'Alice']]);
-        $host->tableColumns = [['key' => 'name']];
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $ran = false;
 
-        $this->assertSame('<tr><td>Alice</td></tr>', $host->renderTbody());
+        // Act
+        $blocked = $this->call($host, 'blockIf', [false, function () use (&$ran): void {
+            $ran = true;
+        }]);
+
+        // Assert
+        $this->assertFalse($blocked);
+        $this->assertFalse($ran);
+    }
+
+    public function testRenderBadgeUsesTheSuccessOrErrorClass(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+
+        // Act + Assert
+        $this->assertSame('<span class="badge badge-success">Yes</span>', $this->call($host, 'renderBadge', [true, 'Yes']));
+        $this->assertSame('<span class="badge badge-error">No</span>', $this->call($host, 'renderBadge', [false, 'No']));
     }
 
     public function testInitTableComposesSearchFiltersAndSortIntoTheQueryParams(): void
     {
+        // Arrange
         $host = new AdminTableTraitHost();
         $host->tableColumns = [['key' => 'name', 'sortable' => true]];
         $this->setFilterDefinitions($host, ['status' => []]);
@@ -323,8 +297,10 @@ class AdminTableTraitTest extends TestCase
             'dir' => 'desc',
         ]);
 
+        // Act
         $this->call($host, 'initTable', [$page]);
 
+        // Assert
         $this->assertSame('ann', $host->search);
         $this->assertTrue($host->hasActiveFilters);
         $this->assertSame(
@@ -337,14 +313,188 @@ class AdminTableTraitTest extends TestCase
         );
     }
 
+    private function setFilterDefinitions(AdminTableTraitHost $host, array $definitions): void
+    {
+        (new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions'))->setValue($host, $definitions);
+    }
+
     public function testInitTableOmitsPerPageFromActiveParamsWhenItMatchesTheDefault(): void
     {
+        // Arrange
         $host = new AdminTableTraitHost();
         $page = new Page('admin', ['test'], ['search' => 'ann']);
 
+        // Act
         $this->call($host, 'initTable', [$page]);
 
+        // Assert
         $this->assertArrayNotHasKey('per_page', $host->activeFilterParams);
+    }
+
+    public function testReadTableParamsReadsPageAndSearch(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $page = new Page('admin', ['test'], ['page' => '2', 'search' => '  foo  ']);
+
+        // Act
+        $this->call($host, 'readTableParams', [$page]);
+
+        // Assert
+        $this->assertSame(2, $host->page);
+        $this->assertSame('foo', $host->search);
+    }
+
+    public function testReadTableParamsIgnoresAPerPageValueNotInTheAllowList(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $page = new Page('admin', ['test'], ['per_page' => '999']);
+
+        // Act
+        $this->call($host, 'readTableParams', [$page]);
+
+        // Assert
+        $this->assertSame(10, $host->perPage);
+    }
+
+    public function testReadTableParamsAcceptsAnAllowedPerPageValue(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $page = new Page('admin', ['test'], ['per_page' => '25']);
+
+        // Act
+        $this->call($host, 'readTableParams', [$page]);
+
+        // Assert
+        $this->assertSame(25, $host->perPage);
+    }
+
+    public function testReadFiltersRejectsAValueNotInTheAllowedList(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $this->setFilterDefinitions($host, ['status' => ['active', 'inactive']]);
+        $page = new Page('admin', ['test'], ['status' => 'bogus']);
+
+        // Act
+        $this->call($host, 'readFilters', [$page]);
+
+        // Assert
+        $this->assertSame('', $host->filters['status']);
+    }
+
+    public function testReadFiltersAcceptsAnyValueWhenNoAllowListIsDefined(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $this->setFilterDefinitions($host, ['role' => []]);
+        $page = new Page('admin', ['test'], ['role' => 'admin']);
+
+        // Act
+        $this->call($host, 'readFilters', [$page]);
+
+        // Assert
+        $this->assertSame('admin', $host->filters['role']);
+    }
+
+    public function testReadFiltersLeavesAMissingParamAsEmpty(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $this->setFilterDefinitions($host, ['role' => []]);
+        $page = new Page('admin', ['test'], []);
+
+        // Act
+        $this->call($host, 'readFilters', [$page]);
+
+        // Assert
+        $this->assertSame('', $host->filters['role']);
+    }
+
+    public function testResolveSortSetsColumnAndNormalizesDirection(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->tableColumns = [['key' => 'name', 'sortable' => true]];
+
+        // Act
+        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'DESC']]);
+
+        // Assert
+        $this->assertSame('name', $host->sortColumn);
+        $this->assertSame('desc', $host->sortDirection);
+    }
+
+    public function testResolveSortDefaultsToAscendingWhenDirIsInvalid(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->tableColumns = [['key' => 'name', 'sortable' => true]];
+
+        // Act
+        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'sideways']]);
+
+        // Assert
+        $this->assertSame('asc', $host->sortDirection);
+    }
+
+    public function testResolveSortIgnoresANonSortableColumn(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->tableColumns = [['key' => 'name', 'sortable' => false]];
+
+        // Act
+        $this->call($host, 'resolveSort', [['sort' => 'name', 'dir' => 'asc']]);
+
+        // Assert
+        $this->assertNull($host->sortColumn);
+    }
+
+    public function testApplyPaginationOnAFullPage(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+
+        // Act
+        $offset = $this->call($host, 'applyPagination', [25]);
+
+        // Assert
+        $this->assertSame(0, $offset);
+        $this->assertSame(2, $host->maxPage);
+        $this->assertSame(1, $host->startIndex);
+        $this->assertSame(10, $host->endIndex);
+    }
+
+    public function testApplyPaginationClampsAnOutOfRangePage(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+        $host->page = 99;
+
+        // Act
+        $offset = $this->call($host, 'applyPagination', [25]);
+
+        // Assert
+        $this->assertSame(2, $host->page);
+        $this->assertSame(20, $offset);
+        $this->assertSame(25, $host->endIndex);
+    }
+
+    public function testApplyPaginationWithNoRows(): void
+    {
+        // Arrange
+        $host = new AdminTableTraitHost();
+
+        // Act
+        $this->call($host, 'applyPagination', [0]);
+
+        // Assert
+        $this->assertSame(0, $host->maxPage);
+        $this->assertSame(0, $host->startIndex);
+        $this->assertSame(0, $host->endIndex);
     }
 
     protected function setUp(): void

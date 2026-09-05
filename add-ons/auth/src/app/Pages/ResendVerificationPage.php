@@ -13,10 +13,7 @@ use app\Models\Page;
 use app\Utils\RateLimiter;
 
 /**
- * ResendVerificationPage
- *
- * Generates and sends a new verification token for a user identified by the
- * URL parameter and redirects the user with appropriate feedback.
+ * Generates and sends a new verification token for the user named in the URL parameter, then redirects with appropriate feedback.
  */
 class ResendVerificationPage
 {

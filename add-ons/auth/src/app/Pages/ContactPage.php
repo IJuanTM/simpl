@@ -12,10 +12,7 @@ use app\Enums\AlertType;
 use app\Pages\Traits\RateLimitedForm;
 
 /**
- * ContactPage
- *
- * Processes submissions from the site's contact form and forwards messages to
- * the configured site mail address.
+ * Processes submissions from the site's contact form and forwards messages to the configured site mail address.
  */
 class ContactPage
 {
@@ -54,8 +51,8 @@ class ContactPage
     /**
      * Sends contact form email to site administrator.
      *
-     * @param string $from    Sender's name
-     * @param string $sender  Sender's email address
+     * @param string $from Sender's name
+     * @param string $sender Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
      *
