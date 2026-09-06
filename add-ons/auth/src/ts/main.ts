@@ -8,6 +8,7 @@ import {verificationModule} from './features/verification-code.ts';
 import {modalModule} from './features/modal.ts';
 import {logoutModule} from './features/logout.ts';
 import {passwordPolicyModule} from './features/password-policy.ts';
+import {passkeyModule} from './features/passkey.ts';
 // @addon-end
 
 // @addon-insert:after('// Initialize modules')
@@ -20,4 +21,5 @@ verificationModule.init();
 modalModule.init();
 logoutModule.init();
 passwordPolicyModule.init();
+passkeyModule.init();
 // @addon-end

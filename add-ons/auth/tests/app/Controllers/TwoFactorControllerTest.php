@@ -36,4 +36,17 @@ final class TwoFactorControllerTest extends TestCase
         // Assert
         foreach ($codes as $code) $this->assertMatchesRegularExpression($pattern, $code);
     }
+
+    public function testQrSvgRendersAStandaloneSvgElement(): void
+    {
+        // Arrange
+        $qrSvg = new ReflectionMethod(TwoFactorController::class, 'qrSvg');
+
+        // Act
+        $svg = $qrSvg->invoke(null, 'otpauth://totp/Simpl:a@b.c?secret=JBSWY3DPEHPK3PXP&issuer=Simpl');
+
+        // Assert
+        $this->assertStringStartsWith('<svg', $svg);
+        $this->assertStringEndsWith('</svg>', trim($svg));
+    }
 }

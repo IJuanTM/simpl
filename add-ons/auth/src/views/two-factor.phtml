@@ -4,7 +4,8 @@ use app\Controllers\FormController;
 use app\Controllers\RequestController;
 use app\Models\Url;
 
-$recovery = $this->pageObj->mode === 'recovery';
+$mode = $this->pageObj->mode;
+$methods = $this->pageObj->enrolledMethods;
 ?>
 
 <section class="row two-factor center-x">
@@ -17,7 +18,7 @@ $recovery = $this->pageObj->mode === 'recovery';
 
     <?= FormController::formAlerts() ?>
 
-    <?php if ($recovery): ?>
+    <?php if ($mode === 'recovery'): ?>
 
       <div class="row">
         <div class="col">
@@ -37,9 +38,18 @@ $recovery = $this->pageObj->mode === 'recovery';
         </div>
       </div>
 
+    <?php elseif ($mode === 'passkey'): ?>
+
       <div class="row">
-        <div class="col">
-          <p class="form-details"><a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor')) ?>" aria-label="Back to entering the emailed code">Use the code from your email instead</a>.</p>
+        <div class="col center-x g-row-1">
+          <p class="form-details">Use the passkey on this device or a nearby phone or security key to finish signing in.</p>
+          <button type="button" class="button center-y f-0"
+                  data-passkey-login data-passkey-auto
+                  data-options-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/options')) ?>"
+                  data-verify-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/verify')) ?>"
+                  aria-label="Sign in with your passkey"><i class="fas fa-fingerprint"></i>Use your passkey
+          </button>
+          <p class="form-details" data-passkey-unsupported hidden>This browser can't use passkeys. Choose another method below.</p>
         </div>
       </div>
 
@@ -47,7 +57,11 @@ $recovery = $this->pageObj->mode === 'recovery';
 
       <div class="row">
         <div class="col">
-          <p class="form-details">A verification code has been sent to your email address. Enter it below to finish signing in.</p>
+          <p class="form-details">
+            <?= $mode === 'totp'
+                ? 'Open your authenticator app and enter the code it shows for this account.'
+                : 'A verification code has been sent to your email address. Enter it below to finish signing in.' ?>
+          </p>
         </div>
       </div>
 
@@ -65,23 +79,39 @@ $recovery = $this->pageObj->mode === 'recovery';
         </div>
       </div>
 
-      <div class="row">
-        <div class="col">
-          <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.</p>
+      <?php if ($mode === 'email'): ?>
+        <div class="row">
+          <div class="col">
+            <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.</p>
+          </div>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col">
-          <p class="form-details"><a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/recovery')) ?>" aria-label="Use a recovery code instead">Use a recovery code instead</a>.</p>
-        </div>
-      </div>
+      <?php endif ?>
 
     <?php endif ?>
 
+    <div class="row">
+      <div class="col try-other g-row-0.25">
+        <p class="form-details">Try another way:</p>
+        <?php if ($mode !== 'passkey' && in_array('passkey', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/passkey')) ?>" aria-label="Use a passkey">Use a passkey</a>
+        <?php endif ?>
+        <?php if ($mode !== 'totp' && in_array('totp', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/totp')) ?>" aria-label="Use your authenticator app">Use your authenticator app</a>
+        <?php endif ?>
+        <?php if ($mode !== 'email' && in_array('email', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/email')) ?>" aria-label="Email me a code">Email me a code</a>
+        <?php endif ?>
+        <?php if ($mode !== 'recovery'): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/recovery')) ?>" aria-label="Use a recovery code">Use a recovery code</a>
+        <?php endif ?>
+      </div>
+    </div>
+
     <div class="row g-2 center-x">
       <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= AppController::sanitize(Url::to('login')) ?>"><i class="fas fa-arrow-left"></i>Cancel</a>
-      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the verification code"><i class="fas fa-right-to-bracket"></i>Verify</button>
+      <?php if ($mode !== 'passkey'): ?>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the verification code"><i class="fas fa-right-to-bracket"></i>Verify</button>
+      <?php endif ?>
     </div>
   </form>
 </section>

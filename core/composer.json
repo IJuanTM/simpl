@@ -36,7 +36,7 @@
     "test": "phpunit",
     "stan": "phpstan analyse --memory-limit=512M",
     "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
-    "post-install-cmd": "@php src/app/Scripts/app-key.php",
+    "post-autoload-dump": "@php src/app/Scripts/app-key.php",
     "@addon-placeholder": "db"
   },
   "keywords": [

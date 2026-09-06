@@ -7,8 +7,14 @@ namespace app\Controllers;
 use app\Database\DB;
 use app\Enums\TokenType;
 use app\Enums\TwoFactorMethod;
+use app\Utils\Crypto;
 use app\Utils\Log;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Exception;
+use OTPHP\TOTP;
 use Random\RandomException;
 
 /**
@@ -111,15 +117,26 @@ class TwoFactorController
      */
     public static function enable(int $userId): array
     {
-        $settings = ['enabled' => 1, 'email_enabled' => 1, 'primary_method' => TwoFactorMethod::EMAIL->value];
-
-        if (DB::exists(FROM: 'user_two_factor', WHERE: ['user_id' => $userId])) {
-            DB::update(UPDATE: 'user_two_factor', SET: $settings, WHERE: ['user_id' => $userId]);
-        } else {
-            DB::insert(INTO: 'user_two_factor', VALUES: ['user_id' => $userId] + $settings);
-        }
+        self::upsertSettings($userId, ['enabled' => 1, 'email_enabled' => 1, 'primary_method' => TwoFactorMethod::EMAIL->value]);
 
         return self::regenerateRecoveryCodes($userId);
+    }
+
+    /**
+     * Insert or merge $data into the user's user_two_factor row.
+     *
+     * @param int                  $userId
+     * @param array<string, mixed> $data
+     *
+     * @return void
+     */
+    private static function upsertSettings(int $userId, array $data): void
+    {
+        if (DB::exists(FROM: 'user_two_factor', WHERE: ['user_id' => $userId])) {
+            DB::update(UPDATE: 'user_two_factor', SET: $data, WHERE: ['user_id' => $userId]);
+        } else {
+            DB::insert(INTO: 'user_two_factor', VALUES: ['user_id' => $userId] + $data);
+        }
     }
 
     /**
@@ -146,6 +163,19 @@ class TwoFactorController
         }
 
         return $codes;
+    }
+
+    /**
+     * Set which enrolled method the login challenge offers first.
+     *
+     * @param int             $userId
+     * @param TwoFactorMethod $method
+     *
+     * @return void
+     */
+    public static function setPrimaryMethod(int $userId, TwoFactorMethod $method): void
+    {
+        self::upsertSettings($userId, ['primary_method' => $method->value]);
     }
 
     /**
@@ -231,6 +261,276 @@ class TwoFactorController
     }
 
     /**
+     * Whether an unexpired login email code is already outstanding for the user.
+     *
+     * @param int $userId
+     *
+     * @return bool
+     */
+    public static function hasPendingEmailChallenge(int $userId): bool
+    {
+        return DB::exists(FROM: 'tokens', WHERE: [
+            'user_id' => $userId,
+            'type' => TokenType::TWO_FACTOR_EMAIL->value,
+            'expires' => ['>', date('Y-m-d H:i:s')],
+        ]);
+    }
+
+    /**
+     * Stage a fresh, unconfirmed TOTP secret for the user, replacing any earlier staged one.
+     *
+     * @param int $userId
+     *
+     * @return void
+     */
+    public static function beginTotpEnrolment(int $userId): void
+    {
+        // Never overwrite a confirmed secret: that would silently break a working authenticator.
+        if (!empty(self::settingsFor($userId)['totp_enabled'])) return;
+
+        self::upsertSettings($userId, [
+            'totp_secret' => Crypto::encrypt(TOTP::generate(secretSize: 20)->getSecret()),
+            'totp_confirmed_at' => null,
+            'totp_enabled' => 0,
+        ]);
+    }
+
+    /**
+     * The QR code, otpauth URI and raw secret for a staged (unconfirmed) TOTP secret, or null when none is staged.
+     *
+     * @param int    $userId
+     * @param string $accountLabel Shown next to the code in the authenticator app
+     *
+     * @return array{secret: string, uri: string, svg: string}|null
+     */
+    public static function totpSetupData(int $userId, string $accountLabel): ?array
+    {
+        $row = self::settingsFor($userId);
+        if ($row === null || empty($row['totp_secret']) || !empty($row['totp_enabled'])) return null;
+
+        $secret = Crypto::decrypt($row['totp_secret']);
+        if ($secret === null) return null;
+
+        $totp = TOTP::createFromSecret($secret);
+        $totp->setLabel($accountLabel);
+        $totp->setIssuer(APP_NAME);
+        $uri = $totp->getProvisioningUri();
+
+        return ['secret' => $secret, 'uri' => $uri, 'svg' => self::qrSvg($uri)];
+    }
+
+    /**
+     * Render an otpauth:// URI as an inline SVG QR code (no XML prolog, drops straight into a page).
+     *
+     * @param string $uri
+     *
+     * @return string
+     */
+    private static function qrSvg(string $uri): string
+    {
+        $svg = new Writer(new ImageRenderer(new RendererStyle(220, 1), new SvgImageBackEnd()))->writeString($uri);
+
+        return substr($svg, strpos($svg, '<svg') ?: 0);
+    }
+
+    /**
+     * Turn the staged TOTP secret into an active method after the user proves they can generate a code.
+     * Enables 2FA (with TOTP as the primary method) when this is the account's first factor.
+     *
+     * @param int    $userId
+     * @param string $code
+     *
+     * @return bool
+     */
+    public static function confirmTotp(int $userId, string $code): bool
+    {
+        $row = self::settingsFor($userId);
+        if ($row === null || empty($row['totp_secret']) || !empty($row['totp_enabled'])) return false;
+
+        $secret = Crypto::decrypt($row['totp_secret']);
+        if ($secret === null || !TOTP::createFromSecret($secret)->verify($code, null, self::totpLeeway())) return false;
+
+        // email_enabled stays on so an emailed code is always available as a fallback.
+        $data = ['totp_enabled' => 1, 'totp_confirmed_at' => date('Y-m-d H:i:s'), 'enabled' => 1, 'email_enabled' => 1];
+        if (empty($row['enabled'])) $data['primary_method'] = TwoFactorMethod::TOTP->value;
+
+        self::upsertSettings($userId, $data);
+        return true;
+    }
+
+    /**
+     * Clock-drift tolerance for a TOTP check, capped just under the 30s period as otphp requires.
+     *
+     * @return int
+     */
+    private static function totpLeeway(): int
+    {
+        return min(29, TWO_FACTOR_CONFIG['totp_leeway']);
+    }
+
+    /**
+     * Verify a TOTP code at the login challenge.
+     *
+     * @param int    $userId
+     * @param string $code
+     *
+     * @return bool
+     */
+    public static function verifyTotp(int $userId, string $code): bool
+    {
+        $row = self::settingsFor($userId);
+        if ($row === null || empty($row['totp_enabled']) || empty($row['totp_secret'])) return false;
+
+        $secret = Crypto::decrypt($row['totp_secret']);
+        return $secret !== null && TOTP::createFromSecret($secret)->verify($code, null, self::totpLeeway());
+    }
+
+    /**
+     * Remove the authenticator-app method, falling back to email as the primary.
+     *
+     * @param int $userId
+     *
+     * @return void
+     */
+    public static function disableTotp(int $userId): void
+    {
+        self::upsertSettings($userId, [
+            'totp_secret' => null,
+            'totp_confirmed_at' => null,
+            'totp_enabled' => 0,
+            'primary_method' => TwoFactorMethod::EMAIL->value,
+        ]);
+    }
+
+    /**
+     * The user's registered passkeys, newest first, for display in security settings.
+     *
+     * @param int $userId
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function passkeysFor(int $userId): array
+    {
+        return DB::select(
+            SELECT: ['id', 'name', 'created_at', 'last_used_at'],
+            FROM: 'webauthn_credentials',
+            WHERE: ['user_id' => $userId],
+            ORDER_BY: 'created_at DESC'
+        );
+    }
+
+    /**
+     * Options JSON for registering a new passkey, excluding the ones the user already has.
+     *
+     * @param int    $userId
+     * @param string $userLabel
+     *
+     * @return string
+     */
+    public static function passkeyRegistrationOptions(int $userId, string $userLabel): string
+    {
+        $existing = array_column(DB::select(SELECT: 'credential_id', FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]), 'credential_id');
+
+        return WebauthnController::registrationOptions($userId, $userLabel, $existing);
+    }
+
+    /**
+     * Validate a passkey registration response and store it. Enables 2FA (passkey primary) when it is the first factor.
+     *
+     * @param int    $userId
+     * @param string $clientJson
+     * @param string $name User-facing label for the passkey
+     *
+     * @return bool
+     */
+    public static function savePasskey(int $userId, string $clientJson, string $name): bool
+    {
+        $data = WebauthnController::verifyRegistration($clientJson);
+        if ($data === null) return false;
+
+        DB::insert(INTO: 'webauthn_credentials', VALUES: [
+            'user_id' => $userId,
+            'credential_id' => $data['credential_id'],
+            'public_key' => $data['record'],
+            'sign_count' => $data['sign_count'],
+            'transports' => $data['transports'] ?: null,
+            'aaguid' => $data['aaguid'] ?: null,
+            'name' => mb_substr(trim($name), 0, 100) ?: 'Passkey',
+        ]);
+
+        $row = self::settingsFor($userId);
+        $settings = ['passkey_enabled' => 1, 'enabled' => 1, 'email_enabled' => 1];
+        if (empty($row['enabled'])) $settings['primary_method'] = TwoFactorMethod::PASSKEY->value;
+
+        self::upsertSettings($userId, $settings);
+        return true;
+    }
+
+    /**
+     * Options JSON for a passkey login challenge.
+     *
+     * @param int $userId
+     *
+     * @return string
+     */
+    public static function passkeyLoginOptions(int $userId): string
+    {
+        $ids = array_column(DB::select(SELECT: 'credential_id', FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]), 'credential_id');
+
+        return WebauthnController::loginOptions($ids);
+    }
+
+    /**
+     * Verify a passkey assertion at the login challenge, bumping the stored signature counter.
+     *
+     * @param int    $userId
+     * @param string $clientJson
+     *
+     * @return bool
+     */
+    public static function verifyPasskey(int $userId, string $clientJson): bool
+    {
+        $credentialId = WebauthnController::credentialIdFromResponse($clientJson);
+        if ($credentialId === null) return false;
+
+        $row = DB::single(SELECT: ['id', 'public_key'], FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId, 'credential_id' => $credentialId]);
+        if ($row === null) return false;
+
+        $updated = WebauthnController::verifyLogin($clientJson, $row['public_key'], (string)$userId);
+        if ($updated === null) return false;
+
+        DB::update(UPDATE: 'webauthn_credentials', SET: [
+            'public_key' => $updated['record'],
+            'sign_count' => $updated['sign_count'],
+            'last_used_at' => date('Y-m-d H:i:s'),
+        ], WHERE: ['id' => $row['id']]);
+
+        return true;
+    }
+
+    /**
+     * Delete one of the user's passkeys, turning the method off (and demoting it as primary) when it was the last.
+     *
+     * @param int $userId
+     * @param int $passkeyId
+     *
+     * @return void
+     */
+    public static function deletePasskey(int $userId, int $passkeyId): void
+    {
+        DB::delete(FROM: 'webauthn_credentials', WHERE: ['id' => $passkeyId, 'user_id' => $userId]);
+
+        if (DB::count(FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]) > 0) return;
+
+        $data = ['passkey_enabled' => 0];
+        if ((self::settingsFor($userId)['primary_method'] ?? null) === TwoFactorMethod::PASSKEY->value) {
+            $data['primary_method'] = TwoFactorMethod::EMAIL->value;
+        }
+
+        self::upsertSettings($userId, $data);
+    }
+
+    /**
      * Redeem one unused recovery code, marking it used. Case-insensitive.
      *
      * @param int    $userId
@@ -266,8 +566,37 @@ class TwoFactorController
     }
 
     /**
+     * Set the user's "also skip 2FA when I use remember me" preference.
+     *
+     * @param int  $userId
+     * @param bool $enabled
+     *
+     * @return void
+     */
+    public static function setRememberDevice(int $userId, bool $enabled): void
+    {
+        DB::update(UPDATE: 'user_two_factor', SET: ['remember_device' => $enabled ? 1 : 0], WHERE: ['user_id' => $userId]);
+    }
+
+    /**
+     * The user's active trusted-device rows, newest first, for display in security settings.
+     *
+     * @param int $userId
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function trustedDevicesFor(int $userId): array
+    {
+        return DB::select(
+            SELECT: ['label', 'created_at', 'last_used_at'],
+            FROM: 'trusted_devices',
+            WHERE: ['user_id' => $userId, 'expires' => ['>', date('Y-m-d H:i:s')]],
+            ORDER_BY: 'created_at DESC'
+        );
+    }
+
+    /**
      * Whether ticking "remember me" should also skip 2FA on this device for $user.
-     * False when the user has 2FA off, opted out, is in a force-off role, or device-remembering is disabled globally.
      *
      * @param int   $userId
      * @param array $user User row carrying a 'role' name

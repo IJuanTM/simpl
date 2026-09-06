@@ -9,10 +9,12 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
+use app\Controllers\TwoFactorController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
 use app\Enums\TokenType;
+use app\Enums\TwoFactorMethod;
 use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
@@ -57,6 +59,7 @@ class Users
     public int $totalAllUsers = 0;
     public int $currentUserId = 0;
     public array $availableRoles = [];
+    public string $twoFactorLabel = 'Off';
 
     public function __construct(Page $page)
     {
@@ -120,7 +123,7 @@ class Users
             return;
         }
 
-        if (in_array($subAction, ['edit', 'delete', 'restore', 'purge'])) {
+        if (in_array($subAction, ['edit', 'delete', 'restore', 'purge', 'reset-2fa'])) {
             $user = $this->requireRecord($page, 'admin/users', static fn(int $id): ?array => DB::single(
                 SELECT: ['users.*', 'roles.name AS role_name'],
                 FROM: 'users',
@@ -143,6 +146,8 @@ class Users
                 PageController::redirect('admin/users', 2);
                 return;
             }
+
+            $this->twoFactorLabel = self::twoFactorLabelFor((int)$this->user['id']);
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
         }
@@ -366,6 +371,26 @@ class Users
     }
 
     /**
+     * Human-readable two-factor status for a user, e.g. "Off" or "On - Email, Passkey".
+     *
+     * @param int $userId
+     *
+     * @return string
+     */
+    private static function twoFactorLabelFor(int $userId): string
+    {
+        if (!TwoFactorController::isEnabledFor($userId)) return 'Off';
+
+        $methods = array_map(static fn(TwoFactorMethod $method) => match ($method) {
+            TwoFactorMethod::EMAIL => 'Email',
+            TwoFactorMethod::TOTP => 'Authenticator app',
+            TwoFactorMethod::PASSKEY => 'Passkey',
+        }, TwoFactorController::enabledMethods($userId));
+
+        return $methods === [] ? 'On' : 'On - ' . implode(', ', $methods);
+    }
+
+    /**
      * Dispatches the POST request to the appropriate action handler.
      *
      * @return void
@@ -377,6 +402,7 @@ class Users
             'delete' => $this->deleteUser($this->user['id']),
             'purge' => $this->purgeUser($this->user['id']),
             'restore' => $this->restoreUser($this->user['id']),
+            'reset-2fa' => $this->resetTwoFactor(),
             default => null
         };
     }
@@ -521,6 +547,17 @@ class Users
             WHERE: compact('id')
         );
         PageController::redirectWithAlert('admin/users', 'User successfully restored!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Wipes every two-factor factor, recovery code and trusted device for the target user.
+     *
+     * @return void
+     */
+    private function resetTwoFactor(): void
+    {
+        TwoFactorController::disableAll((int)$this->user['id']);
+        PageController::redirectWithAlert('admin/users/edit?id=' . $this->user['id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
     }
 
     /**

@@ -63,8 +63,8 @@ class AuthController
         $user = self::getUserWithRole($token['user_id']);
 
         // Auto-login must clear the same bars the login form does.
-        // A stale cookie must not revive a since-deactivated or re-unverified account, nor skip a
-        // 2FA challenge on a device that is no longer trusted.
+        // A stale cookie must not revive a deactivated or re-unverified account.
+        // It must also not skip a 2FA challenge on a device that is no longer trusted.
         if (
             !$user
             || $user['status'] !== UserStatus::ACTIVE->value
@@ -364,14 +364,14 @@ class AuthController
             exit;
         }
 
-        // Roles listed in TWO_FACTOR_CONFIG['force_for_roles'] must have 2FA set up; funnel them
-        // to security settings until they do. The settings routes themselves are exempt so the
-        // redirect back doesn't loop.
+        // The settings routes are exempt so this redirect can't loop; API requests are exempt
+        // because a redirect to an HTML page is useless to a fetch() caller.
         $uri = $_SERVER['REQUEST_URI'] ?? '';
         if (
             TWO_FACTOR_CONFIG['enabled']
             && TwoFactorController::isRequiredFor($user)
             && !TwoFactorController::isEnabledFor((int)$user['id'])
+            && !str_starts_with($uri, '/api/')
             && !preg_match('#^/(user/settings|logout)(/|$)#i', $uri)
         ) {
             self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
@@ -800,29 +800,27 @@ class AuthController
 
     /**
      * Finish an authenticated login: record the successful attempt, open the session, and honour remember-me.
-     * Shared by the direct login path and the post-2FA-challenge path, so both stay in step.
-     * When $remember is set and the user's 2FA settings allow it, this browser is also marked trusted so future logins skip the challenge.
+     * Queues a flash alert and returns the page to go to, so both the redirecting login pages and the
+     * JSON passkey endpoint can drive the navigation themselves.
      *
      * @param array $user Verified user row
      * @param bool  $remember Whether the "remember me" box was ticked on the login form
      *
-     * @return void (redirects/exits)
-     *
-     * @throws JsonException
+     * @return string Route to send the user to
      */
-    public static function completeLogin(array $user, bool $remember): void
+    public static function completeLogin(array $user, bool $remember): string
     {
         self::recordLoginAttempt($user['email'], true, null, (int)$user['id']);
         self::updateLastLogin($user['email']);
 
         if (!self::setUserSession($user)) {
-            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
-            exit;
+            AlertController::globalAlert(self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            return REDIRECT;
         }
 
         if ($user['must_change_password']) {
-            PageController::redirectWithAlert('user/settings/security', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
-            return;
+            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            return 'user/settings/security';
         }
 
         if ($remember) {
@@ -840,7 +838,11 @@ class AuthController
             if (TwoFactorController::shouldRememberDevice((int)$user['id'], $user)) TwoFactorController::trustDevice((int)$user['id']);
         }
 
-        self::intendedRedirect('profile', 'Login successful! Welcome!', AlertType::SUCCESS, 4);
+        $destination = SessionController::get('intended_url') ?? 'profile';
+        SessionController::remove('intended_url');
+        AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
+
+        return $destination;
     }
 
     /**

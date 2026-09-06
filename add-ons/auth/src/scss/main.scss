@@ -5,6 +5,7 @@
 @include meta.load-css("views/admin/login-attempts");
 @include meta.load-css("views/verify-account");
 @include meta.load-css("views/two-factor");
+@include meta.load-css("views/settings");
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')

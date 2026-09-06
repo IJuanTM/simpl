@@ -1,0 +1,37 @@
+@use "../config" as *;
+
+section.user-settings {
+  .code-list {
+    font-family: ui-monospace, "Cascadia Mono", "Roboto Mono", monospace;
+    display: grid;
+    padding: 1rem;
+    letter-spacing: 0.1em;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    background: var(--bg-section);
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.25rem 1rem;
+  }
+
+  .device-list .text-muted {
+    color: var(--text-muted);
+  }
+
+  .qr-code svg {
+    display: block;
+    width: 220px;
+    height: 220px;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    background: white;
+  }
+
+  code.totp-key {
+    font-family: ui-monospace, "Cascadia Mono", "Roboto Mono", monospace;
+    padding: 0.15rem 0.4rem;
+    letter-spacing: 0.1em;
+    word-break: break-all;
+    border-radius: var(--radius-sm);
+    background: var(--bg-section);
+  }
+}

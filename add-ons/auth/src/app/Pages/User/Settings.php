@@ -6,6 +6,7 @@ namespace app\Pages\User;
 
 use app\Controllers\AuthController;
 use app\Controllers\PageController;
+use app\Enums\ErrorCode;
 use app\Models\Page;
 
 /**
@@ -74,5 +75,22 @@ class Settings
     public function __call(string $name, array $args): mixed
     {
         return $this->delegate?->$name(...$args);
+    }
+
+    /**
+     * Forwards API requests to the active section delegate.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    final public function api(Page $page): void
+    {
+        if ($this->delegate === null) {
+            PageController::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
+        $this->delegate->api($page);
     }
 }

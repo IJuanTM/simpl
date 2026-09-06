@@ -5,7 +5,7 @@ declare(strict_types=1);
 use app\Utils\Console;
 use Random\RandomException;
 
-// Runs from Composer's post-install hook, before the config bootstrap exists, so it cannot use start.php.
+// Runs from Composer's post-autoload-dump hook, before the config bootstrap exists, so it cannot use start.php.
 require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 
 $fresh = in_array('--fresh', $_SERVER['argv'] ?? [], true);

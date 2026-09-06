@@ -167,6 +167,11 @@ class UserPage
      */
     final public function api(Page $page): void
     {
+        if ($this->settings !== null) {
+            $this->settings->api($page);
+            return;
+        }
+
         // Profile image actions change state and act on the logged-in user; require authentication.
         AuthController::requireAuth();
 

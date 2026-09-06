@@ -11,7 +11,7 @@ const TWO_FACTOR_CONFIG = [
     ],
     'code_length' => 6,
     'email_code_expiry' => 600,           // seconds
-    'totp_window' => 1,                   // accepted steps either side of now, for clock drift
+    'totp_leeway' => 15,                  // seconds of clock drift tolerated on a TOTP code (must be < 30)
     'recovery_code_count' => 10,
 
     // Wrong-code throttling at the login challenge: per-account backoff, then a per-IP cap.
@@ -26,16 +26,15 @@ const TWO_FACTOR_CONFIG = [
 
     'force_for_roles' => ['Admin'],
 
-    // "Remember me" at login also remembers the 2FA challenge on that device, unless the user
-    // opts out in security settings, their role is force-listed here, or 'allow' is false.
+    // "Remember me" at login also remembers the 2FA challenge on that device.
+    // Overridden by opting out in security settings, a force-off role here, or 'allow' => false.
     'trusted_device' => [
         'allow' => true,
         'force_off_for_roles' => [],
     ],
 
+    // Passkeys are bound to the APP_URL host and shown under APP_NAME; only the browser timeout is tunable.
     'webauthn' => [
-        'rp_name' => null,                // null => APP_NAME
-        'rp_id' => null,                  // null => host from APP_URL
-        'timeout' => 60000,               // milliseconds
+        'timeout' => 60000,              // milliseconds
     ],
 ];

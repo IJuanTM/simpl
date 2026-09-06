@@ -184,7 +184,7 @@ class LoginPage
             return;
         }
 
-        AuthController::completeLogin($user, isset($_POST['remember']));
+        PageController::redirect(AuthController::completeLogin($user, isset($_POST['remember'])));
     }
 
     /**
@@ -229,8 +229,7 @@ class LoginPage
             'at' => time(),
         ]);
 
-        // Rate-limited on the same key as the resend link, so re-submitting the login form can't
-        // email a burst of codes (each issue also invalidates the previous one).
+        // Shares the resend cooldown so re-submitting the login form can't trigger a burst of codes.
         if (
             TwoFactorController::primaryMethod($userId) === TwoFactorMethod::EMAIL
             && RateLimiter::attempt('2fa-resend-' . $userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])
