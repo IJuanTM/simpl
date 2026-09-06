@@ -5,15 +5,16 @@
     Require all denied
 </FilesMatch>
 
-# Disable the PHP engine regardless of the mod_php version in use
+# Disable the PHP engine regardless of the mod_php version in use.
+# Must be php_flag: php_admin_flag is rejected in .htaccess context and 500s the whole directory.
 <IfModule mod_php.c>
-    php_admin_flag engine off
+    php_flag engine off
 </IfModule>
 <IfModule mod_php7.c>
-    php_admin_flag engine off
+    php_flag engine off
 </IfModule>
 <IfModule mod_php8.c>
-    php_admin_flag engine off
+    php_flag engine off
 </IfModule>
 
 # Strip any handlers/types that could cause a file to be executed

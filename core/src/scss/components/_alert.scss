@@ -4,7 +4,7 @@ div.alert {
   display: flex;
   overflow: hidden;
   padding: 1rem;
-  transition: visibility .15s ease-out, opacity .15s ease-out, max-height .3s ease-out, margin-bottom .3s ease-out;
+  transition: visibility .15s ease-in-out, opacity .15s ease-in-out, max-height .3s ease-in-out, margin-bottom .3s ease-in-out;
   color: #FFF;
   border: var(--border-width) solid var(--border-muted);
   border-radius: var(--radius-md);

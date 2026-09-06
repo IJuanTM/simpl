@@ -17,6 +17,16 @@ header {
       padding: 1rem;
     }
 
+    @include breakpoint-down(lg) {
+      &::after {
+        position: absolute;
+        z-index: 1;
+        content: "";
+        background-color: var(--bg-section);
+        inset: 0;
+      }
+    }
+
     > div.nav-brand {
       z-index: layer("layout", 10);
       padding: 0 1rem;
@@ -34,31 +44,26 @@ header {
     > nav.menu {
       @include breakpoint-down(lg) {
         position: absolute;
-        top: calc($header-height);
+        top: 100%;
         left: 0;
-        overflow: hidden;
+        visibility: hidden;
+        overflow-y: auto;
         flex-direction: column;
         width: 100%;
-        max-height: 0;
+        max-height: calc(100dvh - $header-height);
         padding: 0;
-        transition: max-height .15s ease-in-out;
+        transition: transform .15s ease-in-out, visibility .15s ease-in-out;
+        transform: translateY(-100%);
         background-color: var(--bg-section);
 
         &.extended {
-          max-height: 100dvh;
+          visibility: visible;
+          transform: translateY(0);
         }
 
         > div.nav-list {
           flex-direction: column;
-
-          .nav-item {
-            height: 4rem;
-          }
         }
-      }
-
-      @include breakpoint-down(md) {
-        top: calc($header-height - 1rem);
       }
 
       > div.nav-list > .nav-item {
@@ -69,6 +74,7 @@ header {
 
         @include breakpoint-down(lg) {
           justify-content: flex-start;
+          height: 4rem;
           padding: 0 4rem;
         }
 
@@ -79,6 +85,12 @@ header {
         &.link {
           font-weight: 700;
 
+          &:not(.profile) > i {
+            @include breakpoint-up(lg) {
+              display: none;
+            }
+          }
+
           &.profile {
             @include breakpoint-up(lg) {
               padding: 0 .5rem;
@@ -87,11 +99,19 @@ header {
             > img {
               width: 2.5rem;
               border-radius: 50%;
+
+              @include breakpoint-down(lg) {
+                width: 2rem;
+              }
             }
 
             > i {
               font-size: 2.5rem;
               width: auto;
+
+              @include breakpoint-down(lg) {
+                font-size: 2rem;
+              }
             }
           }
         }
@@ -100,6 +120,7 @@ header {
           background-color: var(--nav-button);
 
           @include breakpoint-down(lg) {
+            border: 0;
             border-radius: unset;
           }
 
@@ -212,16 +233,6 @@ header {
               background-color: var(--text-25);
             }
           }
-        }
-      }
-
-      &.extended > div.nav-list > .nav-item.profile {
-        > img {
-          width: 2rem;
-        }
-
-        > i {
-          font-size: 2rem;
         }
       }
     }

@@ -1,48 +1,33 @@
 export const menuModule = {
   init(): void {
     const navMenu = document.querySelector<HTMLElement>('nav.menu');
-    const menuHamburger = document.querySelector<HTMLElement>('button.hamburger');
-    if (!navMenu || !menuHamburger) return;
+    const hamburger = document.querySelector<HTMLElement>('button.hamburger');
+    if (!navMenu || !hamburger) return;
 
     const navItems = navMenu.querySelectorAll<HTMLElement>('.nav-item');
+    const desktop = matchMedia('(min-width: 64rem)');
 
-    const setMenuState = (isOpen: boolean): void => {
-      menuHamburger.classList.toggle('is-active', isOpen);
-      navMenu.classList.toggle('extended', isOpen);
-
-      menuHamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-
-      navItems.forEach(item => item.setAttribute('tabindex', isOpen ? '0' : '-1'));
+    const setOpen = (open: boolean): void => {
+      hamburger.classList.toggle('is-active', open);
+      hamburger.setAttribute('aria-expanded', String(open));
+      navMenu.classList.toggle('extended', open);
+      navMenu.toggleAttribute('inert', !open && !desktop.matches);
     };
 
-    const toggle = (): void => setMenuState(!menuHamburger.classList.contains('is-active'));
+    const normalizePath = (url: string): string => new URL(url, location.origin).pathname.replace(/\/+$/, '') || '/home';
 
-    const setActive = (): void => {
-      const currentPath = window.location.pathname.replace(/\/+$/, '') || '/home';
+    const current = normalizePath(location.href);
+    navItems.forEach(item => {
+      const href = item.getAttribute('href');
+      if (href !== null) item.classList.toggle('active', normalizePath(href) === current);
+    });
 
-      navItems.forEach(item => {
-        const href = item.getAttribute('href');
-        if (href === null) return;
-
-        const itemPath = new URL(href, location.origin).pathname.replace(/\/+$/, '') || '/home';
-        item.classList.toggle('active', itemPath === currentPath);
-      });
-    };
-
-    const syncTabIndex = (): void => {
-      if (window.innerWidth > 1024) {
-        setMenuState(false);
-        navItems.forEach(item => item.setAttribute('tabindex', '0'));
-      } else setMenuState(menuHamburger.classList.contains('is-active'));
-    };
-
-    menuHamburger.addEventListener('click', toggle);
+    hamburger.addEventListener('click', () => setOpen(!hamburger.classList.contains('is-active')));
     navItems.forEach(item => item.addEventListener('click', () => {
-      if (window.innerWidth <= 1024) setMenuState(false);
+      if (!desktop.matches) setOpen(false);
     }));
-    window.addEventListener('resize', syncTabIndex);
+    desktop.addEventListener('change', () => setOpen(false));
 
-    setActive();
-    syncTabIndex();
+    setOpen(false);
   }
 };

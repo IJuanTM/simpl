@@ -8,7 +8,7 @@ section.cookie {
   display: flex;
   margin: 1rem;
   padding: 2rem;
-  transition: visibility .15s ease-out, opacity .15s ease-out;
+  transition: visibility .15s ease-in-out, opacity .15s ease-in-out;
   border: var(--border-width) solid var(--border-muted);
   border-radius: var(--radius-md);
   background-color: var(--bg-accent);

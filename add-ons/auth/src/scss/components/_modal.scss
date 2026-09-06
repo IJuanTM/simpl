@@ -8,7 +8,7 @@ dialog.modal-overlay {
   background-color: transparent;
 
   &, &::backdrop {
-    transition: opacity .15s ease-out, overlay .15s ease-out allow-discrete, display .15s ease-out allow-discrete;
+    transition: opacity .15s ease-in-out, overlay .15s ease-in-out allow-discrete, display .15s ease-in-out allow-discrete;
     opacity: 0;
   }
 

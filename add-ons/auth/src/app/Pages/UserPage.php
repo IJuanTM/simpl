@@ -130,6 +130,15 @@ class UserPage
             WHERE: compact('id')
         );
 
+        // The profile view skips requireAuth(), so sync the edited fields into the owner's session here or the nav bar stays stale.
+        // Only these fields, never a full row refresh - that would mask a stale status/password_changed_at from requireAuth().
+        $sessionUser = SessionController::get('user');
+        $sessionUser['username'] = $_POST['username'] ?: null;
+        $sessionUser['first_name'] = $_POST['first_name'] ?: null;
+        $sessionUser['last_name'] = $_POST['last_name'] ?: null;
+        $sessionUser['email'] = $_POST['email'];
+        SessionController::set('user', $sessionUser);
+
         if (VERIFICATION_CONFIG['required'] && $emailChanged) {
             AuthController::issueVerificationToken($id, $_POST['email']);
             PageController::redirectWithAlert('user/' . $id, 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
