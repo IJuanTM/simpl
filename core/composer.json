@@ -9,6 +9,7 @@
     "ext-pdo_mysql": "*",
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
+    "ext-sodium": "*",
     "phpmailer/phpmailer": "^6.9",
     "vlucas/phpdotenv": "^v5.6.4"
   },
@@ -34,6 +35,8 @@
   "scripts": {
     "test": "phpunit",
     "stan": "phpstan analyse --memory-limit=512M",
+    "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
+    "post-install-cmd": "@php src/app/Scripts/app-key.php",
     "@addon-placeholder": "db"
   },
   "keywords": [

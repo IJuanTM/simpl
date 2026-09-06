@@ -8,13 +8,15 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
+use app\Controllers\TwoFactorController;
 use app\Database\DB;
 use app\Enums\AlertType;
-use app\Enums\TokenType;
+use app\Enums\TwoFactorMethod;
 use app\Enums\UserStatus;
+use app\Utils\RateLimiter;
 
 /**
- * Handles the login form flow: lockout checks, credential verification, and optional remember-me token creation.
+ * Handles the login form flow: lockout checks, credential verification, and either a two-factor challenge or the completed login.
  */
 class LoginPage
 {
@@ -173,7 +175,16 @@ class LoginPage
             return;
         }
 
-        $this->login($user);
+        if (
+            TWO_FACTOR_CONFIG['enabled']
+            && TwoFactorController::isEnabledFor((int)$user['id'])
+            && !TwoFactorController::deviceIsTrusted((int)$user['id'])
+        ) {
+            $this->beginTwoFactorChallenge($user);
+            return;
+        }
+
+        AuthController::completeLogin($user, isset($_POST['remember']));
     }
 
     /**
@@ -201,41 +212,32 @@ class LoginPage
     }
 
     /**
-     * Creates user session and handles remember-me cookie.
+     * Stashes a short-lived pending-login marker and sends the user to the two-factor challenge.
+     * The credential login attempt is only recorded once the challenge passes (in completeLogin).
      *
      * @param array $user Verified user row from verifyCredentials()
      *
      * @return void
      */
-    private function login(array $user): void
+    private function beginTwoFactorChallenge(array $user): void
     {
-        AuthController::recordLoginAttempt($user['email'], true, null, (int)$user['id']);
+        $userId = (int)$user['id'];
 
-        AuthController::updateLastLogin($user['email']);
+        SessionController::set('2fa_pending', [
+            'user_id' => $userId,
+            'remember' => isset($_POST['remember']),
+            'at' => time(),
+        ]);
 
-        if (!AuthController::setUserSession($user)) {
-            PageController::redirectWithAlert(REDIRECT, AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
-            exit;
+        // Rate-limited on the same key as the resend link, so re-submitting the login form can't
+        // email a burst of codes (each issue also invalidates the previous one).
+        if (
+            TwoFactorController::primaryMethod($userId) === TwoFactorMethod::EMAIL
+            && RateLimiter::attempt('2fa-resend-' . $userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])
+        ) {
+            TwoFactorController::issueEmailChallenge($userId, $user['email']);
         }
 
-        if ($user['must_change_password']) {
-            PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
-            return;
-        }
-
-        // Handle remember-me checkbox. Skips silently on token-generation failure;
-        // the login itself already succeeded regardless.
-        $token = isset($_POST['remember']) ? AuthController::generateToken(REMEMBER_ME_TOKEN_LENGTH) : null;
-
-        if ($token !== null) {
-            $timestamp = AuthController::rememberCookieExpiry();
-
-            AuthController::setRememberCookie($token, $timestamp);
-
-            // Store SHA-256 hash of the token in the DB; the raw token stays only in the cookie.
-            AuthController::createToken((int)$user['id'], hash('sha256', $token), TokenType::REMEMBER, date('Y-m-d H:i:s', $timestamp));
-        }
-
-        AuthController::intendedRedirect('profile', 'Login successful! Welcome!', AlertType::SUCCESS, 4);
+        PageController::redirect('two-factor');
     }
 }

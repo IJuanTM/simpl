@@ -14,10 +14,12 @@ use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Enums\Role;
 use app\Models\Page;
+use app\Pages\User\Settings;
 use app\Utils\RateLimiter;
+use JsonException;
 
 /**
- * Profile view for a user identified by /user/{id}.
+ * Profile view for a user identified by /user/{id}, or the settings area under /user/settings.
  * Visitors see only the username and profile image. The profile owner sees an inline edit form.
  * Admins see a read-only extended view with an admin edit link.
  */
@@ -27,9 +29,15 @@ class UserPage
     public ?string $profileImage = null;
     public bool $isOwner = false;
     public bool $isAdmin = false;
+    public ?Settings $settings = null;
 
     public function __construct(Page $page)
     {
+        if ($page->subpage() === 'settings') {
+            $this->settings = new Settings($page);
+            return;
+        }
+
         $this->loadUser($page);
     }
 
@@ -39,6 +47,7 @@ class UserPage
      * @param Page $page
      *
      * @return void
+     * @throws JsonException
      */
     private function loadUser(Page $page): void
     {
@@ -154,6 +163,7 @@ class UserPage
      * @param Page $page Page object with URL parameters
      *
      * @return void
+     * @throws JsonException
      */
     final public function api(Page $page): void
     {

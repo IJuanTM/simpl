@@ -1,0 +1,35 @@
+<?php
+use app\Models\Url;
+?>
+
+<section class="row user-settings">
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col">
+        <h1 data-typo="h2">Settings</h1>
+      </div>
+    </div>
+
+    <div class="row g-2">
+      <a class="col card center-y" href="<?= Url::to('user/settings/security') ?>" aria-label="Link to security settings">
+        <div class="row g-col-2">
+          <div class="col card-icon center f-0">
+            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+          </div>
+          <div class="col f-col g-row-1">
+            <div class="row">
+              <div class="col">
+                <h2 class="card-title" data-typo="h4">Security</h2>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <p>Change your password and manage two-factor authentication.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>

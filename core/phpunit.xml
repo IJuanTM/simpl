@@ -10,6 +10,10 @@
     </testsuite>
   </testsuites>
 
+  <php>
+    <env name="APP_KEY" value="4d2e8f1a6b3c9d7e0f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4c7d0e3f6a9b2c5d8e"/>
+  </php>
+
   <source>
     <include>
       <directory>src/app</directory>

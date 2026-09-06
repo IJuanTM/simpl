@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace app\Pages;
+namespace app\Pages\User;
 
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
@@ -11,20 +11,17 @@ use app\Enums\AlertType;
 use app\Utils\RateLimiter;
 
 /**
- * Allows authenticated users to change their password, clearing the must_change_password flag on success.
+ * The /user/settings/security section: lets an authenticated user change their password, clearing the must_change_password flag on success.
  */
-class ChangePasswordPage
+class SecuritySettings
 {
     public function __construct()
     {
-        // Allow access mid-forced-password-change: this is the page that resolves it.
-        AuthController::requireAuth(null, true);
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
     }
 
     /**
-     * Processes password change form submission.
+     * Processes the change-password form submission.
      *
      * @return void
      */

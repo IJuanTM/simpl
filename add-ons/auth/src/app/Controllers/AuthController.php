@@ -63,11 +63,13 @@ class AuthController
         $user = self::getUserWithRole($token['user_id']);
 
         // Auto-login must clear the same bars the login form does.
-        // A stale cookie must not revive a since-deactivated or re-unverified account.
+        // A stale cookie must not revive a since-deactivated or re-unverified account, nor skip a
+        // 2FA challenge on a device that is no longer trusted.
         if (
             !$user
             || $user['status'] !== UserStatus::ACTIVE->value
             || (VERIFICATION_CONFIG['required'] && !self::isVerified((int)$user['id']))
+            || (TWO_FACTOR_CONFIG['enabled'] && TwoFactorController::isEnabledFor((int)$user['id']) && !TwoFactorController::deviceIsTrusted((int)$user['id']))
             || !self::setUserSession($user)
         ) {
             self::invalidateRememberToken($tokenHash);
@@ -297,30 +299,9 @@ class AuthController
     }
 
     /**
-     * Redirect to the originally requested URL saved by requireAuth(), or to $fallback when none was stored.
-     * Clears the stored URL after use so a second call can't replay it.
-     * Queues a flash alert shown after the redirect when $message is given.
-     *
-     * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message Optional flash alert message to show after redirecting
-     * @param AlertType   $type Alert type, used only when $message is given
-     * @param int         $timeout Alert timeout in seconds, used only when $message is given
-     *
-     * @return void
-     */
-    public static function intendedRedirect(string $fallback = REDIRECT, ?string $message = null, AlertType $type = AlertType::SUCCESS, int $timeout = 0): void
-    {
-        $url = SessionController::get('intended_url') ?? $fallback;
-        SessionController::remove('intended_url');
-
-        if ($message !== null) PageController::redirectWithAlert($url, $message, $type, $timeout);
-        else PageController::redirect($url);
-    }
-
-    /**
      * Ensure the current request is performed by an authenticated user, optionally enforcing role-based access.
      * An unauthenticated user has the intended URL stored in session and is redirected to the login page.
-     * A user who must change their password, on a route that doesn't explicitly allow it, is redirected to the change-password flow.
+     * A user who must change their password, on a route that doesn't explicitly allow it, is redirected to the security settings page.
      *
      * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
      * @param bool        $allowPasswordChange If true, allow access even when the user must change password
@@ -372,14 +353,30 @@ class AuthController
         $user = $fresh;
 
         // If the account requires a password change and this route doesn't
-        // explicitly allow that, force a redirect to the change-password page.
+        // explicitly allow that, force a redirect to the security settings page.
         if (!$allowPasswordChange && $user['must_change_password']) {
             $uri = $_SERVER['REQUEST_URI'] ?? '';
 
-            // Skip the change-password route itself, so the redirect back doesn't loop into it.
-            self::setIntendedUrl($uri, '#^/(change-password|login|logout)(/|$)#i');
+            // Skip the security settings route itself, so the redirect back doesn't loop into it.
+            self::setIntendedUrl($uri, '#^/(user/settings/security|login|logout)(/|$)#i');
 
-            PageController::redirectWithAlert('change-password', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            PageController::redirectWithAlert('user/settings/security', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            exit;
+        }
+
+        // Roles listed in TWO_FACTOR_CONFIG['force_for_roles'] must have 2FA set up; funnel them
+        // to security settings until they do. The settings routes themselves are exempt so the
+        // redirect back doesn't loop.
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (
+            TWO_FACTOR_CONFIG['enabled']
+            && TwoFactorController::isRequiredFor($user)
+            && !TwoFactorController::isEnabledFor((int)$user['id'])
+            && !preg_match('#^/(user/settings|logout)(/|$)#i', $uri)
+        ) {
+            self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
+
+            PageController::redirectWithAlert('user/settings/security', 'Your account requires two-factor authentication. Please set it up to continue.', AlertType::WARNING, 4);
             exit;
         }
 
@@ -760,7 +757,7 @@ class AuthController
      * @param string $password Plaintext new password (will be hashed)
      *
      * @return string The new password_changed_at value.
-     *                A caller with a live session for this user (e.g. ChangePasswordPage) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
+     *                A caller with a live session for this user (e.g. User\SecuritySettings) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
      */
     public static function updatePassword(int $id, string $password): string
     {
@@ -799,6 +796,51 @@ class AuthController
                 'type' => $type->value
             ]
         );
+    }
+
+    /**
+     * Finish an authenticated login: record the successful attempt, open the session, and honour remember-me.
+     * Shared by the direct login path and the post-2FA-challenge path, so both stay in step.
+     * When $remember is set and the user's 2FA settings allow it, this browser is also marked trusted so future logins skip the challenge.
+     *
+     * @param array $user Verified user row
+     * @param bool  $remember Whether the "remember me" box was ticked on the login form
+     *
+     * @return void (redirects/exits)
+     *
+     * @throws JsonException
+     */
+    public static function completeLogin(array $user, bool $remember): void
+    {
+        self::recordLoginAttempt($user['email'], true, null, (int)$user['id']);
+        self::updateLastLogin($user['email']);
+
+        if (!self::setUserSession($user)) {
+            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            exit;
+        }
+
+        if ($user['must_change_password']) {
+            PageController::redirectWithAlert('user/settings/security', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
+            return;
+        }
+
+        if ($remember) {
+            $token = self::generateToken(REMEMBER_ME_TOKEN_LENGTH);
+
+            // Skips silently on token-generation failure; the login itself already succeeded.
+            if ($token !== null) {
+                $timestamp = self::rememberCookieExpiry();
+                self::setRememberCookie($token, $timestamp);
+
+                // Only the SHA-256 hash is stored; the raw token stays in the cookie.
+                self::createToken((int)$user['id'], hash('sha256', $token), TokenType::REMEMBER, date('Y-m-d H:i:s', $timestamp));
+            }
+
+            if (TwoFactorController::shouldRememberDevice((int)$user['id'], $user)) TwoFactorController::trustDevice((int)$user['id']);
+        }
+
+        self::intendedRedirect('profile', 'Login successful! Welcome!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -857,30 +899,6 @@ class AuthController
     }
 
     /**
-     * Generates a verification token, stores it, and emails it to the user.
-     * Used by both the initial registration flow and the resend flow, which only differ in the alert message shown for each outcome, so the caller still picks that based on the result.
-     *
-     * @param int    $id
-     * @param string $email
-     *
-     * @return bool True if token generation and email queueing succeeded, false otherwise.
-     *              Under FastCGI the actual delivery is deferred past this call, so true only guarantees generation and queueing, not that the email reached the recipient.
-     */
-    public static function issueVerificationToken(int $id, string $email): bool
-    {
-        $token = self::generateToken(VERIFICATION_CONFIG['token_length']);
-
-        if ($token === null) {
-            Log::error("Could not generate a verification token for user id \"$id\"");
-            return false;
-        }
-
-        self::createToken($id, hash('sha256', $token), TokenType::VERIFICATION, date('Y-m-d H:i:s', time() + VERIFICATION_CONFIG['token_expiry']));
-
-        return self::sendVerificationMail($id, $email, $token);
-    }
-
-    /**
      * Create or replace a token of the given type for a user.
      * Any existing token of the same type for that user is removed before insertion.
      *
@@ -912,6 +930,51 @@ class AuthController
             INTO: 'tokens',
             VALUES: $data
         );
+    }
+
+    /**
+     * Redirect to the originally requested URL saved by requireAuth(), or to $fallback when none was stored.
+     * Clears the stored URL after use so a second call can't replay it.
+     * Queues a flash alert shown after the redirect when $message is given.
+     *
+     * @param string      $fallback Route to use when no intended URL is in session
+     * @param string|null $message Optional flash alert message to show after redirecting
+     * @param AlertType   $type Alert type, used only when $message is given
+     * @param int         $timeout Alert timeout in seconds, used only when $message is given
+     *
+     * @return void
+     */
+    public static function intendedRedirect(string $fallback = REDIRECT, ?string $message = null, AlertType $type = AlertType::SUCCESS, int $timeout = 0): void
+    {
+        $url = SessionController::get('intended_url') ?? $fallback;
+        SessionController::remove('intended_url');
+
+        if ($message !== null) PageController::redirectWithAlert($url, $message, $type, $timeout);
+        else PageController::redirect($url);
+    }
+
+    /**
+     * Generates a verification token, stores it, and emails it to the user.
+     * Used by both the initial registration flow and the resend flow, which only differ in the alert message shown for each outcome, so the caller still picks that based on the result.
+     *
+     * @param int    $id
+     * @param string $email
+     *
+     * @return bool True if token generation and email queueing succeeded, false otherwise.
+     *              Under FastCGI the actual delivery is deferred past this call, so true only guarantees generation and queueing, not that the email reached the recipient.
+     */
+    public static function issueVerificationToken(int $id, string $email): bool
+    {
+        $token = self::generateToken(VERIFICATION_CONFIG['token_length']);
+
+        if ($token === null) {
+            Log::error("Could not generate a verification token for user id \"$id\"");
+            return false;
+        }
+
+        self::createToken($id, hash('sha256', $token), TokenType::VERIFICATION, date('Y-m-d H:i:s', time() + VERIFICATION_CONFIG['token_expiry']));
+
+        return self::sendVerificationMail($id, $email, $token);
     }
 
     /**

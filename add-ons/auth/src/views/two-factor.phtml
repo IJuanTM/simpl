@@ -1,0 +1,87 @@
+<?php
+use app\Controllers\AppController;
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Models\Url;
+
+$recovery = $this->pageObj->mode === 'recovery';
+?>
+
+<section class="row two-factor center-x">
+  <form class="col g-row-1" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Two-step verification</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <?php if ($recovery): ?>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">Enter one of the recovery codes you saved when you set up two-factor authentication. Each code works once.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group g-row-0.25">
+          <div class="row">
+            <label class="col" for="code">Recovery code: <span class="required">*</span></label>
+          </div>
+          <div class="row input-group">
+            <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+            <input class="col" id="code" type="text" name="code" maxlength="32" autocomplete="one-time-code" autocapitalize="characters" placeholder="Enter a recovery code" value="<?= RequestController::post('code') ?? '' ?>">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details"><a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor')) ?>" aria-label="Back to entering the emailed code">Use the code from your email instead</a>.</p>
+        </div>
+      </div>
+
+    <?php else: ?>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">A verification code has been sent to your email address. Enter it below to finish signing in.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group g-row-0.25">
+          <div class="row">
+            <label class="col" for="code">Code: <span class="required">*</span></label>
+          </div>
+          <input class="col hidden" id="code" type="text" name="code" inputmode="numeric" maxlength="<?= TWO_FACTOR_CONFIG['code_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
+          <div class="col center-x g-col-1">
+            <?php for ($i = 0; $i < TWO_FACTOR_CONFIG['code_length']; $i++): ?>
+              <input type="text" class="digit" maxlength="1" inputmode="numeric" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
+            <?php endfor ?>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details"><a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/recovery')) ?>" aria-label="Use a recovery code instead">Use a recovery code instead</a>.</p>
+        </div>
+      </div>
+
+    <?php endif ?>
+
+    <div class="row g-2 center-x">
+      <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= AppController::sanitize(Url::to('login')) ?>"><i class="fas fa-arrow-left"></i>Cancel</a>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the verification code"><i class="fas fa-right-to-bracket"></i>Verify</button>
+    </div>
+  </form>
+</section>
