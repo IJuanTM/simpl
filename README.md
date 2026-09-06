@@ -306,7 +306,9 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Small formatting changes and improvements
 * Added a code block to the landing page with the command to install add-ons using the npx tool
 
-#### Version 1.7.0 (2026-08-15)
+### Version 2.0
+
+#### Version 2.0.0 (2026-09-06)
 
 * Added a full admin panel to the auth add-on: user management (view, edit, soft-delete and restore, admin-created accounts), role management, and a login attempts page, all with sortable/searchable/paginated tables, breadcrumb navigation and hideable columns
 * Added proper migration and seeder classes for the auth add-on's database, replacing the old example `.sql` schema file
