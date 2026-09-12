@@ -1,37 +1,160 @@
 @use "../config" as *;
 
 section.user-settings {
-  .code-list {
-    font-family: ui-monospace, "Cascadia Mono", "Roboto Mono", monospace;
-    display: grid;
-    padding: 1rem;
-    letter-spacing: 0.1em;
+  &.center-x > .col {
+    max-width: 48rem;
+  }
+
+  form.profile-image {
+    div.avatar {
+      position: relative;
+      overflow: hidden;
+      width: 9rem;
+      height: 9rem;
+      border: var(--border-width) solid var(--border-muted);
+      border-radius: 50%;
+      background-color: var(--bg-accent);
+
+      > img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      > i {
+        font-size: 9rem;
+        line-height: 1;
+        width: auto;
+      }
+    }
+
+    &.loading div.avatar {
+      pointer-events: none;
+
+      &::after {
+        @include fa-icon;
+        font-size: 2rem;
+        position: absolute;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        content: "\f110";
+        animation: spin 1s linear infinite;
+        color: #FFF;
+        background-color: rgba(#000, .5);
+      }
+    }
+  }
+
+  div.code-list {
+    padding: 1rem 3rem;
     border: var(--border-width) solid var(--border-muted);
     border-radius: var(--radius-sm);
-    background: var(--bg-section);
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.25rem 1rem;
+    background-color: var(--bg-content);
+
+    > div.row > div.col {
+      font-family: $mono;
+      letter-spacing: .125rem;
+    }
   }
 
-  .device-list .text-muted {
-    color: var(--text-muted);
-  }
-
-  .qr-code svg {
+  div.qr-code svg {
     display: block;
-    width: 220px;
-    height: 220px;
+    width: 14rem;
+    height: 14rem;
     border: var(--border-width) solid var(--border-muted);
     border-radius: var(--radius-sm);
-    background: white;
+    background-color: #FFF;
   }
 
   code.totp-key {
-    font-family: ui-monospace, "Cascadia Mono", "Roboto Mono", monospace;
-    padding: 0.15rem 0.4rem;
-    letter-spacing: 0.1em;
+    font-family: $mono;
+    padding: .15rem .4rem;
+    letter-spacing: .125rem;
     word-break: break-all;
     border-radius: var(--radius-sm);
-    background: var(--bg-section);
+    background-color: var(--bg-section);
+  }
+
+  div.two-fa-card {
+    overflow: hidden;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-accent);
+  }
+
+  div.two-fa-tabs {
+    height: 3rem;
+
+    button.two-fa-tab {
+      font-size: .875rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      color: var(--text-50);
+      border-bottom: var(--border-width) solid var(--border-muted);
+
+      @include hover-focus {
+        color: var(--text-75);
+      }
+
+      &.active {
+        color: var(--text);
+        border-bottom-color: $simpl;
+      }
+    }
+
+    &::after {
+      content: "";
+      flex: 1 1 auto;
+      border-bottom: var(--border-width) solid var(--border-muted);
+    }
+  }
+
+  p.two-fa-note {
+    font-size: .875rem;
+    color: var(--text-50);
+  }
+
+  span.two-fa-dot {
+    display: block;
+    width: .5rem;
+    height: .5rem;
+    border-radius: 50%;
+    background-color: var(--border-muted);
+
+    &.required {
+      background-color: $orange;
+    }
+
+    &.on {
+      background-color: $green;
+    }
+  }
+
+  div.two-fa-body {
+    padding: 1.5rem;
+  }
+
+  div.two-fa-method-row {
+    height: 2rem;
+  }
+
+  label.two-fa-required {
+    display: flex;
+    align-items: center;
+    gap: .375rem;
+    font-size: .875rem;
+    cursor: pointer;
+    color: var(--text-50);
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+  }
+
+  div.two-fa-body > .row[hidden] {
+    display: none;
   }
 }

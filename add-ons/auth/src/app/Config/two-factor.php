@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 const TWO_FACTOR_CONFIG = [
     'enabled' => true,                    // when false, no 2FA UI or login challenge exists
-    'methods' => [
-        'email' => true,
-        'totp' => true,
-        'passkey' => true,
-    ],
     'code_length' => 6,
     'email_code_expiry' => 600,           // seconds
     'totp_leeway' => 15,                  // seconds of clock drift tolerated on a TOTP code (must be < 30)

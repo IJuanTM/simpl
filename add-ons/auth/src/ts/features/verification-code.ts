@@ -1,23 +1,35 @@
 export const verificationModule = {
   init(): void {
     const codeInput = document.querySelector<HTMLInputElement>('#code');
+    if (!codeInput) return;
+
+    const submitButton = codeInput.form?.querySelector<HTMLButtonElement>('button[type="submit"]');
+    const gateSubmit = (): void => submitButton?.toggleAttribute('inert', !codeInput.value.trim());
+
     const digitInputs = document.querySelectorAll<HTMLInputElement>('input.digit');
-    if (!codeInput || !digitInputs.length) return;
+
+    if (!digitInputs.length) {
+      // Recovery mode: one visible field is the code, no digit boxes to mirror.
+      codeInput.addEventListener('input', gateSubmit);
+      gateSubmit();
+      return;
+    }
 
     const syncHidden = (): void => {
       codeInput.value = Array.from(digitInputs, input => input.value).join('');
+      gateSubmit();
     };
 
     const fill = (chars: string): void => {
-      Array.from(chars).forEach((char, i) => {
-        const digit = digitInputs.item(i);
-        if (digit) digit.value = char;
+      digitInputs.forEach((digit, i) => {
+        digit.value = chars[i] ?? '';
       });
       syncHidden();
     };
 
     // #code carries a server-rendered value after a failed submit.
     if (codeInput.value) fill(codeInput.value);
+    gateSubmit();
 
     digitInputs.forEach((input, index) => {
       input.addEventListener('input', () => {
@@ -46,7 +58,6 @@ export const verificationModule = {
 
         digitInputs.item(digitInputs.length - 1)?.focus();
 
-        const submitButton = codeInput.form?.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (codeInput.form && submitButton) codeInput.form.requestSubmit(submitButton);
       });
     });

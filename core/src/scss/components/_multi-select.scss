@@ -1,0 +1,48 @@
+@use "../config" as *;
+
+div.multi-select {
+  div.multi-select-box {
+    overflow: hidden;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
+  }
+
+  div.multi-select-pills {
+    padding: .5rem;
+    background-color: var(--input-prepend-append);
+
+    &:not(:empty) {
+      border-bottom: var(--border-width) solid var(--border-muted);
+    }
+  }
+
+  button.multi-select-pill {
+    font-size: .875rem;
+    line-height: normal;
+    padding: .25rem .5rem;
+    cursor: pointer;
+    color: var(--text);
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
+    background-color: var(--input);
+
+    @include hover-focus {
+      color: $red;
+      border-color: $red;
+    }
+  }
+
+  select[multiple] {
+    cursor: pointer;
+    border: none;
+    border-radius: 0;
+
+    option {
+      padding: .625rem .5rem;
+
+      &[hidden] {
+        display: none;
+      }
+    }
+  }
+}

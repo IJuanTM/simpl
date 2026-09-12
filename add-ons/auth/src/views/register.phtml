@@ -16,7 +16,7 @@ use app\Models\Url;
     <?= FormController::formAlerts() ?>
 
     <div class="row">
-      <?php $this->component('form-input', [
+      <?php $this->component('form/form-input', [
           'id' => 'email',
           'label' => 'Email',
           'required' => true,
@@ -34,7 +34,7 @@ use app\Models\Url;
     <div class="row">
       <div class="col form-group g-row-0.25">
         <div class="row form-row g-1">
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'password',
               'label' => 'Password',
               'required' => true,
@@ -51,7 +51,7 @@ use app\Models\Url;
               'extraAttrs' => 'data-password-pattern="' . AuthController::getPasswordPatternSource() . '" data-password-message="' . AuthController::getPasswordRequirements() . '"',
           ]) ?>
 
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'password-check',
               'label' => 'Repeat password',
               'required' => true,
@@ -66,7 +66,7 @@ use app\Models\Url;
           ]) ?>
         </div>
 
-        <?php $this->component('password-hint') ?>
+        <?php $this->component('form/password-hint') ?>
       </div>
     </div>
 

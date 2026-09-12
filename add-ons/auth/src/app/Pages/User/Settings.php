@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Pages\User;
 
 use app\Controllers\AuthController;
+use app\Controllers\BreadcrumbController;
 use app\Controllers\PageController;
 use app\Enums\ErrorCode;
 use app\Models\Page;
@@ -16,7 +17,7 @@ use app\Models\Page;
 class Settings
 {
     public string $section;
-    private ?SecuritySettings $delegate = null;
+    private ProfileSettings|PasswordSettings|TwoFactorSettings|null $delegate = null;
 
     public function __construct(Page $page)
     {
@@ -32,17 +33,41 @@ class Settings
      */
     private function dispatch(Page $page): void
     {
-        // The security section is where a forced password change is resolved, so allow it through.
-        AuthController::requireAuth(null, true);
-
         $this->section = $page->subpage(1) ?? 'overview';
 
+        AuthController::requireAuth();
+
         $this->delegate = match ($this->section) {
-            'security' => new SecuritySettings(),
+            'profile' => new ProfileSettings(),
+            'change-password' => new PasswordSettings(),
+            'two-factor' => new TwoFactorSettings(),
             default => null,
         };
 
-        if ($this->delegate === null && $this->section !== 'overview') PageController::redirect('user/settings');
+        if ($this->delegate === null && $this->section !== 'overview') {
+            PageController::redirect('user/settings');
+            return;
+        }
+
+        BreadcrumbController::set($this->breadcrumbTrail());
+    }
+
+    /**
+     * The breadcrumb trail for the active section, rooted at the settings hub.
+     * Built by hand rather than BreadcrumbController::generate(), whose auto "User" root crumb would link to /user, which 404s without an id.
+     *
+     * @return array<int, array{label: string, url: string|null}>
+     */
+    private function breadcrumbTrail(): array
+    {
+        $root = ['label' => 'Settings', 'url' => 'user/settings'];
+
+        return match ($this->section) {
+            'profile' => [$root, ['label' => 'Profile', 'url' => null]],
+            'change-password' => [$root, ['label' => 'Change password', 'url' => null]],
+            'two-factor' => [$root, ['label' => 'Two-factor', 'url' => null]],
+            default => [['label' => 'Settings', 'url' => null]],
+        };
     }
 
     /**

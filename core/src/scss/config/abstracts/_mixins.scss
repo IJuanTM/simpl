@@ -3,6 +3,7 @@
 
 @use "../vars/breakpoints" as *;
 @use "../vars/themes" as *;
+@use "../vars/status" as *;
 
 @mixin set-themes {
   :root {
@@ -129,19 +130,33 @@
 
 // ---------------------------------------------------------------- //
 
-@mixin action-button($bg, $bg-hover, $hover-color: null, $important: false) {
-  color: #FFF;
+@mixin action-button($bg, $bg-hover, $hover-color: null, $color: #FFF) {
+  color: $color;
   background-color: $bg;
 
   @include shimmer(true, rgba(#FFF, .25));
 
   @include hover-focus {
     color: $hover-color;
+    background-color: $bg-hover;
+  }
+}
 
-    @if $important {
-      background-color: $bg-hover !important;
-    } @else {
-      background-color: $bg-hover;
+// ---------------------------------------------------------------- //
+
+@mixin status-modifiers($as: fill) {
+  @each $name, $c in $status {
+    $surface: list.nth($c, 1);
+    $on-surface: list.nth($c, 2);
+
+    &.#{$name} {
+      @if $as == outline {
+        color: $surface;
+        border-color: $surface;
+      } @else {
+        color: $on-surface;
+        background-color: $surface;
+      }
     }
   }
 }

@@ -10,4 +10,8 @@ Scheduler::task('delete-deactivated-users', static fn() => \app\Cron\DeleteDeact
 // Every week, delete rate limit cache files that have been quiet long enough to be dead weight
 Scheduler::task('prune-rate-limit-cache', static fn() => \app\Cron\PruneRateLimitCache::run())
 ->weekly();
+
+// Every week, delete expired trusted-device rows, spent login email codes, and redeemed recovery codes
+Scheduler::task('prune-two-factor-data', static fn() => \app\Cron\PruneTwoFactorData::run())
+->weekly();
 @addon-end

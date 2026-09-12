@@ -14,6 +14,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class FormControllerPasswordsTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $_POST = [];
+        FormController::$alerts = [];
+    }
+
     public function testAcceptsAStrongMatchingPassword(): void
     {
         // Arrange
@@ -53,11 +59,5 @@ final class FormControllerPasswordsTest extends TestCase
         $this->assertSame('', $_POST['password']);
         $this->assertSame('', $_POST['password-check']);
         $this->assertStringContainsString('do not match', FormController::formAlerts());
-    }
-
-    protected function setUp(): void
-    {
-        $_POST = [];
-        FormController::$alerts = [];
     }
 }

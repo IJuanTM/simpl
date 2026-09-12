@@ -1,12 +1,11 @@
 <?php
 use app\Controllers\FormController;
 use app\Controllers\RequestController;
+use app\Enums\TwoFactorMethod;
 ?>
 
 <section class="row users center-x">
   <form class="col g-row-1" method="POST" action="" data-track-form>
-    <?php $this->component('breadcrumbs') ?>
-
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2">Create user</h1>
@@ -16,7 +15,7 @@ use app\Controllers\RequestController;
     <?= FormController::formAlerts() ?>
 
     <div class="row form-row g-1">
-      <?php $this->component('form-input', [
+      <?php $this->component('form/form-input', [
           'id' => 'username',
           'label' => 'Username',
           'icon' => 'user',
@@ -25,34 +24,27 @@ use app\Controllers\RequestController;
           'value' => RequestController::post('username') ?? '',
       ]) ?>
 
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="role">User role: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group">
-          <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-          <select class="col" id="role" name="role">
-            <?php foreach ($this->pageObj->availableRoles as $r) : ?>
-              <option value="<?= $r['name'] ?>" <?= ($_POST['role'] ?? '') === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
-            <?php endforeach ?>
-          </select>
-        </div>
-      </div>
+      <?php $this->component('form/select', [
+          'id' => 'role',
+          'label' => 'User role',
+          'required' => true,
+          'icon' => 'user-group',
+          'options' => array_map(static fn(array $r) => ['value' => $r['name'], 'label' => $r['name']], $this->pageObj->availableRoles),
+          'selected' => is_string($_POST['role'] ?? null) ? $_POST['role'] : '',
+      ]) ?>
     </div>
 
     <div class="row form-row connected-row">
-      <div class="row">
-        <?php $this->component('form-input', [
-            'id' => 'first_name',
-            'label' => 'First name',
-            'icon' => 'address-card',
-            'maxlength' => MAX_NAME_LENGTH,
-            'placeholder' => 'Enter first name:',
-            'value' => RequestController::post('first_name') ?? '',
-        ]) ?>
-      </div>
+      <?php $this->component('form/form-input', [
+          'id' => 'first_name',
+          'label' => 'First name',
+          'icon' => 'address-card',
+          'maxlength' => MAX_NAME_LENGTH,
+          'placeholder' => 'Enter first name:',
+          'value' => RequestController::post('first_name') ?? '',
+      ]) ?>
 
-      <?php $this->component('form-input', [
+      <?php $this->component('form/form-input', [
           'id' => 'last_name',
           'label' => 'Last name',
           'icon' => 'address-card',
@@ -64,24 +56,27 @@ use app\Controllers\RequestController;
     </div>
 
     <div class="row">
-      <div class="col form-group g-row-0.25">
-        <div class="row">
-          <label class="col" for="email">Email: <span class="required">*</span></label>
-        </div>
-        <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['email'])) ? 'error' : '' ?>">
-          <div class="col input-prepend center f-0"><i class="fas fa-at"></i></div>
-          <input class="col" id="email" type="email" name="email" maxlength="<?= MAX_EMAIL_LENGTH ?>" placeholder="Enter email:" value="<?= RequestController::post('email') ?? '' ?>">
-        </div>
-        <div class="row">
-          <div class="col">
-            <p class="form-details">The user will be sent an email with information about the created account, as well as including the generated password. Which they will have to change upon first login.</p>
-          </div>
-        </div>
+      <?php $this->component('form/form-input', [
+          'id' => 'email',
+          'label' => 'Email',
+          'required' => true,
+          'icon' => 'at',
+          'type' => 'email',
+          'maxlength' => MAX_EMAIL_LENGTH,
+          'placeholder' => 'Enter email:',
+          'value' => RequestController::post('email') ?? '',
+          'error' => isset($_POST['submit']) && empty($_POST['email']),
+      ]) ?>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details">The user is emailed their account details and the generated password, which they must change on first login.</p>
       </div>
     </div>
 
     <div class="row">
-      <?php $this->component('form-input', [
+      <?php $this->component('form/form-input', [
           'id' => 'password',
           'label' => 'Password',
           'required' => true,
@@ -94,9 +89,18 @@ use app\Controllers\RequestController;
       ]) ?>
     </div>
 
+    <div class="row">
+      <?php $this->component('form/multi-select', [
+          'name' => 'required_2fa_methods',
+          'label' => 'Required two-factor methods',
+          'options' => array_map(static fn(TwoFactorMethod $m) => ['value' => $m->value, 'label' => $m->label()], TwoFactorMethod::cases()),
+          'selected' => is_array($_POST['required_2fa_methods'] ?? null) ? $_POST['required_2fa_methods'] : [],
+      ]) ?>
+    </div>
+
     <div class="row g-2 center-x">
       <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-      <button class="col button create-user g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-plus"></i>Create user</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-plus"></i>Create user</button>
     </div>
   </form>
 </section>

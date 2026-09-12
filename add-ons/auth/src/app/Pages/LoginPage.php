@@ -178,7 +178,7 @@ class LoginPage
         if (
             TWO_FACTOR_CONFIG['enabled']
             && TwoFactorController::isEnabledFor((int)$user['id'])
-            && !TwoFactorController::deviceIsTrusted((int)$user['id'])
+            && !TwoFactorController::deviceIsTrusted($user)
         ) {
             $this->beginTwoFactorChallenge($user);
             return;

@@ -1,6 +1,4 @@
-function csrfToken(): string {
-  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-}
+import {csrfToken} from '../helpers/csrf.ts';
 
 function toBuffer(base64Url: string): ArrayBuffer {
   const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(base64Url.length / 4) * 4, '=');
@@ -72,7 +70,7 @@ async function register(button: HTMLButtonElement): Promise<void> {
 
     const result = await postJson(button.dataset.registerUrl ?? '', {credential: credentialToJson(credential), name});
 
-    if (result.ok) window.location.assign('/user/settings/security');
+    if (result.ok) window.location.reload();
     else window.alert('That passkey could not be registered. Please try again.');
   } catch (error) {
     if (!(error instanceof DOMException && error.name === 'NotAllowedError')) window.alert('Passkey setup was cancelled or failed.');
@@ -89,9 +87,9 @@ async function authenticate(button: HTMLButtonElement): Promise<void> {
     const credential = await navigator.credentials.get({publicKey: reviveRequest(options.publicKey)}) as PublicKeyCredential;
 
     const result = await postJson(button.dataset.verifyUrl ?? '', credentialToJson(credential));
-    const data = await result.json();
+    const data = result.ok ? await result.json() : null;
 
-    if (data.ok && typeof data.redirect === 'string') window.location.assign(data.redirect);
+    if (data?.ok && typeof data.redirect === 'string') window.location.assign(data.redirect);
     else window.alert('That passkey was not accepted. Try another sign-in method.');
   } catch (error) {
     if (!(error instanceof DOMException && error.name === 'NotAllowedError')) window.alert('Passkey sign-in was cancelled or failed.');
@@ -102,8 +100,17 @@ async function authenticate(button: HTMLButtonElement): Promise<void> {
 
 export const passkeyModule = {
   init(): void {
-    if (!window.PublicKeyCredential) {
-      document.querySelectorAll<HTMLElement>('[data-passkey-unsupported]').forEach(el => el.hidden = false);
+    const usable = !!window.PublicKeyCredential && !!navigator.credentials;
+
+    if (!usable) {
+      const message = window.isSecureContext
+        ? "This browser can't use passkeys. Choose another method."
+        : 'Passkeys need a secure (HTTPS) connection. Open this site over HTTPS to use one.';
+
+      document.querySelectorAll<HTMLElement>('[data-passkey-unsupported]').forEach(el => {
+        el.textContent = message;
+        el.hidden = false;
+      });
       document.querySelectorAll<HTMLElement>('[data-passkey-register], [data-passkey-login]').forEach(el => el.hidden = true);
       return;
     }

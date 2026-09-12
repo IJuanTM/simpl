@@ -112,7 +112,7 @@ class LoginAttempts
     /**
      * Renders an attempt row's cell for the given column.
      */
-    public function renderCell(array $column, array $row): string
+    final public function renderCell(array $column, array $row): string
     {
         return match ($column['key']) {
             'id' => (string)$row['id'],

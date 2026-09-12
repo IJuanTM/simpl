@@ -1,7 +1,7 @@
 @use "../config" as *;
 
 form.table-tools-form {
-  max-width: unset !important;
+  max-width: unset;
 }
 
 i.table-search-clear {
@@ -213,6 +213,30 @@ div.table-container {
       th[data-hidden], td[data-hidden] {
         display: none;
       }
+    }
+  }
+}
+
+td.table-actions :is(a, button).table-action {
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  border: none;
+  background: none;
+
+  > i {
+    font-size: .875rem;
+  }
+
+  @include hover-focus {
+    color: var(--text-75);
+  }
+
+  &.delete {
+    color: $red;
+
+    @include hover-focus {
+      color: $red-dark;
     }
   }
 }

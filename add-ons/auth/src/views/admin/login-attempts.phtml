@@ -1,7 +1,5 @@
 <section class="row login-attempts">
   <div class="col f-col g-row-2">
-    <?php $this->component('breadcrumbs') ?>
-
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2">Login attempts</h1>
@@ -55,7 +53,7 @@
             </div>
           </div>
           <div class="col end-x">
-            <?php $this->component('column-toggle') ?>
+            <?php $this->component('table/column-toggle') ?>
           </div>
         </div>
 
@@ -78,7 +76,7 @@
               <div class="col center-y g-col-1">
                 <p class="no-wrap"><?= $this->pageObj->renderPaginationInfo() ?></p>
               </div>
-              <?php $this->component('per-page-select', ['id' => 'la-per-page']) ?>
+              <?php $this->component('table/per-page-select', ['id' => 'la-per-page']) ?>
             </div>
           </div>
           <div class="col center-y end-x">

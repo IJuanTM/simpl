@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Cron;
 
+use app\Cron\Traits\CronReport;
 use app\Database\DB;
 use app\Enums\TokenType;
 use app\Enums\UserStatus;
@@ -11,6 +12,8 @@ use app\Utils\Console;
 
 class DeactivateUnverifiedUsers
 {
+    use CronReport;
+
     /**
      * Deactivates ACTIVE users whose verification token has outlived the configured window.
      *
@@ -18,23 +21,23 @@ class DeactivateUnverifiedUsers
      */
     public static function run(): void
     {
+        $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['unverified_deactivation_after_days'] . ' days'));
+
         // A user with no verification token is already verified, so only join-matched rows qualify.
         $users = DB::select(
-            SELECT: ['users.id', 'users.email', 'tokens.created AS token_created'],
+            SELECT: ['users.id', 'users.email'],
             FROM: 'users',
             JOIN: ['id', ['tokens', 'user_id']],
             WHERE: [
                 'users.status' => UserStatus::ACTIVE->value,
-                'tokens.type' => TokenType::VERIFICATION->value
+                'tokens.type' => TokenType::VERIFICATION->value,
+                'tokens.created' => ['<', $cutoff]
             ]
         );
 
-        $cutoff = date('Y-m-d H:i:s', strtotime('-' . INACTIVE_USER_CONFIG['unverified_deactivation_after_days'] . ' days'));
         $deactivated = 0;
 
         foreach ($users as $user) {
-            if ($user['token_created'] >= $cutoff) continue;
-
             DB::update(
                 UPDATE: 'users',
                 SET: [
@@ -50,9 +53,6 @@ class DeactivateUnverifiedUsers
             $deactivated++;
         }
 
-        Console::line();
-        if ($deactivated > 0) Console::info("Deactivated $deactivated unverified user" . ($deactivated !== 1 ? 's' : ''));
-        else Console::info("No unverified users to deactivate");
-        Console::line();
+        self::report($deactivated, 'Deactivated', 'unverified user', 'No unverified users to deactivate');
     }
 }

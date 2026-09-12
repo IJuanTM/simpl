@@ -1,0 +1,58 @@
+<?php
+
+use app\Controllers\AppController;
+
+/**
+ * One-time modal shown right after 2FA is enabled or recovery codes are regenerated.
+ *
+ * @var array<int, string> $codes Freshly generated recovery codes, unsanitized
+ */
+
+$filename = AppController::sanitize(APP_NAME) . ' recovery codes ' . date('Y-m-d H-i') . '.txt';
+$header = AppController::sanitize(APP_NAME) . ' - Recovery codes&#10;Generated ' . date('Y-m-d H:i');
+?>
+
+<dialog class="modal-overlay" tabindex="-1" data-recovery-modal aria-label="Your recovery codes">
+  <div class="col modal f-col g-row-2">
+    <div class="row center-y g-col-1">
+      <h3 class="col">Your recovery codes</h3>
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="row modal-body">
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col">
+            <p>Each code works once. Store them somewhere safe now - they will not be shown again.</p>
+          </div>
+        </div>
+
+        <div class="row center-x">
+          <div class="col code-list f-col g-row-0.25 f-0">
+
+            <?php for ($i = 0, $iMax = count($codes); $i < $iMax; $i += 2) : ?>
+
+              <div class="row g-col-1.5">
+                <div class="col">
+                  <?= AppController::sanitize($codes[$i]) ?>
+                </div>
+
+                <?php if (isset($codes[$i + 1])) : ?>
+                  <div class="col">
+                    <?= AppController::sanitize($codes[$i + 1]) ?>
+                  </div>
+                <?php endif ?>
+              </div>
+
+            <?php endfor ?>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Close</button>
+      <button class="col button g-col-0.5 center-y f-0" type="button" data-download-codes data-filename="<?= $filename ?>" data-header="<?= $header ?>" data-codes="<?= AppController::sanitize(json_encode(array_values($codes))) ?>"><i class="fas fa-download"></i>Download</button>
+    </div>
+  </div>
+</dialog>

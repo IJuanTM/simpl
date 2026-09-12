@@ -160,6 +160,12 @@ class PageController extends Page
      */
     private function render(): void
     {
+        // Every page but the home page gets a breadcrumb trail.
+        // A page that built its own trail in its constructor (admin, settings) keeps it.
+        if ($this->page !== REDIRECT && BreadcrumbController::get() === []) {
+            BreadcrumbController::set([['label' => ucfirst(str_replace('-', ' ', $this->page)), 'url' => null]]);
+        }
+
         $this->part('top');
 
         $page = $this->page;

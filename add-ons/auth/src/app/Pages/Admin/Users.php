@@ -14,7 +14,6 @@ use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
 use app\Enums\TokenType;
-use app\Enums\TwoFactorMethod;
 use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Pages\Admin\Traits\AdminTableTrait;
@@ -59,7 +58,9 @@ class Users
     public int $totalAllUsers = 0;
     public int $currentUserId = 0;
     public array $availableRoles = [];
-    public string $twoFactorLabel = 'Off';
+    public ?array $twoFactorSettings = null;
+    public array $passkeys = [];
+    public array $requiredMethods = [];
 
     public function __construct(Page $page)
     {
@@ -110,7 +111,9 @@ class Users
 
             // Generated once per form round-trip and resubmitted via the readonly password field, so the value the admin sees on screen is always the one that actually gets applied.
             // Regenerating fresh on the POST request itself would silently create the account with a different password than what was displayed.
-            $password = $isSubmit && !empty($_POST['password']) ? $_POST['password'] : AuthController::generatePassword();
+            // Only a value with the generator's own shape is trusted back; a tampered (e.g. weak) field value is discarded and a fresh password generated.
+            $resubmitted = $isSubmit && is_string($_POST['password'] ?? null) && AuthController::isGeneratedPasswordShape($_POST['password']);
+            $password = $resubmitted ? $_POST['password'] : AuthController::generatePassword();
 
             if ($password === null) {
                 FormController::addAlert('Could not generate a password. Please try again.', AlertType::ERROR);
@@ -123,7 +126,7 @@ class Users
             return;
         }
 
-        if (in_array($subAction, ['edit', 'delete', 'restore', 'purge', 'reset-2fa'])) {
+        if (in_array($subAction, ['edit', 'delete', 'restore', 'purge', 'reset-2fa', 'two-factor'])) {
             $user = $this->requireRecord($page, 'admin/users', static fn(int $id): ?array => DB::single(
                 SELECT: ['users.*', 'roles.name AS role_name'],
                 FROM: 'users',
@@ -147,7 +150,11 @@ class Users
                 return;
             }
 
-            $this->twoFactorLabel = self::twoFactorLabelFor((int)$this->user['id']);
+            if ($subAction === 'two-factor') {
+                $this->twoFactorSettings = TwoFactorController::settingsFor((int)$this->user['id']);
+                $this->passkeys = TwoFactorController::passkeysFor((int)$this->user['id']);
+                $this->requiredMethods = self::requiredMethodsForUser($this->user);
+            }
 
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
         }
@@ -293,12 +300,13 @@ class Users
             DB::insert(
                 INTO: 'users',
                 VALUES: [
-                    'username' => $_POST['username'] ?: null,
-                    'first_name' => $_POST['first_name'] ?: null,
-                    'last_name' => $_POST['last_name'] ?: null,
+                    'username' => $_POST['username'] !== '' ? $_POST['username'] : null,
+                    'first_name' => $_POST['first_name'] !== '' ? $_POST['first_name'] : null,
+                    'last_name' => $_POST['last_name'] !== '' ? $_POST['last_name'] : null,
                     'email' => $_POST['email'],
                     'password' => password_hash($this->generatedPassword, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
                     'must_change_password' => 1,
+                    'required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null),
                 ]
             );
 
@@ -371,26 +379,6 @@ class Users
     }
 
     /**
-     * Human-readable two-factor status for a user, e.g. "Off" or "On - Email, Passkey".
-     *
-     * @param int $userId
-     *
-     * @return string
-     */
-    private static function twoFactorLabelFor(int $userId): string
-    {
-        if (!TwoFactorController::isEnabledFor($userId)) return 'Off';
-
-        $methods = array_map(static fn(TwoFactorMethod $method) => match ($method) {
-            TwoFactorMethod::EMAIL => 'Email',
-            TwoFactorMethod::TOTP => 'Authenticator app',
-            TwoFactorMethod::PASSKEY => 'Passkey',
-        }, TwoFactorController::enabledMethods($userId));
-
-        return $methods === [] ? 'On' : 'On - ' . implode(', ', $methods);
-    }
-
-    /**
      * Dispatches the POST request to the appropriate action handler.
      *
      * @return void
@@ -403,7 +391,23 @@ class Users
             'purge' => $this->purgeUser($this->user['id']),
             'restore' => $this->restoreUser($this->user['id']),
             'reset-2fa' => $this->resetTwoFactor(),
+            'two-factor' => $this->postTwoFactor(),
             default => null
+        };
+    }
+
+    /**
+     * Dispatches a POST from the two-factor management page based on its self-submitted action field.
+     *
+     * @return void
+     */
+    private function postTwoFactor(): void
+    {
+        match ($_POST['action'] ?? null) {
+            'reset-2fa-totp' => $this->resetTwoFactorTotp(),
+            'reset-2fa-passkey' => $this->resetTwoFactorPasskey(),
+            'update-required' => $this->updateRequiredTwoFactor(),
+            default => null,
         };
     }
 
@@ -437,9 +441,9 @@ class Users
             DB::update(
                 UPDATE: 'users',
                 SET: [
-                    'username' => $_POST['username'] ?: null,
-                    'first_name' => $_POST['first_name'] ?: null,
-                    'last_name' => $_POST['last_name'] ?: null,
+                    'username' => $_POST['username'] !== '' ? $_POST['username'] : null,
+                    'first_name' => $_POST['first_name'] !== '' ? $_POST['first_name'] : null,
+                    'last_name' => $_POST['last_name'] !== '' ? $_POST['last_name'] : null,
                     'email' => $_POST['email'],
                 ],
                 WHERE: compact('id')
@@ -557,7 +561,59 @@ class Users
     private function resetTwoFactor(): void
     {
         TwoFactorController::disableAll((int)$this->user['id']);
-        PageController::redirectWithAlert('admin/users/edit?id=' . $this->user['id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Removes just the authenticator-app method for the target user.
+     *
+     * @return void
+     */
+    private function resetTwoFactorTotp(): void
+    {
+        TwoFactorController::disableTotp((int)$this->user['id']);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'The authenticator app has been reset for this user.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Removes a single passkey for the target user.
+     *
+     * @return void
+     */
+    private function resetTwoFactorPasskey(): void
+    {
+        TwoFactorController::deletePasskey((int)$this->user['id'], (int)$_POST['passkey_id']);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'The passkey has been removed for this user.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Overrides which two-factor methods the target user is required to enrol in.
+     *
+     * @return void
+     */
+    private function updateRequiredTwoFactor(): void
+    {
+        DB::update(
+            UPDATE: 'users',
+            SET: ['required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null)],
+            WHERE: ['id' => (int)$this->user['id']]
+        );
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Effective required methods for a user row loaded via this page (which carries 'role_name' rather than 'role').
+     *
+     * @param array $user
+     *
+     * @return string[]
+     */
+    private static function requiredMethodsForUser(array $user): array
+    {
+        return TwoFactorController::requiredMethodsFor([
+            'role' => $user['role_name'] ?? null,
+            'required_2fa_methods' => $user['required_2fa_methods'] ?? null,
+        ]);
     }
 
     /**
@@ -567,7 +623,7 @@ class Users
     {
         $check = '<i class="fas fa-check"></i>';
         $times = '<i class="fas fa-times"></i>';
-        $muted = static fn(string $v): string => $v ?: '<span class="text-muted">-</span>';
+        $muted = static fn(string $v): string => $v !== '' ? $v : '<span class="text-muted">-</span>';
         $isVerified = !empty($row['is_verified']);
 
         return match ($column['key']) {
@@ -619,22 +675,16 @@ class Users
     {
         if ($row['id'] === $this->currentUserId) return '<td><span class="text-muted">-</span></td>';
 
-        $isActive = $row['status'] === UserStatus::ACTIVE->value;
         $uid = $row['id'];
         $uname = $row['username'] ?? '-';
         $uemail = $row['email'];
 
-        $html = '<td class="table-actions"><div class="row g-col-0.5 center-y">';
-
-        if ($isActive) {
-            $html .= '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '" aria-label="Edit user ' . $uemail . '"><i class="fas fa-pen"></i></a>';
-            $html .= '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>';
-        } else {
-            $html .= '<button class="col table-action restore f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>';
-            $html .= '<button class="col table-action purge f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>';
-        }
-
-        return $html . '</div></td>';
+        return $this->actionsCell($row['status'] === UserStatus::ACTIVE->value
+            ? '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '" aria-label="Edit user ' . $uemail . '"><i class="fas fa-pen"></i></a>'
+            . '<a class="col table-action f-0" href="/admin/users/two-factor?id=' . $uid . '" aria-label="Manage two-factor authentication for user ' . $uemail . '"><i class="fas fa-shield-halved"></i></a>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>'
+            : '<button class="col table-action restore f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>'
+            . '<button class="col table-action purge f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>');
     }
 
     /**

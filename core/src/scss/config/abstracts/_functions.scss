@@ -30,7 +30,6 @@ $z-layers: (
 
 // ---------------------------------------------------------------- //
 
-// Class-name suffix for a fractional value, e.g. 1.5 -> "1\.5", 2 -> "2".
 @function decimal-suffix($value) {
   $floor: math.floor($value);
   $frac: math.round(($value - $floor) * 100);

@@ -1,3 +1,5 @@
+@use "sass:list";
+@use "sass:map";
 @use "../../../config" as *;
 
 header {
@@ -125,8 +127,6 @@ header {
           }
 
           &.login, &.logout, &.admin {
-            color: #FFF;
-
             @include shimmer(true, rgba(#FFF, .25));
 
             &.active::after {
@@ -140,27 +140,16 @@ header {
             }
           }
 
-          &.login {
-            background-color: $green;
+          @each $class, $state in (login: success, logout: error, admin: info) {
+            $c: map.get($status, $state);
 
-            @include hover-focus {
-              background-color: $green-dark !important;
-            }
-          }
+            &.#{$class} {
+              color: list.nth($c, 2);
+              background-color: list.nth($c, 1);
 
-          &.logout {
-            background-color: $red;
-
-            @include hover-focus {
-              background-color: $red-dark !important;
-            }
-          }
-
-          &.admin {
-            background-color: $cyan;
-
-            @include hover-focus {
-              background-color: $cyan-dark !important;
+              @include hover-focus {
+                background-color: list.nth($c, 3);
+              }
             }
           }
 

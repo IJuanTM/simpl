@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace app\Controllers;
 
-use app\Models\Url;
 use app\Utils\Log;
 use Symfony\Component\Serializer\SerializerInterface;
 use Throwable;
@@ -167,10 +166,24 @@ class WebauthnController
 
         if ($factory === null) {
             $factory = new CeremonyStepManagerFactory();
-            $factory->setAllowedOrigins([rtrim(Url::absolute(''), '/')]);
+            $factory->setAllowedOrigins([self::allowedOrigin()]);
         }
 
         return $factory;
+    }
+
+    /**
+     * The site's web origin (scheme://host[:port], never a path) as WebAuthn expects it, from APP_URL.
+     * A trailing deploy sub-path would make every ceremony fail on a sub-directory install.
+     *
+     * @return string
+     */
+    private static function allowedOrigin(): string
+    {
+        $parts = parse_url((string)APP_URL) ?: [];
+        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? 'localhost');
+
+        return isset($parts['port']) ? "$origin:{$parts['port']}" : $origin;
     }
 
     /**

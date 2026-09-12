@@ -30,6 +30,7 @@ class CreateUsersTable
             $t->timestamp('last_update', notNull: true, default: 'CURRENT_TIMESTAMP')->onUpdateCurrentTimestamp();
             $t->enum('status', ['active', 'deactivated', 'deleted'], notNull: true, default: 'active');
             $t->timestamp('inactive_since', default: null);
+            $t->varchar('required_2fa_methods', 255, default: null);
             $t->primary('id');
         });
     }

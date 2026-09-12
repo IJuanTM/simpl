@@ -17,7 +17,8 @@ class CreateWebauthnCredentialsTable
         Schema::create('webauthn_credentials', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
             $t->bigintUnsigned('user_id', notNull: true);
-            $t->varchar('credential_id', 255, notNull: true)->unique();
+            // 512 chars of base64url: comfortably fits a spec-legal credential id (up to 1023 raw bytes) without an index-length overflow.
+            $t->varchar('credential_id', 512, notNull: true)->unique();
             $t->text('public_key', notNull: true);
             $t->intUnsigned('sign_count', notNull: true, default: 0);
             $t->varchar('transports', 255);

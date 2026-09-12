@@ -1,6 +1,4 @@
-function csrfToken(): string {
-  return document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-}
+import {csrfToken} from '../helpers/csrf.ts';
 
 async function logout(): Promise<void> {
   try {

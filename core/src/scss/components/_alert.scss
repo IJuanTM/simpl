@@ -13,17 +13,13 @@ div.alert {
 
   &.global {
     position: fixed;
-    z-index: layer("overlay", 50);
-    bottom: 5rem;
-    left: 0;
-    margin: 2rem;
+    z-index: layer("overlay", 20);
+    top: 7rem;
+    left: 50%;
+    margin: 1rem;
+    transform: translateX(-50%);
 
     @include floating-box-width;
-
-    @include breakpoint-down(md) {
-      bottom: 4rem;
-      margin: 1rem;
-    }
   }
 
   &.collapsing {
@@ -34,20 +30,5 @@ div.alert {
     opacity: 0;
   }
 
-  &.success {
-    background-color: $green;
-  }
-
-  &.warning {
-    color: #000;
-    background-color: $orange;
-  }
-
-  &.error {
-    background-color: $red;
-  }
-
-  &.info {
-    background-color: $cyan;
-  }
+  @include status-modifiers(fill);
 }

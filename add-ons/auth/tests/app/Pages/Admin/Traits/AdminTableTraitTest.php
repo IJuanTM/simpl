@@ -39,6 +39,11 @@ final class AdminTableTraitHost
 
 final class AdminTableTraitTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $_SESSION = [];
+    }
+
     public function testBuildColumnsMapsPositionalTuplesToNamedKeys(): void
     {
         // Act
@@ -52,11 +57,6 @@ final class AdminTableTraitTest extends TestCase
             ['key' => 'id', 'label' => 'ID', 'sortable' => true, 'width' => 60, 'visible' => false],
             ['key' => 'name', 'label' => 'Name', 'sortable' => false, 'width' => null, 'visible' => true],
         ], $columns);
-    }
-
-    private function call(AdminTableTraitHost $host, string $method, array $args = []): mixed
-    {
-        return (new ReflectionMethod(AdminTableTraitHost::class, $method))->invoke($host, ...$args);
     }
 
     public function testHiddenColumnsJsonListsThePositionalIndexesOfHiddenColumns(): void
@@ -279,8 +279,8 @@ final class AdminTableTraitTest extends TestCase
         $host = new AdminTableTraitHost();
 
         // Act + Assert
-        $this->assertSame('<span class="badge badge-success">Yes</span>', $this->call($host, 'renderBadge', [true, 'Yes']));
-        $this->assertSame('<span class="badge badge-error">No</span>', $this->call($host, 'renderBadge', [false, 'No']));
+        $this->assertSame('<span class="badge success">Yes</span>', $this->call($host, 'renderBadge', [true, 'Yes']));
+        $this->assertSame('<span class="badge error">No</span>', $this->call($host, 'renderBadge', [false, 'No']));
     }
 
     public function testInitTableComposesSearchFiltersAndSortIntoTheQueryParams(): void
@@ -311,11 +311,6 @@ final class AdminTableTraitTest extends TestCase
             ['sort' => 'name', 'dir' => 'desc', 'search' => 'ann', 'per_page' => 25, 'status' => 'active'],
             $host->activeQueryParams
         );
-    }
-
-    private function setFilterDefinitions(AdminTableTraitHost $host, array $definitions): void
-    {
-        (new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions'))->setValue($host, $definitions);
     }
 
     public function testInitTableOmitsPerPageFromActiveParamsWhenItMatchesTheDefault(): void
@@ -497,8 +492,13 @@ final class AdminTableTraitTest extends TestCase
         $this->assertSame(0, $host->endIndex);
     }
 
-    protected function setUp(): void
+    private function call(AdminTableTraitHost $host, string $method, array $args = []): mixed
     {
-        $_SESSION = [];
+        return (new ReflectionMethod(AdminTableTraitHost::class, $method))->invoke($host, ...$args);
+    }
+
+    private function setFilterDefinitions(AdminTableTraitHost $host, array $definitions): void
+    {
+        (new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions'))->setValue($host, $definitions);
     }
 }

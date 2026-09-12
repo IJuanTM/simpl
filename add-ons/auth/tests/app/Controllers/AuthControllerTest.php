@@ -9,11 +9,17 @@ use app\Controllers\FormController;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Only covers AuthController's config-driven, DB-free surface: password policy and
- * token generation. Everything else on AuthController touches DB, session or redirect.
+ * Only covers AuthController's config-driven, DB-free surface: password policy,
+ * generated-password shape and token generation. Everything else on AuthController
+ * touches DB, session or redirect.
  */
 final class AuthControllerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        FormController::$alerts = [];
+    }
+
     public function testGenerateTokenReturnsTheRequestedLengthUppercasedByDefault(): void
     {
         // Act
@@ -103,8 +109,27 @@ final class AuthControllerTest extends TestCase
         $this->assertSame(PASSWORD_CONFIG['generated_length'], strlen($password));
     }
 
-    protected function setUp(): void
+    public function testIsGeneratedPasswordShapeAcceptsAFreshlyGeneratedPassword(): void
     {
-        FormController::$alerts = [];
+        // Arrange
+        $password = AuthController::generatePassword();
+
+        // Act + Assert
+        $this->assertTrue(AuthController::isGeneratedPasswordShape($password));
+    }
+
+    public function testIsGeneratedPasswordShapeRejectsAWrongLength(): void
+    {
+        // Act + Assert
+        $this->assertFalse(AuthController::isGeneratedPasswordShape(str_repeat('A', PASSWORD_CONFIG['generated_length'] - 1)));
+    }
+
+    public function testIsGeneratedPasswordShapeRejectsTheAmbiguousCharactersItExcludes(): void
+    {
+        // Arrange
+        $ambiguousOnly = str_repeat('0', PASSWORD_CONFIG['generated_length']);
+
+        // Act + Assert
+        $this->assertFalse(AuthController::isGeneratedPasswordShape($ambiguousOnly));
     }
 }

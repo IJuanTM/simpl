@@ -1,11 +1,15 @@
 @use "../config" as *;
 
+form[hidden] {
+  display: none;
+}
+
 form {
   display: flex;
   flex-direction: column;
 
   @include breakpoint-up(sm) {
-    max-width: 48rem !important;
+    max-width: 48rem;
   }
 
   div.form-group {
@@ -107,11 +111,11 @@ form {
     color: var(--text-50);
 
     &.warning {
-      color: $orange !important;
+      color: $orange;
     }
 
     &.error {
-      color: $red !important;
+      color: $red;
     }
   }
 

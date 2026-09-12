@@ -6,7 +6,7 @@ use app\Controllers\AlertController;
 
 <!-- Alert -->
 <?php if (($alert = AlertController::pull()) !== null) : ?>
-  <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert"<?= $alert['timeout'] > 0 ? ' data-timeout="' . ($alert['timeout'] - time()) * 1000 . '"' : '' ?>>
+  <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert" popover="manual"<?= $alert['timeout'] > 0 ? ' data-timeout="' . ($alert['timeout'] - time()) * 1000 . '"' : '' ?>>
     <?= $alert['message'] ?>
   </div>
 <?php endif ?>

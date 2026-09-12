@@ -1,11 +1,21 @@
 @use "../config" as *;
 
 dialog.modal-overlay {
+  position: fixed;
+  z-index: layer("overlay");
+  top: 50%;
+  left: 50%;
   width: min(48rem, 100% - 2rem);
   max-height: calc(100% - 4rem);
+  margin: 0;
   padding: 0;
+  transform: translate(-50%, -50%);
   border: none;
   background-color: transparent;
+
+  &.confirm-modal {
+    width: min(28rem, 100% - 2rem);
+  }
 
   &, &::backdrop {
     transition: opacity .15s ease-in-out, overlay .15s ease-in-out allow-discrete, display .15s ease-in-out allow-discrete;
@@ -32,7 +42,7 @@ dialog.modal-overlay {
     background-color: var(--bg-section);
 
     div.modal-body {
-      p {
+      p:not(.quote) {
         font-size: .875rem;
         color: var(--text-muted);
       }
@@ -50,22 +60,8 @@ dialog.modal-overlay {
       }
     }
 
-    button.delete-user,
-    button.delete-role {
-      @include action-button($red, $red-dark, $important: true);
-
-      &[inert] {
-        color: rgba(#FFF, .5) !important;
-        background-color: rgba($red, .5) !important;
-      }
-    }
-
-    button.restore-user {
-      @include action-button($green, $green-dark, $important: true);
-    }
-
     button.purge-user {
-      @include action-button($magenta, $magenta-dark, $important: true);
+      @include action-button($magenta, $magenta-dark);
     }
   }
 }

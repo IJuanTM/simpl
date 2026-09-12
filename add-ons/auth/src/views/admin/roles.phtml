@@ -4,8 +4,6 @@ use app\Models\Url;
 
 <section class="row roles">
   <div class="col f-col g-row-2">
-    <?php $this->component('breadcrumbs') ?>
-
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2">Roles</h1>
@@ -17,7 +15,7 @@ use app\Models\Url;
 
         <div class="row g-1">
           <div class="col end-x">
-            <?php $this->component('column-toggle') ?>
+            <?php $this->component('table/column-toggle') ?>
           </div>
         </div>
 
@@ -43,4 +41,4 @@ use app\Models\Url;
   </div>
 </section>
 
-<?php $this->component('role-delete-modal') ?>
+<?php $this->component('modal/role-delete-modal') ?>

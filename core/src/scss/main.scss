@@ -10,7 +10,6 @@
   @include meta.load-css("base/scrollbar");
 }
 
-// .row/.col get their own layer so utilities (.f-0, .g-*) win over them.
 @layer layout {
   @include meta.load-css("utilities/flex");
 }
@@ -33,6 +32,8 @@
   @include meta.load-css("components/card");
   @include meta.load-css("components/code-block");
   @include meta.load-css("components/input");
+  @include meta.load-css("components/multi-button");
+  @include meta.load-css("components/multi-select");
   @include meta.load-css("components/quote");
 
   // PARTS

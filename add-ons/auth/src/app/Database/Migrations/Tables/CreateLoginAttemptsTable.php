@@ -23,7 +23,8 @@ class CreateLoginAttemptsTable
             $t->tinyint('success', notNull: true, default: 0);
             $t->varchar('failed_reason', 50);
             $t->primary('id');
-            $t->foreign('user_id', 'users');
+            // Keep the attempt history when a user is deleted: it is the admin audit log, not user-owned data.
+            $t->foreign('user_id', 'users', 'id', 'SET NULL');
             $t->index('idx_user_success_time', ['user_id', 'success', 'attempt_time']);
             $t->index('idx_ip_success_time', ['ip_address', 'success', 'attempt_time']);
         });

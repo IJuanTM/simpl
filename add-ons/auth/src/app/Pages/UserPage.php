@@ -6,7 +6,7 @@ namespace app\Pages;
 
 use app\Controllers\AppController;
 use app\Controllers\AuthController;
-use app\Controllers\FormController;
+use app\Controllers\BreadcrumbController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
 use app\Database\DB;
@@ -15,13 +15,11 @@ use app\Enums\ErrorCode;
 use app\Enums\Role;
 use app\Models\Page;
 use app\Pages\User\Settings;
-use app\Utils\RateLimiter;
 use JsonException;
 
 /**
- * Profile view for a user identified by /user/{id}, or the settings area under /user/settings.
- * Visitors see only the username and profile image. The profile owner sees an inline edit form.
- * Admins see a read-only extended view with an admin edit link.
+ * Read-only profile view for a user identified by /user/{id}, or the settings area under /user/settings.
+ * Visitors see the username and profile image; the owner also gets links into their settings; admins get an extended read-only view.
  */
 class UserPage
 {
@@ -42,12 +40,11 @@ class UserPage
     }
 
     /**
-     * Loads and sanitizes the target user, resolves owner/admin viewing rights, and processes the profile edit form if the owner submitted it.
+     * Loads and sanitizes the target user and resolves owner/admin viewing rights.
      *
      * @param Page $page
      *
      * @return void
-     * @throws JsonException
      */
     private function loadUser(Page $page): void
     {
@@ -55,14 +52,14 @@ class UserPage
 
         if (empty($id)) {
             PageController::error(ErrorCode::NOT_FOUND);
-            return;
+            exit;
         }
 
         $user = AuthController::getUserWithRole($id);
 
         if (!$user) {
             PageController::error(ErrorCode::NOT_FOUND);
-            return;
+            exit;
         }
 
         $user['role'] = isset($user['role']) ? Role::tryFrom($user['role']) : null;
@@ -73,6 +70,8 @@ class UserPage
         if ($user['first_name'] !== null) $user['first_name'] = AppController::sanitize($user['first_name']);
         if ($user['last_name'] !== null) $user['last_name'] = AppController::sanitize($user['last_name']);
         if ($user['last_login'] !== null) $user['last_login'] = AppController::sanitize($user['last_login']);
+        if ($user['created_at'] !== null) $user['created_at'] = AppController::sanitize($user['created_at']);
+        if ($user['status'] !== null) $user['status'] = AppController::sanitize((string)$user['status']);
         $this->user = $user;
         $this->profileImage = AuthController::getProfileImage($id);
 
@@ -80,85 +79,11 @@ class UserPage
         $this->isOwner = $currentUser !== null && (int)$currentUser['id'] === $id;
         $this->isAdmin = $currentUser !== null && $currentUser['role'] === Role::ADMIN->value;
 
-        if ($this->isOwner && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
-            $this->updateProfile($id);
-        }
+        BreadcrumbController::set([['label' => $this->isOwner ? 'Profile' : 'User', 'url' => null]]);
     }
 
     /**
-     * Validates and saves the profile fields submitted by the owner.
-     */
-    private function updateProfile(int $id): void
-    {
-        if (
-            !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
-            !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
-            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
-        ) return;
-
-        $currentEmail = DB::single(SELECT: 'email', FROM: 'users', WHERE: compact('id'))['email'] ?? null;
-        $emailChanged = $currentEmail !== null && $_POST['email'] !== $currentEmail;
-
-        // Email changes are sensitive - the current password stops a hijacked session from redirecting password resets.
-        if ($emailChanged) {
-            if (!FormController::validate('current-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])) return;
-
-            if (!RateLimiter::attempt("change-email-{$id}", LOCKOUT_CONFIG['change_email']['max_attempts'], LOCKOUT_CONFIG['change_email']['window_seconds'])) {
-                FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
-                return;
-            }
-
-            if (!AuthController::checkPassword($currentEmail, $_POST['current-password'])) {
-                $_POST['current-password'] = '';
-                FormController::addAlert('Your current password is incorrect!', AlertType::WARNING);
-                return;
-            }
-        }
-
-        if ($_POST['username'] !== '' && AuthController::usernameTakenByOtherUser($_POST['username'], $id)) {
-            $_POST['username'] = $this->user['username'] ?? '';
-            FormController::addAlert('That username is already taken!', AlertType::WARNING);
-            return;
-        }
-
-        if (AuthController::emailTakenByOtherUser($_POST['email'], $id)) {
-            $_POST['email'] = $this->user['email'];
-            FormController::addAlert('An account with this email already exists!', AlertType::WARNING);
-            return;
-        }
-
-        DB::update(
-            UPDATE: 'users',
-            SET: [
-                'username' => $_POST['username'] ?: null,
-                'first_name' => $_POST['first_name'] ?: null,
-                'last_name' => $_POST['last_name'] ?: null,
-                'email' => $_POST['email'],
-            ],
-            WHERE: compact('id')
-        );
-
-        // The profile view skips requireAuth(), so sync the edited fields into the owner's session here or the nav bar stays stale.
-        // Only these fields, never a full row refresh - that would mask a stale status/password_changed_at from requireAuth().
-        $sessionUser = SessionController::get('user');
-        $sessionUser['username'] = $_POST['username'] ?: null;
-        $sessionUser['first_name'] = $_POST['first_name'] ?: null;
-        $sessionUser['last_name'] = $_POST['last_name'] ?: null;
-        $sessionUser['email'] = $_POST['email'];
-        SessionController::set('user', $sessionUser);
-
-        if (VERIFICATION_CONFIG['required'] && $emailChanged) {
-            AuthController::issueVerificationToken($id, $_POST['email']);
-            PageController::redirectWithAlert('user/' . $id, 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
-            return;
-        }
-
-        PageController::redirectWithAlert('user/' . $id, 'Profile updated successfully!', AlertType::SUCCESS, 4);
-    }
-
-    /**
-     * Handles API requests for profile image operations.
+     * Routes settings API calls to the settings delegate, and profile-image calls to the handlers below.
      *
      * @param Page $page Page object with URL parameters
      *
@@ -181,14 +106,11 @@ class UserPage
             return;
         }
 
-        if ($page->subpage(1) !== null) switch ($page->subpage(1)) {
-            case 'update-profile-image':
-                self::updateProfileImage();
-                break;
-            case 'delete-profile-image':
-                self::deleteProfileImage();
-                break;
-        }
+        match ($page->subpage(1)) {
+            'update-profile-image' => self::updateProfileImage(),
+            'delete-profile-image' => self::deleteProfileImage(),
+            default => PageController::error(ErrorCode::NOT_FOUND),
+        };
     }
 
     /**
@@ -234,8 +156,15 @@ class UserPage
             return;
         }
 
-        if (getimagesize($file['tmp_name']) === false) {
+        $dimensions = getimagesize($file['tmp_name']);
+
+        if ($dimensions === false) {
             self::uploadFailed('The uploaded file is not a valid image.');
+            return;
+        }
+
+        if ($dimensions[0] > PROFILE_IMAGE_CONFIG['max_dimension'] || $dimensions[1] > PROFILE_IMAGE_CONFIG['max_dimension']) {
+            self::uploadFailed('The image dimensions are too large. Please choose an image no larger than ' . PROFILE_IMAGE_CONFIG['max_dimension'] . 'px on a side.');
             return;
         }
 

@@ -3,7 +3,7 @@
 section.login-attempts {
   div.login-attempts-table {
     @include breakpoint-up(sm) {
-      max-width: 96rem !important;
+      max-width: 96rem;
     }
   }
 }

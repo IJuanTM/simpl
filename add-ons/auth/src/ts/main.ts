@@ -9,6 +9,7 @@ import {modalModule} from './features/modal.ts';
 import {logoutModule} from './features/logout.ts';
 import {passwordPolicyModule} from './features/password-policy.ts';
 import {passkeyModule} from './features/passkey.ts';
+import {twoFactorModule} from './features/two-factor.ts';
 // @addon-end
 
 // @addon-insert:after('// Initialize modules')
@@ -22,4 +23,5 @@ modalModule.init();
 logoutModule.init();
 passwordPolicyModule.init();
 passkeyModule.init();
+twoFactorModule.init();
 // @addon-end

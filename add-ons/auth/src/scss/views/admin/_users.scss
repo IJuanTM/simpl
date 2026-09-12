@@ -3,7 +3,7 @@
 section.users {
   div.users-table {
     @include breakpoint-up(sm) {
-      max-width: 96rem !important;
+      max-width: 96rem;
     }
 
     i.fa-check {
@@ -28,25 +28,6 @@ section.users {
     }
 
     td.table-actions .table-action {
-      line-height: 1;
-      cursor: pointer;
-
-      > i {
-        font-size: .875rem;
-      }
-
-      @include hover-focus {
-        color: var(--text-75);
-      }
-
-      &.delete {
-        color: $red;
-
-        @include hover-focus {
-          color: $red-dark;
-        }
-      }
-
       &.restore {
         color: $green;
 

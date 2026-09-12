@@ -6,6 +6,7 @@ namespace app\Pages\Admin\Traits;
 
 use app\Controllers\AppController;
 use app\Controllers\PageController;
+use app\Enums\ErrorCode;
 use app\Models\Page;
 use JsonException;
 
@@ -30,6 +31,10 @@ trait AdminTableTrait
     public string $itemLabel = 'items';
 
     public array $tableColumns = [];
+
+    // True once initTable() has run. A consumer that only borrows the render helpers never calls it.
+    // Without this its AJAX endpoint would answer with an all-rows, "0 of 0" body nothing asked for.
+    private bool $tableInitialised = false;
 
     // Active filter values, keyed by param name
     public array $filters = [];
@@ -66,6 +71,11 @@ trait AdminTableTrait
      */
     final public function api(): void
     {
+        if (!$this->tableInitialised) {
+            PageController::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
         header('Content-Type: application/json');
 
         echo json_encode([
@@ -194,6 +204,18 @@ trait AdminTableTrait
     }
 
     /**
+     * The shared "<td class=table-actions>" shell an overriding renderActionsCell() wraps its buttons in.
+     *
+     * @param string $buttons Pre-rendered action controls
+     *
+     * @return string
+     */
+    protected function actionsCell(string $buttons): string
+    {
+        return '<td class="table-actions"><div class="row g-col-0.5 center-y">' . $buttons . '</div></td>';
+    }
+
+    /**
      * Renders a single cell's content for the given column and row.
      *
      * @param array<string, mixed> $column
@@ -218,8 +240,9 @@ trait AdminTableTrait
     /**
      * Renders the "X - Y of Z <items>" info string for the current page.
      * Called directly from views for the initial render, and from api() for AJAX.
+     * Overridable: Users appends its unfiltered total.
      */
-    final public function renderPaginationInfo(): string
+    public function renderPaginationInfo(): string
     {
         return $this->startIndex . ' - ' . $this->endIndex . ' of ' . $this->total . ' ' . $this->itemLabel;
     }
@@ -247,7 +270,7 @@ trait AdminTableTrait
      */
     private function renderBadge(bool $ok, string $label): string
     {
-        return '<span class="badge badge-' . ($ok ? 'success' : 'error') . '">' . $label . '</span>';
+        return '<span class="badge ' . ($ok ? 'success' : 'error') . '">' . $label . '</span>';
     }
 
     /**
@@ -256,6 +279,8 @@ trait AdminTableTrait
      */
     private function initTable(Page $page): void
     {
+        $this->tableInitialised = true;
+
         // Captured before the URL can override it, so we know the page's real default.
         $defaultPerPage = $this->perPage;
 

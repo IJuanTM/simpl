@@ -1,21 +1,7 @@
 @use "../config" as *;
 
 section.two-factor {
-  input.digit {
-    font-size: 2rem;
-    width: 4rem;
-    height: 4rem;
-    padding: 0;
-    text-align: center;
-    border: var(--border-width) solid var(--border-muted);
-    border-radius: var(--radius-sm);
-  }
-
-  .try-other {
-    align-items: center;
-
-    a {
-      font-size: 0.9rem;
-    }
+  .try-other a {
+    font-size: .875rem;
   }
 }

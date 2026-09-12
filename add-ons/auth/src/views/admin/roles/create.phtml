@@ -1,12 +1,11 @@
 <?php
 use app\Controllers\FormController;
 use app\Controllers\RequestController;
+use app\Enums\TwoFactorMethod;
 ?>
 
 <section class="row roles center-x">
   <form class="col g-row-1" method="POST" action="" data-track-form>
-    <?php $this->component('breadcrumbs') ?>
-
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2">Create role</h1>
@@ -16,7 +15,7 @@ use app\Controllers\RequestController;
     <?= FormController::formAlerts() ?>
 
     <div class="row">
-      <?php $this->component('form-input', [
+      <?php $this->component('form/form-input', [
           'id' => 'name',
           'label' => 'Name',
           'required' => true,
@@ -28,9 +27,18 @@ use app\Controllers\RequestController;
       ]) ?>
     </div>
 
+    <div class="row">
+      <?php $this->component('form/multi-select', [
+          'name' => 'required_2fa_methods',
+          'label' => 'Required two-factor methods',
+          'options' => array_map(static fn(TwoFactorMethod $m) => ['value' => $m->value, 'label' => $m->label()], TwoFactorMethod::cases()),
+          'selected' => is_array($_POST['required_2fa_methods'] ?? null) ? $_POST['required_2fa_methods'] : [],
+      ]) ?>
+    </div>
+
     <div class="row g-2 center-x">
       <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-      <button class="col button create-role g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-plus"></i>Create role</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-plus"></i>Create role</button>
     </div>
   </form>
 </section>

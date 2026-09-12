@@ -243,7 +243,7 @@ namespace tests\Controllers {
 
             // Act
             ob_start();
-            $page->component('breadcrumbs');
+            $page->component('nav/breadcrumbs');
             $output = ob_get_clean();
 
             // Assert

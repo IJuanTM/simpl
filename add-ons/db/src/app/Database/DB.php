@@ -193,7 +193,7 @@ class DB
      *
      * @param array  $where
      * @param string $prefix
-     * @param string $separator Logical operator joining conditions ('AND' or 'OR')
+     * @param string $separator      Logical operator joining conditions ('AND' or 'OR')
      * @param array  $usedParamNames Tracks param names already assigned, shared across calls (e.g. combineWhere()'s separate
      *                               AND/OR calls) so a prefixed key and an unprefixed key can't normalize to the same placeholder.
      *
@@ -542,7 +542,7 @@ class DB
      * @param string $FROM
      * @param array  $WHERE
      *
-     * @return bool
+     * @return bool True when at least one row was deleted
      */
     public static function delete(string $FROM, array $WHERE): bool
     {
@@ -552,8 +552,7 @@ class DB
         [$whereClause, $params] = self::buildWhere($WHERE);
         $query = "DELETE FROM $table WHERE $whereClause";
 
-        self::execute($query, $params);
-        return true;
+        return self::execute($query, $params)->rowCount() > 0;
     }
 
     /**

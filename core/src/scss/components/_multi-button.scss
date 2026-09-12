@@ -1,0 +1,35 @@
+@use "../config" as *;
+
+div.row.multi-button {
+  gap: 0;
+
+  > :is(button.button, a.button, label.button) {
+    &:not(:first-child) {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    &:not(:last-child) {
+      border-right: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+
+  &:is(.radio, .checkbox) > label.button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+
+    input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &:has(input:checked) {
+      @include action-button($simpl, $simpl-dark);
+    }
+  }
+}

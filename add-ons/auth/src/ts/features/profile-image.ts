@@ -53,20 +53,26 @@ export const profileImageModule = {
       }
 
       const maxSizeMb = Number(fileInput.dataset.maxSizeMb ?? 2);
-      if (file.size > maxSizeMb * 1024 * 1024) return fail(`The image size is too large. Please choose an image that is less than ${maxSizeMb}MB.`);
+      const maxBytes = maxSizeMb * 1024 * 1024;
+      const tooLarge = `The image size is too large. Please choose an image that is less than ${maxSizeMb}MB.`;
+
+      if (file.size > maxBytes) return fail(tooLarge);
       if (!file.type.startsWith('image/')) return fail('The file you selected is not an image. Please select an image file.');
 
       const blob = await cropToSquarePng(file);
       if (!blob) return fail('Failed to process the image. Please try again.');
+
+      // The re-encoded PNG can be larger than the source file, so the limit is re-checked on what actually gets sent.
+      if (blob.size > maxBytes) return fail(tooLarge);
 
       const formData = new FormData(form);
       formData.delete('image'); // only the cropped version below is ever read server-side
       formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
 
       try {
-        const response = await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {method: 'POST', body: formData});
-        if (response.ok) window.location.reload();
-        else fail('An error occurred while uploading the image. Please try again.');
+        // The endpoint always answers with a redirect; success and failure feedback both arrive as a flash alert on reload.
+        await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {method: 'POST', body: formData});
+        window.location.reload();
       } catch {
         fail('An error occurred while uploading the image. Please try again.');
       }

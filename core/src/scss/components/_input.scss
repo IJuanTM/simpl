@@ -24,7 +24,7 @@ textarea {
   field-sizing: content;
 }
 
-:has(> select) {
+:has(> select:not([multiple])) {
   position: relative;
   min-width: 6rem;
 
@@ -39,7 +39,7 @@ textarea {
   }
 }
 
-:has(> select:focus)::after {
+:has(> select:not([multiple]):focus)::after {
   content: "\f0d8";
 }
 

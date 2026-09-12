@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace app\Cron;
 
+use app\Cron\Traits\CronReport;
 use app\Database\DB;
 use app\Enums\UserStatus;
-use app\Utils\Console;
 
 class DeleteDeactivatedUsers
 {
+    use CronReport;
+
     /**
      * Deletes auto-deactivated accounts past the configured retention window.
      *
@@ -28,11 +30,8 @@ class DeleteDeactivatedUsers
 
         $pending = DB::count(FROM: 'users', WHERE: $where);
 
-        if ($pending > 0) {
-            DB::delete('users', $where);
-            Console::info("Deleted $pending deactivated user" . ($pending !== 1 ? 's' : ''));
-        } else Console::info("No users pending deletion");
+        if ($pending > 0) DB::delete('users', $where);
 
-        Console::line();
+        self::report($pending, 'Deleted', 'deactivated user', 'No users pending deletion');
     }
 }

@@ -7,6 +7,7 @@ namespace app\Pages\Admin;
 use app\Controllers\AppController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
+use app\Controllers\TwoFactorController;
 use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\Role;
@@ -137,7 +138,8 @@ class Roles
         DB::insert(
             INTO: 'roles',
             VALUES: [
-                'name' => $_POST['name']
+                'name' => $_POST['name'],
+                'required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null),
             ]
         );
 
@@ -183,7 +185,8 @@ class Roles
         DB::update(
             UPDATE: 'roles',
             SET: [
-                'name' => $_POST['name']
+                'name' => $_POST['name'],
+                'required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null),
             ],
             WHERE: compact('id')
         );
@@ -265,10 +268,10 @@ class Roles
     {
         $name = AppController::sanitize($row['name']);
 
-        return '<td class="table-actions"><div class="row g-col-0.5 center-y">'
-            . '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '" aria-label="Edit role ' . $name . '"><i class="fas fa-pen"></i></a>'
+        return $this->actionsCell(
+            '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '" aria-label="Edit role ' . $name . '"><i class="fas fa-pen"></i></a>'
             . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $name . '" data-role-user-count="' . $row['user_count'] . '" aria-label="Delete role ' . $name . '"><i class="fas fa-trash"></i></button>'
-            . '</div></td>';
+        );
     }
 
     /**

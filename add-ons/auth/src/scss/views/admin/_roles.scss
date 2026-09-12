@@ -3,43 +3,7 @@
 section.roles {
   div.roles-table {
     @include breakpoint-up(sm) {
-      max-width: 48rem !important;
-    }
-
-    td.table-actions :is(a, button).table-action {
-      > i {
-        font-size: .875rem;
-      }
-
-      @include hover-focus {
-        color: var(--text-75);
-      }
-
-      &.delete {
-        color: $red;
-
-        @include hover-focus {
-          color: $red-dark;
-        }
-      }
-    }
-
-    td.table-actions button.table-action {
-      line-height: 1;
-      padding: 0;
-      cursor: pointer;
-      border: none;
-      background: none;
-    }
-  }
-
-  form button {
-    &.create-role, &.edit-role {
-      @include shimmer(true);
-    }
-
-    &.delete-role {
-      @include action-button($red, $red-dark, $important: true);
+      max-width: 48rem;
     }
   }
 }

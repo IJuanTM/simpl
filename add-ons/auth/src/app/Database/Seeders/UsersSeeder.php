@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace app\Database\Seeders;
 
+use app\Controllers\TwoFactorController;
 use app\Database\DB;
+use app\Enums\TwoFactorMethod;
 use app\Enums\UserStatus;
+use app\Utils\Crypto;
+use OTPHP\TOTP;
 use Random\RandomException;
 
 class UsersSeeder
@@ -99,7 +103,37 @@ class UsersSeeder
                     'inactive_since' => $deletedAt
                 ]
             );
+
+            if (!$deletedAt) self::maybeSeedTwoFactor((int)DB::lastInsertId());
         }
+    }
+
+    /**
+     * Randomly enrols a seeded user into two-factor authentication, mirroring the DB state
+     * TwoFactorController itself would produce so the admin panel has realistic data to browse.
+     * Passkeys are skipped, they require real WebAuthn credential material that can't be faked.
+     *
+     * @throws RandomException
+     */
+    private static function maybeSeedTwoFactor(int $userId): void
+    {
+        if (random_int(1, 100) > 40) return;
+
+        TwoFactorController::enable($userId);
+        if (random_int(1, 100) > 50) return;
+
+        $secret = TOTP::generate(secretSize: 20)->getSecret();
+
+        DB::update(
+            UPDATE: 'user_two_factor',
+            SET: [
+                'totp_secret' => Crypto::encrypt($secret),
+                'totp_enabled' => 1,
+                'totp_confirmed_at' => date('Y-m-d H:i:s'),
+                'primary_method' => TwoFactorMethod::TOTP->value
+            ],
+            WHERE: ['user_id' => $userId]
+        );
     }
 
     /**

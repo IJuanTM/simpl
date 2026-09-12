@@ -7,12 +7,12 @@ $items = BreadcrumbController::get();
 
 <?php if ($items) : ?>
 
-  <nav class="row breadcrumbs g-col-0.5 w-auto f-0" aria-label="Breadcrumbs">
-    <?php foreach ($items as $index => $item) : ?>
+  <nav class="row breadcrumbs g-col-0.5" aria-label="Breadcrumbs">
+    <a class="col breadcrumb-item breadcrumb-home link f-0" href="<?= Url::to('home') ?>" aria-label="Home"><i class="fas fa-house" aria-hidden="true"></i></a>
 
-      <?php if ($index > 0) : ?>
-        <div class="col breadcrumb-separator center f-0" aria-hidden="true"><i class="fas fa-chevron-right"></i></div>
-      <?php endif ?>
+    <?php foreach ($items as $item) : ?>
+
+      <div class="col breadcrumb-separator center f-0" aria-hidden="true"><i class="fas fa-chevron-right"></i></div>
 
       <?php if ($item['url'] !== null) : ?>
         <a class="col breadcrumb-item link f-0" href="<?= Url::to($item['url']) ?>"><?= $item['label'] ?></a>

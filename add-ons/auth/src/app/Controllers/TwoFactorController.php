@@ -9,6 +9,7 @@ use app\Enums\TokenType;
 use app\Enums\TwoFactorMethod;
 use app\Utils\Crypto;
 use app\Utils\Log;
+use app\Utils\UserAgentParser;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
@@ -47,6 +48,55 @@ class TwoFactorController
     public static function isRequiredFor(array $user): bool
     {
         return self::roleInList($user['role'] ?? null, TWO_FACTOR_CONFIG['force_for_roles']);
+    }
+
+    /**
+     * Method slugs ('email'/'totp'/'passkey') $user's account policy requires enrolled: the user's own
+     * override when set, else their role's, else none.
+     *
+     * @param array $user User row carrying an optional 'required_2fa_methods' override and a 'role' name
+     *
+     * @return string[]
+     */
+    public static function requiredMethodsFor(array $user): array
+    {
+        $raw = $user['required_2fa_methods'] ?? null;
+
+        if ($raw === null && !empty($user['role'])) {
+            $raw = DB::single(SELECT: 'required_2fa_methods', FROM: 'roles', WHERE: ['name' => $user['role']])['required_2fa_methods'] ?? null;
+        }
+
+        return $raw ? explode(',', $raw) : [];
+    }
+
+    /**
+     * Restricts a submitted list of method slugs to known values, for storing as a role's or user's
+     * required_2fa_methods override.
+     *
+     * @param mixed $submitted Raw $_POST value, expected to be a string[] but not trusted
+     *
+     * @return string|null Comma-separated known slugs, or null when none were selected
+     */
+    public static function sanitizeRequiredMethods(mixed $submitted): ?string
+    {
+        $valid = array_column(TwoFactorMethod::cases(), 'value');
+        $methods = array_values(array_intersect(is_array($submitted) ? $submitted : [], $valid));
+
+        return $methods ? implode(',', $methods) : null;
+    }
+
+    /**
+     * Methods required for $user (per requiredMethodsFor()) that they have not yet enrolled in.
+     *
+     * @param array $user
+     *
+     * @return string[]
+     */
+    public static function missingRequiredMethods(array $user): array
+    {
+        $enrolled = array_map(static fn(TwoFactorMethod $m) => $m->value, self::enabledMethods((int)$user['id']));
+
+        return array_diff(self::requiredMethodsFor($user), $enrolled);
     }
 
     /**
@@ -120,6 +170,20 @@ class TwoFactorController
         self::upsertSettings($userId, ['enabled' => 1, 'email_enabled' => 1, 'primary_method' => TwoFactorMethod::EMAIL->value]);
 
         return self::regenerateRecoveryCodes($userId);
+    }
+
+    /**
+     * Issue recovery codes when 2FA is first turned on via TOTP or a passkey rather than email.
+     * Stashes them for the settings page's one-time display.
+     * Centralised here so "2FA enabled" always implies "recovery codes exist", whichever method turned it on.
+     *
+     * @param int $userId
+     *
+     * @return void
+     */
+    private static function issueFirstFactorRecoveryCodes(int $userId): void
+    {
+        SessionController::set('2fa_new_recovery_codes', self::regenerateRecoveryCodes($userId));
     }
 
     /**
@@ -246,6 +310,8 @@ class TwoFactorController
 
     /**
      * Verify a submitted email code, consuming it on success.
+     * One guarded DELETE (match + row-count in a single statement) makes consumption atomic,
+     * the same way consumeRecoveryCode()'s guarded UPDATE does - two concurrent submissions of the same code can't both win.
      *
      * @param int    $userId
      * @param string $code
@@ -254,10 +320,15 @@ class TwoFactorController
      */
     public static function verifyEmailChallenge(int $userId, string $code): bool
     {
-        if (!AuthController::checkToken($userId, $code, TokenType::TWO_FACTOR_EMAIL)) return false;
-
-        AuthController::deleteToken($userId, TokenType::TWO_FACTOR_EMAIL);
-        return true;
+        return DB::delete(
+            FROM: 'tokens',
+            WHERE: [
+                'user_id' => $userId,
+                'type' => TokenType::TWO_FACTOR_EMAIL->value,
+                'token' => hash('sha256', strtoupper($code)),
+                'expires' => ['>', date('Y-m-d H:i:s')],
+            ]
+        );
     }
 
     /**
@@ -352,9 +423,13 @@ class TwoFactorController
 
         // email_enabled stays on so an emailed code is always available as a fallback.
         $data = ['totp_enabled' => 1, 'totp_confirmed_at' => date('Y-m-d H:i:s'), 'enabled' => 1, 'email_enabled' => 1];
-        if (empty($row['enabled'])) $data['primary_method'] = TwoFactorMethod::TOTP->value;
+        $firstFactor = empty($row['enabled']);
+        if ($firstFactor) $data['primary_method'] = TwoFactorMethod::TOTP->value;
 
         self::upsertSettings($userId, $data);
+
+        if ($firstFactor) self::issueFirstFactorRecoveryCodes($userId);
+
         return true;
     }
 
@@ -394,12 +469,14 @@ class TwoFactorController
      */
     public static function disableTotp(int $userId): void
     {
-        self::upsertSettings($userId, [
-            'totp_secret' => null,
-            'totp_confirmed_at' => null,
-            'totp_enabled' => 0,
-            'primary_method' => TwoFactorMethod::EMAIL->value,
-        ]);
+        $data = ['totp_secret' => null, 'totp_confirmed_at' => null, 'totp_enabled' => 0];
+
+        // Only fall back to email when TOTP was actually the primary; a passkey/email primary is left alone.
+        if ((self::settingsFor($userId)['primary_method'] ?? null) === TwoFactorMethod::TOTP->value) {
+            $data['primary_method'] = TwoFactorMethod::EMAIL->value;
+        }
+
+        self::upsertSettings($userId, $data);
     }
 
     /**
@@ -460,9 +537,13 @@ class TwoFactorController
 
         $row = self::settingsFor($userId);
         $settings = ['passkey_enabled' => 1, 'enabled' => 1, 'email_enabled' => 1];
-        if (empty($row['enabled'])) $settings['primary_method'] = TwoFactorMethod::PASSKEY->value;
+        $firstFactor = empty($row['enabled']);
+        if ($firstFactor) $settings['primary_method'] = TwoFactorMethod::PASSKEY->value;
 
         self::upsertSettings($userId, $settings);
+
+        if ($firstFactor) self::issueFirstFactorRecoveryCodes($userId);
+
         return true;
     }
 
@@ -540,17 +621,17 @@ class TwoFactorController
      */
     public static function consumeRecoveryCode(int $userId, string $code): bool
     {
-        $row = DB::single(SELECT: 'id', FROM: 'two_factor_recovery_codes', WHERE: [
-            'user_id' => $userId,
-            'code_hash' => hash('sha256', strtoupper(trim($code))),
-            'used_at' => null,
-        ]);
-
-        return $row !== null && DB::update(
-                UPDATE: 'two_factor_recovery_codes',
-                SET: ['used_at' => date('Y-m-d H:i:s')],
-                WHERE: ['id' => $row['id']]
-            );
+        // One guarded UPDATE ("used_at IS NULL" in the WHERE) makes redemption atomic.
+        // Two concurrent submissions of the same code can't both win; DB::update reports only rows it changed.
+        return DB::update(
+            UPDATE: 'two_factor_recovery_codes',
+            SET: ['used_at' => date('Y-m-d H:i:s')],
+            WHERE: [
+                'user_id' => $userId,
+                'code_hash' => hash('sha256', strtoupper(trim($code))),
+                'used_at' => null,
+            ]
+        );
     }
 
     /**
@@ -580,6 +661,7 @@ class TwoFactorController
 
     /**
      * The user's active trusted-device rows, newest first, for display in security settings.
+     * Each row is enriched with a best-effort 'type'/'os'/'browser' breakdown of its stored user agent.
      *
      * @param int $userId
      *
@@ -587,12 +669,18 @@ class TwoFactorController
      */
     public static function trustedDevicesFor(int $userId): array
     {
-        return DB::select(
-            SELECT: ['label', 'created_at', 'last_used_at'],
+        $devices = DB::select(
+            SELECT: ['id', 'label', 'ip_address', 'created_at', 'last_used_at'],
             FROM: 'trusted_devices',
             WHERE: ['user_id' => $userId, 'expires' => ['>', date('Y-m-d H:i:s')]],
             ORDER_BY: 'created_at DESC'
         );
+
+        foreach ($devices as &$device) {
+            $device += UserAgentParser::describe($device['label']);
+        }
+
+        return $devices;
     }
 
     /**
@@ -636,6 +724,7 @@ class TwoFactorController
             'selector' => $selector,
             'validator_hash' => hash('sha256', $validator),
             'label' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255) ?: null,
+            'ip_address' => $_SERVER['REMOTE_ADDR'] ?? null,
             'expires' => date('Y-m-d H:i:s', $expires),
         ]);
 
@@ -643,14 +732,23 @@ class TwoFactorController
     }
 
     /**
-     * Whether the current request carries a valid, unexpired trusted-device cookie for $userId.
+     * Whether the current request carries a valid, unexpired trusted-device cookie for $user.
+     * Bumps the row's last_used_at on a match, mirroring the passkey verify path.
+     * Rechecks the same config gates shouldRememberDevice() applies at issuance, so an already-issued
+     * cookie stops bypassing 2FA once trusted devices are disabled globally or the user gains a force-2FA role.
      *
-     * @param int $userId
+     * @param array $user User row carrying 'id' and, ideally, a 'role' name (resolved with a query when absent)
      *
      * @return bool
      */
-    public static function deviceIsTrusted(int $userId): bool
+    public static function deviceIsTrusted(array $user): bool
     {
+        if (!TWO_FACTOR_CONFIG['trusted_device']['allow']) return false;
+
+        $userId = (int)$user['id'];
+        $role = $user['role'] ?? (AuthController::getUserWithRole($userId) ?? [])['role'] ?? null;
+        if (self::roleInList($role, TWO_FACTOR_CONFIG['trusted_device']['force_off_for_roles'])) return false;
+
         $cookie = $_COOKIE[self::TRUSTED_COOKIE] ?? '';
         if (!str_contains($cookie, ':')) return false;
 
@@ -662,8 +760,11 @@ class TwoFactorController
         ]);
 
         if (!$row || strtotime((string)$row['expires']) < time()) return false;
+        if (!hash_equals($row['validator_hash'], hash('sha256', $validator))) return false;
 
-        return hash_equals($row['validator_hash'], hash('sha256', $validator));
+        DB::update(UPDATE: 'trusted_devices', SET: ['last_used_at' => date('Y-m-d H:i:s')], WHERE: ['selector' => $selector]);
+
+        return true;
     }
 
     /**
@@ -677,6 +778,19 @@ class TwoFactorController
         if (str_contains($cookie, ':')) DB::delete(FROM: 'trusted_devices', WHERE: ['selector' => explode(':', $cookie, 2)[0]]);
 
         setcookie(self::TRUSTED_COOKIE, '', ['expires' => time() - 3600] + AppController::secureCookieFlags());
+    }
+
+    /**
+     * Revoke a single trusted device, scoped to $userId so one user can't forget another's row.
+     *
+     * @param int $userId
+     * @param int $deviceId
+     *
+     * @return void
+     */
+    public static function forgetDevice(int $userId, int $deviceId): void
+    {
+        DB::delete(FROM: 'trusted_devices', WHERE: ['id' => $deviceId, 'user_id' => $userId]);
     }
 
     /**

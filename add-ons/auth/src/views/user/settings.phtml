@@ -5,13 +5,63 @@ use app\Models\Url;
 <section class="row user-settings">
   <div class="col f-col g-row-2">
     <div class="row">
-      <div class="col">
-        <h1 data-typo="h2">Settings</h1>
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col">
+            <h1 data-typo="h2">Settings</h1>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <p>Manage your profile, password and two-factor authentication.</p>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="row g-2">
-      <a class="col card center-y" href="<?= Url::to('user/settings/security') ?>" aria-label="Link to security settings">
+      <a class="col card center-y" href="<?= Url::to('user/settings/profile') ?>" aria-label="Link to profile settings">
+        <div class="row g-col-2">
+          <div class="col card-icon center f-0">
+            <i class="fas fa-id-card" aria-hidden="true"></i>
+          </div>
+          <div class="col f-col g-row-1">
+            <div class="row">
+              <div class="col">
+                <h2 class="card-title" data-typo="h4">Profile</h2>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <p>Update your username, name, email address and avatar.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="col card center-y" href="<?= Url::to('user/settings/change-password') ?>" aria-label="Link to change password">
+        <div class="row g-col-2">
+          <div class="col card-icon center f-0">
+            <i class="fas fa-key" aria-hidden="true"></i>
+          </div>
+          <div class="col f-col g-row-1">
+            <div class="row">
+              <div class="col">
+                <h2 class="card-title" data-typo="h4">Change password</h2>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col">
+                <p>Set a new password for your account.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <a class="col card center-y" href="<?= Url::to('user/settings/two-factor') ?>" aria-label="Link to two-factor authentication">
         <div class="row g-col-2">
           <div class="col card-icon center f-0">
             <i class="fas fa-shield-halved" aria-hidden="true"></i>
@@ -19,12 +69,12 @@ use app\Models\Url;
           <div class="col f-col g-row-1">
             <div class="row">
               <div class="col">
-                <h2 class="card-title" data-typo="h4">Security</h2>
+                <h2 class="card-title" data-typo="h4">Two-factor</h2>
               </div>
             </div>
             <div class="row">
               <div class="col">
-                <p>Change your password and manage two-factor authentication.</p>
+                <p>Add a second step at login with email codes, an authenticator app or a passkey.</p>
               </div>
             </div>
           </div>

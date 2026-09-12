@@ -2,7 +2,7 @@
 
 main.content {
   min-height: $content-height;
-  padding: $content-padding-row $content-padding-col;
+  padding: $content-padding-row - 1.5rem $content-padding-col $content-padding-row $content-padding-col;
   background-color: var(--bg-content);
   background-image: radial-gradient(var(--text-5) .0625rem, transparent 0);
   background-position: center;
@@ -10,6 +10,6 @@ main.content {
 
   @include breakpoint-down(md) {
     min-height: calc($content-height + 2rem);
-    padding: calc($content-padding-row - 1rem) calc($content-padding-col - 2rem);
+    padding: calc($content-padding-row - 2.5rem) calc($content-padding-col - 2rem) calc($content-padding-row - 1rem) calc($content-padding-col - 2rem);
   }
 }

@@ -1,7 +1,9 @@
+@use "sass:list";
 @use "../config" as *;
 
 button.button,
-a.button {
+a.button,
+label.button {
   line-height: 1;
   position: relative;
   overflow: hidden;
@@ -31,6 +33,12 @@ a.button {
 
   &.button-simpl {
     @include action-button($simpl, $simpl-dark);
+  }
+
+  @each $name, $c in $status {
+    &.#{$name} {
+      @include action-button(list.nth($c, 1), list.nth($c, 3), $color: list.nth($c, 2));
+    }
   }
 
   &[inert] {

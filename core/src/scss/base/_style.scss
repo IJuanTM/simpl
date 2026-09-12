@@ -41,7 +41,7 @@ html:has(dialog[open]) {
 noscript {
   font-size: 1.25rem;
   position: fixed;
-  z-index: layer("top");
+  z-index: layer("top", 500);
   left: 0;
   padding: 2rem;
   color: $red;
@@ -55,11 +55,11 @@ noscript {
 // -------------------------------------------------------------------------------------------------------------------------------- //
 
 hr {
-  height: .125rem;
+  height: var(--border-width);
   background-color: var(--border);
 
   &.vertical {
-    width: .125rem;
+    width: var(--border-width);
     height: 100%;
   }
 

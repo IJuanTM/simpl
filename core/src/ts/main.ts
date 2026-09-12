@@ -3,6 +3,8 @@ import {cookieModule} from './features/cookie.ts';
 import {themeModule} from './features/theme.ts';
 import {timeoutModule} from './features/timeout.ts';
 import {codeModule} from './features/code.ts';
+import {multiButtonModule} from './features/multi-button.ts';
+import {multiSelectModule} from './features/multi-select.ts';
 
 // Import external stylesheets for Vite to bundle them, local stylesheets are handled by sass
 import './libs.css';
@@ -15,3 +17,5 @@ cookieModule.init();
 themeModule.init();
 timeoutModule.init();
 codeModule.init();
+multiButtonModule.init();
+multiSelectModule.init();

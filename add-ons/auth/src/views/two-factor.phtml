@@ -80,9 +80,10 @@ $methods = $this->pageObj->enrolledMethods;
       </div>
 
       <?php if ($mode === 'email'): ?>
+        <?php $resendCooldown = $this->pageObj->resendCooldown; ?>
         <div class="row">
           <div class="col">
-            <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $this->pageObj->resendCooldown > 0 ? ' data-timeout="' . $this->pageObj->resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.</p>
+            <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $resendCooldown > 0 ? ' data-timeout="' . $resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.<?php if ($resendCooldown > 0): ?> <span data-countdown-wrap>You can request another in <span data-countdown="<?= $resendCooldown ?>"><?= (int)ceil($resendCooldown / 1000) ?></span>s.</span><?php endif ?></p>
           </div>
         </div>
       <?php endif ?>
@@ -90,7 +91,7 @@ $methods = $this->pageObj->enrolledMethods;
     <?php endif ?>
 
     <div class="row">
-      <div class="col try-other g-row-0.25">
+      <div class="col try-other f-col center-y g-row-0.25">
         <p class="form-details">Try another way:</p>
         <?php if ($mode !== 'passkey' && in_array('passkey', $methods, true)): ?>
           <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/passkey')) ?>" aria-label="Use a passkey">Use a passkey</a>

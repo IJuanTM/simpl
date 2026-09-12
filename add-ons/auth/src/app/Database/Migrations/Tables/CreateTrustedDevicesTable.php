@@ -20,6 +20,7 @@ class CreateTrustedDevicesTable
             $t->varchar('selector', 32, notNull: true)->unique();
             $t->varchar('validator_hash', 64, notNull: true);
             $t->varchar('label', 255);
+            $t->varchar('ip_address', 45);
             // Explicit default: a bare first TIMESTAMP would otherwise get an implicit ON UPDATE CURRENT_TIMESTAMP.
             $t->timestamp('expires', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->timestamp('created_at', notNull: true, default: 'CURRENT_TIMESTAMP');

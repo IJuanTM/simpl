@@ -6,17 +6,23 @@ use app\Controllers\AppController;
  * Shared confirmation modal for a single-user action (delete/purge/restore).
  *
  * @var string $triggerAttr Bare data-* attribute that opens this modal, e.g. "data-user-delete-modal"
- * @var string $ariaLabel   Dialog aria-label, e.g. "Delete user"
- * @var string $title       Modal heading, e.g. "Delete user"
- * @var string $question    Confirmation question shown above the user info block
- * @var array  $quotes      List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
- * @var string $formClass   Class on the submit <form>, used by modal.ts to find it
+ * @var string $ariaLabel Dialog aria-label, e.g. "Delete user"
+ * @var string $title Modal heading, e.g. "Delete user"
+ * @var string $question Confirmation question shown above the user info block
+ * @var array  $quotes List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
+ * @var string $formClass Class on the submit <form>, used by modal.ts to find it
  * @var string $buttonClass Class on the submit <button>
- * @var string $icon        Font Awesome icon class for the submit button, e.g. "fa-user-slash"
- * @var string $buttonText  Submit button label, e.g. "Delete user"
+ * @var string $icon Font Awesome icon class for the submit button, e.g. "fa-user-slash"
+ * @var string $buttonText Submit button label, e.g. "Delete user"
+ * @var bool   $confirmCheckbox When true, an "are you sure" checkbox gates the submit button
+ * @var string $confirmText Label for that checkbox
  */
+
+$confirmCheckbox ??= false;
+$confirmText ??= 'I understand this action cannot be undone';
 ?>
-<dialog class="modal-overlay" <?= AppController::sanitize($triggerAttr) ?> aria-label="<?= AppController::sanitize($ariaLabel) ?>">
+
+<dialog class="modal-overlay" tabindex="-1" <?= AppController::sanitize($triggerAttr) ?> aria-label="<?= AppController::sanitize($ariaLabel) ?>">
   <div class="col modal f-col g-row-2">
     <div class="row center-y g-col-1">
       <h3 class="col"><?= AppController::sanitize($title) ?></h3>
@@ -49,12 +55,27 @@ use app\Controllers\AppController;
         </div>
 
         <?php foreach ($quotes as $quote): ?>
+
           <div class="row">
             <div class="col">
               <p class="quote <?= AppController::sanitize($quote['type']) ?>"><?= AppController::sanitize($quote['text']) ?></p>
             </div>
           </div>
+
         <?php endforeach ?>
+
+        <?php if ($confirmCheckbox) : ?>
+
+          <div class="row g-col-1 center-y">
+            <label class="col f-0">
+              <input type="checkbox" data-track-checkbox autocomplete="off">
+            </label>
+            <div class="col">
+              <p><?= AppController::sanitize($confirmText) ?></p>
+            </div>
+          </div>
+
+        <?php endif ?>
       </div>
     </div>
 
@@ -63,7 +84,7 @@ use app\Controllers\AppController;
       <form class="col <?= AppController::sanitize($formClass) ?> f-0" method="POST" action="">
         <input type="hidden" name="submit" value="1">
         <div class="row">
-          <button class="col button <?= AppController::sanitize($buttonClass) ?> g-col-0.5 center-y f-0" type="submit"><i class="fas <?= AppController::sanitize($icon) ?>"></i><?= AppController::sanitize($buttonText) ?></button>
+          <button class="col button <?= AppController::sanitize($buttonClass) ?> g-col-0.5 center-y f-0" type="submit"<?= $confirmCheckbox ? ' inert' : '' ?>><i class="fas <?= AppController::sanitize($icon) ?>"></i><?= AppController::sanitize($buttonText) ?></button>
         </div>
       </form>
     </div>

@@ -7,6 +7,7 @@ namespace app\Pages\User;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
+use app\Controllers\RequestController;
 use app\Controllers\SessionController;
 use app\Controllers\TwoFactorController;
 use app\Enums\AlertType;
@@ -17,13 +18,16 @@ use app\Utils\RateLimiter;
 use JsonException;
 
 /**
- * The /user/settings/security section: password change and two-factor authentication management.
+ * The /user/settings/two-factor section: enrol in, switch between and turn off the 2FA methods
+ * (email codes, authenticator app, passkeys), plus recovery codes and trusted devices.
  */
-class SecuritySettings
+class TwoFactorSettings
 {
     public bool $twoFactorAvailable = false;
     public bool $twoFactorEnabled = false;
     public bool $twoFactorRequired = false;
+    /** @var string[] method values ('email'/'totp'/'passkey') the account policy requires enrolled */
+    public array $requiredMethods = [];
     public bool $rememberDevice = true;
     public int $recoveryCodesLeft = 0;
     public array $newRecoveryCodes = [];
@@ -36,6 +40,8 @@ class SecuritySettings
     public bool $passkeyEnabled = false;
     public array $passkeys = [];
     public string $primaryMethod = 'email';
+    public string $activeTab = 'email';
+    public string $activeManageTab = 'recovery';
     /** @var string[] method values the user is enrolled in, e.g. ['email', 'totp'] */
     public array $enrolledMethods = [];
     private int $userId;
@@ -43,10 +49,23 @@ class SecuritySettings
     public function __construct()
     {
         $this->userId = (int)SessionController::get('user')['id'];
+        $this->initialize();
+    }
 
-        // State first, so the POST handlers can read the current 2FA settings and the view
-        // renders correct values after a non-redirecting handler (a validation failure).
+    /**
+     * Loads render state, abandons a stale unconfirmed authenticator secret once the user has
+     * navigated away from its tab, then dispatches a submitted form.
+     *
+     * @return void
+     */
+    private function initialize(): void
+    {
         $this->loadState();
+
+        if ($this->totpPending && $this->activeTab !== 'totp' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            TwoFactorController::disableTotp($this->userId);
+            $this->totpPending = false;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->dispatch();
     }
@@ -58,8 +77,11 @@ class SecuritySettings
      */
     private function loadState(): void
     {
+        $user = SessionController::get('user');
+
         $this->twoFactorAvailable = TWO_FACTOR_CONFIG['enabled'];
-        $this->twoFactorRequired = TwoFactorController::isRequiredFor(SessionController::get('user'));
+        $this->requiredMethods = TwoFactorController::requiredMethodsFor($user);
+        $this->twoFactorRequired = TwoFactorController::isRequiredFor($user) || $this->requiredMethods !== [];
 
         $settings = TwoFactorController::settingsFor($this->userId);
         $this->twoFactorEnabled = $settings !== null && !empty($settings['enabled']);
@@ -68,6 +90,9 @@ class SecuritySettings
         $this->passkeyEnabled = $settings !== null && !empty($settings['passkey_enabled']);
         $this->primaryMethod = $settings['primary_method'] ?? TwoFactorMethod::EMAIL->value;
         $this->passkeys = TwoFactorController::passkeysFor($this->userId);
+
+        $this->activeTab = self::validTab('tab', [TwoFactorMethod::EMAIL->value, TwoFactorMethod::TOTP->value, TwoFactorMethod::PASSKEY->value], $this->primaryMethod);
+        $this->activeManageTab = self::validTab('manageTab', ['recovery', 'devices'], 'recovery');
 
         if ($this->twoFactorEnabled) {
             $this->recoveryCodesLeft = TwoFactorController::recoveryCodesRemaining($this->userId);
@@ -85,13 +110,30 @@ class SecuritySettings
             }
         }
 
-        // Consume the one-shot list only on the GET that follows enable/regenerate, not on the
-        // POST request that set it (this method also runs after a redirecting action).
+        // Consume the one-shot list only on the GET that follows enable/regenerate.
+        // This method also runs after a redirecting POST, so skip it on the POST that set the list.
         $codes = $_SERVER['REQUEST_METHOD'] !== 'POST' ? SessionController::get('2fa_new_recovery_codes') : null;
         if (is_array($codes)) {
             $this->newRecoveryCodes = $codes;
             SessionController::remove('2fa_new_recovery_codes');
         }
+    }
+
+    /**
+     * Reads a tab-selector query param, falling back to $default when it's missing or names an
+     * unrecognised tab. The page's two tab strips each own their own param so that switching one
+     * never clobbers the other's remembered tab.
+     *
+     * @param string $param GET key naming the tab
+     * @param string[] $allowed Recognised values for this param
+     * @param string $default Fallback when the param is missing or unrecognised
+     *
+     * @return string
+     */
+    private static function validTab(string $param, array $allowed, string $default): string
+    {
+        $value = $_GET[$param] ?? '';
+        return in_array($value, $allowed, true) ? $value : $default;
     }
 
     /**
@@ -101,18 +143,19 @@ class SecuritySettings
      */
     private function dispatch(): void
     {
-        match ($_POST['action'] ?? 'change-password') {
+        match ($_POST['action'] ?? '') {
             'enable-2fa' => $this->enableTwoFactor(),
             'disable-2fa' => $this->disableTwoFactor(),
             'recovery-codes' => $this->regenerateRecoveryCodes(),
             'trusted-devices' => $this->revokeTrustedDevices(),
+            'forget-device' => $this->forgetDevice(),
             'remember-device' => $this->saveRememberDevicePreference(),
             'totp-setup' => $this->beginTotpSetup(),
             'totp-confirm' => $this->confirmTotpSetup(),
             'totp-remove' => $this->removeTotp(),
             'passkey-remove' => $this->removePasskey(),
             'set-primary' => $this->setPrimaryMethod(),
-            default => $this->changePassword(),
+            default => PageController::redirect('user/settings/two-factor'),
         };
     }
 
@@ -123,13 +166,13 @@ class SecuritySettings
      */
     private function enableTwoFactor(): void
     {
-        if (!TWO_FACTOR_CONFIG['enabled'] || TwoFactorController::isEnabledFor($this->userId)) {
-            PageController::redirect('user/settings/security');
+        if (!TWO_FACTOR_CONFIG['enabled'] || $this->twoFactorEnabled) {
+            PageController::redirect('user/settings/two-factor');
             return;
         }
 
         SessionController::set('2fa_new_recovery_codes', TwoFactorController::enable($this->userId));
-        PageController::redirectWithAlert('user/settings/security', 'Two-factor authentication is on. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
+        PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'Two-factor authentication is on. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
     }
 
     /**
@@ -139,33 +182,64 @@ class SecuritySettings
      */
     private function disableTwoFactor(): void
     {
-        if (!TwoFactorController::isEnabledFor($this->userId)) {
-            PageController::redirect('user/settings/security');
-            return;
-        }
+        if (!$this->requireEnabled()) return;
 
         if ($this->twoFactorRequired) {
-            PageController::redirectWithAlert('user/settings/security', 'Your role requires two-factor authentication; it cannot be turned off.', AlertType::WARNING, 5);
+            PageController::redirectWithAlert('user/settings/two-factor', 'Your role requires two-factor authentication; it cannot be turned off.', AlertType::WARNING, 5);
             return;
         }
 
-        if (!FormController::validate('current-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])) return;
-
-        $user = SessionController::get('user');
-
-        if (!RateLimiter::attempt("2fa-disable-{$this->userId}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
-            FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return;
-        }
-
-        if (!AuthController::checkPassword($user['email'], $_POST['current-password'])) {
-            $_POST['current-password'] = '';
-            FormController::addAlert('Your current password is incorrect!', AlertType::WARNING);
-            return;
-        }
+        if (!$this->confirmCurrentPassword("2fa-disable-{$this->userId}", 'user/settings/two-factor?tab=email')) return;
 
         TwoFactorController::disableAll($this->userId);
-        PageController::redirectWithAlert('user/settings/security', 'Two-factor authentication has been turned off.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/two-factor', 'Two-factor authentication has been turned off.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Redirects to the page and returns false when 2FA isn't on, since none of the per-method
+     * actions gated behind this make sense otherwise.
+     *
+     * @return bool
+     */
+    private function requireEnabled(): bool
+    {
+        if ($this->twoFactorEnabled) return true;
+
+        PageController::redirect('user/settings/two-factor');
+        return false;
+    }
+
+    /**
+     * Re-confirms the account password before a change that weakens the account outright.
+     * Turning 2FA off entirely and replacing recovery codes gate on this; removing a single
+     * factor (authenticator, one passkey) does not, since email always remains enrolled.
+     * Redirects with a global alert and returns false on a missing, rate-limited or wrong password,
+     * since the caller's action never completes on this request either way.
+     *
+     * @param string $rateLimitKey Per-action lockout key
+     * @param string $redirectTarget Page (and tab) to send the user back to on failure
+     *
+     * @return bool
+     */
+    private function confirmCurrentPassword(string $rateLimitKey, string $redirectTarget): bool
+    {
+        $password = RequestController::rawPost('current-password');
+
+        if ($password === null || $password === '' || mb_strlen($password) > MAX_PASSWORD_LENGTH) {
+            PageController::redirectWithAlert($redirectTarget, 'Please enter your current password!', AlertType::WARNING);
+            return false;
+        }
+
+        if (AuthController::checkPassword(SessionController::get('user')['email'], $password)) return true;
+
+        // Only a wrong password counts against the lockout, matching PasswordSettings::changePassword().
+        if (!RateLimiter::attempt($rateLimitKey, LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
+            PageController::redirectWithAlert($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return false;
+        }
+
+        PageController::redirectWithAlert($redirectTarget, 'Your current password is incorrect!', AlertType::WARNING);
+        return false;
     }
 
     /**
@@ -175,13 +249,12 @@ class SecuritySettings
      */
     private function regenerateRecoveryCodes(): void
     {
-        if (!TwoFactorController::isEnabledFor($this->userId)) {
-            PageController::redirect('user/settings/security');
-            return;
-        }
+        if (!$this->requireEnabled()) return;
+
+        if (!$this->confirmCurrentPassword("2fa-recovery-{$this->userId}", 'user/settings/two-factor?manageTab=recovery')) return;
 
         SessionController::set('2fa_new_recovery_codes', TwoFactorController::regenerateRecoveryCodes($this->userId));
-        PageController::redirectWithAlert('user/settings/security', 'New recovery codes generated. Your old codes no longer work.', AlertType::SUCCESS, 8);
+        PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'New recovery codes generated. Your old codes no longer work.', AlertType::SUCCESS, 8);
     }
 
     /**
@@ -193,7 +266,20 @@ class SecuritySettings
     {
         TwoFactorController::forgetAllDevices($this->userId);
         TwoFactorController::forgetThisDevice();
-        PageController::redirectWithAlert('user/settings/security', 'All remembered devices will be asked for two-factor again.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'All remembered devices will be asked for two-factor again.', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Revokes a single remembered device.
+     *
+     * @return void
+     */
+    private function forgetDevice(): void
+    {
+        $id = (int)($_POST['device_id'] ?? 0);
+        if ($id > 0) TwoFactorController::forgetDevice($this->userId, $id);
+
+        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'Device forgotten. It will be asked for two-factor again.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -203,21 +289,22 @@ class SecuritySettings
      */
     private function saveRememberDevicePreference(): void
     {
-        if (TwoFactorController::isEnabledFor($this->userId)) TwoFactorController::setRememberDevice($this->userId, isset($_POST['remember_device']));
+        if ($this->twoFactorEnabled) TwoFactorController::setRememberDevice($this->userId, isset($_POST['remember_device']));
 
-        PageController::redirectWithAlert('user/settings/security', 'Preference saved.', AlertType::SUCCESS, 3);
+        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'Preference saved.', AlertType::SUCCESS, 3);
     }
 
     /**
      * Stages a new authenticator-app secret and returns to the page, which then shows the QR code.
+     * Email must be turned on first - it is the account's mandatory fallback method.
      *
      * @return void
      */
     private function beginTotpSetup(): void
     {
-        if (TWO_FACTOR_CONFIG['enabled'] && !$this->totpEnabled) TwoFactorController::beginTotpEnrolment($this->userId);
+        if (TWO_FACTOR_CONFIG['enabled'] && $this->twoFactorEnabled && !$this->totpEnabled) TwoFactorController::beginTotpEnrolment($this->userId);
 
-        PageController::redirect('user/settings/security');
+        PageController::redirect('user/settings/two-factor?tab=totp');
     }
 
     /**
@@ -243,36 +330,47 @@ class SecuritySettings
         }
 
         if (!$wasEnabled) {
-            SessionController::set('2fa_new_recovery_codes', TwoFactorController::regenerateRecoveryCodes($this->userId));
-            PageController::redirectWithAlert('user/settings/security', 'Authenticator app enabled. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
+            // confirmTotp() has already issued and stashed the recovery codes for the one-time display.
+            PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'Authenticator app enabled. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
             return;
         }
 
-        PageController::redirectWithAlert('user/settings/security', 'Authenticator app enabled.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/two-factor?tab=totp', 'Authenticator app enabled.', AlertType::SUCCESS, 4);
     }
 
     /**
-     * Removes the authenticator-app method, leaving email as the fallback.
+     * Removes the authenticator-app method. Blocked when the account's policy requires it.
      *
      * @return void
      */
     private function removeTotp(): void
     {
+        if ($this->totpEnabled && in_array(TwoFactorMethod::TOTP->value, $this->requiredMethods, true)) {
+            PageController::redirectWithAlert('user/settings/two-factor?tab=totp', 'Your account requires the authenticator app; it cannot be removed.', AlertType::WARNING, 5);
+            return;
+        }
+
+        $message = $this->totpEnabled ? 'Authenticator app removed.' : 'Authenticator setup cancelled.';
         TwoFactorController::disableTotp($this->userId);
-        PageController::redirectWithAlert('user/settings/security', 'Authenticator app removed.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/two-factor?tab=totp', $message, AlertType::SUCCESS, 4);
     }
 
     /**
-     * Removes one of the user's passkeys.
+     * Removes one of the user's passkeys. Blocked when it's the last one and the account's policy requires it.
      *
      * @return void
      */
     private function removePasskey(): void
     {
+        if (count($this->passkeys) <= 1 && in_array(TwoFactorMethod::PASSKEY->value, $this->requiredMethods, true)) {
+            PageController::redirectWithAlert('user/settings/two-factor?tab=passkey', 'Your account requires a passkey; you must keep at least one.', AlertType::WARNING, 5);
+            return;
+        }
+
         $id = (int)($_POST['passkey_id'] ?? 0);
         if ($id > 0) TwoFactorController::deletePasskey($this->userId, $id);
 
-        PageController::redirectWithAlert('user/settings/security', 'Passkey removed.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/two-factor?tab=passkey', 'Passkey removed.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -283,61 +381,18 @@ class SecuritySettings
     private function setPrimaryMethod(): void
     {
         $method = TwoFactorMethod::tryFrom($_POST['primary_method'] ?? '');
+        $tab = $this->activeTab;
 
         if ($method !== null && in_array($method->value, $this->enrolledMethods, true)) {
             TwoFactorController::setPrimaryMethod($this->userId, $method);
+            $tab = $method->value;
         }
 
-        PageController::redirect('user/settings/security');
+        PageController::redirect('user/settings/two-factor?tab=' . $tab);
     }
 
     /**
-     * Processes the change-password form submission.
-     *
-     * @return void
-     */
-    private function changePassword(): void
-    {
-        if (
-            !FormController::validate('old-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
-            !FormController::validate('new-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
-            !FormController::validate('new-password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
-        ) return;
-
-        $user = SessionController::get('user');
-
-        if (!AuthController::checkPassword($user['email'], $_POST['old-password'])) {
-            // Only wrong-old-password attempts count against the lockout, so a correct password
-            // never burns a slot on an unrelated validation failure elsewhere in the form.
-            if (!RateLimiter::attempt("change-password-{$user['id']}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
-                FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
-                return;
-            }
-
-            $_POST['old-password'] = '';
-            FormController::addAlert('The old password is incorrect!', AlertType::WARNING);
-            return;
-        }
-
-        if ($_POST['old-password'] === $_POST['new-password']) {
-            FormController::addAlert('The new password is the same as the old password!', AlertType::WARNING);
-            return;
-        }
-
-        if (!FormController::validatePasswords('new-password', 'new-password-check')) return;
-
-        // Copied into this session's own cached user data too.
-        // Otherwise requireAuth() would treat this very session as stale on its very next request.
-        $user['password_changed_at'] = AuthController::updatePassword($user['id'], $_POST['new-password']);
-
-        $user['must_change_password'] = 0;
-        SessionController::set('user', $user);
-
-        AuthController::intendedRedirect('profile', 'Success! Your password has been changed!', AlertType::SUCCESS, 4);
-    }
-
-    /**
-     * JSON passkey endpoints under /api/user/settings/security/passkey/*. Auth was already enforced by Settings::dispatch().
+     * JSON passkey endpoints under /api/user/settings/two-factor/passkey/*. Auth was already enforced by Settings::dispatch().
      *
      * @param Page $page
      *
@@ -347,8 +402,14 @@ class SecuritySettings
      */
     final public function api(Page $page): void
     {
-        if ($page->subpage(2) !== 'passkey' || !TWO_FACTOR_CONFIG['enabled']) {
+        if (!TWO_FACTOR_CONFIG['enabled'] || $page->subpage(2) !== 'passkey') {
             PageController::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
+        // Reachable directly by a client, unlike beginTotpSetup(), so it needs its own email-first guard.
+        if (!$this->twoFactorEnabled) {
+            PageController::error(ErrorCode::BAD_REQUEST);
             return;
         }
 
@@ -410,9 +471,6 @@ class SecuritySettings
             PageController::error(ErrorCode::BAD_REQUEST);
             return;
         }
-
-        // The first passkey enables 2FA; stash recovery codes for the one-time display after the JS reloads the page.
-        if (!$this->twoFactorEnabled) SessionController::set('2fa_new_recovery_codes', TwoFactorController::regenerateRecoveryCodes($this->userId));
 
         self::json(['ok' => true]);
     }

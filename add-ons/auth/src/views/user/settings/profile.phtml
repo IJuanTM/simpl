@@ -1,0 +1,118 @@
+<?php
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Models\Url;
+
+$s = $this->pageObj->settings;
+?>
+
+<section class="row user-settings center-x">
+  <div class="col f-col g-row-1">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Edit profile</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <form class="col profile-image g-row-1" method="POST" action="" enctype="multipart/form-data">
+        <div class="row center-x">
+          <div class="col avatar center f-0">
+            <?php if ($s->profileImage) : ?>
+              <img src="<?= $s->profileImage ?>" alt="Profile image">
+            <?php else : ?>
+              <i class="fas fa-circle-user"></i>
+            <?php endif ?>
+          </div>
+        </div>
+
+        <input type="hidden" name="id" value="<?= $s->user['id'] ?>">
+        <input id="image" type="file" name="image" accept="image/*" data-max-size-mb="<?= PROFILE_IMAGE_CONFIG['max_size_mb'] ?>" hidden>
+
+        <div class="row g-2 center-x">
+          <button class="col profile-action edit button button-sm g-col-0.5 center-y f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>"><i class="fas fa-<?= $s->profileImage ? 'pen' : 'plus' ?>"></i><?= $s->profileImage ? 'Change photo' : 'Add photo' ?></button>
+          <?php if ($s->profileImage) : ?>
+            <button class="col profile-action button button-sm error g-col-0.5 center-y f-0" type="submit" formaction="<?= Url::to('api/user/' . $s->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i>Remove photo</button>
+          <?php endif ?>
+        </div>
+      </form>
+    </div>
+
+    <div class="row">
+      <form class="col g-row-1" method="POST" action="" data-track-form>
+        <div class="row form-row">
+          <?php $this->component('form/form-input', [
+              'id' => 'username',
+              'label' => 'Username',
+              'icon' => 'user',
+              'maxlength' => MAX_USERNAME_LENGTH,
+              'placeholder' => 'Enter username:',
+              'value' => RequestController::post('username') ?? $s->user['username'] ?? '',
+          ]) ?>
+        </div>
+
+        <div class="row form-row connected-row">
+          <?php $this->component('form/form-input', [
+              'id' => 'first_name',
+              'label' => 'First name',
+              'icon' => 'address-card',
+              'maxlength' => MAX_NAME_LENGTH,
+              'placeholder' => 'Enter first name:',
+              'value' => RequestController::post('first_name') ?? $s->user['first_name'] ?? '',
+          ]) ?>
+
+          <?php $this->component('form/form-input', [
+              'id' => 'last_name',
+              'label' => 'Last name',
+              'icon' => 'address-card',
+              'maxlength' => MAX_NAME_LENGTH,
+              'placeholder' => 'Enter last name:',
+              'value' => RequestController::post('last_name') ?? $s->user['last_name'] ?? '',
+              'groupClass' => 'f-g-2',
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'email',
+              'label' => 'Email',
+              'icon' => 'at',
+              'type' => 'email',
+              'maxlength' => MAX_EMAIL_LENGTH,
+              'placeholder' => 'Enter email:',
+              'value' => RequestController::post('email') ?? $s->user['email'] ?? '',
+              'error' => isset($_POST['submit']) && empty($_POST['email']),
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'current-password',
+              'label' => 'Current password',
+              'icon' => 'lock',
+              'type' => 'password',
+              'maxlength' => MAX_PASSWORD_LENGTH,
+              'placeholder' => 'Enter current password:',
+              'autocomplete' => 'current-password',
+              'ariaLabel' => 'Current password, required only to change your email address',
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <p class="form-details">Required only to change your email address.</p>
+          </div>
+        </div>
+
+        <div class="row g-2 center-x">
+          <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-floppy-disk"></i>Save changes</button>
+          <button class="col link lh-1 g-col-0.5 center-y f-0" type="reset" inert><i class="fas fa-rotate-left"></i>Clear changes</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</section>

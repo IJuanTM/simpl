@@ -18,8 +18,8 @@
 // SIMPL_TEST_DOMAIN.
 //
 // Run with no arguments for the interactive picker. Flags:
-//   --all           run every cumulative level (core, core-db, core-db-auth, ...) - no menu
-//   --only=<level>  run just that level - no menu
+//   --all           install a single site with every add-on merged in - no menu
+//   --only=<level>  run just that cumulative level (core, core-db, core-db-auth, ...) - no menu
 //
 import fs from 'node:fs';
 import os from 'node:os';
@@ -337,7 +337,7 @@ function writeVhostConf() {
 #
 # One-time WAMP setup:
 #   1. httpd.conf: uncomment  LoadModule vhost_alias_module modules/mod_vhost_alias.so
-#   2. httpd.conf: add        Include "${win}/httpd-vhosts.conf"
+#   2. httpd.conf: add        IncludeOptional "${win}/httpd-vhosts.conf"
 #   3. hosts file: add a "127.0.0.1 <level>.${DOMAIN}" line per level (see script output)
 #   4. restart Apache (WAMP tray)
 #
@@ -363,18 +363,18 @@ if (!mode) mode = process.stdin.isTTY ? 'pick' : 'all';
 let sets; // one add-on array per level, each dep-ordered
 if (mode === 'pick') {
   sets = [topo(DEPS, await pick())];
+} else if (mode === 'all') {
+  sets = [ADDONS];
 } else {
-  sets = [[]];
+  const levels = [[]];
   const acc = [];
   for (const a of ADDONS) {
     acc.push(a);
-    sets.push([...acc]);
+    levels.push([...acc]);
   }
-  if (mode.only) {
-    const want = sets.find((s) => levelLabel(s) === mode.only);
-    if (!want) die(`--only=${mode.only} matched no level`);
-    sets = [want];
-  }
+  const want = levels.find((s) => levelLabel(s) === mode.only);
+  if (!want) die(`--only=${mode.only} matched no level`);
+  sets = [want];
 }
 
 const VERSION = await resolveLatest();

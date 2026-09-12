@@ -44,8 +44,8 @@ class TwoFactorPage
         }
 
         $this->userId = (int)$pending['user_id'];
-        $this->mode = $this->resolveMode($page->subpage());
         $this->enrolledMethods = array_map(static fn(TwoFactorMethod $m) => $m->value, TwoFactorController::enabledMethods($this->userId));
+        $this->mode = $this->resolveMode($page->subpage());
         $this->resendCooldown = RateLimiter::retryAfterMs('2fa-resend-' . $this->userId);
 
         if ($this->mode === 'email' && $_SERVER['REQUEST_METHOD'] === 'GET') $this->ensureEmailCode();
@@ -54,7 +54,9 @@ class TwoFactorPage
     }
 
     /**
-     * Resolves the requested challenge mode, defaulting to the user's primary method.
+     * Resolves the requested challenge mode.
+     * A mode the user is not enrolled in, or an unknown one, falls back to the primary method.
+     * This stops an email-only user who opens /two-factor/totp from hitting a dead end. Recovery is always available.
      *
      * @param string|null $requested
      *
@@ -62,13 +64,16 @@ class TwoFactorPage
      */
     private function resolveMode(?string $requested): string
     {
-        if (in_array($requested, ['email', 'totp', 'passkey', 'recovery'], true)) return $requested;
-
-        return match (TwoFactorController::primaryMethod($this->userId)) {
+        $primary = match (TwoFactorController::primaryMethod($this->userId)) {
             TwoFactorMethod::TOTP => 'totp',
             TwoFactorMethod::PASSKEY => 'passkey',
             default => 'email',
         };
+
+        if ($requested === 'recovery') return 'recovery';
+        if (!in_array($requested, ['email', 'totp', 'passkey'], true)) return $primary;
+
+        return in_array($requested, $this->enrolledMethods, true) ? $requested : $primary;
     }
 
     /**

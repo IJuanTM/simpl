@@ -1,7 +1,9 @@
 <?php
-use app\Controllers\FormController;
-use app\Controllers\RequestController;
 use app\Models\Url;
+
+$u = $this->pageObj->user;
+$showDetails = $this->pageObj->isOwner || $this->pageObj->isAdmin;
+$adminView = $this->pageObj->isAdmin && !$this->pageObj->isOwner;
 ?>
 
 <section class="row user center-x">
@@ -9,176 +11,97 @@ use app\Models\Url;
 
     <div class="row profile-image-row">
       <div class="col center-x f-0">
-
-        <?php if ($this->pageObj->isOwner) : ?>
-
-          <form class="profile-image h-100" method="POST" action="" enctype="multipart/form-data">
-            <?php if ($this->pageObj->profileImage) : ?>
-              <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
-            <?php else : ?>
-              <i class="fas fa-circle-user"></i>
-            <?php endif ?>
-
-            <input type="hidden" name="id" value="<?= $this->pageObj->user['id'] ?>">
-            <input id="image" type="file" name="image" accept="image/*" data-max-size-mb="<?= PROFILE_IMAGE_CONFIG['max_size_mb'] ?>" hidden>
-
-            <div class="profile-image-menu center g-col-1 w-100 h-100">
-              <?php if ($this->pageObj->profileImage) : ?>
-                <button class="col profile-action edit f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Change profile image"><i class="fas fa-pen"></i></button>
-                <button class="col profile-action delete f-0" type="submit" formmethod="post" formaction="<?= Url::to('api/user/' . $this->pageObj->user['id'] . '/delete-profile-image') ?>" aria-label="Delete profile image"><i class="fas fa-trash"></i></button>
-              <?php else : ?>
-                <button class="col profile-action edit f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Add profile image"><i class="fas fa-plus"></i></button>
-              <?php endif ?>
-            </div>
-          </form>
-
-        <?php else : ?>
-
-          <div class="profile-image h-100">
-            <?php if ($this->pageObj->profileImage) : ?>
-              <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
-            <?php else : ?>
-              <i class="fas fa-circle-user"></i>
-            <?php endif ?>
-          </div>
-
-        <?php endif ?>
-
+        <div class="profile-image h-100">
+          <?php if ($this->pageObj->profileImage) : ?>
+            <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
+          <?php else : ?>
+            <i class="fas fa-circle-user"></i>
+          <?php endif ?>
+        </div>
       </div>
     </div>
 
     <div class="row">
       <div class="col center-x">
-        <h1 data-typo="h2"><?= $this->pageObj->user['username'] ?? $this->pageObj->user['email'] ?? 'User' ?></h1>
+        <h1 data-typo="h2"><?= $u['username'] ?? $u['email'] ?? 'User' ?></h1>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
+          <div class="col user-details-label center-y f-0">Name:</div>
+          <div class="col user-details-value scrollbar-thin center-y">
+            <?= trim(($u['first_name'] ?? '') . ' ' . ($u['last_name'] ?? '')) ?: '-' ?>
+          </div>
+        </div>
+
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-user-group"></i></div>
+          <div class="col user-details-label center-y f-0">Role:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= $u['role']?->value ?? '-' ?></div>
+        </div>
+
+        <div class="row user-details g-col-0.5">
+          <div class="col user-details-icon center-y f-0"><i class="fas fa-circle-check"></i></div>
+          <div class="col user-details-label center-y f-0">Status:</div>
+          <div class="col user-details-value scrollbar-thin center-y"><?= ucfirst((string)$u['status']) ?></div>
+        </div>
+
+        <?php if ($showDetails) : ?>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
+            <div class="col user-details-label center-y f-0">Email:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['email'] ?? '-' ?></div>
+            <?php if ($adminView) : ?>
+              <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+            <?php endif ?>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-user-check"></i></div>
+            <div class="col user-details-label center-y f-0">Verified:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['is_verified'] ? '<i class="fas fa-check verified"></i>' : '<i class="fas fa-times unverified"></i>' ?></div>
+            <?php if ($adminView) : ?>
+              <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+            <?php endif ?>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-calendar-plus"></i></div>
+            <div class="col user-details-label center-y f-0">Joined:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['created_at'] ?? '-' ?></div>
+            <?php if ($adminView) : ?>
+              <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+            <?php endif ?>
+          </div>
+
+          <div class="row user-details g-col-0.5">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
+            <div class="col user-details-label center-y f-0">Last login:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['last_login'] ?? '-' ?></div>
+            <?php if ($adminView) : ?>
+              <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+            <?php endif ?>
+          </div>
+
+        <?php endif ?>
       </div>
     </div>
 
     <?php if ($this->pageObj->isOwner) : ?>
 
-      <form class="col f-col g-row-1" method="POST" action="" data-track-form>
-
-        <?= FormController::formAlerts() ?>
-
-        <div class="row form-row">
-          <?php $this->component('form-input', [
-              'id' => 'username',
-              'label' => 'Username',
-              'icon' => 'user',
-              'maxlength' => MAX_USERNAME_LENGTH,
-              'placeholder' => 'Enter username',
-              'value' => RequestController::post('username') ?? $this->pageObj->user['username'] ?? '',
-          ]) ?>
-        </div>
-
-        <div class="row form-row connected-row">
-          <div class="row">
-            <?php $this->component('form-input', [
-                'id' => 'first_name',
-                'label' => 'First name',
-                'icon' => 'address-card',
-                'maxlength' => MAX_NAME_LENGTH,
-                'placeholder' => 'Enter first name',
-                'value' => RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '',
-            ]) ?>
-          </div>
-
-          <?php $this->component('form-input', [
-              'id' => 'last_name',
-              'label' => 'Last name',
-              'icon' => 'address-card',
-              'maxlength' => MAX_NAME_LENGTH,
-              'placeholder' => 'Enter last name',
-              'value' => RequestController::post('last_name') ?? $this->pageObj->user['last_name'] ?? '',
-              'groupClass' => 'f-g-2',
-          ]) ?>
-        </div>
-
-        <div class="row">
-          <?php $this->component('form-input', [
-              'id' => 'email',
-              'label' => 'Email',
-              'required' => true,
-              'icon' => 'at',
-              'type' => 'email',
-              'maxlength' => MAX_EMAIL_LENGTH,
-              'placeholder' => 'Enter email',
-              'value' => RequestController::post('email') ?? $this->pageObj->user['email'] ?? '',
-              'error' => isset($_POST['submit']) && empty($_POST['email']),
-          ]) ?>
-        </div>
-
-        <div class="row">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="current-password">Current password:</label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-lock"></i></div>
-              <input class="col" id="current-password" type="password" name="current-password" maxlength="<?= MAX_PASSWORD_LENGTH ?>" placeholder="Enter current password" autocomplete="current-password">
-            </div>
-            <div class="row">
-              <div class="col">
-                <p class="form-details">Required to change your email.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="row g-2 center-x">
-          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-save"></i>Save changes</button>
-          <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('user/settings/security') ?>"><i class="fas fa-key"></i>Change password</a>
-        </div>
-
-      </form>
+      <div class="row g-2 center-x">
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('user/settings/profile') ?>"><i class="fas fa-user-pen"></i>Edit profile</a>
+        <a class="col button change-password g-col-0.5 center-y f-0" href="<?= Url::to('user/settings/change-password') ?>"><i class="fas fa-key"></i>Change password</a>
+      </div>
 
     <?php elseif ($this->pageObj->isAdmin) : ?>
 
-      <div class="row">
-        <div class="col">
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Name:</div>
-            <div class="col user-details-value scrollbar-thin center-y">
-              <?= trim(($this->pageObj->user['first_name'] ?? '') . ' ' . ($this->pageObj->user['last_name'] ?? '')) ?: '-' ?>
-            </div>
-          </div>
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-at"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Email:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['email'] ?? '-' ?></div>
-          </div>
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-user-group"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Role:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['role']?->value ?? '-' ?></div>
-          </div>
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-circle-check"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Status:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= ucfirst((string)$this->pageObj->user['status']) ?></div>
-          </div>
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-user-check"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Verified:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['is_verified'] ? '<i class="fas fa-check"></i>' : '<i class="fas fa-times"></i>' ?></div>
-          </div>
-
-          <div class="row user-details g-col-0.5">
-            <div class="col user-details-icon center-y f-0"><i class="fas fa-clock"></i></div>
-            <div class="col user-details-label center-y end-x f-0">Last login:</div>
-            <div class="col user-details-value scrollbar-thin center-y"><?= $this->pageObj->user['last_login'] ?? '-' ?></div>
-          </div>
-
-        </div>
-      </div>
-
       <div class="row g-2 center-x">
-        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/edit?id=' . $this->pageObj->user['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/edit?id=' . $u['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
       </div>
 
     <?php endif ?>

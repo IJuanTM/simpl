@@ -1,0 +1,162 @@
+<?php
+use app\Controllers\AppController;
+use app\Controllers\FormController;
+use app\Enums\TwoFactorMethod;
+
+$user = $this->pageObj->user;
+$settings = $this->pageObj->twoFactorSettings;
+$passkeys = $this->pageObj->passkeys;
+$requiredMethods = $this->pageObj->requiredMethods;
+
+$emailOn = !empty($settings['enabled']);
+$totpOn = !empty($settings['totp_enabled']);
+$passkeyOn = !empty($settings['passkey_enabled']);
+$anyOn = $emailOn || $totpOn || $passkeyOn;
+
+$isRequired = static fn(TwoFactorMethod $method): bool => in_array($method->value, $requiredMethods, true);
+$dotClass = static function (bool $on, bool $required): string {
+    if ($on) return ' on';
+    return $required ? ' required' : '';
+};
+?>
+
+<?php if ($user !== []) : ?>
+
+  <section class="row users user-settings center-x">
+    <div class="col f-col g-row-1">
+      <div class="row">
+        <div class="col center-x">
+          <h1 data-typo="h2">Two-factor authentication</h1>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col center-x">
+          <p class="form-details">Status for <strong><?= AppController::sanitize($user['username'] ?? $user['email']) ?></strong>.</p>
+        </div>
+      </div>
+
+      <?= FormController::formAlerts() ?>
+
+      <form id="required-methods-form" method="POST" action="" data-track-form hidden>
+        <input type="hidden" name="action" value="update-required">
+      </form>
+
+      <div class="row">
+        <div class="col two-fa-card f-col">
+          <div class="row two-fa-body f-col g-row-1.5">
+
+            <div class="row g-col-0.5 center-y two-fa-method-row">
+              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($emailOn, $isRequired(TwoFactorMethod::EMAIL)) ?>" aria-hidden="true"></span></div>
+              <div class="col f-0">Email</div>
+              <div class="col end-x"></div>
+              <label class="col f-0 two-fa-required">
+                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::EMAIL->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::EMAIL) ? ' checked' : '' ?>>
+                Required
+              </label>
+            </div>
+
+            <div class="row g-col-0.5 center-y two-fa-method-row">
+              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($totpOn, $isRequired(TwoFactorMethod::TOTP)) ?>" aria-hidden="true"></span></div>
+              <div class="col f-0">Authenticator app</div>
+              <div class="col end-x">
+                <?php if ($totpOn && $settings['totp_confirmed_at']) : ?>
+                  <span class="text-muted">Confirmed <?= AppController::sanitize((string)$settings['totp_confirmed_at']) ?></span>
+                <?php endif ?>
+              </div>
+              <label class="col f-0 two-fa-required">
+                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::TOTP->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::TOTP) ? ' checked' : '' ?>>
+                Required
+              </label>
+              <?php if ($totpOn) : ?>
+                <form id="totp-reset-form" class="col f-0" method="POST" action="" hidden>
+                  <input type="hidden" name="action" value="reset-2fa-totp">
+                </form>
+                <button class="col button button-sm error f-0" type="submit" name="submit" form="totp-reset-form" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>">Reset</button>
+              <?php endif ?>
+            </div>
+
+            <div class="row g-col-0.5 center-y two-fa-method-row">
+              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($passkeyOn, $isRequired(TwoFactorMethod::PASSKEY)) ?>" aria-hidden="true"></span></div>
+              <div class="col f-0">Passkeys</div>
+              <div class="col end-x">
+                <?php if ($passkeys) : ?>
+                  <span class="text-muted"><?= count($passkeys) ?> registered</span>
+                <?php endif ?>
+              </div>
+              <label class="col f-0 two-fa-required">
+                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::PASSKEY->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::PASSKEY) ? ' checked' : '' ?>>
+                Required
+              </label>
+            </div>
+
+            <?php if ($passkeys) : ?>
+
+              <div class="row">
+                <ul class="col device-list f-col g-row-0.5">
+
+                  <?php foreach ($passkeys as $passkey) : ?>
+
+                    <li class="row g-col-0.5 center-y">
+                      <div class="col">
+                        <?= AppController::sanitize((string)$passkey['name']) ?>
+                        <span class="text-muted">- <?= $passkey['last_used_at'] ? 'last used ' . AppController::sanitize((string)$passkey['last_used_at']) : 'not used yet' ?></span>
+                      </div>
+                      <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" class="col f-0" method="POST" action="" hidden>
+                        <input type="hidden" name="action" value="reset-2fa-passkey">
+                        <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
+                      </form>
+                      <button class="button button-sm error" type="submit" name="submit" form="passkey-remove-form-<?= (int)$passkey['id'] ?>" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Remove this passkey">Remove</button>
+                    </li>
+
+                  <?php endforeach ?>
+
+                </ul>
+              </div>
+
+            <?php endif ?>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col center-x">
+          <p class="two-fa-note">Required methods force this user to complete setup at their next login.</p>
+        </div>
+      </div>
+
+      <div class="row g-2 center-x">
+        <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" form="required-methods-form" inert><i class="fas fa-check"></i>Save required methods</button>
+
+        <?php if ($anyOn) : ?>
+          <button class="col button warning g-col-0.5 center-y f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" data-modal-reset-2fa data-user-id="<?= $user['id'] ?>" data-user-username="<?= $user['username'] ?? '' ?>" data-user-email="<?= $user['email'] ?>" aria-label="Reset all two-factor authentication for this user"><i class="fas fa-shield-halved"></i>Reset everything</button>
+        <?php endif ?>
+      </div>
+    </div>
+  </section>
+
+  <?php $this->component('modal/user-action-modal', [
+      'triggerAttr' => 'data-user-reset-2fa-modal',
+      'ariaLabel' => 'Reset two-factor authentication',
+      'title' => 'Reset two-factor authentication',
+      'question' => 'Are you sure you want to reset two-factor authentication for this user?',
+      'quotes' => [
+          ['type' => 'warning', 'text' => 'This immediately turns off two-factor authentication and forgets all trusted devices for this user. They can set it up again from their own account settings.'],
+      ],
+      'formClass' => 'modal-reset-2fa-form',
+      'buttonClass' => 'warning',
+      'icon' => 'fa-shield-halved',
+      'buttonText' => 'Reset two-factor',
+  ]) ?>
+
+<?php else : ?>
+
+  <section class="row users min-h-content center-y">
+    <div class="col center-x">
+      <h1 data-typo="h5">Could not find user.</h1>
+    </div>
+  </section>
+
+<?php endif ?>

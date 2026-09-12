@@ -2,7 +2,7 @@
 
 section.cookie {
   position: fixed;
-  z-index: layer("overlay");
+  z-index: layer("overlay", 10);
   right: 0;
   bottom: 0;
   display: flex;
@@ -22,9 +22,6 @@ section.cookie {
 
     button {
       padding: 1rem;
-      cursor: pointer;
-
-      @include action-button($green, $green-dark, rgba(#FFF, .75));
     }
   }
 }

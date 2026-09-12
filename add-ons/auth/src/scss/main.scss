@@ -3,13 +3,13 @@
 @include meta.load-css("views/admin/users");
 @include meta.load-css("views/admin/roles");
 @include meta.load-css("views/admin/login-attempts");
-@include meta.load-css("views/verify-account");
 @include meta.load-css("views/two-factor");
 @include meta.load-css("views/settings");
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')
 @include meta.load-css("components/form");
+@include meta.load-css("components/code-input");
 @include meta.load-css("components/table");
 @include meta.load-css("components/modal");
 @include meta.load-css("components/badge");

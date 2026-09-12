@@ -22,6 +22,9 @@
  * @var string      $inputClass Extra classes for the input itself, e.g. "input-password".
  *
  * $fieldName is not called "name": that would collide with component()'s own $name parameter, since require() shares its scope.
+ *
+ * $value is echoed as-is; every caller passes it already escaped (RequestController::post() output, or a field sanitized on the page).
+ * $label, $placeholder and $ariaLabel are escaped below so a future caller passing a dynamic one can't inject markup.
  */
 
 $fieldName ??= $id;
@@ -31,19 +34,32 @@ $inputClass ??= '';
 $extraAttrs ??= '';
 $groupClass ??= '';
 $groupAttrs ??= '';
+$label = htmlspecialchars($label);
+
+if (isset($placeholder)) $placeholder = htmlspecialchars((string)$placeholder);
+if (isset($ariaLabel)) $ariaLabel = htmlspecialchars((string)$ariaLabel);
 ?>
+
 <div class="col form-group g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>
   <div class="row">
     <label class="col" for="<?= $id ?>"><?= $label ?>:<?= !empty($required) ? ' <span class="required">*</span>' : '' ?></label>
+
     <?php if (!empty($capsLockWarning)) : ?>
+
       <div class="col password-warning end-x hidden">Caps lock is on!</div>
+
     <?php endif ?>
+
   </div>
   <div class="row input-group<?= !empty($error) ? ' error' : '' ?>">
     <div class="col input-prepend center f-0"><i class="fas fa-<?= $icon ?>"></i></div>
     <input class="col<?= $inputClass ? " $inputClass" : '' ?>" id="<?= $id ?>" type="<?= $type ?>" name="<?= $fieldName ?>"<?= isset($maxlength) ? ' maxlength="' . $maxlength . '"' : '' ?><?= isset($placeholder) ? ' placeholder="' . $placeholder . '"' : '' ?> value="<?= $value ?>"<?= isset($autocomplete) ? ' autocomplete="' . $autocomplete . '"' : '' ?><?= isset($ariaLabel) ? ' aria-label="' . $ariaLabel . '"' : '' ?><?= !empty($readonly) ? ' readonly' : '' ?><?= $extraAttrs ? " $extraAttrs" : '' ?>>
+
     <?php if (!empty($appendIcon)) : ?>
+
       <div class="col input-append center f-0"><i class="fas fa-<?= $appendIcon ?>"></i></div>
+
     <?php endif ?>
+
   </div>
 </div>

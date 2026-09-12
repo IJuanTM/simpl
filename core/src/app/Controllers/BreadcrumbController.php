@@ -16,6 +16,8 @@ class BreadcrumbController
      */
     private static array $trail = [];
 
+    private static bool $suppressed = false;
+
     /**
      * Builds and sets the breadcrumb trail from the page's URL segments.
      *
@@ -48,10 +50,32 @@ class BreadcrumbController
      */
     public static function set(array $trail): void
     {
+        if (self::$suppressed) return;
+
         self::$trail = array_map(static fn(array $crumb): array => [
             'label' => AppController::sanitize($crumb['label']),
             'url' => $crumb['url'] !== null ? AppController::sanitize($crumb['url']) : null,
         ], $trail);
+    }
+
+    /**
+     * Blocks all further set()/generate() calls, so a page with no way out (a pinned mandatory action) renders no trail.
+     *
+     * @return void
+     */
+    public static function suppress(): void
+    {
+        self::$suppressed = true;
+    }
+
+    /**
+     * Whether suppress() was called - the layout also strips its navigation links when it was.
+     *
+     * @return bool
+     */
+    public static function isSuppressed(): bool
+    {
+        return self::$suppressed;
     }
 
     /**

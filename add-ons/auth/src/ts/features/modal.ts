@@ -1,7 +1,10 @@
+import {raiseGlobalAlert} from '../helpers/alert.ts';
+
 const base = window.location.pathname.split('/').slice(0, 3).join('/');
 
 function openModal(modal: HTMLDialogElement): void {
   modal.showModal();
+  raiseGlobalAlert();
 }
 
 function closeModal(modal: HTMLDialogElement): void {
@@ -40,10 +43,30 @@ function initUserActionModal(config: UserActionModalConfig): void {
     if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
     if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
     if (form) form.action = `${base}/${config.urlSegment}?id=${btn.dataset.userId}`;
+
+    // Start each open from an unconfirmed state; the 'change' re-inerts the gated submit button.
+    modal.querySelectorAll<HTMLInputElement>('[data-track-checkbox]').forEach(cb => {
+      cb.checked = false;
+      cb.dispatchEvent(new Event('change'));
+    });
+
     openModal(modal);
   });
 
   bindClose(modal);
+}
+
+// Plain confirm dialogs with no per-instance data to populate (e.g. two-factor settings' "are you sure" prompts).
+function initGenericModals(): void {
+  document.querySelectorAll<HTMLDialogElement>('.confirm-modal').forEach(bindClose);
+
+  document.addEventListener('click', e => {
+    const trigger = (e.target as HTMLElement).closest<HTMLElement>('[data-open-modal]');
+    if (!trigger) return;
+
+    const modal = document.getElementById(trigger.dataset.openModal ?? '');
+    if (modal instanceof HTMLDialogElement) openModal(modal);
+  });
 }
 
 function initRoleDeleteModal(): void {
@@ -82,6 +105,8 @@ export const modalModule = {
     initUserActionModal({modalSelector: '[data-user-delete-modal]', triggerAttr: 'data-modal-delete', formSelector: '.modal-soft-delete-form', urlSegment: 'delete'});
     initUserActionModal({modalSelector: '[data-user-purge-modal]', triggerAttr: 'data-modal-purge', formSelector: '.modal-purge-form', urlSegment: 'purge'});
     initUserActionModal({modalSelector: '[data-user-restore-modal]', triggerAttr: 'data-modal-restore', formSelector: '.modal-restore-form', urlSegment: 'restore'});
+    initUserActionModal({modalSelector: '[data-user-reset-2fa-modal]', triggerAttr: 'data-modal-reset-2fa', formSelector: '.modal-reset-2fa-form', urlSegment: 'reset-2fa'});
     initRoleDeleteModal();
+    initGenericModals();
   }
 };

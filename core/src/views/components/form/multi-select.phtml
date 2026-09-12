@@ -1,0 +1,38 @@
+<?php
+/**
+ * A native multi-select: picked options show as removable pills above a 3-row
+ * `<select multiple>` listbox. Degrades to a plain multi-select without JS.
+ *
+ * @var string                                          $name Name for the select, submitted as "$name[]"
+ * @var string                                          $label
+ * @var array<int, array{value: string, label: string}> $options
+ * @var string[]                                        $selected Values pre-selected
+ */
+
+use app\Controllers\AppController;
+
+$selected ??= [];
+?>
+
+<div class="col form-group multi-select g-row-0.5" data-multi-select>
+  <div class="row">
+    <label class="col" for="<?= AppController::sanitize($name) ?>"><?= AppController::sanitize($label) ?></label>
+  </div>
+
+  <div class="row">
+    <div class="col multi-select-box f-col">
+      <div class="row multi-select-pills g-col-0.5 g-row-0.5 f-wrap" data-multi-select-pills></div>
+
+      <select id="<?= AppController::sanitize($name) ?>" name="<?= AppController::sanitize($name) ?>[]" multiple size="3" data-multi-select-input>
+
+        <?php foreach ($options as $option) : ?>
+
+          <?php $isSelected = in_array($option['value'], $selected, true) ?>
+          <option value="<?= AppController::sanitize($option['value']) ?>"<?= $isSelected ? ' selected hidden' : '' ?>><?= AppController::sanitize($option['label']) ?></option>
+
+        <?php endforeach ?>
+
+      </select>
+    </div>
+  </div>
+</div>

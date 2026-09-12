@@ -1,10 +1,8 @@
 <?php
-use app\Controllers\AppController;
 use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\RequestController;
 use app\Controllers\SessionController;
-use app\Models\Url;
 ?>
 
 <?php if ($this->pageObj->user !== []) : ?>
@@ -13,8 +11,6 @@ use app\Models\Url;
 
     <section class="row users center-x">
       <form class="col g-row-1" method="POST" action="" data-track-form>
-        <?php $this->component('breadcrumbs') ?>
-
         <div class="row">
           <div class="col center-x">
             <h1 data-typo="h2">Edit user</h1>
@@ -24,7 +20,7 @@ use app\Models\Url;
         <?= FormController::formAlerts() ?>
 
         <div class="row form-row g-1">
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'id',
               'label' => 'Id',
               'icon' => 'hashtag',
@@ -34,7 +30,7 @@ use app\Models\Url;
               'inert' => true,
           ]) ?>
 
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'last_update',
               'label' => 'Last update',
               'icon' => 'calendar-check',
@@ -45,7 +41,7 @@ use app\Models\Url;
         </div>
 
         <div class="row form-row g-1">
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'username',
               'label' => 'Username',
               'icon' => 'user',
@@ -56,18 +52,16 @@ use app\Models\Url;
         </div>
 
         <div class="row form-row connected-row">
-          <div class="row">
-            <?php $this->component('form-input', [
-                'id' => 'first_name',
-                'label' => 'First name',
-                'icon' => 'address-card',
-                'maxlength' => MAX_NAME_LENGTH,
-                'placeholder' => 'Enter first name:',
-                'value' => RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '',
-            ]) ?>
-          </div>
+          <?php $this->component('form/form-input', [
+              'id' => 'first_name',
+              'label' => 'First name',
+              'icon' => 'address-card',
+              'maxlength' => MAX_NAME_LENGTH,
+              'placeholder' => 'Enter first name:',
+              'value' => RequestController::post('first_name') ?? $this->pageObj->user['first_name'] ?? '',
+          ]) ?>
 
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'last_name',
               'label' => 'Last name',
               'icon' => 'address-card',
@@ -79,7 +73,7 @@ use app\Models\Url;
         </div>
 
         <div class="row">
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'email',
               'label' => 'Email',
               'required' => true,
@@ -93,21 +87,16 @@ use app\Models\Url;
         </div>
 
         <div class="row form-row g-1">
-          <div class="col form-group g-row-0.25">
-            <div class="row">
-              <label class="col" for="role">User role: <span class="required">*</span></label>
-            </div>
-            <div class="row input-group">
-              <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
-              <select class="col edit-user-role" id="role" name="role">
-                <?php foreach ($this->pageObj->availableRoles as $r) : ?>
-                  <option value="<?= $r['name'] ?>" <?= ($_POST['role'] ?? $this->pageObj->user['role_name']) === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
-                <?php endforeach ?>
-              </select>
-            </div>
-          </div>
+          <?php $this->component('form/select', [
+              'id' => 'role',
+              'label' => 'User role',
+              'required' => true,
+              'icon' => 'user-group',
+              'options' => array_map(static fn(array $r) => ['value' => $r['name'], 'label' => $r['name']], $this->pageObj->availableRoles),
+              'selected' => is_string($_POST['role'] ?? null) ? $_POST['role'] : (string)($this->pageObj->user['role_name'] ?? ''),
+          ]) ?>
 
-          <?php $this->component('form-input', [
+          <?php $this->component('form/form-input', [
               'id' => 'verified',
               'label' => 'Verified',
               'icon' => 'check',
@@ -117,28 +106,11 @@ use app\Models\Url;
           ]) ?>
         </div>
 
-        <div class="row">
-          <?php $this->component('form-input', [
-              'id' => 'two_factor',
-              'label' => 'Two-factor',
-              'icon' => 'shield-halved',
-              'value' => $this->pageObj->twoFactorLabel,
-              'readonly' => true,
-              'inert' => true,
-          ]) ?>
-        </div>
-
         <div class="row g-2 center-x">
           <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-          <button class="col button edit-user g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-pen"></i>Edit user</button>
+          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-user-pen"></i>Edit user</button>
         </div>
       </form>
-
-      <?php if ($this->pageObj->twoFactorLabel !== 'Off') : ?>
-        <form class="row g-2 center-x" method="POST" action="<?= AppController::sanitize(Url::to('admin/users/reset-2fa?id=' . $this->pageObj->user['id'])) ?>">
-          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Reset two-factor authentication for this user"><i class="fas fa-shield-halved"></i>Reset two-factor</button>
-        </form>
-      <?php endif ?>
     </section>
 
   <?php else : ?>

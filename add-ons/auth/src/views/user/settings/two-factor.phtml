@@ -1,0 +1,565 @@
+<?php
+use app\Controllers\AppController;
+use app\Controllers\FormController;
+use app\Models\Url;
+
+$s = $this->pageObj->settings;
+
+$tabs = [
+    'email' => ['label' => 'Email', 'on' => $s->twoFactorEnabled],
+    'totp' => ['label' => 'Authenticator', 'on' => $s->totpEnabled],
+    'passkey' => ['label' => 'Passkeys', 'on' => $s->passkeyEnabled],
+];
+
+// Already validated and defaulted per-card by TwoFactorSettings::loadState().
+$primaryCardTab = $s->activeTab;
+$secondCardTab = $s->activeManageTab;
+
+// The method offered first at the login challenge, only meaningful once 2FA is on.
+$isDefault = static fn(string $method): bool => $s->twoFactorEnabled && $s->primaryMethod === $method;
+
+$methodEnabled = static fn(string $method): bool => match ($method) {
+  'email' => $s->twoFactorEnabled,
+  'totp' => $s->totpEnabled,
+  'passkey' => $s->passkeyEnabled,
+  default => false,
+};
+
+// Shared across all three method panels, so the footer isn't repeated per tab.
+$primaryFooter = function (string $method) use ($isDefault, $methodEnabled): void {
+  ?>
+  <?php if ($methodEnabled($method)) : ?>
+    <div class="row">
+      <hr class="col muted">
+    </div>
+
+    <?php if ($isDefault($method)) : ?>
+      <div class="row">
+        <div class="col center-x">
+          <p class="two-fa-note">Default method. This is the first thing you're asked for when you sign in.</p>
+        </div>
+      </div>
+    <?php else : ?>
+      <div class="row">
+        <form class="col" method="POST" action="">
+          <input type="hidden" name="action" value="set-primary">
+          <input type="hidden" name="primary_method" value="<?= $method ?>">
+          <div class="row g-2 center-x">
+            <button class="col button button-sm g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-star"></i>Make default</button>
+          </div>
+        </form>
+      </div>
+    <?php endif ?>
+  <?php endif ?>
+  <?php
+};
+
+// Reused by both password-gated forms below: turning 2FA off, and replacing recovery codes.
+// $idSuffix keeps each field's id unique since every panel stays mounted, just hidden via CSS.
+// A failed confirmation redirects instead of re-rendering, so there's no POST state to flag as errored.
+$currentPasswordConfirm = function (string $idSuffix, string $ariaContext): void {
+  $this->component('form/form-input', [
+      'id' => $idSuffix === '' ? 'current-password' : "current-password-$idSuffix",
+      'fieldName' => 'current-password',
+      'label' => 'Current password',
+      'required' => true,
+      'icon' => 'lock',
+      'type' => 'password',
+      'maxlength' => MAX_PASSWORD_LENGTH,
+      'placeholder' => 'Enter current password:',
+      'autocomplete' => 'current-password',
+      'ariaLabel' => "Current password, required to $ariaContext",
+  ]);
+};
+
+// A lightweight "are you sure" dialog for removing a single enrolled factor; no password needed.
+$areYouSureModal = function (string $id, string $formId, string $question, string $buttonText): void {
+  $this->component('modal/confirm-modal', ['id' => $id, 'formId' => $formId, 'question' => $question, 'buttonText' => $buttonText]);
+};
+?>
+
+<section class="row user-settings center-x">
+  <div class="col f-col g-row-1">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Two-factor authentication</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <?php if (!$s->twoFactorAvailable) : ?>
+
+      <div class="row">
+        <div class="col center-x">
+          <p class="form-details">Two-factor authentication is turned off for this site.</p>
+        </div>
+      </div>
+
+    <?php else : ?>
+
+      <?php if ($s->newRecoveryCodes) : ?>
+        <?php $this->component('modal/recovery-codes-modal', ['codes' => $s->newRecoveryCodes]) ?>
+      <?php endif ?>
+
+      <div class="row">
+        <div class="col two-fa-card f-col" data-tab-param="tab">
+          <div class="row two-fa-tabs f-0">
+
+            <?php foreach ($tabs as $slug => $tab) : ?>
+
+              <button type="button" class="col two-fa-tab f-0 center-y g-col-0.5<?= $primaryCardTab === $slug ? ' active' : '' ?>" data-tab="<?= AppController::sanitize($slug) ?>">
+                <span class="two-fa-dot<?= $tab['on'] ? ' on' : '' ?>" aria-hidden="true"></span><?= $tab['label'] ?><?php if ($isDefault($slug)) : ?><span class="badge bordered muted">default</span><?php endif ?>
+              </button>
+
+            <?php endforeach ?>
+
+          </div>
+
+          <div class="row">
+            <div class="col two-fa-body f-col g-row-1.5">
+              <div class="row" data-tab-panel="email"<?= $primaryCardTab === 'email' ? '' : ' hidden' ?>>
+                <div class="col two-fa-panel f-col g-row-1">
+
+                  <?php if (!$s->twoFactorEnabled) : ?>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">A one-time code is emailed to you each time you sign in. This is the simplest way to turn two-factor on.</p>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <form class="col" method="POST" action="">
+                        <input type="hidden" name="action" value="enable-2fa">
+                        <div class="row g-2 center-x">
+                          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-envelope"></i>Turn on with email codes</button>
+                        </div>
+                      </form>
+                    </div>
+
+                  <?php else : ?>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">A one-time code is emailed to your account address.</p>
+                      </div>
+                    </div>
+
+                    <?php if ($s->twoFactorRequired) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">Your account requires two-factor authentication; it cannot be turned off.</p>
+                        </div>
+                      </div>
+
+                    <?php elseif ($s->totpEnabled || $s->passkeyEnabled) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">Stays on as a backup while you have other methods enabled.</p>
+                        </div>
+                      </div>
+
+                    <?php else : ?>
+
+                      <div class="row">
+                        <div class="col">
+                          <p class="quote warning">Turning this off removes two-factor authentication from your account entirely. You will be less secure.</p>
+                        </div>
+                      </div>
+
+                      <div class="row">
+                        <form class="col g-row-1" method="POST" action="">
+                          <input type="hidden" name="action" value="disable-2fa">
+
+                          <div class="row">
+                            <div class="col">
+                              <p class="form-details">Enter your current password to confirm.</p>
+                            </div>
+                          </div>
+
+                          <div class="row">
+                            <?php $currentPasswordConfirm('', 'turn off two-factor') ?>
+                          </div>
+
+                          <div class="row g-2 center-x">
+                            <button class="col button error g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-shield-halved"></i>Turn off two-factor</button>
+                          </div>
+                        </form>
+                      </div>
+
+                    <?php endif ?>
+
+                    <?php $primaryFooter('email') ?>
+
+                  <?php endif ?>
+
+                </div>
+              </div>
+
+              <div class="row" data-tab-panel="totp"<?= $primaryCardTab === 'totp' ? '' : ' hidden' ?>>
+                <div class="col two-fa-panel f-col g-row-1"<?= $s->totpPending ? ' data-totp-setup' : '' ?>>
+
+                  <?php if ($s->totpPending) : ?>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">Scan this QR code with an app like Google Authenticator, Aegis or 1Password, then enter a code from the app to confirm.</p>
+                      </div>
+                    </div>
+
+                    <div class="row center-x">
+                      <div class="col qr-code f-0"><?= $s->totpQrSvg ?></div>
+                    </div>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">Can't scan it? Enter this key manually: <code class="totp-key"><?= AppController::sanitize($s->totpSecret) ?></code></p>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <form id="totp-confirm-form" class="col" method="POST" action="" data-track-form>
+                        <input type="hidden" name="action" value="totp-confirm">
+
+                        <div class="row">
+                          <?php $this->component('form/form-input', [
+                              'id' => 'totp-code',
+                              'label' => 'Code from your app',
+                              'required' => true,
+                              'icon' => 'mobile-screen',
+                              'maxlength' => 10,
+                              'placeholder' => 'Enter the 6-digit code:',
+                              'autocomplete' => 'one-time-code',
+                              'ariaLabel' => 'Code from your authenticator app',
+                              'extraAttrs' => 'inputmode="numeric"',
+                              'error' => isset($_POST['submit']) && ($_POST['action'] ?? '') === 'totp-confirm' && empty($_POST['totp-code']),
+                          ]) ?>
+                        </div>
+                      </form>
+                    </div>
+
+                    <form id="totp-cancel-form" method="POST" action="" hidden>
+                      <input type="hidden" name="action" value="totp-remove">
+                    </form>
+
+                    <div class="row g-2 center-x">
+                      <button class="col link lh-1 g-col-0.5 center-y f-0" type="submit" name="submit" form="totp-cancel-form"><i class="fas fa-xmark"></i>Cancel</button>
+                      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" form="totp-confirm-form" inert><i class="fas fa-check"></i>Confirm</button>
+                    </div>
+
+                  <?php elseif ($s->totpEnabled) : ?>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">Codes come from your authenticator app.</p>
+                      </div>
+                    </div>
+
+                    <?php if (in_array('totp', $s->requiredMethods, true)) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">Required by your account policy. It cannot be removed.</p>
+                        </div>
+                      </div>
+
+                    <?php else : ?>
+
+                      <form id="totp-remove-form" method="POST" action="" hidden>
+                        <input type="hidden" name="action" value="totp-remove">
+                      </form>
+
+                      <?php $areYouSureModal('confirm-totp-remove', 'totp-remove-form', 'This removes the authenticator app as a sign-in method. Email codes will still work.', 'Remove authenticator app') ?>
+
+                      <div class="row g-2 center-x">
+                        <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" data-open-modal="confirm-totp-remove"><i class="fas fa-trash"></i>Remove authenticator app</button>
+                      </div>
+
+                    <?php endif ?>
+
+                    <?php $primaryFooter('totp') ?>
+
+                  <?php else : ?>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">Use a time-based code from an authenticator app instead of waiting for an email.</p>
+                      </div>
+                    </div>
+
+                    <?php if (!$s->twoFactorEnabled) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">Turn on two-factor with email codes first, then you can add an authenticator app.</p>
+                        </div>
+                      </div>
+
+                    <?php else : ?>
+
+                      <div class="row">
+                        <form class="col" method="POST" action="">
+                          <input type="hidden" name="action" value="totp-setup">
+                          <div class="row g-2 center-x">
+                            <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-qrcode"></i>Set up authenticator app</button>
+                          </div>
+                        </form>
+                      </div>
+
+                    <?php endif ?>
+
+                  <?php endif ?>
+
+                </div>
+              </div>
+
+              <div class="row" data-tab-panel="passkey"<?= $primaryCardTab === 'passkey' ? '' : ' hidden' ?>>
+                <div class="col two-fa-panel f-col g-row-1">
+                  <div class="row">
+                    <div class="col">
+                      <p class="form-details">Sign in with this device's fingerprint, face or PIN, or a hardware security key.</p>
+                    </div>
+                  </div>
+
+                  <?php if ($s->passkeys) : ?>
+
+                    <div class="row">
+                      <ul class="col device-list f-col g-row-0.5">
+
+                        <?php foreach ($s->passkeys as $passkey) : ?>
+
+                          <li class="row">
+                            <div class="col f-col g-row-0.5">
+                              <div class="row">
+                                <div class="col">
+                                  <?= AppController::sanitize((string)$passkey['name']) ?>
+                                  <span class="text-muted">- <?= $passkey['last_used_at'] ? 'last used ' . AppController::sanitize((string)$passkey['last_used_at']) : 'not used yet' ?></span>
+                                </div>
+                              </div>
+
+                              <?php if (count($s->passkeys) <= 1 && in_array('passkey', $s->requiredMethods, true)) : ?>
+
+                                <div class="row">
+                                  <p class="two-fa-note">Required by your account policy. You must keep at least one passkey.</p>
+                                </div>
+
+                              <?php else : ?>
+
+                                <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" method="POST" action="" hidden>
+                                  <input type="hidden" name="action" value="passkey-remove">
+                                  <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
+                                </form>
+
+                                <?php $areYouSureModal('confirm-passkey-remove-' . (int)$passkey['id'], 'passkey-remove-form-' . (int)$passkey['id'], 'This removes "' . $passkey['name'] . '" as a sign-in method. Email codes will still work.', 'Remove passkey') ?>
+
+                                <div class="row g-2 center-x">
+                                  <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" data-open-modal="confirm-passkey-remove-<?= (int)$passkey['id'] ?>" aria-label="Remove this passkey"><i class="fas fa-trash"></i>Remove passkey</button>
+                                </div>
+
+                              <?php endif ?>
+                            </div>
+                          </li>
+
+                        <?php endforeach ?>
+
+                      </ul>
+                    </div>
+
+                  <?php endif ?>
+
+                  <?php if (!$s->twoFactorEnabled) : ?>
+
+                    <div class="row">
+                      <div class="col center-x">
+                        <p class="two-fa-note">Turn on two-factor with email codes first, then you can add a passkey.</p>
+                      </div>
+                    </div>
+
+                  <?php else : ?>
+
+                    <div class="row g-2 center-x">
+                      <button class="col button g-col-0.5 center-y f-0" type="button"
+                              data-passkey-register
+                              data-options-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/options')) ?>"
+                              data-register-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/register')) ?>"><i class="fas fa-fingerprint"></i>Add a passkey
+                      </button>
+                    </div>
+
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details" data-passkey-unsupported hidden></p>
+                      </div>
+                    </div>
+
+                  <?php endif ?>
+
+                  <?php $primaryFooter('passkey') ?>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <?php if ($s->twoFactorEnabled) : ?>
+
+        <div class="row">
+          <div class="col two-fa-card f-col" data-tab-param="manageTab">
+            <div class="row two-fa-tabs f-0">
+
+              <button type="button" class="col two-fa-tab f-0 center-y g-col-0.5<?= $secondCardTab === 'recovery' ? ' active' : '' ?>" data-tab="recovery">
+                <i class="fas fa-lock" aria-hidden="true"></i>Recovery codes
+              </button>
+
+              <button type="button" class="col two-fa-tab f-0 center-y g-col-0.5<?= $secondCardTab === 'devices' ? ' active' : '' ?>" data-tab="devices">
+                <i class="fas fa-mobile-screen" aria-hidden="true"></i>Devices
+              </button>
+
+            </div>
+
+            <div class="row">
+              <div class="col two-fa-body f-col g-row-1.5">
+                <div class="row" data-tab-panel="recovery"<?= $secondCardTab === 'recovery' ? '' : ' hidden' ?>>
+                  <div class="col two-fa-panel f-col g-row-1">
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">You have <strong><?= $s->recoveryCodesLeft ?></strong> of 10 recovery codes left. A recovery code lets you sign in if you lose access to your other methods. Generating a new set replaces the old one.</p>
+                      </div>
+                    </div>
+
+                    <div class="row">
+                      <form class="col g-row-1" method="POST" action="">
+                        <input type="hidden" name="action" value="recovery-codes">
+
+                        <div class="row">
+                          <div class="col">
+                            <p class="form-details">Enter your current password to replace your recovery codes.</p>
+                          </div>
+                        </div>
+
+                        <div class="row">
+                          <?php $currentPasswordConfirm('recovery', 'replace recovery codes') ?>
+                        </div>
+
+                        <div class="row g-2 center-x">
+                          <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-arrows-rotate"></i>Generate a new set</button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row" data-tab-panel="devices"<?= $secondCardTab === 'devices' ? '' : ' hidden' ?>>
+                  <div class="col two-fa-panel f-col g-row-1">
+                    <div class="row">
+                      <div class="col">
+                        <p class="form-details">Devices remembered from signing in with "remember me" checked.</p>
+                      </div>
+                    </div>
+
+                    <div class="row table-container">
+                      <div class="col">
+                        <table>
+                          <thead>
+                          <tr>
+                            <th><span class="table-header-label">Device</span></th>
+                            <th><span class="table-header-label">IP address</span></th>
+                            <th><span class="table-header-label">Added</span></th>
+                            <th><span class="table-header-label">Last used</span></th>
+                            <th></th>
+                          </tr>
+                          </thead>
+                          <tbody>
+
+                          <?php if (!$s->trustedDevices) : ?>
+
+                            <tr class="table-empty-row text-center">
+                              <td colspan="5">No remembered devices.</td>
+                            </tr>
+
+                          <?php else : ?>
+
+                            <?php foreach ($s->trustedDevices as $device) : ?>
+
+                              <?php $deviceIcon = match ($device['type']) {
+                                'Mobile' => 'fa-mobile-screen',
+                                'Tablet' => 'fa-tablet-screen-button',
+                                default => 'fa-desktop',
+                              } ?>
+
+                              <tr>
+                                <td><i class="fas <?= $deviceIcon ?>" aria-hidden="true"></i> <?= AppController::sanitize($device['os']) ?><?= $device['browser'] !== null ? ' · ' . AppController::sanitize($device['browser']) : '' ?></td>
+                                <td><?= AppController::sanitize($device['ip_address'] ?? 'Unknown') ?></td>
+                                <td><?= AppController::sanitize((string)$device['created_at']) ?></td>
+                                <td><?= $device['last_used_at'] ? AppController::sanitize((string)$device['last_used_at']) : 'Never' ?></td>
+                                <td class="table-actions">
+                                  <div class="row g-col-0.5 center-y">
+                                    <form id="device-remove-form-<?= (int)$device['id'] ?>" method="POST" action="" hidden>
+                                      <input type="hidden" name="action" value="forget-device">
+                                      <input type="hidden" name="device_id" value="<?= (int)$device['id'] ?>">
+                                    </form>
+
+                                    <?php $areYouSureModal('confirm-device-remove-' . (int)$device['id'], 'device-remove-form-' . (int)$device['id'], 'This device will be asked for two-factor again next time it signs in.', 'Forget device') ?>
+
+                                    <button class="col table-action delete f-0" type="button" data-open-modal="confirm-device-remove-<?= (int)$device['id'] ?>" aria-label="Forget this device"><i class="fas fa-trash"></i></button>
+                                  </div>
+                                </td>
+                              </tr>
+
+                            <?php endforeach ?>
+
+                          <?php endif ?>
+
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <?php if ($s->trustedDevices) : ?>
+
+                      <div class="row">
+                        <form class="col" method="POST" action="">
+                          <input type="hidden" name="action" value="trusted-devices">
+                          <div class="row g-2 center-x">
+                            <button class="col button button-sm g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-trash"></i>Forget all remembered devices</button>
+                          </div>
+                        </form>
+                      </div>
+
+                    <?php endif ?>
+
+                    <div class="row">
+                      <hr class="col muted">
+                    </div>
+
+                    <div class="row">
+                      <form class="col" method="POST" action="" data-autosave>
+                        <input type="hidden" name="action" value="remember-device">
+                        <input type="hidden" name="submit" value="1">
+                        <div class="row g-col-1 center-y">
+                          <label class="col f-0" for="remember_device">
+                            <input class="remember-checkbox" id="remember_device" type="checkbox" name="remember_device" autocomplete="off"<?= $s->rememberDevice ? ' checked' : '' ?>>
+                          </label>
+                          <div class="col">
+                            <p>Skip two-factor on devices where I tick "remember me" at login.</p>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <?php endif ?>
+
+    <?php endif ?>
+
+  </div>
+</section>

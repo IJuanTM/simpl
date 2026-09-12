@@ -4,8 +4,6 @@ use app\Models\Url;
 
 <section class="row users">
   <div class="col f-col g-row-2">
-    <?php $this->component('breadcrumbs') ?>
-
     <div class="row">
       <div class="col center-x">
         <h1 data-typo="h2">Registered users</h1>
@@ -89,7 +87,7 @@ use app\Models\Url;
             </div>
           </div>
           <div class="col end-x">
-            <?php $this->component('column-toggle') ?>
+            <?php $this->component('table/column-toggle') ?>
           </div>
         </div>
 
@@ -112,7 +110,7 @@ use app\Models\Url;
               <div class="col center-y g-col-1">
                 <p class="no-wrap"><?= $this->pageObj->renderPaginationInfo() ?></p>
               </div>
-              <?php $this->component('per-page-select', ['id' => 'users-per-page']) ?>
+              <?php $this->component('table/per-page-select', ['id' => 'users-per-page']) ?>
             </div>
           </div>
           <div class="col center-y end-x">
@@ -131,7 +129,7 @@ use app\Models\Url;
   </div>
 </section>
 
-<?php $this->component('user-action-modal', [
+<?php $this->component('modal/user-action-modal', [
     'triggerAttr' => 'data-user-delete-modal',
     'ariaLabel' => 'Delete user',
     'title' => 'Delete user',
@@ -141,12 +139,12 @@ use app\Models\Url;
         ['type' => 'info', 'text' => 'To permanently remove the account from the database, use the purge action on a deleted user.'],
     ],
     'formClass' => 'modal-soft-delete-form',
-    'buttonClass' => 'delete-user',
+    'buttonClass' => 'error',
     'icon' => 'fa-user-slash',
     'buttonText' => 'Delete user',
 ]) ?>
 
-<?php $this->component('user-action-modal', [
+<?php $this->component('modal/user-action-modal', [
     'triggerAttr' => 'data-user-purge-modal',
     'ariaLabel' => 'Purge user',
     'title' => 'Purge user',
@@ -158,9 +156,11 @@ use app\Models\Url;
     'buttonClass' => 'purge-user',
     'icon' => 'fa-skull',
     'buttonText' => 'Purge user',
+    'confirmCheckbox' => true,
+    'confirmText' => 'I understand this permanently removes the account with no way to recover it',
 ]) ?>
 
-<?php $this->component('user-action-modal', [
+<?php $this->component('modal/user-action-modal', [
     'triggerAttr' => 'data-user-restore-modal',
     'ariaLabel' => 'Restore user',
     'title' => 'Restore user',
@@ -169,7 +169,7 @@ use app\Models\Url;
         ['type' => 'info', 'text' => 'Restoring a user will reinstate their account and will allow the user to log in again.'],
     ],
     'formClass' => 'modal-restore-form',
-    'buttonClass' => 'restore-user',
+    'buttonClass' => 'success',
     'icon' => 'fa-wrench',
     'buttonText' => 'Restore user',
 ]) ?>

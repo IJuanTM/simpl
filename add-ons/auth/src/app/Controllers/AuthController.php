@@ -24,9 +24,78 @@ class AuthController
     // Deliberately vague so a login attempt can't be used to confirm account status.
     public const string ACCOUNT_ISSUE_MESSAGE = 'There is an issue with your account. Please contact support for assistance.';
 
+    // Unambiguous charset for generated passwords (no 0/O/1/l/I): they are meant to be typed by a human.
+    private const string GENERATED_PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+
     public function __construct()
     {
         if (isset($_COOKIE['remember']) && !SessionController::has('user')) self::rememberLogin($_COOKIE['remember']);
+
+        self::enforceMandatoryActions();
+    }
+
+    /**
+     * The settings route a signed-in user is still forced to complete (change a temporary password,
+     * enrol in required 2FA), or null when nothing is pending.
+     *
+     * @return string|null
+     */
+    private static function pendingMandatoryRoute(): ?string
+    {
+        $user = SessionController::get('user');
+        if (!$user) return null;
+
+        if (!empty($user['must_change_password'])) {
+            return 'user/settings/change-password';
+        }
+
+        if (
+            TWO_FACTOR_CONFIG['enabled']
+            && (
+                (TwoFactorController::isRequiredFor($user) && !TwoFactorController::isEnabledFor((int)$user['id']))
+                || TwoFactorController::missingRequiredMethods($user) !== []
+            )
+        ) {
+            return 'user/settings/two-factor';
+        }
+
+        return null;
+    }
+
+    /**
+     * The single enforcement point for forced actions: pins a user with one pending to that page,
+     * before the request is even dispatched. Every other route (bar logout and the /api/ calls the
+     * page needs) redirects there, stashing the attempted URL to return to afterwards. On the pinned
+     * page the breadcrumb trail is suppressed and the layout drops its nav links.
+     *
+     * @return void
+     */
+    private static function enforceMandatoryActions(): void
+    {
+        $route = self::pendingMandatoryRoute();
+        if ($route === null) return;
+
+        $uri = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '/';
+
+        if (preg_match('#^/(api/)?logout(/|$)#i', $uri)) return;
+
+        if (preg_match('#^/(api/)?' . preg_quote($route, '#') . '(/|$)#i', $uri)) {
+            if (!str_starts_with($uri, '/api/')) BreadcrumbController::suppress();
+            return;
+        }
+
+        if (str_starts_with($uri, '/api/')) {
+            PageController::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
+        self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
+
+        PageController::redirectWithAlert($route, match ($route) {
+            'user/settings/change-password' => 'Before you can continue, you must change your password!',
+            default => 'Your account requires two-factor authentication. Please set it up to continue.',
+        }, AlertType::WARNING, 4);
+        exit;
     }
 
     /**
@@ -55,23 +124,41 @@ class AuthController
             return;
         }
 
-        if (strtotime((string)$token['expires']) < time()) {
+        // NULL expires means "no expiry" here too, matching checkToken().
+        // Every remember token is created with one set, so this only guards a manually nulled row.
+        if ($token['expires'] !== null && strtotime((string)$token['expires']) < time()) {
             self::invalidateRememberToken($tokenHash);
             return;
         }
 
         $user = self::getUserWithRole($token['user_id']);
 
-        // Auto-login must clear the same bars the login form does.
         // A stale cookie must not revive a deactivated or re-unverified account.
-        // It must also not skip a 2FA challenge on a device that is no longer trusted.
         if (
             !$user
             || $user['status'] !== UserStatus::ACTIVE->value
             || (VERIFICATION_CONFIG['required'] && !self::isVerified((int)$user['id']))
-            || (TWO_FACTOR_CONFIG['enabled'] && TwoFactorController::isEnabledFor((int)$user['id']) && !TwoFactorController::deviceIsTrusted((int)$user['id']))
-            || !self::setUserSession($user)
         ) {
+            self::invalidateRememberToken($tokenHash);
+            return;
+        }
+
+        // A 2FA user on an untrusted device still owes the challenge: the remember cookie proves
+        // only the password factor. Defer to /two-factor with the token left intact, so abandoning
+        // the challenge doesn't cost the remembered login; completeLogin() rotates it once it passes.
+        if (
+            TWO_FACTOR_CONFIG['enabled']
+            && TwoFactorController::isEnabledFor((int)$user['id'])
+            && !TwoFactorController::deviceIsTrusted($user)
+        ) {
+            if (SessionController::has('2fa_pending')) return;
+
+            SessionController::set('2fa_pending', ['user_id' => (int)$user['id'], 'remember' => true, 'at' => time()]);
+            PageController::redirect('two-factor');
+            exit;
+        }
+
+        if (!self::setUserSession($user)) {
             self::invalidateRememberToken($tokenHash);
             return;
         }
@@ -217,7 +304,8 @@ class AuthController
     }
 
     /**
-     * Resolve the role name for a user by looking up user_roles then roles.
+     * Resolve the role name for a user.
+     * Reuses getUserWithRole()'s single LEFT JOIN so the resolution can't drift from it.
      *
      * @param int $userId
      *
@@ -225,17 +313,7 @@ class AuthController
      */
     private static function getUserRole(int $userId): ?string
     {
-        $roleId = DB::single(
-            SELECT: 'role_id',
-            FROM: 'user_roles',
-            WHERE: ['user_id' => $userId]
-        )['role_id'] ?? null;
-
-        return $roleId ? DB::single(
-            SELECT: 'name',
-            FROM: 'roles',
-            WHERE: ['id' => $roleId]
-        )['name'] ?? null : null;
+        return (self::getUserWithRole($userId) ?? [])['role'] ?? null;
     }
 
     /**
@@ -301,16 +379,15 @@ class AuthController
     /**
      * Ensure the current request is performed by an authenticated user, optionally enforcing role-based access.
      * An unauthenticated user has the intended URL stored in session and is redirected to the login page.
-     * A user who must change their password, on a route that doesn't explicitly allow it, is redirected to the security settings page.
+     * Forced actions (temporary-password change, required 2FA enrolment) are handled earlier by enforceMandatoryActions().
      *
      * @param Role[]|null $allowedRoles Roles that are allowed, or null to allow any authenticated user
-     * @param bool        $allowPasswordChange If true, allow access even when the user must change password
      *
      * @return void (will redirect/exit on access denial)
      *
      * @throws JsonException
      */
-    public static function requireAuth(?array $allowedRoles = null, bool $allowPasswordChange = false): void
+    public static function requireAuth(?array $allowedRoles = null): void
     {
         $user = SessionController::get('user');
 
@@ -351,34 +428,6 @@ class AuthController
         unset($fresh['password']);
         SessionController::set('user', $fresh);
         $user = $fresh;
-
-        // If the account requires a password change and this route doesn't
-        // explicitly allow that, force a redirect to the security settings page.
-        if (!$allowPasswordChange && $user['must_change_password']) {
-            $uri = $_SERVER['REQUEST_URI'] ?? '';
-
-            // Skip the security settings route itself, so the redirect back doesn't loop into it.
-            self::setIntendedUrl($uri, '#^/(user/settings/security|login|logout)(/|$)#i');
-
-            PageController::redirectWithAlert('user/settings/security', 'Before you can continue, you must change your password!', AlertType::WARNING, 4);
-            exit;
-        }
-
-        // The settings routes are exempt so this redirect can't loop; API requests are exempt
-        // because a redirect to an HTML page is useless to a fetch() caller.
-        $uri = $_SERVER['REQUEST_URI'] ?? '';
-        if (
-            TWO_FACTOR_CONFIG['enabled']
-            && TwoFactorController::isRequiredFor($user)
-            && !TwoFactorController::isEnabledFor((int)$user['id'])
-            && !str_starts_with($uri, '/api/')
-            && !preg_match('#^/(user/settings|logout)(/|$)#i', $uri)
-        ) {
-            self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
-
-            PageController::redirectWithAlert('user/settings/security', 'Your account requires two-factor authentication. Please set it up to continue.', AlertType::WARNING, 4);
-            exit;
-        }
 
         if ($allowedRoles !== null && !in_array($user['role'], array_map(static fn(Role $r) => $r->value, $allowedRoles), true)) {
             PageController::error(ErrorCode::FORBIDDEN);
@@ -535,6 +584,21 @@ class AuthController
             Log::error("Could not generate password: {$e->getMessage()}");
             return null;
         }
+    }
+
+    /**
+     * Whether $password has the exact length and charset generatePassword() produces.
+     * A caller that pre-generated a password and round-tripped it through a form uses this to reject a tampered value.
+     * The policy check is not enough on its own: a weak-but-in-charset string can pass it under a lax PASSWORD_CONFIG.
+     *
+     * @param string $password
+     *
+     * @return bool
+     */
+    public static function isGeneratedPasswordShape(string $password): bool
+    {
+        return strlen($password) === PASSWORD_CONFIG['generated_length']
+            && strspn($password, self::GENERATED_PASSWORD_CHARS) === strlen($password);
     }
 
     /**
@@ -757,7 +821,7 @@ class AuthController
      * @param string $password Plaintext new password (will be hashed)
      *
      * @return string The new password_changed_at value.
-     *                A caller with a live session for this user (e.g. User\SecuritySettings) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
+     *                A caller with a live session for this user (e.g. User\PasswordSettings) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
      */
     public static function updatePassword(int $id, string $password): string
     {
@@ -818,10 +882,8 @@ class AuthController
             return REDIRECT;
         }
 
-        if ($user['must_change_password']) {
-            AlertController::globalAlert('Before you can continue, you must change your password!', AlertType::WARNING, 4);
-            return 'user/settings/security';
-        }
+        // A pending forced action (temporary password, required 2FA enrolment) is caught by
+        // enforceMandatoryActions() on the request the returned route lands on.
 
         if ($remember) {
             $token = self::generateToken(REMEMBER_ME_TOKEN_LENGTH);
