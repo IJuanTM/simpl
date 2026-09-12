@@ -15,8 +15,8 @@ $anyOn = $emailOn || $totpOn || $passkeyOn;
 
 $isRequired = static fn(TwoFactorMethod $method): bool => in_array($method->value, $requiredMethods, true);
 $dotClass = static function (bool $on, bool $required): string {
-    if ($on) return ' on';
-    return $required ? ' required' : '';
+  if ($on) return ' on';
+  return $required ? ' required' : '';
 };
 ?>
 
@@ -44,78 +44,80 @@ $dotClass = static function (bool $on, bool $required): string {
 
       <div class="row">
         <div class="col two-fa-card f-col">
-          <div class="row two-fa-body f-col g-row-1.5">
+          <div class="row">
+            <div class="col two-fa-body f-col g-row-1.5">
 
-            <div class="row g-col-0.5 center-y two-fa-method-row">
-              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($emailOn, $isRequired(TwoFactorMethod::EMAIL)) ?>" aria-hidden="true"></span></div>
-              <div class="col f-0">Email</div>
-              <div class="col end-x"></div>
-              <label class="col f-0 two-fa-required">
-                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::EMAIL->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::EMAIL) ? ' checked' : '' ?>>
-                Required
-              </label>
-            </div>
+              <div class="row g-col-0.5 center-y two-fa-method-row">
+                <div class="col f-0"><span class="two-fa-dot<?= $dotClass($emailOn, $isRequired(TwoFactorMethod::EMAIL)) ?>" aria-hidden="true"></span></div>
+                <div class="col f-0">Email</div>
+                <div class="col end-x"></div>
+                <label class="col f-0 two-fa-required">
+                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::EMAIL->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::EMAIL) ? ' checked' : '' ?>>
+                  Required
+                </label>
+              </div>
 
-            <div class="row g-col-0.5 center-y two-fa-method-row">
-              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($totpOn, $isRequired(TwoFactorMethod::TOTP)) ?>" aria-hidden="true"></span></div>
-              <div class="col f-0">Authenticator app</div>
-              <div class="col end-x">
-                <?php if ($totpOn && $settings['totp_confirmed_at']) : ?>
-                  <span class="text-muted">Confirmed <?= AppController::sanitize((string)$settings['totp_confirmed_at']) ?></span>
+              <div class="row g-col-0.5 center-y two-fa-method-row">
+                <div class="col f-0"><span class="two-fa-dot<?= $dotClass($totpOn, $isRequired(TwoFactorMethod::TOTP)) ?>" aria-hidden="true"></span></div>
+                <div class="col f-0">Authenticator app</div>
+                <div class="col end-x">
+                  <?php if ($totpOn && $settings['totp_confirmed_at']) : ?>
+                    <span class="text-muted">Confirmed <?= AppController::sanitize((string)$settings['totp_confirmed_at']) ?></span>
+                  <?php endif ?>
+                </div>
+                <label class="col f-0 two-fa-required">
+                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::TOTP->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::TOTP) ? ' checked' : '' ?>>
+                  Required
+                </label>
+                <?php if ($totpOn) : ?>
+                  <form id="totp-reset-form" class="col f-0" method="POST" action="" hidden>
+                    <input type="hidden" name="action" value="reset-2fa-totp">
+                  </form>
+                  <button class="col button button-sm error f-0" type="submit" name="submit" form="totp-reset-form" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>">Reset</button>
                 <?php endif ?>
               </div>
-              <label class="col f-0 two-fa-required">
-                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::TOTP->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::TOTP) ? ' checked' : '' ?>>
-                Required
-              </label>
-              <?php if ($totpOn) : ?>
-                <form id="totp-reset-form" class="col f-0" method="POST" action="" hidden>
-                  <input type="hidden" name="action" value="reset-2fa-totp">
-                </form>
-                <button class="col button button-sm error f-0" type="submit" name="submit" form="totp-reset-form" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>">Reset</button>
+
+              <div class="row g-col-0.5 center-y two-fa-method-row">
+                <div class="col f-0"><span class="two-fa-dot<?= $dotClass($passkeyOn, $isRequired(TwoFactorMethod::PASSKEY)) ?>" aria-hidden="true"></span></div>
+                <div class="col f-0">Passkeys</div>
+                <div class="col end-x">
+                  <?php if ($passkeys) : ?>
+                    <span class="text-muted"><?= count($passkeys) ?> registered</span>
+                  <?php endif ?>
+                </div>
+                <label class="col f-0 two-fa-required">
+                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::PASSKEY->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::PASSKEY) ? ' checked' : '' ?>>
+                  Required
+                </label>
+              </div>
+
+              <?php if ($passkeys) : ?>
+
+                <div class="row">
+                  <ul class="col device-list f-col g-row-0.5">
+
+                    <?php foreach ($passkeys as $passkey) : ?>
+
+                      <li class="row g-col-0.5 center-y">
+                        <div class="col">
+                          <?= AppController::sanitize((string)$passkey['name']) ?>
+                          <span class="text-muted">- <?= $passkey['last_used_at'] ? 'last used ' . AppController::sanitize((string)$passkey['last_used_at']) : 'not used yet' ?></span>
+                        </div>
+                        <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" class="col f-0" method="POST" action="" hidden>
+                          <input type="hidden" name="action" value="reset-2fa-passkey">
+                          <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
+                        </form>
+                        <button class="button button-sm error" type="submit" name="submit" form="passkey-remove-form-<?= (int)$passkey['id'] ?>" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Remove this passkey">Remove</button>
+                      </li>
+
+                    <?php endforeach ?>
+
+                  </ul>
+                </div>
+
               <?php endif ?>
+
             </div>
-
-            <div class="row g-col-0.5 center-y two-fa-method-row">
-              <div class="col f-0"><span class="two-fa-dot<?= $dotClass($passkeyOn, $isRequired(TwoFactorMethod::PASSKEY)) ?>" aria-hidden="true"></span></div>
-              <div class="col f-0">Passkeys</div>
-              <div class="col end-x">
-                <?php if ($passkeys) : ?>
-                  <span class="text-muted"><?= count($passkeys) ?> registered</span>
-                <?php endif ?>
-              </div>
-              <label class="col f-0 two-fa-required">
-                <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::PASSKEY->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::PASSKEY) ? ' checked' : '' ?>>
-                Required
-              </label>
-            </div>
-
-            <?php if ($passkeys) : ?>
-
-              <div class="row">
-                <ul class="col device-list f-col g-row-0.5">
-
-                  <?php foreach ($passkeys as $passkey) : ?>
-
-                    <li class="row g-col-0.5 center-y">
-                      <div class="col">
-                        <?= AppController::sanitize((string)$passkey['name']) ?>
-                        <span class="text-muted">- <?= $passkey['last_used_at'] ? 'last used ' . AppController::sanitize((string)$passkey['last_used_at']) : 'not used yet' ?></span>
-                      </div>
-                      <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" class="col f-0" method="POST" action="" hidden>
-                        <input type="hidden" name="action" value="reset-2fa-passkey">
-                        <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
-                      </form>
-                      <button class="button button-sm error" type="submit" name="submit" form="passkey-remove-form-<?= (int)$passkey['id'] ?>" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-label="Remove this passkey">Remove</button>
-                    </li>
-
-                  <?php endforeach ?>
-
-                </ul>
-              </div>
-
-            <?php endif ?>
-
           </div>
         </div>
       </div>

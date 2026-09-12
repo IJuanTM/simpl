@@ -18,6 +18,8 @@ const TWO_FACTOR_CONFIG = [
     'challenge_ip_window' => 900,         // seconds
 
     'resend_cooldown' => 60,              // seconds between login email-code resends
+    'resend_ip_max_attempts' => 10,       // login email-code sends per IP before blocking, across every account
+    'resend_ip_attempt_window' => 900,    // seconds
 
     'force_for_roles' => ['Admin'],
 

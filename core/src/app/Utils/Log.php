@@ -30,9 +30,9 @@ class Log
     /**
      * Write a log entry to the appropriate level file, optionally including a trace.
      *
-     * @param LogLevel $level Log severity
-     * @param string   $message Message template
-     * @param array    $context Context values for interpolation
+     * @param LogLevel $level        Log severity
+     * @param string   $message      Message template
+     * @param array    $context      Context values for interpolation
      * @param bool     $includeTrace Whether to include a filtered stack trace
      *
      * @return void
@@ -47,9 +47,11 @@ class Log
         $logLine = sprintf('[%s] %s: %s', $timestamp, strtoupper($level->value), $interpolated);
 
         if ($includeTrace) {
+            // A frame's 'function' names the call made to reach the NEXT frame, not the call at its own file/line.
+            // Filtering by file instead correctly skips every internal Log.php frame regardless of the call depth.
             $trace = array_filter(
                 debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS),
-                static fn($e) => !in_array($e['function'], ['log', 'error', 'warning', 'info', 'debug'], true) && basename($e['file'] ?? '') !== 'index.php'
+                static fn($e) => ($e['file'] ?? '') !== __FILE__ && basename($e['file'] ?? '') !== 'index.php'
             );
 
             if ($trace) {

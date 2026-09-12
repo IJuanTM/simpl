@@ -32,6 +32,7 @@ class CreateUsersTable
             $t->timestamp('inactive_since', default: null);
             $t->varchar('required_2fa_methods', 255, default: null);
             $t->primary('id');
+            $t->index('idx_status_inactive_since', ['status', 'inactive_since']);
         });
     }
 

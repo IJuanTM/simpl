@@ -85,6 +85,7 @@ class TwoFactorPage
     {
         if (TwoFactorController::hasPendingEmailChallenge($this->userId)) return;
         if (!RateLimiter::attempt('2fa-resend-' . $this->userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])) return;
+        if (!RateLimiter::attempt(RateLimiter::ipKey('2fa-resend-ip'), TWO_FACTOR_CONFIG['resend_ip_max_attempts'], TWO_FACTOR_CONFIG['resend_ip_attempt_window'])) return;
 
         $user = AuthController::getUserById($this->userId);
         if ($user !== null) TwoFactorController::issueEmailChallenge($this->userId, $user['email']);
@@ -209,6 +210,11 @@ class TwoFactorPage
     private function resendEmailCode(): void
     {
         if (!RateLimiter::attempt('2fa-resend-' . $this->userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])) {
+            PageController::redirectWithAlert('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
+            return;
+        }
+
+        if (!RateLimiter::attempt(RateLimiter::ipKey('2fa-resend-ip'), TWO_FACTOR_CONFIG['resend_ip_max_attempts'], TWO_FACTOR_CONFIG['resend_ip_attempt_window'])) {
             PageController::redirectWithAlert('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
             return;
         }

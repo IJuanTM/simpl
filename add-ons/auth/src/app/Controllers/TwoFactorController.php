@@ -51,22 +51,16 @@ class TwoFactorController
     }
 
     /**
-     * Method slugs ('email'/'totp'/'passkey') $user's account policy requires enrolled: the user's own
-     * override when set, else their role's, else none.
+     * Whether a role name appears in a configured list of role names.
      *
-     * @param array $user User row carrying an optional 'required_2fa_methods' override and a 'role' name
+     * @param mixed    $role
+     * @param string[] $list
      *
-     * @return string[]
+     * @return bool
      */
-    public static function requiredMethodsFor(array $user): array
+    private static function roleInList(mixed $role, array $list): bool
     {
-        $raw = $user['required_2fa_methods'] ?? null;
-
-        if ($raw === null && !empty($user['role'])) {
-            $raw = DB::single(SELECT: 'required_2fa_methods', FROM: 'roles', WHERE: ['name' => $user['role']])['required_2fa_methods'] ?? null;
-        }
-
-        return $raw ? explode(',', $raw) : [];
+        return in_array($role, $list, true);
     }
 
     /**
@@ -100,43 +94,6 @@ class TwoFactorController
     }
 
     /**
-     * Whether a role name appears in a configured list of role names.
-     *
-     * @param mixed    $role
-     * @param string[] $list
-     *
-     * @return bool
-     */
-    private static function roleInList(mixed $role, array $list): bool
-    {
-        return in_array($role, $list, true);
-    }
-
-    /**
-     * The method offered first at the login challenge.
-     *
-     * @param int $userId
-     *
-     * @return TwoFactorMethod
-     */
-    public static function primaryMethod(int $userId): TwoFactorMethod
-    {
-        return TwoFactorMethod::tryFrom(self::settingsFor($userId)['primary_method'] ?? '') ?? TwoFactorMethod::EMAIL;
-    }
-
-    /**
-     * The user_two_factor row, or null when the user has never touched 2FA.
-     *
-     * @param int $userId
-     *
-     * @return array|null
-     */
-    public static function settingsFor(int $userId): ?array
-    {
-        return DB::single(SELECT: '*', FROM: 'user_two_factor', WHERE: ['user_id' => $userId]);
-    }
-
-    /**
      * Every method the user has enrolled in, primary first.
      *
      * @param int $userId
@@ -159,6 +116,49 @@ class TwoFactorController
     }
 
     /**
+     * The user_two_factor row, or null when the user has never touched 2FA.
+     *
+     * @param int $userId
+     *
+     * @return array|null
+     */
+    public static function settingsFor(int $userId): ?array
+    {
+        return DB::single(SELECT: '*', FROM: 'user_two_factor', WHERE: ['user_id' => $userId]);
+    }
+
+    /**
+     * Method slugs ('email'/'totp'/'passkey') $user's account policy requires enrolled: the user's own
+     * override when set, else their role's, else none.
+     *
+     * @param array $user User row carrying an optional 'required_2fa_methods' override and a 'role' name
+     *
+     * @return string[]
+     */
+    public static function requiredMethodsFor(array $user): array
+    {
+        $raw = $user['required_2fa_methods'] ?? null;
+
+        if ($raw === null && !empty($user['role'])) {
+            $raw = DB::single(SELECT: 'required_2fa_methods', FROM: 'roles', WHERE: ['name' => $user['role']])['required_2fa_methods'] ?? null;
+        }
+
+        return $raw ? explode(',', $raw) : [];
+    }
+
+    /**
+     * The method offered first at the login challenge.
+     *
+     * @param int $userId
+     *
+     * @return TwoFactorMethod
+     */
+    public static function primaryMethod(int $userId): TwoFactorMethod
+    {
+        return TwoFactorMethod::tryFrom(self::settingsFor($userId)['primary_method'] ?? '') ?? TwoFactorMethod::EMAIL;
+    }
+
+    /**
      * Turn 2FA on with email as the initial method, returning a fresh batch of recovery codes to show once.
      *
      * @param int $userId
@@ -170,20 +170,6 @@ class TwoFactorController
         self::upsertSettings($userId, ['enabled' => 1, 'email_enabled' => 1, 'primary_method' => TwoFactorMethod::EMAIL->value]);
 
         return self::regenerateRecoveryCodes($userId);
-    }
-
-    /**
-     * Issue recovery codes when 2FA is first turned on via TOTP or a passkey rather than email.
-     * Stashes them for the settings page's one-time display.
-     * Centralised here so "2FA enabled" always implies "recovery codes exist", whichever method turned it on.
-     *
-     * @param int $userId
-     *
-     * @return void
-     */
-    private static function issueFirstFactorRecoveryCodes(int $userId): void
-    {
-        SessionController::set('2fa_new_recovery_codes', self::regenerateRecoveryCodes($userId));
     }
 
     /**
@@ -310,8 +296,8 @@ class TwoFactorController
 
     /**
      * Verify a submitted email code, consuming it on success.
-     * One guarded DELETE (match + row-count in a single statement) makes consumption atomic,
-     * the same way consumeRecoveryCode()'s guarded UPDATE does - two concurrent submissions of the same code can't both win.
+     * The expiry check reads the row first so a NULL expires can be treated as "never expires", matching AuthController::checkToken().
+     * Consumption itself is still one guarded DELETE keyed on the token match, the same way consumeRecoveryCode()'s guarded UPDATE is - two concurrent submissions of the same code can't both win.
      *
      * @param int    $userId
      * @param string $code
@@ -320,19 +306,23 @@ class TwoFactorController
      */
     public static function verifyEmailChallenge(int $userId, string $code): bool
     {
-        return DB::delete(
-            FROM: 'tokens',
-            WHERE: [
-                'user_id' => $userId,
-                'type' => TokenType::TWO_FACTOR_EMAIL->value,
-                'token' => hash('sha256', strtoupper($code)),
-                'expires' => ['>', date('Y-m-d H:i:s')],
-            ]
-        );
+        $tokenHash = hash('sha256', strtoupper($code));
+
+        $where = [
+            'user_id' => $userId,
+            'type' => TokenType::TWO_FACTOR_EMAIL->value,
+            'token' => $tokenHash,
+        ];
+
+        $row = DB::single(SELECT: ['expires'], FROM: 'tokens', WHERE: $where);
+        if (!$row || ($row['expires'] !== null && strtotime((string)$row['expires']) < time())) return false;
+
+        return DB::delete(FROM: 'tokens', WHERE: $where);
     }
 
     /**
      * Whether an unexpired login email code is already outstanding for the user.
+     * NULL expires counts as "never expires", matching AuthController::checkToken().
      *
      * @param int $userId
      *
@@ -340,11 +330,12 @@ class TwoFactorController
      */
     public static function hasPendingEmailChallenge(int $userId): bool
     {
-        return DB::exists(FROM: 'tokens', WHERE: [
+        $row = DB::single(SELECT: ['expires'], FROM: 'tokens', WHERE: [
             'user_id' => $userId,
             'type' => TokenType::TWO_FACTOR_EMAIL->value,
-            'expires' => ['>', date('Y-m-d H:i:s')],
         ]);
+
+        return $row !== null && ($row['expires'] === null || strtotime((string)$row['expires']) >= time());
     }
 
     /**
@@ -441,6 +432,20 @@ class TwoFactorController
     private static function totpLeeway(): int
     {
         return min(29, TWO_FACTOR_CONFIG['totp_leeway']);
+    }
+
+    /**
+     * Issue recovery codes when 2FA is first turned on via TOTP or a passkey rather than email.
+     * Stashes them for the settings page's one-time display.
+     * Centralised here so "2FA enabled" always implies "recovery codes exist", whichever method turned it on.
+     *
+     * @param int $userId
+     *
+     * @return void
+     */
+    private static function issueFirstFactorRecoveryCodes(int $userId): void
+    {
+        SessionController::set('2fa_new_recovery_codes', self::regenerateRecoveryCodes($userId));
     }
 
     /**

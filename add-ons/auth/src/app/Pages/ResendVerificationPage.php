@@ -6,7 +6,6 @@ namespace app\Pages;
 
 use app\Controllers\AppController;
 use app\Controllers\AuthController;
-use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Enums\AlertType;
 use app\Models\Page;
@@ -36,8 +35,7 @@ class ResendVerificationPage
         $id = AppController::sanitize($this->page->subpage() ?? '');
 
         if (empty($id) || !is_numeric($id)) {
-            FormController::addAlert('Undefined user id! Please contact an administrator.', AlertType::ERROR);
-            PageController::redirect(REDIRECT, 2);
+            PageController::redirectWithAlert(REDIRECT, 'Undefined user id! Please contact an administrator.', AlertType::ERROR, 0, 2);
             return;
         }
 
@@ -46,8 +44,7 @@ class ResendVerificationPage
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
         if (!RateLimiter::attempt("resend-verification-ip-$ip", VERIFICATION_CONFIG['resend_ip_max_attempts'], VERIFICATION_CONFIG['resend_ip_attempt_window'])) {
-            FormController::addAlert('Please wait a moment before requesting another verification email!', AlertType::WARNING);
-            PageController::redirect(REDIRECT, 2);
+            PageController::redirectWithAlert(REDIRECT, 'Please wait a moment before requesting another verification email!', AlertType::WARNING, 0, 2);
             return;
         }
 

@@ -92,7 +92,7 @@ class PageController extends Page
      * Handles errors: redirects to the matching error page for a normal request, or responds with a JSON error body for an API request.
      * A redirect would otherwise send an API client's fetch() into an HTML page instead of the error it expected.
      *
-     * @param ErrorCode   $code The specific error code used to determine the error page.
+     * @param ErrorCode   $code     The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
@@ -130,7 +130,7 @@ class PageController extends Page
      * Redirects the user's browser to the given location, via an immediate 302 or a delayed refresh header.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -166,8 +166,6 @@ class PageController extends Page
             BreadcrumbController::set([['label' => ucfirst(str_replace('-', ' ', $this->page)), 'url' => null]]);
         }
 
-        $this->part('top');
-
         $page = $this->page;
         $subpage = $this->subpage();
 
@@ -194,8 +192,8 @@ class PageController extends Page
             return;
         }
 
+        $this->part('top');
         require_once $file;
-
         $this->part('bottom');
     }
 
@@ -229,10 +227,10 @@ class PageController extends Page
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message The alert message to show after redirecting.
-     * @param AlertType $type Visual type/style for the alert.
-     * @param int       $timeout Seconds until the alert expires. 0 means it persists until the next page load.
-     * @param int|null  $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param string    $message  The alert message to show after redirecting.
+     * @param AlertType $type     Visual type/style for the alert.
+     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -274,21 +272,25 @@ class PageController extends Page
      *
      * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
      *
-     * @param string $name The name of the view component to load, relative to views/components/.
+     * @param string $name  The name of the view component to load, relative to views/components/.
      * @param array  $props Associative array of values extracted into the component's local scope.
      *
      * @return void
      */
     final public function component(string $name, array $props = []): void
     {
-        $file = BASEDIR . "/views/components/$name.phtml";
+        $__componentFile = BASEDIR . "/views/components/$name.phtml";
 
-        if (is_file($file)) {
-            extract($props, EXTR_SKIP);
-            require $file;
+        if (!is_file($__componentFile)) {
+            echo Log::missingAsset('Component', $name);
             return;
         }
 
-        echo Log::missingAsset('Component', $name);
+        // $name/$props themselves must not survive into the require()'d scope, or a prop with
+        // one of those exact keys would be skipped by extract() as "already defined".
+        $__componentProps = $props;
+        unset($name, $props);
+        extract($__componentProps, EXTR_SKIP);
+        require $__componentFile;
     }
 }
