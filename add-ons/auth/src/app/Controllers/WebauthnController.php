@@ -42,7 +42,7 @@ class WebauthnController
      * Build and stash the options for registering a new passkey.
      *
      * @param int      $userId
-     * @param string   $userLabel Shown by the authenticator / OS prompt (the user's email)
+     * @param string   $userLabel            Shown by the authenticator / OS prompt (the user's email)
      * @param string[] $excludeCredentialIds base64url ids of the user's existing passkeys, so the same authenticator isn't enrolled twice
      *
      * @return string JSON for navigator.credentials.create()
@@ -187,7 +187,7 @@ class WebauthnController
     }
 
     /**
-     * URL-safe, unpadded base64 - the encoding webauthn-lib uses for ids in its JSON.
+     * URL-safe, unpadded base64: the encoding webauthn-lib uses for ids in its JSON.
      *
      * @param string $bytes
      *

@@ -49,7 +49,7 @@ export const timeoutModule = {
       try {
         alert.showPopover();
       } catch {
-        // Already open, or the browser has no popover support - the CSS fallback still shows it.
+        // Already open, or the browser has no popover support; the CSS fallback still shows it.
       }
     });
 

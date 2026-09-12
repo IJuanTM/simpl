@@ -6,6 +6,7 @@ namespace app\Database\Migrations;
 
 use app\Database\DB;
 use Closure;
+use InvalidArgumentException;
 
 /**
  * Static helpers for schema-level DDL: creating/dropping databases and tables, and toggling
@@ -18,7 +19,22 @@ class Schema
      */
     public static function createDatabase(string $name): void
     {
-        DB::raw("CREATE SCHEMA IF NOT EXISTS `$name` CHARACTER SET " . DB_SCHEMA_DEFAULTS['charset'] . " COLLATE " . DB_SCHEMA_DEFAULTS['collation']);
+        DB::raw("CREATE SCHEMA IF NOT EXISTS `" . self::databaseName($name) . '` CHARACTER SET ' . DB_SCHEMA_DEFAULTS['charset'] . " COLLATE " . DB_SCHEMA_DEFAULTS['collation']);
+    }
+
+    /**
+     * Validates a database name before it's interpolated backtick-quoted into DDL. Unlike Blueprint::identifier()'s
+     * \w+ whitelist, a real database name can contain characters like a hyphen, so only the backtick itself,
+     * which would let the value escape its quoting, is treated as unsafe, matching DB::useDatabase()'s rule.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    private static function databaseName(string $name): string
+    {
+        if (str_contains($name, '`')) throw new InvalidArgumentException("Invalid database name: $name");
+        return $name;
     }
 
     /**
@@ -26,7 +42,7 @@ class Schema
      */
     public static function dropDatabase(string $name): void
     {
-        DB::raw("DROP SCHEMA IF EXISTS `$name`");
+        DB::raw("DROP SCHEMA IF EXISTS `" . self::databaseName($name) . '`');
     }
 
     /**
@@ -44,7 +60,7 @@ class Schema
      */
     public static function drop(string $table): void
     {
-        DB::raw("DROP TABLE IF EXISTS `$table`");
+        DB::raw("DROP TABLE IF EXISTS `" . Blueprint::identifier($table) . '`');
     }
 
     /**

@@ -12,6 +12,7 @@ use app\Controllers\RequestController;
 use app\Enums\AlertType;
 use app\Enums\TokenType;
 use app\Models\Page;
+use app\Pages\Traits\TwoTierThrottle;
 use app\Utils\RateLimiter;
 
 /**
@@ -20,6 +21,8 @@ use app\Utils\RateLimiter;
  */
 class VerifyAccountPage
 {
+    use TwoTierThrottle;
+
     public int $resendCooldown = 0;
 
     public function __construct(Page $page)
@@ -120,19 +123,18 @@ class VerifyAccountPage
      */
     private function throttle(int $id): bool
     {
-        if (!RateLimiter::attemptWithBackoff("verify-attempt-account-$id", VERIFICATION_CONFIG['account_max_attempts'], VERIFICATION_CONFIG['account_attempt_window'], VERIFICATION_CONFIG['account_min_lockout'], VERIFICATION_CONFIG['account_max_lockout'])) {
-            FormController::addAlert('Too many verification attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
-
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-
-        if (!RateLimiter::attempt("verify-attempt-ip-$ip", VERIFICATION_CONFIG['ip_max_attempts'], VERIFICATION_CONFIG['ip_attempt_window'])) {
-            FormController::addAlert('Too many verification attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
-
-        return false;
+        return $this->twoTierThrottle(
+            "verify-attempt-account-$id",
+            VERIFICATION_CONFIG['account_max_attempts'],
+            VERIFICATION_CONFIG['account_attempt_window'],
+            VERIFICATION_CONFIG['account_min_lockout'],
+            VERIFICATION_CONFIG['account_max_lockout'],
+            'Too many verification attempts for this account. Please wait a while before trying again.',
+            'verify-attempt-ip',
+            VERIFICATION_CONFIG['ip_max_attempts'],
+            VERIFICATION_CONFIG['ip_attempt_window'],
+            'Too many verification attempts. Please wait a while before trying again.'
+        );
     }
 
     /**

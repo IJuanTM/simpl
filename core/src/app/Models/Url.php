@@ -28,14 +28,14 @@ class Url
 
         if (!self::$rootDir) self::baseUrl();
 
-        $filePath = self::$rootDir . '/public/' . ltrim($subUrl, '/');
+        [$path, $fragment] = str_contains($url, '#') ? explode('#', $url, 2) : [$url, ''];
+        $filePath = self::$rootDir . '/public/' . ltrim($path, '/');
 
         if (!is_file($filePath)) {
             Log::warning("Could not find file \"$filePath\"");
             return $url;
         }
 
-        [$path, $fragment] = str_contains($url, '#') ? explode('#', $url, 2) : [$url, ''];
         return $path . (str_contains($path, '?') ? '&' : '?') . 'v=' . filemtime($filePath) . ($fragment !== '' ? "#$fragment" : '');
     }
 

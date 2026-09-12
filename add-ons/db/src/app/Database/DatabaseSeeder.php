@@ -12,7 +12,7 @@ use app\Database\Migrations\Schema;
  */
 class DatabaseSeeder
 {
-    // db's own schema bookkeeping, not domain data - truncate() must leave these intact.
+    // db's own schema bookkeeping, not domain data, so truncate() must leave these intact.
     private const array BOOKKEEPING_TABLES = ['migrations', 'scheduler_runs'];
 
     /** @var class-string[] */

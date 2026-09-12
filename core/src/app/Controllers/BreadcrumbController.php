@@ -69,7 +69,7 @@ class BreadcrumbController
     }
 
     /**
-     * Whether suppress() was called - the layout also strips its navigation links when it was.
+     * Whether suppress() was called; the layout also strips its navigation links when it was.
      *
      * @return bool
      */

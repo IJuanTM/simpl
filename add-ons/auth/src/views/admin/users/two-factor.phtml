@@ -51,7 +51,7 @@ $dotClass = static function (bool $on, bool $required): string {
                 <div class="col f-0"><span class="two-fa-dot<?= $dotClass($emailOn, $isRequired(TwoFactorMethod::EMAIL)) ?>" aria-hidden="true"></span></div>
                 <div class="col f-0">Email</div>
                 <div class="col end-x"></div>
-                <label class="col f-0 two-fa-required">
+                <label class="col f-0 center-y two-fa-required">
                   <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::EMAIL->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::EMAIL) ? ' checked' : '' ?>>
                   Required
                 </label>
@@ -65,7 +65,7 @@ $dotClass = static function (bool $on, bool $required): string {
                     <span class="text-muted">Confirmed <?= AppController::sanitize((string)$settings['totp_confirmed_at']) ?></span>
                   <?php endif ?>
                 </div>
-                <label class="col f-0 two-fa-required">
+                <label class="col f-0 center-y two-fa-required">
                   <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::TOTP->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::TOTP) ? ' checked' : '' ?>>
                   Required
                 </label>
@@ -85,7 +85,7 @@ $dotClass = static function (bool $on, bool $required): string {
                     <span class="text-muted"><?= count($passkeys) ?> registered</span>
                   <?php endif ?>
                 </div>
-                <label class="col f-0 two-fa-required">
+                <label class="col f-0 center-y two-fa-required">
                   <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::PASSKEY->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::PASSKEY) ? ' checked' : '' ?>>
                   Required
                 </label>

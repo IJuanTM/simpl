@@ -343,7 +343,9 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                               <?php if (count($s->passkeys) <= 1 && in_array('passkey', $s->requiredMethods, true)) : ?>
 
                                 <div class="row">
-                                  <p class="two-fa-note">Required by your account policy. You must keep at least one passkey.</p>
+                                  <div class="col center-x">
+                                    <p class="two-fa-note">Required by your account policy. You must keep at least one passkey.</p>
+                                  </div>
                                 </div>
 
                               <?php else : ?>

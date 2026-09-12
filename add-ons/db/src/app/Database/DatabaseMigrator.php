@@ -93,7 +93,7 @@ class DatabaseMigrator
     }
 
     /**
-     * Fully-qualified class name to record/compare against - not the basename, so migrations from different add-ons can't collide.
+     * Fully-qualified class name to record/compare against, not the basename, so migrations from different add-ons can't collide.
      */
     private static function name(string $class): string
     {

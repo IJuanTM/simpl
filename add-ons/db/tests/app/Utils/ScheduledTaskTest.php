@@ -8,6 +8,9 @@ use app\Utils\ScheduledTask;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
+/**
+ * Covers interval/cron schedule builders, their mutual exclusivity, isDue() timing, and the cron field matcher.
+ */
 final class ScheduledTaskTest extends TestCase
 {
     public function testIntervalBuildersProduceExpectedSeconds(): void

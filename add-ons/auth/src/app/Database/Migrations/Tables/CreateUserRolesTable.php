@@ -19,9 +19,7 @@ class CreateUserRolesTable
             $t->smallintUnsigned('role_id', notNull: true);
             $t->primary('user_id', 'role_id');
             $t->foreign('user_id', 'users');
-            // RESTRICT (not the project default CASCADE): Roles::deleteRole() checks for assigned users
-            // first, but a role assigned in the race window between that check and the DELETE must block
-            // the delete at the DB level instead of silently cascading the assignment away with it.
+            // RESTRICT (not the project default CASCADE): Roles::deleteRole() checks for assigned users first, but a role assigned in the race window between that check and the DELETE must block the delete at the DB level instead of silently cascading the assignment away with it.
             $t->foreign('role_id', 'roles', onDelete: 'RESTRICT');
             $t->index('idx_role_user', ['role_id', 'user_id']);
         });

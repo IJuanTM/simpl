@@ -33,8 +33,8 @@ class RateLimiter
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
-     * @param string $key Unique identifier for the action being limited
-     * @param int    $max Maximum number of attempts allowed in the window
+     * @param string $key           Unique identifier for the action being limited
+     * @param int    $max           Maximum number of attempts allowed in the window
      * @param int    $windowSeconds Rolling time window in seconds
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded
@@ -42,19 +42,10 @@ class RateLimiter
     public static function attempt(string $key, int $max, int $windowSeconds): bool
     {
         $now = time();
-        $file = self::path($key);
 
-        $handle = fopen($file, 'cb+');
-        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
-
-        try {
-            flock($handle, LOCK_EX);
-
-            $raw = stream_get_contents($handle);
-            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
-
+        return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $max, $windowSeconds) {
             $attempts = array_values(array_filter(
-                is_array($data) ? ($data['attempts'] ?? []) : [],
+                $data['attempts'] ?? [],
                 static fn(int $ts) => $now - $ts < $windowSeconds
             ));
 
@@ -67,6 +58,35 @@ class RateLimiter
             self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $retry]);
 
             return $allowed;
+        });
+    }
+
+    /**
+     * Opens a key's storage file, takes the given lock, decodes its JSON record, and hands both the
+     * handle and decoded data (normalized to an array) to $fn, unlocking and closing afterward regardless of outcome.
+     *
+     * @param string   $key
+     * @param string   $mode     Fopen mode
+     * @param int      $lockType LOCK_EX or LOCK_SH
+     * @param callable $fn       ($handle, array $data): mixed
+     *
+     * @return mixed Whatever $fn returns
+     *
+     * @throws JsonException
+     */
+    private static function withLock(string $key, string $mode, int $lockType, callable $fn): mixed
+    {
+        $file = self::path($key);
+        $handle = fopen($file, $mode);
+        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
+
+        try {
+            flock($handle, $lockType);
+
+            $raw = stream_get_contents($handle);
+            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
+
+            return $fn($handle, is_array($data) ? $data : []);
         } finally {
             flock($handle, LOCK_UN);
             fclose($handle);
@@ -114,9 +134,9 @@ class RateLimiter
      * It only clears when the whole record ages out of RATE_LIMIT_CACHE_RETENTION.
      * Same escalating-lockout shape as LoginPage::calculateLockout(), on the file-based storage attempt() already uses instead of a dedicated DB table.
      *
-     * @param string $key Unique identifier for the action being limited
-     * @param int    $maxAttempts Attempts allowed in one burst before a lockout starts
-     * @param int    $windowSeconds Burst window: attempts must land within this of the newest to count together
+     * @param string $key                Unique identifier for the action being limited
+     * @param int    $maxAttempts        Attempts allowed in one burst before a lockout starts
+     * @param int    $windowSeconds      Burst window: attempts must land within this of the newest to count together
      * @param int    $minDurationSeconds First lockout duration
      * @param int    $maxDurationSeconds Lockout duration ceiling
      *
@@ -125,18 +145,8 @@ class RateLimiter
     public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool
     {
         $now = time();
-        $file = self::path($key);
 
-        $handle = fopen($file, 'cb+');
-        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
-
-        try {
-            flock($handle, LOCK_EX);
-
-            $raw = stream_get_contents($handle);
-            $data = json_decode($raw ?: 'null', true, 512, JSON_THROW_ON_ERROR);
-            $data = is_array($data) ? $data : [];
-
+        return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $maxAttempts, $windowSeconds, $minDurationSeconds, $maxDurationSeconds) {
             $attempts = array_values(array_filter(
                 $data['attempts'] ?? [],
                 static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION
@@ -175,10 +185,7 @@ class RateLimiter
 
             self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
             return true;
-        } finally {
-            flock($handle, LOCK_UN);
-            fclose($handle);
-        }
+        });
     }
 
     /**
@@ -209,22 +216,14 @@ class RateLimiter
      */
     private static function read(string $key): array
     {
-        $file = self::path($key);
-        if (!is_file($file)) return [];
-
-        $handle = fopen($file, 'rb');
-        if ($handle === false) return [];
+        if (!is_file(self::path($key))) return [];
 
         try {
-            flock($handle, LOCK_SH);
-            $raw = stream_get_contents($handle);
-        } finally {
-            flock($handle, LOCK_UN);
-            fclose($handle);
+            return self::withLock($key, 'rb', LOCK_SH, static fn($handle, array $data) => $data);
+        } catch (RuntimeException) {
+            // A concurrent clear() can unlink the file between the is_file() check above and the fopen() in withLock(); treat that race the same as "never existed".
+            return [];
         }
-
-        $data = json_decode((string)$raw, true, 512, JSON_THROW_ON_ERROR);
-        return is_array($data) ? $data : [];
     }
 
     /**

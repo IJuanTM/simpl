@@ -27,13 +27,13 @@ final class RateLimitedFormTest extends TestCase
         $prefix = 'contact-' . uniqid('', true);
 
         // Act + Assert
-        $this->assertFalse($this->init($host, $prefix));
+        $this->assertFalse($this->call($host, 'initRateLimitedForm', [$prefix]));
         $this->rlKey($host);
     }
 
-    private function init(RateLimitedFormHost $host, string $prefix): bool
+    private function call(RateLimitedFormHost $host, string $method, array $args = []): mixed
     {
-        return new ReflectionMethod(RateLimitedFormHost::class, 'initRateLimitedForm')->invoke($host, $prefix);
+        return (new ReflectionMethod(RateLimitedFormHost::class, $method))->invoke($host, ...$args);
     }
 
     private function rlKey(RateLimitedFormHost $host): void
@@ -50,7 +50,7 @@ final class RateLimitedFormTest extends TestCase
         $_POST['submit'] = '1';
 
         // Act + Assert
-        $this->assertTrue($this->init($host, $prefix));
+        $this->assertTrue($this->call($host, 'initRateLimitedForm', [$prefix]));
         $this->rlKey($host);
     }
 
@@ -61,24 +61,19 @@ final class RateLimitedFormTest extends TestCase
         $submitting = new RateLimitedFormHost();
         $_SERVER['REQUEST_METHOD'] = 'POST';
         $_POST['submit'] = '1';
-        $this->init($submitting, $prefix);
+        $this->call($submitting, 'initRateLimitedForm', [$prefix]);
         $this->rlKey($submitting);
-        $this->attemptRateLimit($submitting, 60);
-        $this->attemptRateLimit($submitting, 60);
+        $this->call($submitting, 'attemptRateLimit', [60]);
+        $this->call($submitting, 'attemptRateLimit', [60]);
 
         // Act
         $viewer = new RateLimitedFormHost();
         $_SERVER['REQUEST_METHOD'] = 'GET';
         unset($_POST['submit']);
-        $this->init($viewer, $prefix);
+        $this->call($viewer, 'initRateLimitedForm', [$prefix]);
 
         // Assert
         $this->assertGreaterThan(0, $viewer->cooldown);
-    }
-
-    private function attemptRateLimit(RateLimitedFormHost $host, int $windowSeconds): bool
-    {
-        return (new ReflectionMethod(RateLimitedFormHost::class, 'attemptRateLimit'))->invoke($host, $windowSeconds);
     }
 
     public function testFirstAttemptWithinTheWindowIsAllowed(): void
@@ -87,13 +82,13 @@ final class RateLimitedFormTest extends TestCase
         $host = $this->newSubmittedHost();
 
         // Act + Assert
-        $this->assertTrue($this->attemptRateLimit($host, 60));
+        $this->assertTrue($this->call($host, 'attemptRateLimit', [60]));
     }
 
     private function newSubmittedHost(): RateLimitedFormHost
     {
         $host = new RateLimitedFormHost();
-        $this->init($host, 'contact-' . uniqid('', true));
+        $this->call($host, 'initRateLimitedForm', ['contact-' . uniqid('', true)]);
         $this->rlKey($host);
         return $host;
     }
@@ -104,10 +99,10 @@ final class RateLimitedFormTest extends TestCase
         $host = $this->newSubmittedHost();
 
         // Act
-        $this->attemptRateLimit($host, 60);
+        $this->call($host, 'attemptRateLimit', [60]);
 
         // Assert
-        $this->assertFalse($this->attemptRateLimit($host, 60));
+        $this->assertFalse($this->call($host, 'attemptRateLimit', [60]));
         $this->assertGreaterThan(0, $host->cooldown);
     }
 
@@ -117,8 +112,8 @@ final class RateLimitedFormTest extends TestCase
         $host = $this->newSubmittedHost();
 
         // Act
-        $this->attemptRateLimit($host, 60);
-        $this->attemptRateLimit($host, 60);
+        $this->call($host, 'attemptRateLimit', [60]);
+        $this->call($host, 'attemptRateLimit', [60]);
 
         // Assert
         $this->assertNotNull(FormController::formAlerts());

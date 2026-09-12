@@ -32,7 +32,7 @@ class LoginPage
      * The message deliberately doesn't say whether the lockout is account-based or IP-based, so it can't be used to confirm an identifier maps to a real account.
      *
      * @param string|null $identifier Username/email for fresh lockout check
-     * @param int|null    $userId Pre-resolved user id, to skip a redundant lookup
+     * @param int|null    $userId     Pre-resolved user id, to skip a redundant lookup
      *
      * @return bool True if locked out
      */
@@ -78,8 +78,8 @@ class LoginPage
      * Calculates remaining lockout duration for user and IP address, whichever is longer.
      *
      * @param string   $identifier Username or email
-     * @param string   $ip IP address
-     * @param int|null $userId Pre-resolved user id, to skip a redundant lookup
+     * @param string   $ip         IP address
+     * @param int|null $userId     Pre-resolved user id, to skip a redundant lookup
      *
      * @return int Seconds remaining on the lockout, or 0 when not locked out
      */
@@ -100,7 +100,7 @@ class LoginPage
      * Calculates lockout end timestamp based on failed attempts.
      *
      * @param string                                                                                              $column Database column to query (user_id or ip_address)
-     * @param mixed                                                                                               $value Value to match
+     * @param mixed                                                                                               $value  Value to match
      * @param array{max_attempts: int, min_duration_minutes: int, max_duration_minutes: int, window_minutes: int} $config
      *
      * @return int|null Lockout end timestamp or null if not locked
@@ -125,8 +125,7 @@ class LoginPage
         $timestamps = array_map(static fn($r) => (int)$r['ts'], $rows);
         $newest = $timestamps[0];
 
-        // Rows are sorted newest-first, so the first attempt outside the window means every
-        // remaining one is too - safe to stop counting there.
+        // Rows are sorted newest-first, so the first attempt outside the window means every remaining one is too, so it's safe to stop counting there.
         $count = 0;
         foreach ($timestamps as $ts) {
             if (($newest - $ts) <= $config['window_minutes'] * 60) $count++;
@@ -192,10 +191,10 @@ class LoginPage
      * (which shows its own alert), and otherwise clears the submitted credentials
      * and shows the given alert.
      *
-     * @param string    $reason Failure reason recorded in the login_attempts log
+     * @param string    $reason  Failure reason recorded in the login_attempts log
      * @param string    $message Alert message to show when this didn't trigger a lockout
-     * @param AlertType $type Alert type for $message
-     * @param int|null  $userId Pre-resolved user id, to skip redundant lookups
+     * @param AlertType $type    Alert type for $message
+     * @param int|null  $userId  Pre-resolved user id, to skip redundant lookups
      *
      * @return void
      */

@@ -57,7 +57,7 @@ class ProfileSettings
         $currentEmail = DB::single(SELECT: 'email', FROM: 'users', WHERE: compact('id'))['email'] ?? null;
         $emailChanged = $currentEmail !== null && $_POST['email'] !== $currentEmail;
 
-        // Email changes are sensitive - the current password stops a hijacked session from redirecting password resets.
+        // Email changes are sensitive, so the current password stops a hijacked session from redirecting password resets.
         if ($emailChanged) {
             if (!FormController::validate('current-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])) return;
 
@@ -97,7 +97,7 @@ class ProfileSettings
         );
 
         // requireAuth()'s session sync ran before this request's own update, so patch the edited fields in now or the nav bar stays stale until the next request.
-        // Only these fields, never a full row refresh - that would mask a stale status/password_changed_at from requireAuth().
+        // Only these fields, never a full row refresh, since that would mask a stale status/password_changed_at from requireAuth().
         $sessionUser = SessionController::get('user');
         $sessionUser['username'] = $_POST['username'] ?: null;
         $sessionUser['first_name'] = $_POST['first_name'] ?: null;

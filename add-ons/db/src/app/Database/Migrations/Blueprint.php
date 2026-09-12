@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Database\Migrations;
 
 use app\Database\DB;
+use InvalidArgumentException;
 
 /**
  * Fluent builder for a CREATE TABLE statement's column/index/foreign-key definitions, built up
@@ -17,9 +18,25 @@ class Blueprint
     private array $foreigns = [];
     private ?string $primaryKey = null;
     private ?int $startAt = null;
+    private readonly string $table;
 
-    public function __construct(private readonly string $table)
+    public function __construct(string $table)
     {
+        $this->table = self::identifier($table);
+    }
+
+    /**
+     * Validates a table/column/index name before it's interpolated backtick-quoted into DDL, matching
+     * the \w+ whitelist DB::sanitize() applies to DML identifiers.
+     *
+     * @param string $name
+     *
+     * @return string
+     */
+    public static function identifier(string $name): string
+    {
+        if (!preg_match('/^\w+$/', $name)) throw new InvalidArgumentException("Invalid identifier: $name");
+        return $name;
     }
 
     /**
@@ -48,15 +65,17 @@ class Blueprint
      */
     public function bigintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` BIGINT UNSIGNED", $notNull, $default);
+        return $this->addColumn($name, 'BIGINT UNSIGNED', $notNull, $default);
     }
 
     /**
      * Appends a column definition, applying NOT NULL and DEFAULT clauses (NoDefault::VALUE means
-     * no DEFAULT clause at all - see its docblock).
+     * no DEFAULT clause at all; see its docblock).
      */
-    private function addColumn(string $definition, bool $notNull, mixed $default): static
+    private function addColumn(string $name, string $type, bool $notNull, mixed $default): static
     {
+        $definition = '`' . self::identifier($name) . "` $type";
+
         if ($notNull) $definition .= ' NOT NULL';
 
         if ($default !== NoDefault::VALUE) {
@@ -77,7 +96,7 @@ class Blueprint
      */
     public function smallintUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` SMALLINT UNSIGNED", $notNull, $default);
+        return $this->addColumn($name, 'SMALLINT UNSIGNED', $notNull, $default);
     }
 
     /**
@@ -85,7 +104,7 @@ class Blueprint
      */
     public function int(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` INT", $notNull, $default);
+        return $this->addColumn($name, 'INT', $notNull, $default);
     }
 
     /**
@@ -93,7 +112,7 @@ class Blueprint
      */
     public function intUnsigned(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` INT UNSIGNED", $notNull, $default);
+        return $this->addColumn($name, 'INT UNSIGNED', $notNull, $default);
     }
 
     /**
@@ -101,7 +120,7 @@ class Blueprint
      */
     public function tinyint(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` TINYINT", $notNull, $default);
+        return $this->addColumn($name, 'TINYINT', $notNull, $default);
     }
 
     /**
@@ -109,7 +128,7 @@ class Blueprint
      */
     public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` VARCHAR($length)", $notNull, $default);
+        return $this->addColumn($name, "VARCHAR($length)", $notNull, $default);
     }
 
     /**
@@ -117,7 +136,7 @@ class Blueprint
      */
     public function text(string $name, bool $notNull = false): static
     {
-        return $this->addColumn("`$name` TEXT", $notNull, NoDefault::VALUE);
+        return $this->addColumn($name, 'TEXT', $notNull, NoDefault::VALUE);
     }
 
     /**
@@ -125,7 +144,7 @@ class Blueprint
      */
     public function timestamp(string $name, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
-        return $this->addColumn("`$name` TIMESTAMP", $notNull, $default);
+        return $this->addColumn($name, 'TIMESTAMP', $notNull, $default);
     }
 
     /**
@@ -134,7 +153,7 @@ class Blueprint
     public function enum(string $name, array $values, bool $notNull = false, mixed $default = NoDefault::VALUE): static
     {
         $list = implode(', ', array_map(static fn($v) => "'" . str_replace("'", "''", $v) . "'", $values));
-        return $this->addColumn("`$name` ENUM($list)", $notNull, $default);
+        return $this->addColumn($name, "ENUM($list)", $notNull, $default);
     }
 
     /**
@@ -171,7 +190,7 @@ class Blueprint
      */
     public function primary(string ...$columns): static
     {
-        $this->primaryKey = implode(', ', array_map(static fn($c) => "`$c`", $columns));
+        $this->primaryKey = implode(', ', array_map(static fn($c) => '`' . self::identifier($c) . '`', $columns));
         return $this;
     }
 
@@ -180,6 +199,9 @@ class Blueprint
      */
     public function foreign(string $column, string $refTable, string $refColumn = DB_SCHEMA_DEFAULTS['primary_key'], string $onDelete = DB_SCHEMA_DEFAULTS['foreign_key_on_delete']): static
     {
+        $column = self::identifier($column);
+        $refTable = self::identifier($refTable);
+        $refColumn = self::identifier($refColumn);
         $this->foreigns[] = "FOREIGN KEY (`$column`) REFERENCES `$refTable` (`$refColumn`) ON DELETE $onDelete";
         return $this;
     }
@@ -189,7 +211,8 @@ class Blueprint
      */
     public function index(string $name, array $columns): static
     {
-        $cols = implode(', ', array_map(static fn($c) => "`$c`", $columns));
+        $name = self::identifier($name);
+        $cols = implode(', ', array_map(static fn($c) => '`' . self::identifier($c) . '`', $columns));
         $this->indexes[] = "INDEX `$name` ($cols)";
         return $this;
     }

@@ -12,13 +12,15 @@ use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\TokenType;
 use app\Models\Page;
-use app\Utils\RateLimiter;
+use app\Pages\Traits\TwoTierThrottle;
 
 /**
  * Handles password reset via tokenized links and processes the reset form.
  */
 class ResetPasswordPage
 {
+    use TwoTierThrottle;
+
     public bool $disableForm = false;
 
     public function __construct(Page $page)
@@ -97,19 +99,18 @@ class ResetPasswordPage
      */
     private function throttle(int $id): bool
     {
-        if (!RateLimiter::attemptWithBackoff("reset-attempt-account-$id", PASSWORD_RESET_CONFIG['token_max_attempts'], PASSWORD_RESET_CONFIG['token_attempt_window'], PASSWORD_RESET_CONFIG['token_min_lockout'], PASSWORD_RESET_CONFIG['token_max_lockout'])) {
-            FormController::addAlert('Too many reset attempts for this account. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
-
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-
-        if (!RateLimiter::attempt("reset-attempt-ip-$ip", PASSWORD_RESET_CONFIG['token_ip_max_attempts'], PASSWORD_RESET_CONFIG['token_ip_attempt_window'])) {
-            FormController::addAlert('Too many reset attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
-
-        return false;
+        return $this->twoTierThrottle(
+            "reset-attempt-account-$id",
+            PASSWORD_RESET_CONFIG['token_max_attempts'],
+            PASSWORD_RESET_CONFIG['token_attempt_window'],
+            PASSWORD_RESET_CONFIG['token_min_lockout'],
+            PASSWORD_RESET_CONFIG['token_max_lockout'],
+            'Too many reset attempts for this account. Please wait a while before trying again.',
+            'reset-attempt-ip',
+            PASSWORD_RESET_CONFIG['token_ip_max_attempts'],
+            PASSWORD_RESET_CONFIG['token_ip_attempt_window'],
+            'Too many reset attempts. Please wait a while before trying again.'
+        );
     }
 
     /**
@@ -134,7 +135,7 @@ class ResetPasswordPage
     /**
      * Updates user password and deletes reset token.
      *
-     * @param int    $id User ID
+     * @param int    $id       User ID
      * @param string $password New password
      *
      * @return void

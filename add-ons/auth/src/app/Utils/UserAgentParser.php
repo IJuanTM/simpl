@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace app\Utils;
 
 /**
- * Best-effort User-Agent parsing for the trusted-devices list. Not a full UA database - covers
+ * Best-effort User-Agent parsing for the trusted-devices list. Not a full UA database, but it covers
  * the common desktop/mobile OSes and browsers well enough to label a remembered device.
  */
 final class UserAgentParser

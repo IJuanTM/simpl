@@ -32,7 +32,7 @@ class Users
     private const array PER_PAGE_OPTIONS = [25, 50, 100, 250];
 
     // Maps a sortable column key to the SQL expression ORDER BY should sort on.
-    // Either a real column or a SELECT-list alias - MySQL allows ordering by either.
+    // Either a real column or a SELECT-list alias, since MySQL allows ordering by either.
     private const array SORT_COLUMNS = [
         'id' => 'users.id',
         'username' => 'users.username',
@@ -99,7 +99,7 @@ class Users
 
         $subAction = $this->subAction;
 
-        // Only the main listing needs the full table pipeline - sub-actions look up one row.
+        // Only the main listing needs the full table pipeline; sub-actions look up one row.
         if ($subAction === null) {
             $this->initTable($page);
             $this->loadUsers();
@@ -216,9 +216,7 @@ class Users
 
         $orWhere = [];
         if ($this->search !== '') {
-            // Escape LIKE wildcards so a literal '%' or '_' in the search term isn't treated as a pattern.
-            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $this->search);
-            $like = ['LIKE', '%' . $escapedSearch . '%'];
+            $like = ['LIKE', '%' . $this->escapeLike($this->search) . '%'];
             $orWhere = [
                 'users.id' => $like,
                 'users.username' => $like,
@@ -379,6 +377,21 @@ class Users
     }
 
     /**
+     * Effective required methods for a user row loaded via this page (which carries 'role_name' rather than 'role').
+     *
+     * @param array $user
+     *
+     * @return string[]
+     */
+    private static function requiredMethodsForUser(array $user): array
+    {
+        return TwoFactorController::requiredMethodsFor([
+            'role' => $user['role_name'] ?? null,
+            'required_2fa_methods' => $user['required_2fa_methods'] ?? null,
+        ]);
+    }
+
+    /**
      * Dispatches the POST request to the appropriate action handler.
      *
      * @return void
@@ -393,21 +406,6 @@ class Users
             'reset-2fa' => $this->resetTwoFactor(),
             'two-factor' => $this->postTwoFactor(),
             default => null
-        };
-    }
-
-    /**
-     * Dispatches a POST from the two-factor management page based on its self-submitted action field.
-     *
-     * @return void
-     */
-    private function postTwoFactor(): void
-    {
-        match ($_POST['action'] ?? null) {
-            'reset-2fa-totp' => $this->resetTwoFactorTotp(),
-            'reset-2fa-passkey' => $this->resetTwoFactorPasskey(),
-            'update-required' => $this->updateRequiredTwoFactor(),
-            default => null,
         };
     }
 
@@ -499,7 +497,7 @@ class Users
 
     /**
      * Redirects away (without acting) unless the target user's active state matches
-     * $requireActive - true for delete (must be active), false for purge/restore (must not be).
+     * $requireActive: true for delete (must be active), false for purge/restore (must not be).
      *
      * @param bool $requireActive
      *
@@ -565,6 +563,21 @@ class Users
     }
 
     /**
+     * Dispatches a POST from the two-factor management page based on its self-submitted action field.
+     *
+     * @return void
+     */
+    private function postTwoFactor(): void
+    {
+        match ($_POST['action'] ?? null) {
+            'reset-2fa-totp' => $this->resetTwoFactorTotp(),
+            'reset-2fa-passkey' => $this->resetTwoFactorPasskey(),
+            'update-required' => $this->updateRequiredTwoFactor(),
+            default => null,
+        };
+    }
+
+    /**
      * Removes just the authenticator-app method for the target user.
      *
      * @return void
@@ -599,21 +612,6 @@ class Users
             WHERE: ['id' => (int)$this->user['id']]
         );
         PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
-    }
-
-    /**
-     * Effective required methods for a user row loaded via this page (which carries 'role_name' rather than 'role').
-     *
-     * @param array $user
-     *
-     * @return string[]
-     */
-    private static function requiredMethodsForUser(array $user): array
-    {
-        return TwoFactorController::requiredMethodsFor([
-            'role' => $user['role_name'] ?? null,
-            'required_2fa_methods' => $user['required_2fa_methods'] ?? null,
-        ]);
     }
 
     /**

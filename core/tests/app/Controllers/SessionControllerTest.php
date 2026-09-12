@@ -8,7 +8,7 @@ use app\Controllers\SessionController;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Only the static accessors are covered - the constructor calls session_start() for real,
+ * Only the static accessors are covered, since the constructor calls session_start() for real,
  * which would take over $_SESSION for the rest of this PHPUnit process and affect every
  * other test relying on a plain array.
  */
@@ -44,7 +44,7 @@ final class SessionControllerTest extends TestCase
     public function testSettingAKeyToNullReadsBackAsNotPresent(): void
     {
         // Arrange
-        // has() uses isset(), which treats a null value the same as absent - get() stays consistent with that since it checks has() first.
+        // has() uses isset(), which treats a null value the same as absent; get() stays consistent with that since it checks has() first.
         // This is intentional, not a leak.
         SessionController::set('key', null);
 

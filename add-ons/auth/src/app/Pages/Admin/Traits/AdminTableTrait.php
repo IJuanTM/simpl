@@ -34,13 +34,13 @@ trait AdminTableTrait
 
     // True once initTable() has run. A consumer that only borrows the render helpers never calls it.
     // Without this its AJAX endpoint would answer with an all-rows, "0 of 0" body nothing asked for.
-    private bool $tableInitialised = false;
-
-    // Active filter values, keyed by param name
     public array $filters = [];
 
-    // Filter param => allowed values ([] means any value is accepted)
+    // Active filter values, keyed by param name
     protected array $filterDefinitions = [];
+
+    // Filter param => allowed values ([] means any value is accepted)
+    private bool $tableInitialised = false;
 
     /**
      * Builds column definitions from [key, label, sortable, width, visible] tuples.
@@ -204,18 +204,6 @@ trait AdminTableTrait
     }
 
     /**
-     * The shared "<td class=table-actions>" shell an overriding renderActionsCell() wraps its buttons in.
-     *
-     * @param string $buttons Pre-rendered action controls
-     *
-     * @return string
-     */
-    protected function actionsCell(string $buttons): string
-    {
-        return '<td class="table-actions"><div class="row g-col-0.5 center-y">' . $buttons . '</div></td>';
-    }
-
-    /**
      * Renders a single cell's content for the given column and row.
      *
      * @param array<string, mixed> $column
@@ -248,12 +236,24 @@ trait AdminTableTrait
     }
 
     /**
+     * The shared "<td class=table-actions>" shell an overriding renderActionsCell() wraps its buttons in.
+     *
+     * @param string $buttons Pre-rendered action controls
+     *
+     * @return string
+     */
+    protected function actionsCell(string $buttons): string
+    {
+        return '<td class="table-actions"><div class="row g-col-0.5 center-y">' . $buttons . '</div></td>';
+    }
+
+    /**
      * Runs $onBlock() and returns true when $condition is true, otherwise returns false.
      * Shared shape for a page's own "block this action, alert/redirect, return" guards -
      * use as `if ($this->blockIf($cond, fn() => ...)) return;`.
      *
      * @param bool     $condition True when the action should be blocked
-     * @param callable $onBlock Called with no args when blocked - queue an alert and/or redirect
+     * @param callable $onBlock   Called with no args when blocked; queue an alert and/or redirect
      *
      * @return bool True when blocked (the caller should return immediately)
      */
@@ -348,7 +348,7 @@ trait AdminTableTrait
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
-     * @param callable $lookup (int $id): ?array
+     * @param callable $lookup    (int $id): ?array
      *
      * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */
@@ -367,6 +367,14 @@ trait AdminTableTrait
         }
 
         return $record;
+    }
+
+    /**
+     * Escapes LIKE wildcards so a literal '%' or '_' in a search term isn't treated as a pattern.
+     */
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 
     /**

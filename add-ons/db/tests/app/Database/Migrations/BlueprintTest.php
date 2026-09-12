@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace tests\Database\Migrations;
 
 use app\Database\Migrations\Blueprint;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -14,6 +15,19 @@ use ReflectionProperty;
  */
 final class BlueprintTest extends TestCase
 {
+    public function testIdentifierReturnsAValidNameUnchanged(): void
+    {
+        // Act + Assert
+        $this->assertSame('user_roles', Blueprint::identifier('user_roles'));
+    }
+
+    public function testIdentifierRejectsANonWordCharacter(): void
+    {
+        // Act + Assert
+        $this->expectException(InvalidArgumentException::class);
+        Blueprint::identifier('users; DROP TABLE users');
+    }
+
     public function testColumnWithANumericDefault(): void
     {
         // Arrange + Act

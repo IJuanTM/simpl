@@ -3,6 +3,10 @@ import {storage} from '../helpers/storage.ts';
 const HIDDEN_KEY = 'table-hidden-cols';
 const MIN_COL_WIDTH = 64;
 
+function hiddenKeyFor(table: HTMLTableElement): string {
+  return `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
+}
+
 function getHeaders(table: HTMLTableElement): HTMLTableCellElement[] {
   return Array.from(table.querySelectorAll<HTMLTableCellElement>('thead th'));
 }
@@ -80,8 +84,7 @@ function getEffectiveWidths(table: HTMLTableElement, defaultWidths: number[], hi
   return getHeaders(table).map((_, col) => stored[col] ?? defaultWidths[col] ?? 100);
 }
 
-// Hidden columns report offsetWidth 0, so their previous (or default) width is kept
-// instead of overwriting it with 0 - resizing one column must not corrupt another's.
+// Hidden columns report offsetWidth 0, so their previous (or default) width is kept instead of overwriting it with 0; resizing one column must not corrupt another's.
 function persistWidths(table: HTMLTableElement, hiddenKey: string, defaultWidths: number[]): void {
   const hidden = new Set(getHiddenCols(hiddenKey, table));
   const previous = getStoredWidths(hiddenKey);
@@ -312,7 +315,7 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
 
     const data = await res.json() as { thead: string; tbody: string; pagination: string; info: string; total: number };
 
-    // A newer request for this table has since been made - discard this now-stale response.
+    // A newer request for this table has since been made, so discard this now-stale response.
     if (latestTableRequest.get(table) !== requestId) return;
 
     if (table.tHead) {
@@ -356,8 +359,7 @@ function initTable(table: HTMLTableElement): { defaultWidths: number[]; widthsSt
   const container = table.closest('.table-container')?.parentElement;
   if (!container) return undefined;
 
-  const id = table.dataset.tableId ?? table.id ?? 'table';
-  const hiddenKey = `${HIDDEN_KEY}-${id}`;
+  const hiddenKey = hiddenKeyFor(table);
   const defaultWidths = getDefaultWidths(table);
   const resetBtn = container.querySelector<HTMLButtonElement>('.table-reset-btn');
   const widthsState: WidthsState = {hasCustomWidths: hasStoredWidthChanges(table, defaultWidths, hiddenKey)};
@@ -388,7 +390,7 @@ function initTableFilters(section: HTMLElement, table: HTMLTableElement, default
   const filtersResetBtn = section.querySelector<HTMLButtonElement>('.filters-reset-btn');
   const filterSelects = Array.from(section.querySelectorAll<HTMLSelectElement>('.table-filter'));
   const filterParams = filterSelects.map(s => s.dataset.filter).filter((p): p is string => !!p);
-  const hiddenKey = `${HIDDEN_KEY}-${table.dataset.tableId ?? table.id ?? 'table'}`;
+  const hiddenKey = hiddenKeyFor(table);
   const resetBtn = section.querySelector<HTMLButtonElement>('.table-reset-btn');
 
   const syncState = (): void => {

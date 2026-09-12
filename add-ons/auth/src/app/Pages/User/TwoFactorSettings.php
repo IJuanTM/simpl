@@ -124,9 +124,9 @@ class TwoFactorSettings
      * unrecognised tab. The page's two tab strips each own their own param so that switching one
      * never clobbers the other's remembered tab.
      *
-     * @param string $param GET key naming the tab
+     * @param string   $param   GET key naming the tab
      * @param string[] $allowed Recognised values for this param
-     * @param string $default Fallback when the param is missing or unrecognised
+     * @param string   $default Fallback when the param is missing or unrecognised
      *
      * @return string
      */
@@ -216,7 +216,7 @@ class TwoFactorSettings
      * Redirects with a global alert and returns false on a missing, rate-limited or wrong password,
      * since the caller's action never completes on this request either way.
      *
-     * @param string $rateLimitKey Per-action lockout key
+     * @param string $rateLimitKey   Per-action lockout key
      * @param string $redirectTarget Page (and tab) to send the user back to on failure
      *
      * @return bool
@@ -296,7 +296,7 @@ class TwoFactorSettings
 
     /**
      * Stages a new authenticator-app secret and returns to the page, which then shows the QR code.
-     * Email must be turned on first - it is the account's mandatory fallback method.
+     * Email must be turned on first; it is the account's mandatory fallback method.
      *
      * @return void
      */

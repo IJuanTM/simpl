@@ -7,7 +7,7 @@ namespace app\Utils;
 use LogicException;
 
 /**
- * A named, callable task with a schedule - either a cron expression or a fixed interval - set
+ * A named, callable task with a schedule (either a cron expression or a fixed interval), set
  * via cron()/everyMinutes()/hourly()/etc. and checked against the last run time by isDue().
  */
 class ScheduledTask

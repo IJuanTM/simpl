@@ -7,6 +7,7 @@ namespace tests\Controllers;
 use app\Controllers\BreadcrumbController;
 use app\Models\Page;
 use PHPUnit\Framework\TestCase;
+use ReflectionProperty;
 
 final class BreadcrumbControllerTest extends TestCase
 {
@@ -80,9 +81,31 @@ final class BreadcrumbControllerTest extends TestCase
         $this->assertSame([], BreadcrumbController::get());
     }
 
+    public function testIsSuppressedIsFalseByDefault(): void
+    {
+        // Act + Assert
+        $this->assertFalse(BreadcrumbController::isSuppressed());
+    }
+
+    public function testSuppressBlocksFurtherSetAndGenerateCalls(): void
+    {
+        // Arrange
+        BreadcrumbController::set([['label' => 'Home', 'url' => '/home']]);
+
+        // Act
+        BreadcrumbController::suppress();
+        BreadcrumbController::set([['label' => 'Changed', 'url' => '/changed']]);
+        BreadcrumbController::generate(new Page('changed', []));
+
+        // Assert
+        $this->assertTrue(BreadcrumbController::isSuppressed());
+        $this->assertSame('Home', BreadcrumbController::get()[0]['label']);
+    }
+
     protected function setUp(): void
     {
         $_SESSION = [];
+        new ReflectionProperty(BreadcrumbController::class, 'suppressed')->setValue(null, false);
         BreadcrumbController::set([]);
     }
 }

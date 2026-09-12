@@ -109,6 +109,27 @@ class UsersSeeder
     }
 
     /**
+     * Generates a random date between the given start and end dates, formatted as 'Y-m-d H:i:s'.
+     *
+     * @throws RandomException
+     */
+    private static function randomDate(string $start, string $end): string
+    {
+        return date('Y-m-d H:i:s', random_int(strtotime($start), strtotime($end)));
+    }
+
+    /**
+     * Randomly decides whether the given creation date should be treated as soft-deleted, returning the deletion date if so.
+     *
+     * @throws RandomException
+     */
+    private static function maybeDeleted(string $createdAt): ?string
+    {
+        if (random_int(1, 100) > 10) return null;
+        return self::randomDate($createdAt, 'now');
+    }
+
+    /**
      * Randomly enrols a seeded user into two-factor authentication, mirroring the DB state
      * TwoFactorController itself would produce so the admin panel has realistic data to browse.
      * Passkeys are skipped, they require real WebAuthn credential material that can't be faked.
@@ -134,35 +155,5 @@ class UsersSeeder
             ],
             WHERE: ['user_id' => $userId]
         );
-    }
-
-    /**
-     * Generates a random date between the given start and end dates.
-     *
-     * @param string $start The starting date in a valid date format.
-     * @param string $end The ending date in a valid date format.
-     *
-     * @return string A random date between the start and end dates, formatted as 'Y-m-d H:i:s'.
-     *
-     * @throws RandomException
-     */
-    private static function randomDate(string $start, string $end): string
-    {
-        return date('Y-m-d H:i:s', random_int(strtotime($start), strtotime($end)));
-    }
-
-    /**
-     * Determines if the given date may be deleted based on a random condition.
-     *
-     * @param string $createdAt The creation date to evaluate.
-     *
-     * @return string|null A randomly generated date string if the condition is met, or null otherwise.
-     *
-     * @throws RandomException
-     */
-    private static function maybeDeleted(string $createdAt): ?string
-    {
-        if (random_int(1, 100) > 10) return null;
-        return self::randomDate($createdAt, 'now');
     }
 }

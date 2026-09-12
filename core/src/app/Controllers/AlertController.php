@@ -40,7 +40,7 @@ class AlertController
 
     /**
      * Returns the pending alert and consumes a non-expiring (timeout 0) one so it renders once.
-     * Skipped on a 302 body, whose output the browser discards - that alert belongs to the redirect target.
+     * Skipped on a 302 body, whose output the browser discards; that alert belongs to the redirect target.
      * Timed alerts are left in the session for the constructor to expire on their own schedule.
      *
      * @return array{message: string, type: string, timeout: int}|null

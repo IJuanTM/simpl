@@ -11,7 +11,7 @@ export function raiseGlobalAlert(): void {
       alert.hidePopover();
       alert.showPopover();
     } catch {
-      // No popover support - nothing to re-stack.
+      // No popover support, so nothing to re-stack.
     }
   });
 }
@@ -27,7 +27,7 @@ export function showAlert(message: string, type: AlertType = 'info', timeoutMs =
   try {
     el.showPopover();
   } catch {
-    // No popover support - the CSS fallback still shows it.
+    // No popover support; the CSS fallback still shows it.
   }
 
   setTimeout(() => {

@@ -154,7 +154,7 @@ class DB
     }
 
     /**
-     * Whether $v is a [table, column] pair - a 2-element array of two strings.
+     * Whether $v is a [table, column] pair: a 2-element array of two strings.
      */
     private static function isColPair(mixed $v): bool
     {
@@ -209,8 +209,7 @@ class DB
         foreach ($where as $key => $value) {
             $column = self::sanitizeColumn($key);
 
-            // Two different keys can normalize to the same param name (e.g. 'a.b' and 'a_b'
-            // both become 'a_b') - only disambiguate with a suffix when that actually happens.
+            // Two different keys can normalize to the same param name (e.g. 'a.b' and 'a_b' both become 'a_b'), so only disambiguate with a suffix when that actually happens.
             $base = $prefix . str_replace('.', '_', $key);
             $paramName = $base;
             for ($suffix = 1; isset($usedParamNames[$paramName]); $suffix++) $paramName = "{$base}_$suffix";
@@ -441,7 +440,7 @@ class DB
     }
 
     /**
-     * Logs a database error and redirects to the error page - or, on CLI, rethrows so the script exits non-zero.
+     * Logs a database error and redirects to the error page, or on CLI rethrows so the script exits non-zero.
      *
      * @param PDOException $e
      *
@@ -515,7 +514,7 @@ class DB
      * @param array  $SET
      * @param array  $WHERE
      *
-     * @return bool True when at least one row was actually changed - MySQL/PDO reports rows
+     * @return bool True when at least one row was actually changed; MySQL/PDO reports rows
      *               changed, not rows matched, so a matching row whose SET values were already
      *               equal to the new ones returns false here too.
      */

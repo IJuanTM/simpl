@@ -60,9 +60,7 @@ class LoginAttempts
 
         $orWhere = [];
         if ($this->search !== '') {
-            // Escape LIKE wildcards so a literal '%' or '_' in the search term isn't treated as a pattern
-            $escapedSearch = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $this->search);
-            $like = ['LIKE', '%' . $escapedSearch . '%'];
+            $like = ['LIKE', '%' . $this->escapeLike($this->search) . '%'];
             $orWhere = [
                 'login_attempts.ip_address' => $like,
                 'users.username' => $like,

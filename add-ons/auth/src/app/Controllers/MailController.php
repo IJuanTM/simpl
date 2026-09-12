@@ -12,7 +12,6 @@ use PHPMailer\PHPMailer\PHPMailer;
  * Provides email templating and delivery helpers.
  *
  * When FastCGI is available, outgoing mail is queued and sent after the response via register_shutdown_function. Otherwise delivery is synchronous.
- * template() extracts variables directly into the include scope, so watch for variable name collisions in templates.
  */
 class MailController
 {
@@ -20,7 +19,7 @@ class MailController
 
     /**
      * Render an email template file and return the resulting HTML.
-     * Variables in $vars are extracted into the template scope, referenced there by their key names.
+     * Variables in $vars are extracted directly into the template scope, so watch for variable name collisions in templates.
      *
      * @param string              $name Template filename without extension (e.g. 'verification')
      * @param array<string,mixed> $vars Associative array of variables to expose to the template
@@ -46,12 +45,12 @@ class MailController
     /**
      * Sends an email after validating the recipient address; defaults $replyTo to $senderEmail when not given.
      *
-     * @param string      $senderName Display name of the sender
-     * @param string      $to Recipient email address
+     * @param string      $senderName  Display name of the sender
+     * @param string      $to          Recipient email address
      * @param string      $senderEmail Sender/envelope-from email address
-     * @param string      $subject Email subject
-     * @param string      $message HTML message body
-     * @param string|null $replyTo Reply-To address, defaults to $senderEmail when null
+     * @param string      $subject     Email subject
+     * @param string      $message     HTML message body
+     * @param string|null $replyTo     Reply-To address, defaults to $senderEmail when null
      *
      * @return bool True when the message was sent or queued successfully
      */
@@ -82,12 +81,12 @@ class MailController
     /**
      * Perform the actual email delivery over SMTP via PHPMailer, using SMTP_CONFIG's development or production settings depending on the DEV flag.
      *
-     * @param string $senderName Display name of the sender
-     * @param string $to Recipient email address
+     * @param string $senderName  Display name of the sender
+     * @param string $to          Recipient email address
      * @param string $senderEmail Sender/envelope-from email address
-     * @param string $subject Email subject
-     * @param string $message HTML message body
-     * @param string $replyTo Reply-To address
+     * @param string $subject     Email subject
+     * @param string $message     HTML message body
+     * @param string $replyTo     Reply-To address
      *
      * @return bool True on success, false on failure
      */

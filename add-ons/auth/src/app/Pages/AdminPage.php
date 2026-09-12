@@ -49,7 +49,10 @@ class AdminPage
             default => null,
         };
 
-        if ($this->delegate === null && $this->section !== 'dashboard') PageController::redirect('admin/users');
+        if ($this->delegate === null && $this->section !== 'dashboard') {
+            PageController::redirect('admin/users');
+            return;
+        }
 
         BreadcrumbController::generate($page);
     }

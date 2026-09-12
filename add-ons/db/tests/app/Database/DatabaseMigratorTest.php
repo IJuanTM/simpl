@@ -11,7 +11,7 @@ use ReflectionProperty;
 
 /**
  * run()/rollback() both call DB::useDatabase()/DB::raw() as their first step, which attempts a real connection.
- * That is not safely callable in a unit test - it would hang or exit via DB::handleError().
+ * That is not safely callable in a unit test; it would hang or exit via DB::handleError().
  * Only register()'s accumulation and the private name() helper are pure.
  */
 final class DatabaseMigratorTest extends TestCase

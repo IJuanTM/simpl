@@ -48,7 +48,7 @@ class ForgotPasswordPage
 
     /**
      * Generates reset token and sends reset email. Silently does nothing if token
-     * generation fails - the caller always shows the same generic response either way.
+     * generation fails; the caller always shows the same generic response either way.
      *
      * @param string $email User email
      *

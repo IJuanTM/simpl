@@ -6,9 +6,7 @@ function fieldState(field: FormField): string {
     : field.value;
 }
 
-// A field or submit button can live outside the form and target it via the `form` attribute
-// (e.g. to sit in a shared button row, or a form with no visible fields of its own), so it
-// won't turn up as a descendant - look it up by owner form too.
+// A field or submit button can live outside the form and target it via the `form` attribute (e.g. to sit in a shared button row, or a form with no visible fields of its own), so it won't turn up as a descendant; look it up by owner form too.
 function ownedElements<T extends Element>(form: HTMLFormElement, selector: string): T[] {
   const descendants = Array.from(form.querySelectorAll<T>(selector));
   if (!form.id) return descendants;

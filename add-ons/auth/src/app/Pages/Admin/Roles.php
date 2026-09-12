@@ -18,7 +18,7 @@ use app\Pages\Admin\Traits\AdminTableTrait;
 /**
  * Admin page: handles role listing, creation, editing, and deletion.
  * Delete is POST-only via a modal confirmation dialog. Uses AdminTableTrait
- * for column rendering only - no search, filters, sort or pagination.
+ * for column rendering only, with no search, filters, sort or pagination.
  */
 class Roles
 {
@@ -83,8 +83,7 @@ class Roles
 
     /**
      * Loads all roles with their assigned user counts.
-     * Names are kept raw here, sanitized only at render time, so links built from them
-     * round-trip correctly against the raw DB values Users::filterUsers() compares against.
+     * Names are kept raw here, sanitized only at render time, so links built from them round-trip correctly against the raw DB values Users::loadUsers() compares against.
      *
      * @return void
      */

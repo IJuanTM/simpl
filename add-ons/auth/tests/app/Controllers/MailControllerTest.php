@@ -8,7 +8,7 @@ use app\Controllers\MailController;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Only "template not found" is covered here - the happy path reads from BASEDIR/app/Mails,
+ * Only "template not found" is covered here; the happy path reads from BASEDIR/app/Mails,
  * which only lines up with this add-on's own templates after a real install-time merge.
  */
 final class MailControllerTest extends TestCase

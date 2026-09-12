@@ -28,6 +28,15 @@ final class UrlTest extends TestCase
         $this->assertStringNotContainsString('?v=', $url);
     }
 
+    public function testFileKeepsAFragmentAfterTheVersionQueryParameter(): void
+    {
+        // Act
+        $url = Url::file('index.php#section');
+
+        // Assert
+        $this->assertMatchesRegularExpression('/\?v=\d+#section$/', $url);
+    }
+
     public function testToNormalizesAMissingLeadingSlash(): void
     {
         // Act + Assert

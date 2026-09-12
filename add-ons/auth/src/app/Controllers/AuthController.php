@@ -35,70 +35,6 @@ class AuthController
     }
 
     /**
-     * The settings route a signed-in user is still forced to complete (change a temporary password,
-     * enrol in required 2FA), or null when nothing is pending.
-     *
-     * @return string|null
-     */
-    private static function pendingMandatoryRoute(): ?string
-    {
-        $user = SessionController::get('user');
-        if (!$user) return null;
-
-        if (!empty($user['must_change_password'])) {
-            return 'user/settings/change-password';
-        }
-
-        if (
-            TWO_FACTOR_CONFIG['enabled']
-            && (
-                (TwoFactorController::isRequiredFor($user) && !TwoFactorController::isEnabledFor((int)$user['id']))
-                || TwoFactorController::missingRequiredMethods($user) !== []
-            )
-        ) {
-            return 'user/settings/two-factor';
-        }
-
-        return null;
-    }
-
-    /**
-     * The single enforcement point for forced actions: pins a user with one pending to that page,
-     * before the request is even dispatched. Every other route (bar logout and the /api/ calls the
-     * page needs) redirects there, stashing the attempted URL to return to afterwards. On the pinned
-     * page the breadcrumb trail is suppressed and the layout drops its nav links.
-     *
-     * @return void
-     */
-    private static function enforceMandatoryActions(): void
-    {
-        $route = self::pendingMandatoryRoute();
-        if ($route === null) return;
-
-        $uri = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '/';
-
-        if (preg_match('#^/(api/)?logout(/|$)#i', $uri)) return;
-
-        if (preg_match('#^/(api/)?' . preg_quote($route, '#') . '(/|$)#i', $uri)) {
-            if (!str_starts_with($uri, '/api/')) BreadcrumbController::suppress();
-            return;
-        }
-
-        if (str_starts_with($uri, '/api/')) {
-            PageController::error(ErrorCode::FORBIDDEN);
-            exit;
-        }
-
-        self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
-
-        PageController::redirectWithAlert($route, match ($route) {
-            'user/settings/change-password' => 'Before you can continue, you must change your password!',
-            default => 'Your account requires two-factor authentication. Please set it up to continue.',
-        }, AlertType::WARNING, 4);
-        exit;
-    }
-
-    /**
      * Try to automatically log a user in using a persistent "remember" token.
      * If the token is missing, expired or invalid, the cookie and database token are cleaned up.
      *
@@ -166,7 +102,7 @@ class AuthController
         // Rotate the token, not just extend its expiry, so a stolen cookie stops working next use.
         $newToken = self::generateToken(REMEMBER_ME_TOKEN_LENGTH);
 
-        // Can't rotate - fail closed like the branches above, rather than leaving the old token valid.
+        // Can't rotate, so fail closed like the branches above, rather than leaving the old token valid.
         if ($newToken === null) {
             self::invalidateRememberToken($tokenHash);
             return;
@@ -320,7 +256,7 @@ class AuthController
      * Generate a cryptographically secure random token (hex characters), trimmed to $length.
      * When $uppercase is true the returned string is uppercased, which reads more clearly in some places.
      *
-     * @param int  $length Number of characters to return
+     * @param int  $length    Number of characters to return
      * @param bool $uppercase Uppercase the resulting token
      *
      * @return string|null Token string or null when secure random generation fails
@@ -350,7 +286,7 @@ class AuthController
     /**
      * Sets the remember-me cookie. Shared by every call site that issues one, so the cookie flags can't independently drift between them.
      *
-     * @param string $token Raw (unhashed) remember-me token
+     * @param string $token     Raw (unhashed) remember-me token
      * @param int    $expiresAt Unix timestamp to expire the cookie at
      *
      * @return void
@@ -358,6 +294,98 @@ class AuthController
     public static function setRememberCookie(string $token, int $expiresAt): void
     {
         setcookie('remember', $token, ['expires' => $expiresAt] + AppController::secureCookieFlags());
+    }
+
+    /**
+     * The single enforcement point for forced actions: pins a user with one pending to that page,
+     * before the request is even dispatched. Every other route (bar logout and the /api/ calls the
+     * page needs) redirects there, stashing the attempted URL to return to afterwards. On the pinned
+     * page the breadcrumb trail is suppressed and the layout drops its nav links.
+     *
+     * @return void
+     */
+    private static function enforceMandatoryActions(): void
+    {
+        $route = self::pendingMandatoryRoute();
+        if ($route === null) return;
+
+        $uri = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '/';
+
+        if (preg_match('#^/(api/)?logout(/|$)#i', $uri)) return;
+
+        if (preg_match('#^/(api/)?' . preg_quote($route, '#') . '(/|$)#i', $uri)) {
+            if (!str_starts_with($uri, '/api/')) BreadcrumbController::suppress();
+            return;
+        }
+
+        if (str_starts_with($uri, '/api/')) {
+            PageController::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
+        self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
+
+        PageController::redirectWithAlert($route, match ($route) {
+            'user/settings/change-password' => 'Before you can continue, you must change your password!',
+            default => 'Your account requires two-factor authentication. Please set it up to continue.',
+        }, AlertType::WARNING, 4);
+        exit;
+    }
+
+    /**
+     * The settings route a signed-in user is still forced to complete (change a temporary password,
+     * enrol in required 2FA), or null when nothing is pending.
+     *
+     * @return string|null
+     */
+    private static function pendingMandatoryRoute(): ?string
+    {
+        $user = SessionController::get('user');
+        if (!$user) return null;
+
+        if (!empty($user['must_change_password'])) {
+            return 'user/settings/change-password';
+        }
+
+        if (
+            TWO_FACTOR_CONFIG['enabled']
+            && (
+                (TwoFactorController::isRequiredFor($user) && !TwoFactorController::isEnabledFor((int)$user['id']))
+                || TwoFactorController::missingRequiredMethods($user) !== []
+            )
+        ) {
+            return 'user/settings/two-factor';
+        }
+
+        return null;
+    }
+
+    /**
+     * Store $uri as the post-login/post-password-change redirect target.
+     * Skips storing when $uri fails isSafeRedirectPath() or matches $excludePattern (a route that would redirect back into itself).
+     * The only path that writes 'intended_url' to the session, so every call site gets the safety check.
+     *
+     * @param string $uri            Request URI to store
+     * @param string $excludePattern preg_match() pattern for routes to skip storing
+     *
+     * @return void
+     */
+    private static function setIntendedUrl(string $uri, string $excludePattern): void
+    {
+        if ($uri && self::isSafeRedirectPath($uri) && !preg_match($excludePattern, $uri)) SessionController::set('intended_url', $uri);
+    }
+
+    /**
+     * Whether $uri is safe to store and later redirect to.
+     * Only a plain root-relative path passes; anything else risks a protocol-relative offsite redirect.
+     *
+     * @param string $uri
+     *
+     * @return bool
+     */
+    private static function isSafeRedirectPath(string $uri): bool
+    {
+        return (bool)preg_match('#^/(?![/\\\\])#', $uri);
     }
 
     /**
@@ -433,34 +461,6 @@ class AuthController
             PageController::error(ErrorCode::FORBIDDEN);
             exit;
         }
-    }
-
-    /**
-     * Store $uri as the post-login/post-password-change redirect target.
-     * Skips storing when $uri fails isSafeRedirectPath() or matches $excludePattern (a route that would redirect back into itself).
-     * The only path that writes 'intended_url' to the session, so every call site gets the safety check.
-     *
-     * @param string $uri Request URI to store
-     * @param string $excludePattern preg_match() pattern for routes to skip storing
-     *
-     * @return void
-     */
-    private static function setIntendedUrl(string $uri, string $excludePattern): void
-    {
-        if ($uri && self::isSafeRedirectPath($uri) && !preg_match($excludePattern, $uri)) SessionController::set('intended_url', $uri);
-    }
-
-    /**
-     * Whether $uri is safe to store and later redirect to.
-     * Only a plain root-relative path passes - anything else risks a protocol-relative offsite redirect.
-     *
-     * @param string $uri
-     *
-     * @return bool
-     */
-    private static function isSafeRedirectPath(string $uri): bool
-    {
-        return (bool)preg_match('#^/(?![/\\\\])#', $uri);
     }
 
     /**
@@ -630,7 +630,7 @@ class AuthController
     }
 
     /**
-     * Whether $email belongs to a user other than $excludeId - the check a profile/edit form needs before saving a changed email address.
+     * Whether $email belongs to a user other than $excludeId: the check a profile/edit form needs before saving a changed email address.
      *
      * @param string $email
      * @param int    $excludeId User id allowed to already have this email
@@ -662,7 +662,7 @@ class AuthController
     }
 
     /**
-     * Whether $username belongs to a user other than $excludeId - the check a profile/edit form needs before saving a changed username.
+     * Whether $username belongs to a user other than $excludeId: the check a profile/edit form needs before saving a changed username.
      *
      * @param string $username
      * @param int    $excludeId User id allowed to already have this username
@@ -697,9 +697,9 @@ class AuthController
      * Verify that a provided token matches the stored token for the given user id and token type, and hasn't expired.
      * Comparison is case-insensitive.
      *
-     * @param int       $id User id
+     * @param int       $id    User id
      * @param string    $token Token to check
-     * @param TokenType $type Token type
+     * @param TokenType $type  Token type
      *
      * @return bool True if tokens match and the token hasn't expired
      */
@@ -756,7 +756,7 @@ class AuthController
      * Every failure path takes at least TIMING_FLOOR_MS['login'] (hashing a dummy password when the identifier doesn't resolve), so timing can't reveal why it failed.
      *
      * @param string $identifier Email or username
-     * @param string $password Plaintext password to verify
+     * @param string $password   Plaintext password to verify
      *
      * @return array|null Matched user row on success, null on any failure
      */
@@ -867,7 +867,7 @@ class AuthController
      * Queues a flash alert and returns the page to go to, so both the redirecting login pages and the
      * JSON passkey endpoint can drive the navigation themselves.
      *
-     * @param array $user Verified user row
+     * @param array $user     Verified user row
      * @param bool  $remember Whether the "remember me" box was ticked on the login form
      *
      * @return string Route to send the user to
@@ -1002,9 +1002,9 @@ class AuthController
      * Queues a flash alert shown after the redirect when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message Optional flash alert message to show after redirecting
-     * @param AlertType   $type Alert type, used only when $message is given
-     * @param int         $timeout Alert timeout in seconds, used only when $message is given
+     * @param string|null $message  Optional flash alert message to show after redirecting
+     * @param AlertType   $type     Alert type, used only when $message is given
+     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
      *
      * @return void
      */

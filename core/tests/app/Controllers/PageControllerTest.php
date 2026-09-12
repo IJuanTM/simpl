@@ -185,7 +185,7 @@ namespace tests\Controllers {
             $output = ob_get_clean();
 
             // Assert
-            // Exact match, not substring - the non-DEV branch's comment output also contains "not found".
+            // Exact match, not substring: the non-DEV branch's comment output also contains "not found".
             $this->assertSame("Part \"$name\" not found", $output);
         }
 
@@ -263,7 +263,7 @@ namespace tests\Controllers {
             $output = ob_get_clean();
 
             // Assert
-            // Exact match, not substring - the non-DEV branch's comment output also contains "not found".
+            // Exact match, not substring: the non-DEV branch's comment output also contains "not found".
             $this->assertSame("Component \"$name\" not found", $output);
         }
 

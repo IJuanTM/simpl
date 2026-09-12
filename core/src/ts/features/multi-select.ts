@@ -29,9 +29,7 @@ export const multiSelectModule = {
 
       options().filter(option => option.hidden).forEach(addPill);
 
-      // A plain click/keyboard move on a native multi-select clears every other
-      // selection, so already-picked (hidden) options must be reselected after
-      // every change or the browser would silently drop them from the submission.
+      // A plain click/keyboard move on a native multi-select clears every other selection, so already-picked (hidden) options must be reselected after every change or the browser would silently drop them from the submission.
       select.addEventListener('change', () => {
         options().filter(option => option.selected && !option.hidden).forEach(addPill);
         options().filter(option => option.hidden).forEach(option => (option.selected = true));

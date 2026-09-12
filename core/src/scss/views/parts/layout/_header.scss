@@ -72,7 +72,6 @@ header {
         padding: 0 1rem;
         white-space: pre-wrap;
         border-radius: var(--radius-md);
-        column-gap: .5rem;
 
         @include breakpoint-down(lg) {
           justify-content: flex-start;

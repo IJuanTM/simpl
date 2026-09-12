@@ -17,6 +17,7 @@ class CreateSchedulerRunsTable
         Schema::create('scheduler_runs', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
             $t->varchar('task_name', 100, notNull: true)->unique();
+
             // Explicit DEFAULT NULL: with explicit_defaults_for_timestamp off a first bare TIMESTAMP auto-fills now(), which isDue() would read as "already ran".
             $t->timestamp('last_run', default: null);
             $t->intUnsigned('last_duration_ms');

@@ -14,6 +14,7 @@ use app\Enums\ErrorCode;
 use app\Enums\TwoFactorMethod;
 use app\Models\Page;
 use app\Models\Url;
+use app\Pages\Traits\TwoTierThrottle;
 use app\Utils\RateLimiter;
 use JsonException;
 
@@ -23,6 +24,8 @@ use JsonException;
  */
 class TwoFactorPage
 {
+    use TwoTierThrottle;
+
     // Seconds a pending login may sit before the challenge is abandoned.
     private const int PENDING_TTL = 900;
 
@@ -135,29 +138,33 @@ class TwoFactorPage
      */
     private function throttle(): bool
     {
-        if (!RateLimiter::attemptWithBackoff("2fa-account-{$this->userId}", TWO_FACTOR_CONFIG['challenge_max_attempts'], TWO_FACTOR_CONFIG['challenge_attempt_window'], TWO_FACTOR_CONFIG['challenge_min_lockout'], TWO_FACTOR_CONFIG['challenge_max_lockout'])) {
-            FormController::addAlert('Too many attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
+        $message = 'Too many attempts. Please wait a while before trying again.';
 
-        if (!RateLimiter::attempt(RateLimiter::ipKey('2fa-ip'), TWO_FACTOR_CONFIG['challenge_ip_max_attempts'], TWO_FACTOR_CONFIG['challenge_ip_window'])) {
-            FormController::addAlert('Too many attempts. Please wait a while before trying again.', AlertType::ERROR);
-            return true;
-        }
-
-        return false;
+        return $this->twoTierThrottle(
+            "2fa-account-{$this->userId}",
+            TWO_FACTOR_CONFIG['challenge_max_attempts'],
+            TWO_FACTOR_CONFIG['challenge_attempt_window'],
+            TWO_FACTOR_CONFIG['challenge_min_lockout'],
+            TWO_FACTOR_CONFIG['challenge_max_lockout'],
+            $message,
+            '2fa-ip',
+            TWO_FACTOR_CONFIG['challenge_ip_max_attempts'],
+            TWO_FACTOR_CONFIG['challenge_ip_window'],
+            $message
+        );
     }
 
     /**
      * Clears the pending marker and the account throttle, then finishes the login.
      *
      * @param array $pending
+     * @param bool  $isApi Whether the caller is a JSON API endpoint (passkeyVerify()) rather than the form-post handler (post()), so a vanished account is reported as a JSON error instead of a page redirect
      *
      * @return string The route to send the user to
      *
      * @throws JsonException
      */
-    private function complete(array $pending): string
+    private function complete(array $pending, bool $isApi = false): string
     {
         SessionController::remove('2fa_pending');
         RateLimiter::clear("2fa-account-{$this->userId}");
@@ -165,7 +172,8 @@ class TwoFactorPage
         $user = AuthController::getUserWithRole($this->userId);
 
         if (!$user) {
-            PageController::redirectWithAlert('login', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            if ($isApi) PageController::error(ErrorCode::BAD_REQUEST);
+            else PageController::redirectWithAlert('login', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;
         }
 
@@ -264,6 +272,6 @@ class TwoFactorPage
         }
 
         header('Content-Type: application/json');
-        echo json_encode(['ok' => true, 'redirect' => Url::to($this->complete($pending))], JSON_THROW_ON_ERROR);
+        echo json_encode(['ok' => true, 'redirect' => Url::to($this->complete($pending, isApi: true))], JSON_THROW_ON_ERROR);
     }
 }

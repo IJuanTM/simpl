@@ -297,7 +297,7 @@ class TwoFactorController
     /**
      * Verify a submitted email code, consuming it on success.
      * The expiry check reads the row first so a NULL expires can be treated as "never expires", matching AuthController::checkToken().
-     * Consumption itself is still one guarded DELETE keyed on the token match, the same way consumeRecoveryCode()'s guarded UPDATE is - two concurrent submissions of the same code can't both win.
+     * Consumption itself is still one guarded DELETE keyed on the token match, the same way consumeRecoveryCode()'s guarded UPDATE is, so two concurrent submissions of the same code can't both win.
      *
      * @param int    $userId
      * @param string $code

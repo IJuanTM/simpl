@@ -39,8 +39,7 @@ class RegisterPage
             !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
         ) return;
 
-        // Runs before the rate limiter: a policy or mismatch failure touches no account data.
-        // It must not spend the single registration attempt or sit inside the enumeration timebox.
+        // Runs before the rate limiter: a policy or mismatch failure touches no account data, and it must not spend the single registration attempt or sit inside the enumeration timebox.
         if (!FormController::validatePasswords('password', 'password-check')) return;
 
         // Rate limit before the email-existence check to prevent enumeration.
@@ -49,8 +48,7 @@ class RegisterPage
         // Timeboxed so the response takes the same time whether or not the email is already registered.
         new Timebox()->call(function () {
             if (AuthController::checkEmail($_POST['email'])) {
-                // Redirects like a fresh registration instead of alerting inline, closing the status-code/body tell.
-                // The Location can still differ when verification is required - a separate, harder gap to close.
+                // Redirects like a fresh registration instead of alerting inline, closing the status-code/body tell, though the Location can still differ when verification is required, a separate, harder gap to close.
                 PageController::redirectWithAlert('login', 'An account with this email already exists! Try logging in!', AlertType::WARNING, 4);
                 return;
             }
@@ -62,7 +60,7 @@ class RegisterPage
     /**
      * Creates new user account and sends verification email if required.
      *
-     * @param string $email User email
+     * @param string $email    User email
      * @param string $password User password (will be hashed)
      *
      * @return void

@@ -12,7 +12,7 @@ use tests\Support\HeadersAssertionTrait;
 
 /**
  * The invalid-error-code branch calls PageController::error() followed by a real exit,
- * which would kill the test process - not exercised here, same as PageControllerTest's
+ * which would kill the test process, so it's not exercised here, same as PageControllerTest's
  * documented exclusion of exit paths. ERROR_AUTO_REDIRECT is a hardcoded true in app.php
  * (not env-driven), so every construction here also sends a delayed refresh redirect.
  */
