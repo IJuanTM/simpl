@@ -9,7 +9,7 @@
     <div class="row center-x">
       <div class="col login-attempts-table f-col g-row-1 w-100">
 
-        <div class="row table-tools">
+        <search class="row table-tools">
           <form class="col table-tools-form" novalidate>
             <div class="row">
               <div class="col form-group g-row-0.25">
@@ -18,13 +18,13 @@
                 </div>
                 <div class="row input-group">
                   <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
-                  <input class="col table-search" id="la-search" type="text" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: IP address, Username or Email" autocomplete="off">
+                  <input class="col table-search" id="la-search" type="search" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: IP address, Username or Email" autocomplete="off">
                   <div class="col input-append center f-0"><i class="fas fa-xmark table-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
                 </div>
               </div>
             </div>
           </form>
-        </div>
+        </search>
 
         <div class="row table-tools">
           <form class="col center-y table-tools-form" novalidate>

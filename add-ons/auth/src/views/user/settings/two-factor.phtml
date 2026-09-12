@@ -275,7 +275,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                       <?php $areYouSureModal('confirm-totp-remove', 'totp-remove-form', 'This removes the authenticator app as a sign-in method. Email codes will still work.', 'Remove authenticator app') ?>
 
                       <div class="row g-2 center-x">
-                        <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" data-open-modal="confirm-totp-remove"><i class="fas fa-trash"></i>Remove authenticator app</button>
+                        <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="confirm-totp-remove"><i class="fas fa-trash"></i>Remove authenticator app</button>
                       </div>
 
                     <?php endif ?>
@@ -358,7 +358,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                                 <?php $areYouSureModal('confirm-passkey-remove-' . (int)$passkey['id'], 'passkey-remove-form-' . (int)$passkey['id'], 'This removes "' . $passkey['name'] . '" as a sign-in method. Email codes will still work.', 'Remove passkey') ?>
 
                                 <div class="row g-2 center-x">
-                                  <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" data-open-modal="confirm-passkey-remove-<?= (int)$passkey['id'] ?>" aria-label="Remove this passkey"><i class="fas fa-trash"></i>Remove passkey</button>
+                                  <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="confirm-passkey-remove-<?= (int)$passkey['id'] ?>" aria-label="Remove this passkey"><i class="fas fa-trash"></i>Remove passkey</button>
                                 </div>
 
                               <?php endif ?>
@@ -507,7 +507,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
 
                                     <?php $areYouSureModal('confirm-device-remove-' . (int)$device['id'], 'device-remove-form-' . (int)$device['id'], 'This device will be asked for two-factor again next time it signs in.', 'Forget device') ?>
 
-                                    <button class="col table-action delete f-0" type="button" data-open-modal="confirm-device-remove-<?= (int)$device['id'] ?>" aria-label="Forget this device"><i class="fas fa-trash"></i></button>
+                                    <button class="col table-action delete f-0" type="button" command="show-modal" commandfor="confirm-device-remove-<?= (int)$device['id'] ?>" aria-label="Forget this device"><i class="fas fa-trash"></i></button>
                                   </div>
                                 </td>
                               </tr>

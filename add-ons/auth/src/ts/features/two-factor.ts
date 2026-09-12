@@ -28,7 +28,6 @@ export const twoFactorModule = {
       recoveryModal.addEventListener('click', event => {
         if (event.target === recoveryModal) recoveryModal.close();
       });
-      recoveryModal.querySelectorAll('.modal-close').forEach(button => button.addEventListener('click', () => recoveryModal.close()));
     }
 
     const downloadButton = document.querySelector<HTMLButtonElement>('[data-download-codes]');

@@ -5,28 +5,29 @@ use app\Controllers\AppController;
 /**
  * Shared confirmation modal for a single-user action (delete/purge/restore).
  *
- * @var string $triggerAttr Bare data-* attribute that opens this modal, e.g. "data-user-delete-modal"
- * @var string $ariaLabel Dialog aria-label, e.g. "Delete user"
- * @var string $title Modal heading, e.g. "Delete user"
- * @var string $question Confirmation question shown above the user info block
- * @var array  $quotes List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
- * @var string $formClass Class on the submit <form>, used by modal.ts to find it
- * @var string $buttonClass Class on the submit <button>
- * @var string $icon Font Awesome icon class for the submit button, e.g. "fa-user-slash"
- * @var string $buttonText Submit button label, e.g. "Delete user"
+ * @var string $triggerAttr     Bare data-* attribute that opens this modal, e.g. "data-user-delete-modal"
+ * @var string $ariaLabel       Dialog aria-label, e.g. "Delete user"
+ * @var string $title           Modal heading, e.g. "Delete user"
+ * @var string $question        Confirmation question shown above the user info block
+ * @var array  $quotes          List of ['type' => 'warning'|'info', 'text' => string] callout paragraphs
+ * @var string $formClass       Class on the submit <form>, used by modal.ts to find it
+ * @var string $buttonClass     Class on the submit <button>
+ * @var string $icon            Font Awesome icon class for the submit button, e.g. "fa-user-slash"
+ * @var string $buttonText      Submit button label, e.g. "Delete user"
  * @var bool   $confirmCheckbox When true, an "are you sure" checkbox gates the submit button
- * @var string $confirmText Label for that checkbox
+ * @var string $confirmText     Label for that checkbox
  */
 
 $confirmCheckbox ??= false;
 $confirmText ??= 'I understand this action cannot be undone';
+$id = substr($triggerAttr, 5); // strip the "data-" prefix from e.g. "data-user-delete-modal"
 ?>
 
-<dialog class="modal-overlay" tabindex="-1" <?= AppController::sanitize($triggerAttr) ?> aria-label="<?= AppController::sanitize($ariaLabel) ?>">
+<dialog class="modal-overlay" id="<?= AppController::sanitize($id) ?>" tabindex="-1" <?= AppController::sanitize($triggerAttr) ?> aria-label="<?= AppController::sanitize($ariaLabel) ?>">
   <div class="col modal f-col g-row-2">
     <div class="row center-y g-col-1">
       <h3 class="col"><?= AppController::sanitize($title) ?></h3>
-      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="<?= AppController::sanitize($id) ?>" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
 
     <div class="row modal-body">
@@ -80,7 +81,7 @@ $confirmText ??= 'I understand this action cannot be undone';
     </div>
 
     <div class="row g-2 center-x">
-      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Cancel</button>
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="<?= AppController::sanitize($id) ?>"><i class="fas fa-xmark"></i>Cancel</button>
       <form class="col <?= AppController::sanitize($formClass) ?> f-0" method="POST" action="">
         <input type="hidden" name="submit" value="1">
         <div class="row">

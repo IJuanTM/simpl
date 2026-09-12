@@ -73,7 +73,7 @@ $methods = $this->pageObj->enrolledMethods;
           <input class="col hidden" id="code" type="text" name="code" inputmode="numeric" maxlength="<?= TWO_FACTOR_CONFIG['code_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
           <div class="col center-x g-col-1">
             <?php for ($i = 0; $i < TWO_FACTOR_CONFIG['code_length']; $i++): ?>
-              <input type="text" class="digit" maxlength="1" inputmode="numeric" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
+              <input type="text" class="digit" maxlength="1" inputmode="numeric" autocomplete="one-time-code" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
             <?php endfor ?>
           </div>
         </div>

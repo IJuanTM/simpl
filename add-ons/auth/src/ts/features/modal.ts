@@ -7,15 +7,11 @@ function openModal(modal: HTMLDialogElement): void {
   raiseGlobalAlert();
 }
 
-function closeModal(modal: HTMLDialogElement): void {
-  modal.close();
-}
-
-function bindClose(modal: HTMLDialogElement): void {
+// Close buttons use command="close" declaratively; this only covers the backdrop-click case.
+function bindBackdropClose(modal: HTMLDialogElement): void {
   modal.addEventListener('click', e => {
-    if (e.target === modal) closeModal(modal);
+    if (e.target === modal) modal.close();
   });
-  modal.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', () => closeModal(modal)));
 }
 
 interface UserActionModalConfig {
@@ -53,20 +49,12 @@ function initUserActionModal(config: UserActionModalConfig): void {
     openModal(modal);
   });
 
-  bindClose(modal);
+  bindBackdropClose(modal);
 }
 
-// Plain confirm dialogs with no per-instance data to populate (e.g. two-factor settings' "are you sure" prompts).
+// Plain confirm dialogs with no per-instance data to populate; open/close is fully declarative, only backdrop-click needs JS.
 function initGenericModals(): void {
-  document.querySelectorAll<HTMLDialogElement>('.confirm-modal').forEach(bindClose);
-
-  document.addEventListener('click', e => {
-    const trigger = (e.target as HTMLElement).closest<HTMLElement>('[data-open-modal]');
-    if (!trigger) return;
-
-    const modal = document.getElementById(trigger.dataset.openModal ?? '');
-    if (modal instanceof HTMLDialogElement) openModal(modal);
-  });
+  document.querySelectorAll<HTMLDialogElement>('.confirm-modal').forEach(bindBackdropClose);
 }
 
 function initRoleDeleteModal(): void {
@@ -97,7 +85,7 @@ function initRoleDeleteModal(): void {
     });
   });
 
-  bindClose(modal);
+  bindBackdropClose(modal);
 }
 
 export const modalModule = {

@@ -337,6 +337,8 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Restructured the `scss` folder - `config/` now holds only Sass definitions (re-exported through a `config/_index.scss` barrel), with `base/`, `utilities/` and `components/` alongside `views/`; visible page chrome moved to `views/parts/layout/`
 * Reworked the TypeScript into one consistent module shape (private helpers, a single `init()` per feature), dropped the `window.load` handler, switched clipboard copy to `navigator.clipboard`, and added a client-side alert helper in place of native `alert()`
 * Documented the `part()` vs `component()` split on `PageController`, renamed `ts/utils` to `ts/helpers`, and moved generated runtime data out of `app/` into `src/cache` and `src/logs`
+* Modal dialogs now open/close declaratively via the `command`/`commandfor` attributes instead of per-button JavaScript listeners
+* Admin table search boxes are now `<search>` landmarks with `type="search"` inputs, for correct semantics/mobile keyboard affordance
 
 <br>
 

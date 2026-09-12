@@ -1,8 +1,8 @@
-<dialog class="modal-overlay" tabindex="-1" data-role-delete-modal aria-label="Delete role">
+<dialog class="modal-overlay" id="role-delete-modal" tabindex="-1" data-role-delete-modal aria-label="Delete role">
   <div class="col modal f-col g-row-2">
     <div class="row center-y g-col-1">
       <h3 class="col">Delete role</h3>
-      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="role-delete-modal" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
 
     <div class="row modal-body">
@@ -39,7 +39,7 @@
     </div>
 
     <div class="row g-2 center-x">
-      <button class="col link modal-close lh-1 g-col-0.5 center-y f-0"><i class="fas fa-xmark"></i>Cancel</button>
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="role-delete-modal"><i class="fas fa-xmark"></i>Cancel</button>
       <form class="col modal-delete-role-form f-0" method="POST" action="">
         <input type="hidden" name="submit" value="1">
 
