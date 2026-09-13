@@ -1,34 +1,23 @@
 import {showAlert} from '../helpers/alert.ts';
 
-function cropToSquarePng(file: File): Promise<Blob | null> {
-  return new Promise(resolve => {
-    const reader = new FileReader();
+async function cropToSquarePng(file: File): Promise<Blob | null> {
+  try {
+    const image = await createImageBitmap(file);
+    const size = Math.min(image.width, image.height);
+    const x = (image.width - size) / 2;
+    const y = (image.height - size) / 2;
 
-    reader.onload = () => {
-      const image = new Image();
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
 
-      image.onload = () => {
-        const size = Math.min(image.width, image.height);
-        const x = (image.width - size) / 2;
-        const y = (image.height - size) / 2;
+    const context = canvas.getContext('2d');
+    if (!context) return null;
 
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = size;
-
-        const context = canvas.getContext('2d');
-        if (!context) return resolve(null);
-
-        context.drawImage(image, x, y, size, size, 0, 0, size, size);
-        canvas.toBlob(blob => resolve(blob));
-      };
-
-      image.onerror = () => resolve(null);
-      image.src = reader.result as string;
-    };
-
-    reader.onerror = () => resolve(null);
-    reader.readAsDataURL(file);
-  });
+    context.drawImage(image, x, y, size, size, 0, 0, size, size);
+    return await new Promise(resolve => canvas.toBlob(resolve));
+  } catch {
+    return null;
+  }
 }
 
 export const profileImageModule = {

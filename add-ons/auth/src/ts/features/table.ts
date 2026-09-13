@@ -177,27 +177,30 @@ function addResizeHandle(table: HTMLTableElement, th: HTMLTableCellElement, col:
   handle.className = 'col-resize-handle';
   th.appendChild(handle);
 
-  handle.addEventListener('mousedown', e => {
+  handle.addEventListener('pointerdown', e => {
     e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
     const startX = e.clientX;
     const startW = th.offsetWidth;
 
-    const onMove = (mv: MouseEvent) => {
+    const onMove = (mv: PointerEvent) => {
       applyColumnWidth(table, col, startW + mv.clientX - startX);
       onWidthChange(hasWidthChanges(table, defaultWidths, hiddenKey));
       onStateChange();
     };
 
     const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+      handle.removeEventListener('pointercancel', onUp);
       persistWidths(table, hiddenKey, defaultWidths);
       onWidthChange(hasWidthChanges(table, defaultWidths, hiddenKey));
       onStateChange();
     };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+    handle.addEventListener('pointercancel', onUp);
   });
 }
 
@@ -287,15 +290,16 @@ function initPaginationLinks(section: HTMLElement, container: Element, table: HT
   }
 }
 
-// Prevents a slower response from overwriting a newer one.
-const latestTableRequest = new WeakMap<HTMLTableElement, number>();
+// Aborts a still-in-flight request for the same table instead of just letting it complete and discarding the result.
+const tableAbortControllers = new WeakMap<HTMLTableElement, AbortController>();
 
 async function fetchTableData(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void, params: URLSearchParams): Promise<void> {
   const api = table.dataset.api;
   if (!api) return;
 
-  const requestId = (latestTableRequest.get(table) ?? 0) + 1;
-  latestTableRequest.set(table, requestId);
+  tableAbortControllers.get(table)?.abort();
+  const controller = new AbortController();
+  tableAbortControllers.set(table, controller);
 
   const apiUrl = new URL(api, window.location.origin);
   apiUrl.search = params.toString();
@@ -307,16 +311,13 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
   if (tbody) tbody.classList.add('loading');
 
   try {
-    const res = await fetch(apiUrl.toString());
+    const res = await fetch(apiUrl.toString(), {signal: controller.signal});
     if (!res.ok) {
-      if (tbody && latestTableRequest.get(table) === requestId) tbody.classList.remove('loading');
+      tbody?.classList.remove('loading');
       return;
     }
 
     const data = await res.json() as { thead: string; tbody: string; pagination: string; info: string; total: number };
-
-    // A newer request for this table has since been made, so discard this now-stale response.
-    if (latestTableRequest.get(table) !== requestId) return;
 
     if (table.tHead) {
       table.tHead.innerHTML = data.thead;
@@ -346,8 +347,9 @@ async function fetchTableData(section: HTMLElement, table: HTMLTableElement, def
     const paginationInfo = paginationRow?.querySelector<HTMLElement>('p');
     if (paginationInfo) paginationInfo.textContent = data.info;
 
-  } catch {
-    if (tbody && latestTableRequest.get(table) === requestId) tbody.classList.remove('loading');
+  } catch (error) {
+    // A newer request for this table aborted this one; the newer request owns the loading state now.
+    if (!(error instanceof DOMException && error.name === 'AbortError')) tbody?.classList.remove('loading');
   }
 }
 

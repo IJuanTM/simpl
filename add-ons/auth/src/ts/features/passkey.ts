@@ -1,14 +1,11 @@
 import {csrfToken} from '../helpers/csrf.ts';
 
 function toBuffer(base64Url: string): ArrayBuffer {
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(base64Url.length / 4) * 4, '=');
-  const binary = atob(base64);
-  return Uint8Array.from(binary, char => char.charCodeAt(0)).buffer;
+  return Uint8Array.fromBase64(base64Url, {alphabet: 'base64url'}).buffer;
 }
 
 function toBase64Url(buffer: ArrayBuffer): string {
-  const binary = String.fromCharCode(...new Uint8Array(buffer));
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return new Uint8Array(buffer).toBase64({alphabet: 'base64url', omitPadding: true});
 }
 
 // The server sends ids and challenges as base64url strings; the WebAuthn API needs ArrayBuffers.
