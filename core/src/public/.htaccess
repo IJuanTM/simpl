@@ -25,8 +25,9 @@ Options -MultiViews -Indexes
     # Prevent MIME-type sniffing
     Header always set X-Content-Type-Options "nosniff"
 
-    # Enable basic XSS protection
-    Header always set X-XSS-Protection "1; mode=block"
+    # Explicitly disabled: the XSS Auditor it toggled is gone from every current browser engine, and enabling it on the rare browser that still honors it has caused XSS bugs of its own.
+    # CSP below is what actually mitigates XSS now.
+    Header always set X-XSS-Protection "0"
 
     # Enforce HTTPS
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
@@ -34,9 +35,19 @@ Options -MultiViews -Indexes
     # Referrer policy
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
 
-    # Content Security Policy. Assets are self-hosted; 'unsafe-inline' is required for the inline
-    # theme script and dynamic styles. Tightening these to nonces/hashes is a future improvement.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    # Deny powerful browser features this app never uses
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
+    # Isolate this site's browsing context from other origins
+    Header always set Cross-Origin-Opener-Policy "same-origin"
+
+    # Block other origins from embedding this site's resources
+    Header always set Cross-Origin-Resource-Policy "same-origin"
+
+    # Content Security Policy. Assets are self-hosted; 'unsafe-inline' on script-src is required for the inline theme script.
+    # style-src needs no 'unsafe-inline': no style="" attribute or <style> block exists anywhere, and the JS that touches .style sets properties directly, which CSP doesn't treat as inline.
+    # Tightening script-src to a nonce/hash is a future improvement.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 </IfModule>
 
 # Enable compression
