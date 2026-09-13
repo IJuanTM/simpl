@@ -13,6 +13,7 @@ use app\Enums\Role;
 use app\Pages\Traits\RateLimitedForm;
 use app\Utils\Log;
 use app\Utils\Timebox;
+use SensitiveParameter;
 
 /**
  * Handles new account creation and optional email verification flow.
@@ -48,8 +49,8 @@ class RegisterPage
         // Timeboxed so the response takes the same time whether or not the email is already registered.
         new Timebox()->call(function () {
             if (AuthController::checkEmail($_POST['email'])) {
-                // Redirects like a fresh registration instead of alerting inline, closing the status-code/body tell, though the Location can still differ when verification is required, a separate, harder gap to close.
-                PageController::redirectWithAlert('login', 'An account with this email already exists! Try logging in!', AlertType::WARNING, 4);
+                // Mirrors the genuine no-verification-required success response verbatim, so the alert text carries no enumeration tell either; the Location can still differ when verification is required, a separate, harder gap to close.
+                PageController::redirectWithAlert('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
                 return;
             }
 
@@ -65,7 +66,7 @@ class RegisterPage
      *
      * @return void
      */
-    private function register(string $email, string $password): void
+    private function register(string $email, #[SensitiveParameter] string $password): void
     {
         $roleId = DB::single(
             SELECT: 'id',

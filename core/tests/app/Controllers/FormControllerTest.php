@@ -91,6 +91,28 @@ final class FormControllerTest extends TestCase
         $this->assertFalse(FormController::validate('username', ['minLength' => 3]));
     }
 
+    public function testSingleLineRejectsAValueContainingANewlineAndClearsIt(): void
+    {
+        // Arrange
+        $_POST['subject'] = "Hi\r\nBcc: victim@example.com";
+
+        // Act
+        $passed = FormController::validate('subject', ['singleLine']);
+
+        // Assert
+        $this->assertFalse($passed);
+        $this->assertSame('', $_POST['subject']);
+    }
+
+    public function testSingleLineAcceptsAValueWithoutNewlines(): void
+    {
+        // Arrange
+        $_POST['subject'] = 'Hello there';
+
+        // Act + Assert
+        $this->assertTrue(FormController::validate('subject', ['singleLine']));
+    }
+
     public function testMinValueRejectsATooLowNumber(): void
     {
         // Arrange

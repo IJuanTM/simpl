@@ -15,8 +15,10 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Exception;
+use NoDiscard;
 use OTPHP\TOTP;
 use Random\RandomException;
+use SensitiveParameter;
 
 /**
  * Two-factor authentication helpers: enrolment state, the login-time email challenge, single-use recovery codes, and trusted-device cookies.
@@ -105,10 +107,7 @@ class TwoFactorController
         $row = self::settingsFor($userId);
         if (!$row) return [];
 
-        $methods = array_values(array_filter(
-            TwoFactorMethod::cases(),
-            static fn(TwoFactorMethod $m) => !empty($row[$m->value . '_enabled'])
-        ));
+        $methods = array_filter(TwoFactorMethod::cases(), static fn(TwoFactorMethod $m) => !empty($row[$m->value . '_enabled'])) |> array_values(...);
 
         usort($methods, static fn(TwoFactorMethod $a, TwoFactorMethod $b) => ($b->value === $row['primary_method']) <=> ($a->value === $row['primary_method']));
 
@@ -304,7 +303,8 @@ class TwoFactorController
      *
      * @return bool
      */
-    public static function verifyEmailChallenge(int $userId, string $code): bool
+    #[NoDiscard]
+    public static function verifyEmailChallenge(int $userId, #[SensitiveParameter] string $code): bool
     {
         $tokenHash = hash('sha256', strtoupper($code));
 
@@ -404,7 +404,8 @@ class TwoFactorController
      *
      * @return bool
      */
-    public static function confirmTotp(int $userId, string $code): bool
+    #[NoDiscard]
+    public static function confirmTotp(int $userId, #[SensitiveParameter] string $code): bool
     {
         $row = self::settingsFor($userId);
         if ($row === null || empty($row['totp_secret']) || !empty($row['totp_enabled'])) return false;
@@ -456,7 +457,8 @@ class TwoFactorController
      *
      * @return bool
      */
-    public static function verifyTotp(int $userId, string $code): bool
+    #[NoDiscard]
+    public static function verifyTotp(int $userId, #[SensitiveParameter] string $code): bool
     {
         $row = self::settingsFor($userId);
         if ($row === null || empty($row['totp_enabled']) || empty($row['totp_secret'])) return false;
@@ -574,6 +576,7 @@ class TwoFactorController
      *
      * @return bool
      */
+    #[NoDiscard]
     public static function verifyPasskey(int $userId, string $clientJson): bool
     {
         $credentialId = WebauthnController::credentialIdFromResponse($clientJson);
@@ -624,7 +627,8 @@ class TwoFactorController
      *
      * @return bool
      */
-    public static function consumeRecoveryCode(int $userId, string $code): bool
+    #[NoDiscard]
+    public static function consumeRecoveryCode(int $userId, #[SensitiveParameter] string $code): bool
     {
         // One guarded UPDATE ("used_at IS NULL" in the WHERE) makes redemption atomic.
         // Two concurrent submissions of the same code can't both win; DB::update reports only rows it changed.

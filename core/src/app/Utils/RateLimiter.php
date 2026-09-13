@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Utils;
 
 use JsonException;
+use NoDiscard;
 use RuntimeException;
 
 /**
@@ -39,15 +40,13 @@ class RateLimiter
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded
      */
+    #[NoDiscard]
     public static function attempt(string $key, int $max, int $windowSeconds): bool
     {
         $now = time();
 
         return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $max, $windowSeconds) {
-            $attempts = array_values(array_filter(
-                $data['attempts'] ?? [],
-                static fn(int $ts) => $now - $ts < $windowSeconds
-            ));
+            $attempts = array_filter($data['attempts'] ?? [], static fn(int $ts) => $now - $ts < $windowSeconds) |> array_values(...);
 
             $allowed = count($attempts) < $max;
             if ($allowed) $attempts[] = $now;
@@ -142,15 +141,13 @@ class RateLimiter
      *
      * @return bool True if the attempt is allowed, false if currently within a backoff lockout
      */
+    #[NoDiscard]
     public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool
     {
         $now = time();
 
         return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $maxAttempts, $windowSeconds, $minDurationSeconds, $maxDurationSeconds) {
-            $attempts = array_values(array_filter(
-                $data['attempts'] ?? [],
-                static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION
-            ));
+            $attempts = array_filter($data['attempts'] ?? [], static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION) |> array_values(...);
             $tier = (int)($data['tier'] ?? 0);
             $retry = (int)($data['retry'] ?? 0);
 
@@ -161,7 +158,7 @@ class RateLimiter
             }
 
             // A served lockout resets the burst, so only attempts since $retry (the last lockout's end) count toward the next one.
-            $burst = array_values(array_filter($attempts, static fn(int $ts) => $ts >= $retry));
+            $burst = array_filter($attempts, static fn(int $ts) => $ts >= $retry) |> array_values(...);
             $newest = $burst ? max($burst) : $now;
             $count = 0;
             for ($i = count($burst) - 1; $i >= 0; $i--) {

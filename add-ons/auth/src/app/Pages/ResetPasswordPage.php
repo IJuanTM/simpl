@@ -13,6 +13,7 @@ use app\Enums\AlertType;
 use app\Enums\TokenType;
 use app\Models\Page;
 use app\Pages\Traits\TwoTierThrottle;
+use SensitiveParameter;
 
 /**
  * Handles password reset via tokenized links and processes the reset form.
@@ -140,7 +141,7 @@ class ResetPasswordPage
      *
      * @return void
      */
-    private function resetPassword(int $id, string $password): void
+    private function resetPassword(int $id, #[SensitiveParameter] string $password): void
     {
         AuthController::updatePassword($id, $password);
 

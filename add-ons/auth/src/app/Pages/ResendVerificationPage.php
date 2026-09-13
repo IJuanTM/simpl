@@ -13,6 +13,7 @@ use app\Utils\RateLimiter;
 
 /**
  * Generates and sends a new verification token for the user named in the URL parameter, then redirects with appropriate feedback.
+ * Only responds to CSRF-protected POST requests, so a forged cross-site GET can't spend the resend budget on a victim's account.
  */
 class ResendVerificationPage
 {
@@ -32,6 +33,11 @@ class ResendVerificationPage
      */
     public function api(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            PageController::redirect(REDIRECT);
+            return;
+        }
+
         $id = AppController::sanitize($this->page->subpage() ?? '');
 
         if (empty($id) || !is_numeric($id)) {

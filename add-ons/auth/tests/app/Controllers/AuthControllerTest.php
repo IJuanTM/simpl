@@ -15,11 +15,6 @@ use PHPUnit\Framework\TestCase;
  */
 final class AuthControllerTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        FormController::$alerts = [];
-    }
-
     public function testGenerateTokenReturnsTheRequestedLengthUppercasedByDefault(): void
     {
         // Act
@@ -72,7 +67,7 @@ final class AuthControllerTest extends TestCase
     public function testValidatePasswordQueuesAnAlertOnFailure(): void
     {
         // Act
-        AuthController::validatePassword('short');
+        (void)AuthController::validatePassword('short');
 
         // Assert
         $this->assertNotNull(FormController::formAlerts());
@@ -131,5 +126,10 @@ final class AuthControllerTest extends TestCase
 
         // Act + Assert
         $this->assertFalse(AuthController::isGeneratedPasswordShape($ambiguousOnly));
+    }
+
+    protected function setUp(): void
+    {
+        FormController::$alerts = [];
     }
 }

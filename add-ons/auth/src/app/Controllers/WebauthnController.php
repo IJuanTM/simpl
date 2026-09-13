@@ -7,6 +7,7 @@ namespace app\Controllers;
 use app\Utils\Log;
 use Symfony\Component\Serializer\SerializerInterface;
 use Throwable;
+use Uri\Rfc3986\Uri;
 use Webauthn\AttestationStatement\AttestationStatementSupportManager;
 use Webauthn\AuthenticatorAssertionResponse;
 use Webauthn\AuthenticatorAssertionResponseValidator;
@@ -86,7 +87,7 @@ class WebauthnController
      */
     private static function rpId(): string
     {
-        return parse_url((string)APP_URL, PHP_URL_HOST) ?: 'localhost';
+        return new Uri((string)APP_URL)->getHost() ?? 'localhost';
     }
 
     /**
@@ -98,13 +99,15 @@ class WebauthnController
      */
     private static function descriptors(array $base64UrlIds): array
     {
-        return array_values(array_filter(array_map(
-            static function (string $id): ?PublicKeyCredentialDescriptor {
-                $raw = base64_decode(strtr($id, '-_', '+/'), true);
-                return $raw === false ? null : PublicKeyCredentialDescriptor::create('public-key', $raw);
-            },
-            $base64UrlIds
-        )));
+        return array_map(
+                static function (string $id): ?PublicKeyCredentialDescriptor {
+                    $raw = base64_decode(strtr($id, '-_', '+/'), true);
+                    return $raw === false ? null : PublicKeyCredentialDescriptor::create('public-key', $raw);
+                },
+                $base64UrlIds
+            )
+                |> array_filter(...)
+                |> array_values(...);
     }
 
     /**
@@ -180,10 +183,10 @@ class WebauthnController
      */
     private static function allowedOrigin(): string
     {
-        $parts = parse_url((string)APP_URL) ?: [];
-        $origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? 'localhost');
+        $uri = new Uri((string)APP_URL);
+        $origin = ($uri->getScheme() ?? 'https') . '://' . ($uri->getHost() ?? 'localhost');
 
-        return isset($parts['port']) ? "$origin:{$parts['port']}" : $origin;
+        return $uri->getPort() !== null ? "$origin:{$uri->getPort()}" : $origin;
     }
 
     /**

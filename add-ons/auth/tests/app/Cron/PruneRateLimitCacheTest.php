@@ -29,7 +29,7 @@ final class PruneRateLimitCacheTest extends TestCase
     {
         // Arrange
         $key = 'prune-cron-test-' . uniqid();
-        RateLimiter::attempt($key, 5, 60);
+        (void)RateLimiter::attempt($key, 5, 60);
         $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
         touch($file, time() - 90000); // older than prune()'s default 86400s (1 day) threshold
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Models;
 
 use app\Utils\Log;
+use Uri\Rfc3986\Uri;
 
 /**
  * URL helpers: root-relative path normalization, cache-busted public-file URLs, and absolute URLs off APP_URL.
@@ -28,15 +29,17 @@ class Url
 
         if (!self::$rootDir) self::baseUrl();
 
-        [$path, $fragment] = str_contains($url, '#') ? explode('#', $url, 2) : [$url, ''];
-        $filePath = self::$rootDir . '/public/' . ltrim($path, '/');
+        $uri = new Uri($url);
+        $filePath = self::$rootDir . '/public/' . ltrim($uri->getPath(), '/');
 
         if (!is_file($filePath)) {
             Log::warning("Could not find file \"$filePath\"");
             return $url;
         }
 
-        return $path . (str_contains($path, '?') ? '&' : '?') . 'v=' . filemtime($filePath) . ($fragment !== '' ? "#$fragment" : '');
+        $query = $uri->getQuery();
+
+        return $uri->withQuery(($query !== null ? "$query&" : '') . 'v=' . filemtime($filePath))->toString();
     }
 
     /**

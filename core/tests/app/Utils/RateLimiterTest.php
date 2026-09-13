@@ -50,8 +50,8 @@ final class RateLimiterTest extends TestCase
         $key = $this->key('block');
 
         // Act
-        RateLimiter::attempt($key, 2, 60);
-        RateLimiter::attempt($key, 2, 60);
+        (void)RateLimiter::attempt($key, 2, 60);
+        (void)RateLimiter::attempt($key, 2, 60);
 
         // Assert
         $this->assertFalse(RateLimiter::attempt($key, 2, 60));
@@ -74,8 +74,8 @@ final class RateLimiterTest extends TestCase
         $key = $this->key('backoff-block');
 
         // Act
-        RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
-        RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
 
         // Assert
         $this->assertFalse(RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100));
@@ -85,12 +85,12 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('backoff-no-extend');
-        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
-        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
         $firstRetry = RateLimiter::retryAfterMs($key);
 
         // Act
-        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 1, 60, 10, 100);
         $secondRetry = RateLimiter::retryAfterMs($key);
 
         // Assert
@@ -102,7 +102,7 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('backoff-retry-ok');
-        RateLimiter::attemptWithBackoff($key, 5, 60, 10, 100);
+        (void)RateLimiter::attemptWithBackoff($key, 5, 60, 10, 100);
 
         // Act + Assert
         $this->assertSame(0, RateLimiter::retryAfterMs($key));
@@ -113,7 +113,7 @@ final class RateLimiterTest extends TestCase
         // Arrange
         $key = $this->key('backoff-tiers');
         $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
-        RateLimiter::attemptWithBackoff($key, 1, 60, 10, 1000);
+        (void)RateLimiter::attemptWithBackoff($key, 1, 60, 10, 1000);
         $this->assertFalse(RateLimiter::attemptWithBackoff($key, 1, 60, 10, 1000));
         $firstRetry = RateLimiter::retryAfterMs($key);
 
@@ -136,7 +136,7 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('retry-ok');
-        RateLimiter::attempt($key, 5, 60);
+        (void)RateLimiter::attempt($key, 5, 60);
 
         // Act + Assert
         $this->assertSame(0, RateLimiter::retryAfterMs($key));
@@ -146,8 +146,8 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('retry-limited');
-        RateLimiter::attempt($key, 1, 60);
-        RateLimiter::attempt($key, 1, 60);
+        (void)RateLimiter::attempt($key, 1, 60);
+        (void)RateLimiter::attempt($key, 1, 60);
 
         // Act + Assert
         $this->assertGreaterThan(0, RateLimiter::retryAfterMs($key));
@@ -157,7 +157,7 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('clear');
-        RateLimiter::attempt($key, 1, 60);
+        (void)RateLimiter::attempt($key, 1, 60);
         $this->assertFalse(RateLimiter::attempt($key, 1, 60));
 
         // Act
@@ -171,7 +171,7 @@ final class RateLimiterTest extends TestCase
     {
         // Arrange
         $key = $this->key('prune');
-        RateLimiter::attempt($key, 5, 60);
+        (void)RateLimiter::attempt($key, 5, 60);
         $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
         $this->assertFileExists($file);
         touch($file, time() - 1000);

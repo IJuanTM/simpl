@@ -31,9 +31,9 @@ class ContactPage
     private function post(): void
     {
         if (
-            !FormController::validate('name', ['required', 'maxLength' => MAX_NAME_LENGTH]) ||
+            !FormController::validate('name', ['required', 'singleLine', 'maxLength' => MAX_NAME_LENGTH]) ||
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
-            !FormController::validate('subject', ['required', 'maxLength' => MAX_CONTACT_SUBJECT_LENGTH]) ||
+            !FormController::validate('subject', ['required', 'singleLine', 'maxLength' => MAX_CONTACT_SUBJECT_LENGTH]) ||
             !FormController::validate('message', ['required', 'maxLength' => MAX_CONTACT_MESSAGE_LENGTH])
         ) return;
 
@@ -51,8 +51,8 @@ class ContactPage
     /**
      * Sends contact form email to site administrator.
      *
-     * @param string $from Sender's name
-     * @param string $sender Sender's email address
+     * @param string $from    Sender's name
+     * @param string $sender  Sender's email address
      * @param string $subject Email subject
      * @param string $message Email message body
      *

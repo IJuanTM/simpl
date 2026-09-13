@@ -40,11 +40,9 @@ class PageController extends Page
 
         // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
         // A backslash-containing segment is rejected too, since splitting only on "/" would let one through untouched, and it's a path separator on Windows.
-        foreach ($urlArr as $segment) {
-            if ($segment === '.' || $segment === '..' || str_contains($segment, '\\')) {
-                self::error(ErrorCode::NOT_FOUND);
-                return;
-            }
+        if (array_any($urlArr, static fn($segment) => $segment === '.' || $segment === '..' || str_contains($segment, '\\'))) {
+            self::error(ErrorCode::NOT_FOUND);
+            return;
         }
 
         $page = array_shift($urlArr);
@@ -260,7 +258,7 @@ class PageController extends Page
     {
         $updated = array_slice(Page::history(), 0, -1);
         SessionController::set('history', $updated);
-        self::redirect(end($updated) ?: REDIRECT);
+        self::redirect(array_last($updated) ?: REDIRECT);
     }
 
     /**

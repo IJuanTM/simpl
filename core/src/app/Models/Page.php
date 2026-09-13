@@ -40,7 +40,7 @@ class Page
         $history = self::history();
         $subUrl = $this->subUrl();
 
-        if (end($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -HISTORY_DEPTH));
+        if (array_last($history) !== $subUrl) SessionController::set('history', array_slice([...$history, $subUrl], -HISTORY_DEPTH));
     }
 
     /**

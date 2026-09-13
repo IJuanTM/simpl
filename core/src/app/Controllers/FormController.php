@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Controllers;
 
 use app\Enums\AlertType;
+use NoDiscard;
 
 /**
  * Utilities for validating form input and queuing alert markup for display.
@@ -21,7 +22,7 @@ class FormController
      * The method mutates $_POST[$field] to an empty string on validation
      * failures to avoid re-using invalid values later in request handling.
      *
-     * Positional rules: 'required'
+     * Positional rules: 'required', 'singleLine' (rejects \r/\n, for values placed into mail headers)
      * Keyed rules: 'minLength' => int, 'maxLength' => int, 'minValue' => mixed, 'maxValue' => mixed, 'type' => 'number'|'email'
      *
      * @param string                  $field Field name expected in $_POST
@@ -29,6 +30,7 @@ class FormController
      *
      * @return bool True when validation passes, false on first failure
      */
+    #[NoDiscard]
     public static function validate(string $field, array $rules): bool
     {
         $fieldName = str_replace('-', ' ', $field);
@@ -52,6 +54,12 @@ class FormController
         if ((isset($rules['minValue']) || isset($rules['maxValue'])) && !is_numeric($value)) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is not a number!", AlertType::WARNING);
+            return false;
+        }
+
+        if (in_array('singleLine', $rules, true) && preg_match('/[\r\n]/', $value)) {
+            $_POST[$field] = '';
+            static::addAlert("The input in the $fieldName field contains invalid characters!", AlertType::WARNING);
             return false;
         }
 
@@ -92,7 +100,7 @@ class FormController
      * attribute that front-end code may use to auto-dismiss the alert.
      *
      * @param string    $message The message text to show
-     * @param AlertType $type Visual type/style for the alert
+     * @param AlertType $type    Visual type/style for the alert
      * @param int|null  $timeout Optional auto-dismiss timeout in milliseconds
      *
      * @return void

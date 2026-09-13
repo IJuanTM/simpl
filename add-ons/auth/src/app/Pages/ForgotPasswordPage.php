@@ -36,10 +36,10 @@ class ForgotPasswordPage
         if (!$this->attemptRateLimit(RESEND_TIMEOUTS['password_reset'])) return;
 
         // Throttled per account too, so this form can't be used to email-bomb one victim from many IPs.
-        $withinAccountLimit = RateLimiter::attempt('password-reset-account-' . hash('sha256', strtolower($_POST['email'])), PASSWORD_RESET_CONFIG['account_max_attempts'], PASSWORD_RESET_CONFIG['account_attempt_window']);
+        $withinAccountLimit = RateLimiter::attempt('password-reset-account-' . hash('sha256', strtolower($_POST['email'])), PASSWORD_RESET_CONFIG['request_max_attempts'], PASSWORD_RESET_CONFIG['request_attempt_window']);
 
         // Timeboxed so the response takes the same time whether or not the email is registered.
-        (new Timebox())->call(function () use ($withinAccountLimit) {
+        new Timebox()->call(function () use ($withinAccountLimit) {
             if ($withinAccountLimit && AuthController::checkEmail($_POST['email'])) $this->sendPasswordReset($_POST['email']);
         }, TIMING_FLOOR_MS['password_reset'] * 1000);
 

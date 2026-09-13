@@ -15,6 +15,8 @@ use app\Utils\Log;
 use app\Utils\Timebox;
 use Exception;
 use JsonException;
+use NoDiscard;
+use SensitiveParameter;
 
 /**
  * Provides user authentication helpers: session management, token creation and validation, password handling, and email notifications.
@@ -42,7 +44,7 @@ class AuthController
      *
      * @return void
      */
-    public static function rememberLogin(string $rememberToken): void
+    public static function rememberLogin(#[SensitiveParameter] string $rememberToken): void
     {
         $tokenHash = hash('sha256', $rememberToken);
 
@@ -291,7 +293,7 @@ class AuthController
      *
      * @return void
      */
-    public static function setRememberCookie(string $token, int $expiresAt): void
+    public static function setRememberCookie(#[SensitiveParameter] string $token, int $expiresAt): void
     {
         setcookie('remember', $token, ['expires' => $expiresAt] + AppController::secureCookieFlags());
     }
@@ -471,7 +473,8 @@ class AuthController
      *
      * @return bool True if valid, false otherwise
      */
-    public static function validatePassword(string $password): bool
+    #[NoDiscard]
+    public static function validatePassword(#[SensitiveParameter] string $password): bool
     {
         [$pattern, $message] = self::getPasswordRules();
 
@@ -504,7 +507,7 @@ class AuthController
 
         $messages = array_column($rules, 1);
         array_unshift($messages, "at least " . PASSWORD_CONFIG['min_length'] . " characters");
-        $message = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . end($messages) . ".";
+        $message = "Your password must contain " . (count($messages) > 1 ? implode(', ', array_slice($messages, 0, -1)) . ' and ' : '') . array_last($messages) . ".";
 
         return $cache = [$pattern, $message];
     }
@@ -595,7 +598,8 @@ class AuthController
      *
      * @return bool
      */
-    public static function isGeneratedPasswordShape(string $password): bool
+    #[NoDiscard]
+    public static function isGeneratedPasswordShape(#[SensitiveParameter] string $password): bool
     {
         return strlen($password) === PASSWORD_CONFIG['generated_length']
             && strspn($password, self::GENERATED_PASSWORD_CHARS) === strlen($password);
@@ -608,6 +612,7 @@ class AuthController
      *
      * @return bool
      */
+    #[NoDiscard]
     public static function checkEmail(string $email): bool
     {
         return DB::exists(
@@ -624,6 +629,7 @@ class AuthController
      *
      * @return bool
      */
+    #[NoDiscard]
     public static function needsVerification(int $id): bool
     {
         return self::exists($id) && !self::isVerified($id);
@@ -703,7 +709,8 @@ class AuthController
      *
      * @return bool True if tokens match and the token hasn't expired
      */
-    public static function checkToken(int $id, string $token, TokenType $type): bool
+    #[NoDiscard]
+    public static function checkToken(int $id, #[SensitiveParameter] string $token, TokenType $type): bool
     {
         $row = DB::single(
             SELECT: ['token', 'expires'],
@@ -732,7 +739,8 @@ class AuthController
      *
      * @return bool True when the password matches
      */
-    public static function checkPassword(string $email, string $password): bool
+    #[NoDiscard]
+    public static function checkPassword(string $email, #[SensitiveParameter] string $password): bool
     {
         return new Timebox()->call(function (Timebox $timebox) use ($email, $password) {
             $hash = DB::single(
@@ -760,7 +768,8 @@ class AuthController
      *
      * @return array|null Matched user row on success, null on any failure
      */
-    public static function verifyCredentials(string $identifier, string $password): ?array
+    #[NoDiscard]
+    public static function verifyCredentials(string $identifier, #[SensitiveParameter] string $password): ?array
     {
         return new Timebox()->call(function (Timebox $timebox) use ($identifier, $password) {
             $user = self::getUserByIdentifier($identifier);
@@ -823,7 +832,7 @@ class AuthController
      * @return string The new password_changed_at value.
      *                A caller with a live session for this user (e.g. User\PasswordSettings) must copy it into that session's own cached user data, or requireAuth() will treat that same session as stale too.
      */
-    public static function updatePassword(int $id, string $password): string
+    public static function updatePassword(int $id, #[SensitiveParameter] string $password): string
     {
         $passwordChangedAt = date('Y-m-d H:i:s');
 
@@ -1051,7 +1060,7 @@ class AuthController
      *
      * @return bool True if the email was sent (or queued) successfully
      */
-    public static function sendVerificationMail(int $id, string $to, string $code): bool
+    public static function sendVerificationMail(int $id, string $to, #[SensitiveParameter] string $code): bool
     {
         $contents = MailController::template('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
@@ -1077,7 +1086,7 @@ class AuthController
      *
      * @return void
      */
-    public static function sendPasswordResetMail(int $id, string $to, string $token): void
+    public static function sendPasswordResetMail(int $id, string $to, #[SensitiveParameter] string $token): void
     {
         $contents = MailController::template('reset-password', [
             'title' => 'Password Reset Request - ' . APP_NAME,
@@ -1101,7 +1110,7 @@ class AuthController
      *
      * @return bool True when the email was sent (or queued) successfully
      */
-    public static function sendCreatedUserMail(string $to, string $password): bool
+    public static function sendCreatedUserMail(string $to, #[SensitiveParameter] string $password): bool
     {
         $contents = MailController::template('account-created', [
             'title' => 'Account Created - ' . APP_NAME,
