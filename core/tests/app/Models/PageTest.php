@@ -50,6 +50,15 @@ final class PageTest extends TestCase
         $this->assertSame('/b/', $history[0]);
     }
 
+    public function testRecordHistoryFalseSkipsPushingOntoHistory(): void
+    {
+        // Arrange + Act
+        new Page('api', ['user', '1', 'update-profile-image'], [], false);
+
+        // Assert
+        $this->assertSame([], Page::history());
+    }
+
     public function testSubUrlBuildsThePathWithSubpagesAndQuery(): void
     {
         // Arrange

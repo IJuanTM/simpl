@@ -4,7 +4,6 @@ form.table-tools-form {
   max-width: unset;
 }
 
-// The custom clear icon in .input-append replaces the native one, which would otherwise double up.
 input.table-search::-webkit-search-decoration,
 input.table-search::-webkit-search-cancel-button {
   display: none;

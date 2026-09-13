@@ -81,9 +81,9 @@ class AuthController
             return;
         }
 
-        // A 2FA user on an untrusted device still owes the challenge: the remember cookie proves
-        // only the password factor. Defer to /two-factor with the token left intact, so abandoning
-        // the challenge doesn't cost the remembered login; completeLogin() rotates it once it passes.
+        // A 2FA user on an untrusted device still owes the challenge: the remember cookie proves only the password factor.
+        // Defer to /two-factor with the token left intact, so abandoning the challenge doesn't cost the remembered login.
+        // completeLogin() rotates it once it passes.
         if (
             TWO_FACTOR_CONFIG['enabled']
             && TwoFactorController::isEnabledFor((int)$user['id'])
@@ -891,8 +891,7 @@ class AuthController
             return REDIRECT;
         }
 
-        // A pending forced action (temporary password, required 2FA enrolment) is caught by
-        // enforceMandatoryActions() on the request the returned route lands on.
+        // A pending forced action (temporary password, required 2FA enrolment) is caught by enforceMandatoryActions() on the request the returned route lands on.
 
         if ($remember) {
             $token = self::generateToken(REMEMBER_ME_TOKEN_LENGTH);
@@ -1062,18 +1061,35 @@ class AuthController
      */
     public static function sendVerificationMail(int $id, string $to, #[SensitiveParameter] string $code): bool
     {
-        $contents = MailController::template('verification', [
+        return self::renderAndSendMail('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
             'link' => Url::absolute("verify-account/$id/$code"),
             'code' => $code
-        ]);
+        ], $to, 'Verify account', "user id \"$id\"");
+    }
+
+    /**
+     * Renders a mail template and sends it, logging (and returning false) instead if the template failed to render.
+     * Shared by every AuthController mail sender - they only differ in template name, template vars, subject, and the log-message subject.
+     *
+     * @param string $template
+     * @param array  $vars
+     * @param string $to
+     * @param string $subject
+     * @param string $logSubject Identifies the recipient/context in the render-failure log message.
+     *
+     * @return bool True if the email was sent (or queued) successfully.
+     */
+    private static function renderAndSendMail(string $template, array $vars, string $to, string $subject, string $logSubject): bool
+    {
+        $contents = MailController::template($template, $vars);
 
         if ($contents === false) {
-            Log::error("Verification email template failed to render for user id \"$id\"");
+            Log::error('{template} email template failed to render for {subject}', ['template' => $template, 'subject' => $logSubject]);
             return false;
         }
 
-        return MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'Verify account', $contents);
+        return MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], $subject, $contents);
     }
 
     /**
@@ -1088,17 +1104,10 @@ class AuthController
      */
     public static function sendPasswordResetMail(int $id, string $to, #[SensitiveParameter] string $token): void
     {
-        $contents = MailController::template('reset-password', [
+        self::renderAndSendMail('reset-password', [
             'title' => 'Password Reset Request - ' . APP_NAME,
             'link' => Url::absolute("reset-password/$id/$token")
-        ]);
-
-        if ($contents === false) {
-            Log::error("Password reset email template failed to render for user id \"$id\"");
-            return;
-        }
-
-        MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'Reset password', $contents);
+        ], $to, 'Reset password', "user id \"$id\"");
     }
 
     /**
@@ -1112,17 +1121,10 @@ class AuthController
      */
     public static function sendCreatedUserMail(string $to, #[SensitiveParameter] string $password): bool
     {
-        $contents = MailController::template('account-created', [
+        return self::renderAndSendMail('account-created', [
             'title' => 'Account Created - ' . APP_NAME,
             'link' => Url::absolute('login'),
             'password' => $password
-        ]);
-
-        if ($contents === false) {
-            Log::error('Account-created email template failed to render for "{to}"', ['to' => $to]);
-            return false;
-        }
-
-        return MailController::send(APP_NAME, $to, MAIL_CONFIG['no_reply_address'], 'An account has been created', $contents);
+        ], $to, 'An account has been created', "\"$to\"");
     }
 }

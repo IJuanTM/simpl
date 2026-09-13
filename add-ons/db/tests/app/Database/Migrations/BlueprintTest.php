@@ -78,6 +78,29 @@ final class BlueprintTest extends TestCase
         $this->assertSame(["`status` VARCHAR(20) DEFAULT 'active'"], $this->columns($blueprint));
     }
 
+    public function testColumnWithABooleanDefaultEmitsZeroOrOneNotAnEmptyOrOneCharString(): void
+    {
+        // Arrange + Act
+        $blueprint = (new Blueprint('users'))
+            ->intUnsigned('is_active', default: true)
+            ->intUnsigned('is_deleted', default: false);
+
+        // Assert
+        $this->assertSame([
+            '`is_active` INT UNSIGNED DEFAULT 1',
+            '`is_deleted` INT UNSIGNED DEFAULT 0',
+        ], $this->columns($blueprint));
+    }
+
+    public function testVarcharWithANarrowerCharsetThanTheTableDefault(): void
+    {
+        // Arrange + Act
+        $blueprint = (new Blueprint('webauthn_credentials'))->varchar('credential_id', 1364, true, charset: 'ascii');
+
+        // Assert
+        $this->assertSame(['`credential_id` VARCHAR(1364) CHARACTER SET ascii NOT NULL'], $this->columns($blueprint));
+    }
+
     public function testTextColumnNeverGetsADefaultClause(): void
     {
         // Arrange + Act
@@ -121,6 +144,27 @@ final class BlueprintTest extends TestCase
 
         // Assert
         $this->assertSame(['`id` BIGINT UNSIGNED AUTO_INCREMENT'], $this->columns($blueprint));
+    }
+
+    public function testAutoIncrementBeforeAnyColumnThrows(): void
+    {
+        // Act + Assert
+        $this->expectException(InvalidArgumentException::class);
+        (new Blueprint('users'))->autoIncrement();
+    }
+
+    public function testUniqueBeforeAnyColumnThrows(): void
+    {
+        // Act + Assert
+        $this->expectException(InvalidArgumentException::class);
+        (new Blueprint('users'))->unique();
+    }
+
+    public function testOnUpdateCurrentTimestampBeforeAnyColumnThrows(): void
+    {
+        // Act + Assert
+        $this->expectException(InvalidArgumentException::class);
+        (new Blueprint('users'))->onUpdateCurrentTimestamp();
     }
 
     public function testAutoIncrementWithAStartingValueIsStoredSeparately(): void

@@ -217,6 +217,11 @@ class TwoFactorPage
      */
     private function resendEmailCode(): void
     {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            PageController::redirect('two-factor');
+            return;
+        }
+
         if (!RateLimiter::attempt('2fa-resend-' . $this->userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])) {
             PageController::redirectWithAlert('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
             return;

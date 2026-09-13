@@ -18,13 +18,13 @@ class Page
     public string $title;
     public string $subtitle;
 
-    public function __construct(string $page, array $subpages = [], array $params = [])
+    public function __construct(string $page, array $subpages = [], array $params = [], bool $recordHistory = true)
     {
         $this->page = $page;
         $this->subpages = $subpages;
         $this->params = $params;
 
-        $this->recordHistory();
+        if ($recordHistory) $this->recordHistory();
 
         $this->title = APP_NAME;
         $this->subtitle = $this->getSubtitle();

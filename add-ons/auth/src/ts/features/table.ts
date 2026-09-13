@@ -267,9 +267,10 @@ function buildUrl(baseUrl: string, newParams: Record<string, string | number | n
   return url;
 }
 
-function initSortLinks(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void): void {
-  section.querySelectorAll<HTMLAnchorElement>('a.table-sort-link').forEach(link => {
+function bindTableNavLinks(links: NodeListOf<HTMLAnchorElement>, section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void): void {
+  links.forEach(link => {
     link.addEventListener('click', e => {
+      if (link.inert) return;
       e.preventDefault();
       const url = new URL(link.href);
       window.history.pushState(null, '', url.toString());
@@ -278,16 +279,12 @@ function initSortLinks(section: HTMLElement, table: HTMLTableElement, defaultWid
   });
 }
 
+function initSortLinks(section: HTMLElement, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void): void {
+  bindTableNavLinks(section.querySelectorAll<HTMLAnchorElement>('a.table-sort-link'), section, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
+}
+
 function initPaginationLinks(section: HTMLElement, container: Element, table: HTMLTableElement, defaultWidths: number[], hiddenKey: string, onStateChange: () => void, onWidthChange: (isDirty: boolean) => void): void {
-  for (const link of Array.from(container.querySelectorAll<HTMLAnchorElement>('a[href]'))) {
-    link.addEventListener('click', e => {
-      if (link.inert) return;
-      e.preventDefault();
-      const url = new URL(link.href);
-      window.history.pushState(null, '', url.toString());
-      fetchTableData(section, table, defaultWidths, hiddenKey, onStateChange, onWidthChange, url.searchParams);
-    });
-  }
+  bindTableNavLinks(container.querySelectorAll<HTMLAnchorElement>('a[href]'), section, table, defaultWidths, hiddenKey, onStateChange, onWidthChange);
 }
 
 // Aborts a still-in-flight request for the same table instead of just letting it complete and discarding the result.

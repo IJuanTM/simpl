@@ -22,6 +22,14 @@ Complete authentication system for Simpl projects with user management, email ve
 - **Login Tracking** - Monitor failed attempts with automatic lockout protection
 - **Sortable, Searchable, Paginated Tables** - With breadcrumb navigation and hideable columns
 
+### Two-Factor Authentication
+
+- **Email OTP** - 6-digit one-time code sent by email, the default method when 2FA is first enabled
+- **TOTP** - Authenticator app support via QR code enrolment
+- **Passkeys** - WebAuthn-based passwordless second factor
+- **Recovery Codes & Trusted Devices** - Single-use recovery codes and per-device "remember this device" trust
+- **Admin Controls** - Per-role/user required-methods enforcement and admin-initiated 2FA reset
+
 ### Security Features
 
 - **Lockout Protection** - Automatic account/IP lockouts after failed login attempts, with exponential backoff
@@ -129,6 +137,7 @@ classes) isn't covered here - that requires a real database connection.
 - **PHP**: >= 8.5
 - **Database**: MySQL >= 9.5.0 or MariaDB >= 12.1.2
 - **Extensions**: PDO, pdo_mysql (via the [`db`](../db/README.md) add-on)
+- **2FA packages**: `spomky-labs/otphp` (TOTP), `bacon/bacon-qr-code` (QR codes), `web-auth/webauthn-lib` (passkeys)
 
 ## Email Templates
 

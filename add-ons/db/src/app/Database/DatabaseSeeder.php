@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Database;
 
+use app\Database\Migrations\Blueprint;
 use app\Database\Migrations\Schema;
 
 /**
@@ -49,7 +50,7 @@ class DatabaseSeeder
             }
 
             $tables = DB::query('SELECT LOWER(table_name) AS table_name FROM information_schema.tables WHERE table_schema = DATABASE() AND LOWER(table_name) NOT IN (' . implode(', ', $placeholders) . ')', $params);
-            foreach ($tables as $row) DB::query("TRUNCATE TABLE `$row[table_name]`");
+            foreach ($tables as $row) DB::raw('TRUNCATE TABLE `' . Blueprint::identifier($row['table_name']) . '`');
         } finally {
             Schema::enableForeignKeys();
         }

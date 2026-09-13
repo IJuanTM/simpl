@@ -120,8 +120,7 @@ command -v php >/dev/null 2>&1 && php_available=1
 while IFS= read -r staged_file; do
   check_artifact_path "$staged_file"
 
-  # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention
-  # "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
+  # Markers are only ever spliced into these file types - anything else (docs, hook scripts) can mention "@addon-insert"/"@addon-end" in prose without using them, which would otherwise false-flag as unbalanced.
   # Fetched once here (not per-check) since check_addon_markers and check_php_syntax both need the same content.
   content=""
   fetched=0

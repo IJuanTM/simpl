@@ -1,4 +1,4 @@
-import {raiseGlobalAlert} from '../helpers/alert.ts';
+import {bindBackdropClose, openModal} from './modal.ts';
 
 export const twoFactorModule = {
   init(): void {
@@ -23,11 +23,8 @@ export const twoFactorModule = {
 
     const recoveryModal = document.querySelector<HTMLDialogElement>('[data-recovery-modal]');
     if (recoveryModal) {
-      recoveryModal.showModal();
-      raiseGlobalAlert();
-      recoveryModal.addEventListener('click', event => {
-        if (event.target === recoveryModal) recoveryModal.close();
-      });
+      openModal(recoveryModal);
+      bindBackdropClose(recoveryModal);
     }
 
     const downloadButton = document.querySelector<HTMLButtonElement>('[data-download-codes]');

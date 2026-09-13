@@ -6,8 +6,7 @@ function togglePassword(input: HTMLInputElement, icon: HTMLElement): void {
 
 function capsLockWarning(event: KeyboardEvent): void {
   const input = event.currentTarget as HTMLElement;
-  const warning = input.closest('.form-group')?.querySelector<HTMLElement>('.password-warning');
-  warning?.classList.toggle('hidden', !event.getModifierState('CapsLock'));
+  input.closest('.form-group')?.querySelector<HTMLElement>('.password-warning')?.classList.toggle('hidden', !event.getModifierState('CapsLock'));
 }
 
 export const inputModule = {

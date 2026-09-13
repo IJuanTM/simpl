@@ -65,12 +65,9 @@ class UserPage
         $user['role'] = isset($user['role']) ? Role::tryFrom($user['role']) : null;
         $user['is_verified'] = AuthController::isVerified($user['id']);
 
-        if ($user['username'] !== null) $user['username'] = AppController::sanitize($user['username']);
-        if ($user['email'] !== null) $user['email'] = AppController::sanitize($user['email']);
-        if ($user['first_name'] !== null) $user['first_name'] = AppController::sanitize($user['first_name']);
-        if ($user['last_name'] !== null) $user['last_name'] = AppController::sanitize($user['last_name']);
-        if ($user['last_login'] !== null) $user['last_login'] = AppController::sanitize($user['last_login']);
-        if ($user['created_at'] !== null) $user['created_at'] = AppController::sanitize($user['created_at']);
+        foreach (['username', 'email', 'first_name', 'last_name', 'last_login', 'created_at'] as $field) {
+            if ($user[$field] !== null) $user[$field] = AppController::sanitize($user[$field]);
+        }
         if ($user['status'] !== null) $user['status'] = AppController::sanitize((string)$user['status']);
         $this->user = $user;
         $this->profileImage = AuthController::getProfileImage($id);

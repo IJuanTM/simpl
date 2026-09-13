@@ -96,6 +96,19 @@ namespace tests\Controllers {
             $this->assertTrue(PageControllerFixturePage::$apiCalled);
         }
 
+        public function testApiDispatchDoesNotRecordNavigationHistory(): void
+        {
+            // Arrange
+            $_SERVER['REQUEST_URI'] = '/api/page-controller-fixture';
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            // Act
+            new PageController();
+
+            // Assert
+            $this->assertNull(SessionController::get('history'));
+        }
+
         public function testApiDispatchWithNoMatchingPageRespondsWithJsonNotFound(): void
         {
             // Arrange

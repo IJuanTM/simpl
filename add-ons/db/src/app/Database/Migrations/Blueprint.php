@@ -69,19 +69,21 @@ class Blueprint
     }
 
     /**
-     * Appends a column definition, applying NOT NULL and DEFAULT clauses (NoDefault::VALUE means
-     * no DEFAULT clause at all; see its docblock).
+     * Appends a column definition, applying an optional CHARACTER SET, NOT NULL, and DEFAULT
+     * clauses (NoDefault::VALUE means no DEFAULT clause at all; see its docblock).
      */
-    private function addColumn(string $name, string $type, bool $notNull, mixed $default): static
+    private function addColumn(string $name, string $type, bool $notNull, mixed $default, ?string $charset = null): static
     {
         $definition = '`' . self::identifier($name) . "` $type";
 
+        if ($charset !== null) $definition .= " CHARACTER SET $charset";
         if ($notNull) $definition .= ' NOT NULL';
 
         if ($default !== NoDefault::VALUE) {
             $definition .= match (true) {
                 $default === null => ' DEFAULT NULL',
                 $default === 'CURRENT_TIMESTAMP' => ' DEFAULT CURRENT_TIMESTAMP',
+                is_bool($default) => ' DEFAULT ' . (int)$default,
                 is_int($default) || is_float($default) => " DEFAULT $default",
                 default => " DEFAULT '" . str_replace("'", "''", (string)$default) . "'"
             };
@@ -124,11 +126,13 @@ class Blueprint
     }
 
     /**
-     * Adds a VARCHAR($length) column.
+     * Adds a VARCHAR($length) column, optionally with a narrower CHARACTER SET than the table
+     * default (e.g. 'ascii' for a column that only ever holds ASCII, to fit more chars inside the
+     * index byte-length limit than the table's usual multi-byte charset would allow).
      */
-    public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = NoDefault::VALUE): static
+    public function varchar(string $name, int $length = 255, bool $notNull = false, mixed $default = NoDefault::VALUE, ?string $charset = null): static
     {
-        return $this->addColumn($name, "VARCHAR($length)", $notNull, $default);
+        return $this->addColumn($name, "VARCHAR($length)", $notNull, $default, $charset);
     }
 
     /**
@@ -161,9 +165,20 @@ class Blueprint
      */
     public function autoIncrement(int $startAt = 1): static
     {
-        $this->columns[array_key_last($this->columns)] .= ' AUTO_INCREMENT';
+        $this->columns[$this->lastColumnKey()] .= ' AUTO_INCREMENT';
         if ($startAt > 1) $this->startAt = $startAt;
         return $this;
+    }
+
+    /**
+     * The array key of the most recently added column, for fluent modifiers that amend it.
+     * Throws if called before any column has been added, instead of a confusing null-key TypeError.
+     */
+    private function lastColumnKey(): int
+    {
+        $key = array_key_last($this->columns);
+        if ($key === null) throw new InvalidArgumentException('No column to modify: call a column method first.');
+        return $key;
     }
 
     /**
@@ -171,7 +186,7 @@ class Blueprint
      */
     public function unique(): static
     {
-        preg_match('/`(\w+)`/', $this->columns[array_key_last($this->columns)], $m);
+        preg_match('/`(\w+)`/', $this->columns[$this->lastColumnKey()], $m);
         $this->indexes[] = "UNIQUE (`$m[1]`)";
         return $this;
     }
@@ -181,7 +196,7 @@ class Blueprint
      */
     public function onUpdateCurrentTimestamp(): static
     {
-        $this->columns[array_key_last($this->columns)] .= ' ON UPDATE CURRENT_TIMESTAMP';
+        $this->columns[$this->lastColumnKey()] .= ' ON UPDATE CURRENT_TIMESTAMP';
         return $this;
     }
 

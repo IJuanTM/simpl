@@ -11,10 +11,10 @@ For each chosen add-on set it runs the real scaffold, the real add-on merges,
 `composer migrate:fresh` / `seed:fresh`, then `npm install` (which builds Sass and
 Vite). The result is a browsable install.
 
-Zips are rebuilt from the working tree every run (uncommitted edits included) and
-served to the installers locally, so nothing has to be committed or published
-first. A MariaDB/MySQL server (`root`, no password) is optional; if it is down the
-migrate/seed steps are skipped.
+Zips are rebuilt from the working tree every run (uncommitted edits to tracked files
+included; new files must be `git add`ed first) and served to the installers locally,
+so nothing has to be committed or published first. A MariaDB/MySQL server (`root`,
+no password) is optional; if it is down the migrate/seed steps are skipped.
 
 ### Running
 

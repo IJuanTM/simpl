@@ -83,7 +83,9 @@ $methods = $this->pageObj->enrolledMethods;
         <?php $resendCooldown = $this->pageObj->resendCooldown; ?>
         <div class="row">
           <div class="col">
-            <p class="form-details">Didn't receive it? <a class="link underline" href="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $resendCooldown > 0 ? ' data-timeout="' . $resendCooldown . '" inert' : '' ?> aria-label="Resend the verification code email">Send a new code</a>.<?php if ($resendCooldown > 0): ?> <span data-countdown-wrap>You can request another in <span data-countdown="<?= $resendCooldown ?>"><?= (int)ceil($resendCooldown / 1000) ?></span>s.</span><?php endif ?></p>
+            <p class="form-details">Didn't receive it?
+              <button class="link underline" data-typo="a" type="submit" formmethod="post" formaction="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $resendCooldown > 0 ? ' data-timeout="' . $resendCooldown . '" inert' : '' ?> aria-label="Button to resend the verification code email">Send a new code</button>
+              .<?php if ($resendCooldown > 0): ?> <span data-countdown-wrap>You can request another in <span data-countdown="<?= $resendCooldown ?>"><?= (int)ceil($resendCooldown / 1000) ?></span>s.</span><?php endif ?></p>
           </div>
         </div>
       <?php endif ?>

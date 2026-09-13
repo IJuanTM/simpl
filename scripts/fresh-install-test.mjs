@@ -7,8 +7,9 @@
 // against a per-level db named <addons>-simpl) -> `npm install` (postinstall sass/vite
 // build). So the install is ready to browse.
 //
-// Zips are rebuilt from the working tree every run (uncommitted edits included, via
-// `git stash create`) and served to the installers through SIMPL_LOCAL_RELEASES. The CDN's
+// Zips are rebuilt from the working tree every run (uncommitted edits to tracked files included,
+// via `git stash create` - new files must be `git add`ed first, since that command only snapshots
+// tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES. The CDN's
 // versions.json is fetched once to resolve `latest`. MariaDB (WAMP, root / no password) is
 // optional; if it's down the migrate/seed steps are skipped.
 //

@@ -2,13 +2,13 @@ import {raiseGlobalAlert} from '../helpers/alert.ts';
 
 const base = window.location.pathname.split('/').slice(0, 3).join('/');
 
-function openModal(modal: HTMLDialogElement): void {
+export function openModal(modal: HTMLDialogElement): void {
   modal.showModal();
   raiseGlobalAlert();
 }
 
 // Close buttons use command="close" declaratively; this only covers the backdrop-click case.
-function bindBackdropClose(modal: HTMLDialogElement): void {
+export function bindBackdropClose(modal: HTMLDialogElement): void {
   modal.addEventListener('click', e => {
     if (e.target === modal) modal.close();
   });

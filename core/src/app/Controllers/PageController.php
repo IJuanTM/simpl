@@ -67,7 +67,7 @@ class PageController extends Page
         $api = $page === 'api';
         if ($api) $page = array_shift($urlArr) ?? '';
 
-        parent::__construct($page, $urlArr, $params);
+        parent::__construct($page, $urlArr, $params, !$api);
 
         $class = 'app\\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
         if (class_exists($class)) $this->pageObj = new $class($this);

@@ -32,7 +32,7 @@ $dotClass = static function (bool $on, bool $required): string {
 
       <div class="row">
         <div class="col center-x">
-          <p class="form-details">Status for <strong><?= AppController::sanitize($user['username'] ?? $user['email']) ?></strong>.</p>
+          <p class="form-details">Status for <strong><?= $user['username'] ?? $user['email'] ?></strong>.</p>
         </div>
       </div>
 

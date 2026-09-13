@@ -86,14 +86,23 @@ class DB
     {
         if (is_string($columns)) {
             if ($columns === '*') return '*';
-            if (preg_match('/^\w+$/', $columns)) return self::sanitize($columns);
-            return $columns;
+            return self::isSimpleIdentifier($columns) ? self::sanitize($columns) : $columns;
         }
 
-        return implode(', ', array_map(static function ($col) {
-            if (preg_match('/^\w+$/', $col)) return self::sanitize($col);
-            return $col;
-        }, $columns));
+        return implode(', ', array_map(static fn($col) => self::isSimpleIdentifier($col) ? self::sanitize($col) : $col, $columns));
+    }
+
+    /**
+     * Whether $value is a plain identifier (matching \w+), as opposed to an expression that
+     * columns() should pass through unchanged.
+     *
+     * @param string $value
+     *
+     * @return bool
+     */
+    private static function isSimpleIdentifier(string $value): bool
+    {
+        return (bool)preg_match('/^\w+$/', $value);
     }
 
     /**
@@ -105,7 +114,7 @@ class DB
      */
     private static function sanitize(string $identifier): string
     {
-        if (!preg_match('/^\w+$/', $identifier)) throw new PDOException("Invalid identifier: $identifier");
+        if (!self::isSimpleIdentifier($identifier)) throw new PDOException("Invalid identifier: $identifier");
         return $identifier;
     }
 
@@ -393,8 +402,7 @@ class DB
             );
             self::$pdoHasDatabase = $withDatabase;
 
-            $tz = new DateTime('now', new DateTimeZone(TIMEZONE))->format('P');
-            self::$pdo->exec("SET time_zone = '$tz'");
+            self::$pdo->exec("SET time_zone = '" . new DateTime('now', new DateTimeZone(TIMEZONE))->format('P') . "'");
 
             return self::$pdo;
         } catch (PDOException $e) {
