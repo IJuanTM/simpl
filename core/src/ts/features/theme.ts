@@ -8,7 +8,10 @@ const themes = [
 type Theme = typeof themes[number];
 
 function currentTheme(): Theme {
-  return themes.find(t => t.name === storage.get('theme')) ?? themes[1];
+  const stored = storage.get('theme');
+  if (stored) return themes.find(t => t.name === stored) ?? themes[1];
+
+  return matchMedia('(prefers-color-scheme: light)').matches ? themes[0] : themes[1];
 }
 
 function nextTheme(current: Theme): Theme {
@@ -20,13 +23,17 @@ export const themeModule = {
     const themeSwitch = document.querySelector<HTMLElement>('div.theme-switch');
     if (!themeSwitch) return;
 
-    const apply = (theme: Theme): void => {
-      storage.set('theme', theme.name);
+    const render = (theme: Theme): void => {
       themeSwitch.innerHTML = `<i class="fas ${theme.icon}"></i>`;
       document.documentElement.setAttribute('data-theme', theme.name);
     };
 
-    themeSwitch.addEventListener('click', () => apply(nextTheme(currentTheme())));
-    apply(currentTheme());
+    themeSwitch.addEventListener('click', () => {
+      const theme = nextTheme(currentTheme());
+      storage.set('theme', theme.name);
+      render(theme);
+    });
+
+    render(currentTheme());
   }
 };

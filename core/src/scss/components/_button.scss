@@ -1,4 +1,4 @@
-@use "sass:list";
+@use "sass:map";
 @use "../config" as *;
 
 button.button,
@@ -32,12 +32,12 @@ label.button {
   }
 
   &.button-simpl {
-    @include action-button($simpl, $simpl-dark);
+    @include action-button($simpl);
   }
 
-  @each $name, $c in $status {
+  @each $name, $accent in $status {
     &.#{$name} {
-      @include action-button(list.nth($c, 1), list.nth($c, 3), $color: list.nth($c, 2));
+      @include action-button(map.get($accent-colors, $accent));
     }
   }
 

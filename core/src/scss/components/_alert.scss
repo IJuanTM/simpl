@@ -14,7 +14,7 @@ div.alert {
   &.global {
     position: fixed;
     z-index: layer("overlay", 20);
-    top: 7rem;
+    top: $header-height;
     left: 50%;
     margin: 1rem;
     transform: translateX(-50%);

@@ -61,7 +61,7 @@ dialog.modal-overlay {
     }
 
     button.purge-user {
-      @include action-button($magenta, $magenta-dark);
+      @include action-button($magenta);
     }
   }
 }

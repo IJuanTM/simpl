@@ -1,35 +1,27 @@
 // Simpl
 $simpl: #D01018;
-$simpl-dark: #C00008;
-$simpl-light: #E02028;
 
 // RGB
 $red: #E03010;
-$red-dark: #D02000;
-$red-light: #F04020;
-
 $green: #10A030;
-$green-dark: #009020;
-$green-light: #20B040;
-
 $blue: #1070E0;
-$blue-dark: #0060D0;
-$blue-light: #2080F0;
 
 // CMY
 $cyan: #10A0A0;
-$cyan-dark: #009090;
-$cyan-light: #20B0B0;
-
 $magenta: #A010A0;
-$magenta-dark: #900090;
-$magenta-light: #B020B0;
-
 $yellow: #A0A010;
-$yellow-dark: #909000;
-$yellow-light: #B0B020;
 
 // Extra
 $orange: #E0A010;
-$orange-dark: #D09000;
-$orange-light: #F0B020;
+
+// ---------------------------------------------------------------- //
+
+$accent-colors: (
+  "red": $red,
+  "green": $green,
+  "blue": $blue,
+  "cyan": $cyan,
+  "magenta": $magenta,
+  "yellow": $yellow,
+  "orange": $orange,
+);

@@ -1,5 +1,5 @@
-@use "sass:list";
 @use "sass:map";
+@use "sass:color";
 @use "../../../config" as *;
 
 header {
@@ -140,14 +140,14 @@ header {
           }
 
           @each $class, $state in (login: success, logout: error, admin: info) {
-            $c: map.get($status, $state);
+            $surface: map.get($accent-colors, map.get($status, $state));
 
             &.#{$class} {
-              color: list.nth($c, 2);
-              background-color: list.nth($c, 1);
+              color: contrast-color($surface);
+              background-color: $surface;
 
               @include hover-focus {
-                background-color: list.nth($c, 3);
+                background-color: color.scale($surface, $lightness: -12%, $space: oklch);
               }
             }
           }

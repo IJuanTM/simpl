@@ -21,12 +21,12 @@ form {
     }
 
     span.required {
-      color: $red;
+      color: var(--red);
     }
 
     div.password-warning {
       font-size: .875rem;
-      color: $red;
+      color: var(--red);
     }
 
     div.input-group {
@@ -68,10 +68,10 @@ form {
       }
 
       &.error > :is(div.input-prepend, input, textarea) {
-        color: $red;
+        color: var(--red);
 
         &::placeholder {
-          color: rgba($red, .5);
+          color: rgb(from var(--red) r g b / .5);
         }
       }
     }
@@ -111,11 +111,11 @@ form {
     color: var(--text-50);
 
     &.warning {
-      color: $orange;
+      color: var(--orange);
     }
 
     &.error {
-      color: $red;
+      color: var(--red);
     }
   }
 

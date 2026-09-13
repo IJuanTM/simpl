@@ -3,6 +3,7 @@
 @use "../config" as *;
 
 @include set-themes();
+@include set-accent-inks();
 
 :root {
   --border-width: .125rem;
@@ -18,6 +19,7 @@ html {
   font-size: clamp(.75rem, .25vw + .75rem, 1rem);
   line-height: 1.6;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
   accent-color: $simpl;
 
   @media (max-height: map.get($breakpoints, lg)) {
@@ -44,7 +46,7 @@ noscript {
   z-index: layer("top", 500);
   left: 0;
   padding: 2rem;
-  color: $red;
+  color: var(--red);
   background-color: var(--bg-main);
 
   @include breakpoint-up(lg) {

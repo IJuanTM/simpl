@@ -7,11 +7,11 @@ section.users {
     }
 
     i.fa-check {
-      color: $green;
+      color: var(--green);
     }
 
     i.fa-times {
-      color: $red;
+      color: var(--red);
     }
 
     th a.table-sort-link {
@@ -29,18 +29,18 @@ section.users {
 
     td.table-actions .table-action {
       &.restore {
-        color: $green;
+        color: var(--green);
 
         @include hover-focus {
-          color: $green-dark;
+          color: var(--green-hover);
         }
       }
 
       &.purge {
-        color: $magenta;
+        color: var(--magenta);
 
         @include hover-focus {
-          color: $magenta-dark;
+          color: var(--magenta-hover);
         }
       }
     }

@@ -66,11 +66,11 @@ section.user {
         white-space: nowrap;
 
         i.verified {
-          color: $green;
+          color: var(--green);
         }
 
         i.unverified {
-          color: $red;
+          color: var(--red);
         }
       }
 
@@ -81,7 +81,7 @@ section.user {
     }
 
     a.button.change-password {
-      @include action-button($orange, $orange-dark, rgba(#000, .75), $color: #000);
+      @include action-button($orange);
     }
   }
 }

@@ -1,10 +1,7 @@
-@use "colors" as *;
-@use "themes" as *;
-
-// background, contents, hover-background,
+// Values are $accent-colors keys, not colors themselves.
 $status: (
-  success: ($green, $light-0, $green-dark),
-  warning: ($orange, $dark-0, $orange-dark),
-  error: ($red, $light-0, $red-dark),
-  info: ($cyan, $light-0, $cyan-dark),
+  success: "green",
+  warning: "orange",
+  error: "red",
+  info: "cyan",
 );

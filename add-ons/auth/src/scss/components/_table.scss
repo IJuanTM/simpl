@@ -239,10 +239,10 @@ td.table-actions :is(a, button).table-action {
   }
 
   &.delete {
-    color: $red;
+    color: var(--red);
 
     @include hover-focus {
-      color: $red-dark;
+      color: var(--red-hover);
     }
   }
 }

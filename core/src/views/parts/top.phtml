@@ -31,7 +31,7 @@ use app\Models\Url;
 
 <!-- Theme -->
 <script>
-  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark');
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
 </script>
 
 <!-- Header -->

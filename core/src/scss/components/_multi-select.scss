@@ -27,8 +27,8 @@ div.multi-select {
     background-color: var(--input);
 
     @include hover-focus {
-      color: $red;
-      border-color: $red;
+      color: var(--red);
+      border-color: var(--red);
     }
   }
 

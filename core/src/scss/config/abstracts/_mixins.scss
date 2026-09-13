@@ -1,8 +1,10 @@
 @use "sass:list";
 @use "sass:map";
+@use "sass:color";
 
 @use "../vars/breakpoints" as *;
 @use "../vars/themes" as *;
+@use "../vars/colors" as *;
 @use "../vars/status" as *;
 
 @mixin set-themes {
@@ -26,6 +28,16 @@
 
   html[data-theme="dark"] {
     color-scheme: dark;
+  }
+}
+
+// Per-theme light-dark() ink shade of each accent for text/icon/border use; surface fills stay the raw hex.
+@mixin set-accent-inks {
+  :root {
+    @each $name, $c in $accent-colors {
+      --#{$name}: light-dark(#{color.scale($c, $lightness: -15%, $space: oklch)}, #{color.scale($c, $lightness: 15%, $space: oklch)});
+      --#{$name}-hover: light-dark(#{color.scale($c, $lightness: -30%, $space: oklch)}, #{color.scale($c, $lightness: 30%, $space: oklch)});
+    }
   }
 }
 
@@ -130,31 +142,39 @@
 
 // ---------------------------------------------------------------- //
 
-@mixin action-button($bg, $bg-hover, $hover-color: null, $color: #FFF) {
-  color: $color;
+// $color defaults to an auto-picked black/white via contrast-color($bg) when omitted.
+@mixin action-button($bg, $color: null, $hover-color: null) {
+  @if $color {
+    color: $color;
+  } @else {
+    color: contrast-color($bg);
+  }
+
   background-color: $bg;
 
   @include shimmer(true, rgba(#FFF, .25));
 
   @include hover-focus {
-    color: $hover-color;
-    background-color: $bg-hover;
+    @if $hover-color {
+      color: $hover-color;
+    }
+
+    background-color: color.scale($bg, $lightness: -12%, $space: oklch);
   }
 }
 
 // ---------------------------------------------------------------- //
 
 @mixin status-modifiers($as: fill) {
-  @each $name, $c in $status {
-    $surface: list.nth($c, 1);
-    $on-surface: list.nth($c, 2);
+  @each $name, $accent in $status {
+    $surface: map.get($accent-colors, $accent);
 
     &.#{$name} {
       @if $as == outline {
-        color: $surface;
-        border-color: $surface;
+        color: var(--#{$accent});
+        border-color: var(--#{$accent});
       } @else {
-        color: $on-surface;
+        color: contrast-color($surface);
         background-color: $surface;
       }
     }
