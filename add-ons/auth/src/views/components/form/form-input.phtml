@@ -1,25 +1,27 @@
 <?php
+use app\Controllers\AppController;
+
 /**
  * @var string      $id
- * @var string|null $fieldName HTML "name" attribute, defaults to $id.
+ * @var string|null $fieldName       HTML "name" attribute, defaults to $id.
  * @var string      $label
- * @var bool        $required Adds the red "*" marker after the label.
- * @var string      $icon Font Awesome icon suffix for the prepend icon, e.g. "user".
- * @var string      $type Input type, default "text".
+ * @var bool        $required        Adds the red "*" marker after the label.
+ * @var string      $icon            Font Awesome icon suffix for the prepend icon, e.g. "user".
+ * @var string      $type            Input type, default "text".
  * @var int|null    $maxlength
  * @var string|null $placeholder
  * @var string      $value
  * @var string|null $autocomplete
  * @var string|null $ariaLabel
  * @var bool        $readonly
- * @var bool        $error Adds the "error" class to the input-group.
- * @var bool        $inert Marks the whole form-group inert.
- * @var string      $groupClass Extra classes for the form-group wrapper, e.g. "f-g-2".
- * @var string      $groupAttrs Raw extra attributes for the form-group wrapper, e.g. data-timeout="0".
+ * @var bool        $error           Adds the "error" class to the input-group.
+ * @var bool        $inert           Marks the whole form-group inert.
+ * @var string      $groupClass      Extra classes for the form-group wrapper, e.g. "f-g-2".
+ * @var string      $groupAttrs      Raw extra attributes for the form-group wrapper, e.g. data-timeout="0".
  * @var bool        $capsLockWarning Adds the "Caps lock is on!" label-row warning.
- * @var string|null $appendIcon Font Awesome icon suffix (with any extra classes) for an append icon, e.g. "eye password-toggle input-icon-clickable".
- * @var string      $extraAttrs Raw extra attributes for the input, e.g. data-match="...".
- * @var string      $inputClass Extra classes for the input itself, e.g. "input-password".
+ * @var string|null $appendIcon      Font Awesome icon suffix (with any extra classes) for an append icon, e.g. "eye password-toggle input-icon-clickable".
+ * @var string      $extraAttrs      Raw extra attributes for the input, e.g. data-match="...".
+ * @var string      $inputClass      Extra classes for the input itself, e.g. "input-password".
  *
  * $fieldName is not called "name": that would collide with component()'s own $name parameter, since require() shares its scope.
  *
@@ -34,10 +36,10 @@ $inputClass ??= '';
 $extraAttrs ??= '';
 $groupClass ??= '';
 $groupAttrs ??= '';
-$label = htmlspecialchars($label);
+$label = AppController::sanitize($label);
 
-if (isset($placeholder)) $placeholder = htmlspecialchars((string)$placeholder);
-if (isset($ariaLabel)) $ariaLabel = htmlspecialchars((string)$ariaLabel);
+if (isset($placeholder)) $placeholder = AppController::sanitize((string)$placeholder);
+if (isset($ariaLabel)) $ariaLabel = AppController::sanitize((string)$ariaLabel);
 ?>
 
 <div class="col form-group g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>

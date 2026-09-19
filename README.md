@@ -50,10 +50,13 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net/) >= 8.5.x
-* [Composer](https://getcomposer.org/) >= 2.9.x
 * [Node.js](https://nodejs.org/) >= 24.x.x
 * [npm](https://www.npmjs.com/) >= 11.x.x
+
+You'll also need a way to run PHP locally - see [Step 4](#step-4-set-up-your-localhost) for the two options:
+
+* **Docker** (recommended): [Docker Desktop](https://www.docker.com/products/docker-desktop/) - PHP, Composer and (optionally) MariaDB all run inside the container, nothing else to install.
+* **Manual (WAMP/XAMPP/Apache)**: [PHP](https://www.php.net/) >= 8.5.x, [Composer](https://getcomposer.org/) >= 2.9.x, and [WAMP](https://www.wampserver.com/)/[XAMPP](https://www.apachefriends.org/)/Apache installed on your host.
 
 ### Step 1: Download Simpl
 
@@ -73,7 +76,7 @@ Available commands:
 
 Alternatively, you can also set up a new Simpl project manually by following these steps:
 
-- Download the latest version of Simpl from [here](#download) and extract the folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+- Download the latest version of Simpl from [here](#download) and extract the folder to your project folder. See [Step 4](#step-4-set-up-your-localhost) for how to serve it - Docker is the recommended option.
 
 - Next, rename the extracted folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/). Inside it you'll find a `src` folder (the application code) and a `tests` folder (its PHPUnit test suite).
 
@@ -81,13 +84,19 @@ Alternatively, you can also set up a new Simpl project manually by following the
 
 Simpl makes use of PSR-4 autoloading; for this to work, you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
 
+_If you're going to use Docker (see [Step 4](#step-4-set-up-your-localhost)), you can skip this step - `composer install` runs automatically the first time you build the image._
+
 ### Step 3: Install packages
 
 Next, a few npm packages will need to be installed. You can do this by running `npm install` in the `src` folder of your project (that's where `package.json` lives), this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
 
 ### Step 4: Set up your localhost
 
-Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
+You have two options for running Simpl locally:
+
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and comes with `composer docker:*` shorthand commands for the common actions (starting the stack, migrating, seeding, etc.).
+
+**Option B: Manual (WAMP/XAMPP/Apache).** If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling, there is a chance there was an issue compiling the Sass files; you can try to fix this by running the `build` script again manually using `npm run build`.
 
@@ -171,11 +180,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test`, to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `composer docker:test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
-Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` (or `composer docker:stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -339,6 +348,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Documented the `part()` vs `component()` split on `PageController`, renamed `ts/utils` to `ts/helpers`, and moved generated runtime data out of `app/` into `src/cache` and `src/logs`
 * Modal dialogs now open/close declaratively via the `command`/`commandfor` attributes instead of per-button JavaScript listeners
 * Admin table search boxes are now `<search>` landmarks with `type="search"` inputs, for correct semantics/mobile keyboard affordance
+* Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow, with `composer docker:*` shorthand commands for the common actions
 
 <br>
 

@@ -19,7 +19,7 @@
   background-color: var(--bg-section);
 
   @container card-row (min-width: #{map.get($breakpoints, sm)}) {
-    min-width: 24rem;
+    min-width: $width-xs;
   }
 
   @include shimmer(true);

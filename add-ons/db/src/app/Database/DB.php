@@ -516,6 +516,42 @@ class DB
     }
 
     /**
+     * Inserts multiple records in a single statement. Every row must have the same columns, in the same order.
+     *
+     * @param string $INTO
+     * @param array  $ROWS List of column => value arrays, one per row
+     *
+     * @return bool
+     */
+    public static function insertMany(string $INTO, array $ROWS): bool
+    {
+        if (empty($ROWS)) throw new PDOException('Cannot insert empty values');
+
+        $table = self::sanitize($INTO);
+        $keys = array_keys($ROWS[0]);
+        $columns = self::sanitizedColumnList($keys, static fn($col) => self::sanitize($col));
+
+        $rowsSql = [];
+        $params = [];
+        foreach ($ROWS as $i => $row) {
+            if (array_keys($row) !== $keys) throw new PDOException('All rows must share the same columns, in the same order');
+
+            $rowPlaceholders = [];
+            foreach ($row as $key => $value) {
+                $placeholder = ":r{$i}_$key";
+                $rowPlaceholders[] = $placeholder;
+                $params[$placeholder] = $value;
+            }
+            $rowsSql[] = '(' . implode(', ', $rowPlaceholders) . ')';
+        }
+
+        $query = "INSERT INTO $table ($columns) VALUES " . implode(', ', $rowsSql);
+
+        self::execute($query, $params);
+        return true;
+    }
+
+    /**
      * Updates records matching WHERE with the given SET values.
      *
      * @param string $UPDATE

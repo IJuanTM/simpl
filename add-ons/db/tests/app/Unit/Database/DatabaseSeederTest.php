@@ -14,6 +14,8 @@ use ReflectionProperty;
  */
 final class DatabaseSeederTest extends TestCase
 {
+    private array $seedersBeforeTest;
+
     public function testRegisterAppendsToTheSeederList(): void
     {
         // Arrange
@@ -28,5 +30,17 @@ final class DatabaseSeederTest extends TestCase
         $after = $seeders->getValue();
         $this->assertCount($before + 1, $after);
         $this->assertSame($marker, end($after));
+    }
+
+    // register() accumulates into a static property shared by every test in the process (including Integration tests, which run DatabaseSeeder::run() for real), so a fake entry left behind here would poison them.
+
+    protected function setUp(): void
+    {
+        $this->seedersBeforeTest = (new ReflectionProperty(DatabaseSeeder::class, 'seeders'))->getValue();
+    }
+
+    protected function tearDown(): void
+    {
+        (new ReflectionProperty(DatabaseSeeder::class, 'seeders'))->setValue(null, $this->seedersBeforeTest);
     }
 }

@@ -7,6 +7,7 @@ define('DEV', filter_var($_ENV['DEV'] ?? false, FILTER_VALIDATE_BOOLEAN));
 define('APP_NAME', $_ENV['APP_NAME']);
 define('APP_URL', $_ENV['APP_URL']);
 define('APP_KEY', $_ENV['APP_KEY'] ?? null);
+define('LOG_DIR', $_ENV['LOG_DIR'] ?? BASEDIR . '/logs');
 
 // See https://www.php.net/manual/en/timezones.php
 const TIMEZONE = 'UTC';

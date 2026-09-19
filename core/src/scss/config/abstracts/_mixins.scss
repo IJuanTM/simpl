@@ -75,13 +75,7 @@
 // ---------------------------------------------------------------- //
 
 @mixin floating-box-width {
-  @include breakpoint-down(sm) {
-    width: calc(100% - 2rem);
-  }
-
-  @include breakpoint-up(sm) {
-    max-width: 32rem;
-  }
+  width: min(32rem, 100% - 2rem);
 }
 
 // ---------------------------------------------------------------- //
@@ -174,7 +168,7 @@
         color: var(--#{$accent});
         border-color: var(--#{$accent});
       } @else {
-        color: contrast-color($surface);
+        color: map.get($status-ink, $name);
         background-color: $surface;
       }
     }

@@ -143,7 +143,7 @@ header {
             $surface: map.get($accent-colors, map.get($status, $state));
 
             &.#{$class} {
-              color: contrast-color($surface);
+              color: map.get($status-ink, $state);
               background-color: $surface;
 
               @include hover-focus {

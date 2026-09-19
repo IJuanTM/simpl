@@ -8,13 +8,15 @@
 # Package manager files
 vendor/
 node_modules/
-composer.lock
 
 # Environment variables
 .env
 
+# Docker Compose local overrides
+docker-compose.override.yml
+
 # Generated build output
-src/assets/
+src/public/assets/
 src/public/css/
 src/public/js/
 

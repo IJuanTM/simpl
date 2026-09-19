@@ -1,8 +1,10 @@
+@use "sizes" as *;
+
 $breakpoints: (
   xs: 0,
-  sm: 36rem,
-  md: 48rem,
-  lg: 64rem,
-  xl: 80rem,
-  xxl: 96rem
+  sm: $width-sm,
+  md: $width-md,
+  lg: $width-lg,
+  xl: $width-xl,
+  xxl: $width-xxl
 );

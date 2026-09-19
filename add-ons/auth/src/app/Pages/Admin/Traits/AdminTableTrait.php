@@ -32,14 +32,14 @@ trait AdminTableTrait
 
     public array $tableColumns = [];
 
-    // True once initTable() has run. A consumer that only borrows the render helpers never calls it.
-    // Without this its AJAX endpoint would answer with an all-rows, "0 of 0" body nothing asked for.
+    // Active filter values, keyed by param name
     public array $filters = [];
 
-    // Active filter values, keyed by param name
+    // Filter param => allowed values ([] means any value is accepted)
     protected array $filterDefinitions = [];
 
-    // Filter param => allowed values ([] means any value is accepted)
+    // True once initTable() has run. A consumer that only borrows the render helpers never calls it.
+    // Without this its AJAX endpoint would answer with an all-rows, "0 of 0" body nothing asked for.
     private bool $tableInitialised = false;
 
     /**

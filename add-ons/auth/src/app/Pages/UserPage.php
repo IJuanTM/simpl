@@ -19,7 +19,7 @@ use JsonException;
 
 /**
  * Read-only profile view for a user identified by /user/{id}, or the settings area under /user/settings.
- * Visitors see the username and profile image; the owner also gets links into their settings; admins get an extended read-only view.
+ * Visitors see the username, profile image, name, role and status; the owner and admins additionally see email, verification, join date and last login.
  */
 class UserPage
 {

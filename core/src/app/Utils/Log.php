@@ -39,7 +39,7 @@ class Log
      */
     private static function log(LogLevel $level, string $message, array $context = [], bool $includeTrace = true): void
     {
-        $dir = BASEDIR . '/logs';
+        $dir = LOG_DIR;
         self::ensureDirectory($dir);
 
         $timestamp = date('Y-m-d H:i:s.v P');

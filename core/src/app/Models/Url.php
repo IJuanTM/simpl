@@ -39,7 +39,7 @@ class Url
 
         $query = $uri->getQuery();
 
-        return $uri->withQuery(($query !== null ? "$query&" : '') . 'v=' . filemtime($filePath))->toString();
+        return $uri->withQuery(($query ? "$query&" : '') . 'v=' . filemtime($filePath))->toString();
     }
 
     /**

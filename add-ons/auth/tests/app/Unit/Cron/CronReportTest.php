@@ -6,6 +6,7 @@ namespace tests\Unit\Cron;
 
 use app\Cron\Traits\CronReport;
 use PHPUnit\Framework\TestCase;
+use tests\Support\OutputCaptureTrait;
 
 final class CronReportHost
 {
@@ -19,6 +20,8 @@ final class CronReportHost
 
 final class CronReportTest extends TestCase
 {
+    use OutputCaptureTrait;
+
     public function testZeroCountPrintsTheNothingMessage(): void
     {
         // Act
@@ -26,13 +29,6 @@ final class CronReportTest extends TestCase
 
         // Assert
         $this->assertStringContainsString('No unverified users to deactivate.', $output);
-    }
-
-    private function captured(callable $fn): string
-    {
-        ob_start();
-        $fn();
-        return ob_get_clean();
     }
 
     public function testSingularCountDoesNotPluralizeTheNoun(): void

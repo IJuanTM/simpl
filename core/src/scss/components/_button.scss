@@ -37,7 +37,7 @@ label.button {
 
   @each $name, $accent in $status {
     &.#{$name} {
-      @include action-button(map.get($accent-colors, $accent));
+      @include action-button(map.get($accent-colors, $accent), map.get($status-ink, $name));
     }
   }
 

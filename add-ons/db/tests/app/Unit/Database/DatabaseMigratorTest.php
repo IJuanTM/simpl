@@ -16,6 +16,8 @@ use ReflectionProperty;
  */
 final class DatabaseMigratorTest extends TestCase
 {
+    private array $migrationsBeforeTest;
+
     public function testRegisterAppendsToTheMigrationList(): void
     {
         // Arrange
@@ -30,6 +32,8 @@ final class DatabaseMigratorTest extends TestCase
         $this->assertCount($before + 1, $after);
         $this->assertSame($marker, end($after));
     }
+
+    // register() accumulates into a static property shared by every test in the process (including Integration tests, which run DatabaseMigrator::run() for real), so a fake entry left behind here would poison them.
 
     private function migrations(): array
     {
@@ -61,5 +65,15 @@ final class DatabaseMigratorTest extends TestCase
 
         // Act + Assert
         $this->assertSame('PlainClass', $method->invoke(null, 'PlainClass'));
+    }
+
+    protected function setUp(): void
+    {
+        $this->migrationsBeforeTest = $this->migrations();
+    }
+
+    protected function tearDown(): void
+    {
+        (new ReflectionProperty(DatabaseMigrator::class, 'migrations'))->setValue(null, $this->migrationsBeforeTest);
     }
 }

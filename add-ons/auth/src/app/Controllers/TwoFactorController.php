@@ -84,13 +84,14 @@ class TwoFactorController
     /**
      * Methods required for $user (per requiredMethodsFor()) that they have not yet enrolled in.
      *
-     * @param array $user
+     * @param array      $user
+     * @param array|null $settings Pre-fetched settingsFor() row, to avoid re-querying it when the caller already has one
      *
      * @return string[]
      */
-    public static function missingRequiredMethods(array $user): array
+    public static function missingRequiredMethods(array $user, ?array $settings = null): array
     {
-        $enrolled = array_map(static fn(TwoFactorMethod $m) => $m->value, self::enabledMethods((int)$user['id']));
+        $enrolled = array_map(static fn(TwoFactorMethod $m) => $m->value, self::enabledMethods((int)$user['id'], $settings));
 
         return array_diff(self::requiredMethodsFor($user), $enrolled);
     }
@@ -98,13 +99,14 @@ class TwoFactorController
     /**
      * Every method the user has enrolled in, primary first.
      *
-     * @param int $userId
+     * @param int        $userId
+     * @param array|null $settings Pre-fetched settingsFor() row, to avoid re-querying it when the caller already has one
      *
      * @return TwoFactorMethod[]
      */
-    public static function enabledMethods(int $userId): array
+    public static function enabledMethods(int $userId, ?array $settings = null): array
     {
-        $row = self::settingsFor($userId);
+        $row = $settings ?? self::settingsFor($userId);
         if (!$row) return [];
 
         $methods = array_filter(TwoFactorMethod::cases(), static fn(TwoFactorMethod $m) => !empty($row[$m->value . '_enabled'])) |> array_values(...);
@@ -200,16 +202,19 @@ class TwoFactorController
         DB::delete(FROM: 'two_factor_recovery_codes', WHERE: ['user_id' => $userId]);
 
         $codes = [];
+        $rows = [];
         for ($i = 0; $i < TWO_FACTOR_CONFIG['recovery_code_count']; $i++) {
             $code = AuthController::generateToken(self::RECOVERY_CODE_LENGTH);
             if ($code === null) break;
 
             $codes[] = $code;
-            DB::insert(INTO: 'two_factor_recovery_codes', VALUES: [
+            $rows[] = [
                 'user_id' => $userId,
                 'code_hash' => hash('sha256', $code),
-            ]);
+            ];
         }
+
+        if ($rows) DB::insertMany(INTO: 'two_factor_recovery_codes', ROWS: $rows);
 
         return $codes;
     }

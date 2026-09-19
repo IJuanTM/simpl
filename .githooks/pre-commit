@@ -79,6 +79,39 @@ check_addon_markers() {
   fi
 }
 
+# simpl-addon-installer's mergeFile() splices marker content verbatim with no re-indent, so a patch block's leading whitespace must already match the depth of the line it targets.
+# Scoped to YAML only, since a mismatch here produces invalid YAML at install time, unlike JSON/PHP patches which tolerate wrong indentation.
+
+check_yaml_marker_indentation() {
+  local file="$1"
+  local content="$2"
+  local line search_text next_indent target_hit target_indent awaiting=0
+
+  while IFS= read -r line; do
+    if [ "$awaiting" -eq 1 ]; then
+      [[ -z "${line// /}" ]] && continue
+      next_indent=$(sed -E 's/[^ ].*$//' <<< "$line")
+      awaiting=0
+
+      target_hit=$(git grep --cached -F -n -- "$search_text" -- '*.yml' '*.yaml' 2>/dev/null | grep -v "^$file:" | head -n1) || true
+      [ -z "$target_hit" ] && continue
+
+      target_indent=$(cut -d: -f3- <<< "$target_hit" | sed -E 's/[^ ].*$//')
+
+      if [ "${#next_indent}" -ne "${#target_indent}" ]; then
+        echo "pre-commit: $file - content targeting '$search_text' is indented ${#next_indent} spaces, but that line sits at ${#target_indent} spaces in the file it targets; splice is verbatim with no re-indent, so this will corrupt the merged YAML" >&2
+        fail=1
+      fi
+      continue
+    fi
+
+    if [[ "$line" =~ @addon-insert:(replace|before|after)\(\'(.*)\'\) ]]; then
+      search_text="${BASH_REMATCH[2]}"
+      [ -n "$search_text" ] && awaiting=1
+    fi
+  done <<< "$content"
+}
+
 # Lints staged content via a real temp file - piping through `php -l -- -` hangs on this machine's PHP CLI instead of reading stdin.
 
 check_php_syntax() {
@@ -125,12 +158,16 @@ while IFS= read -r staged_file; do
   content=""
   fetched=0
   case "$staged_file" in
-    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore)
+    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore | *.yml | *.yaml)
       if content=$(git show ":$staged_file" 2>/dev/null); then fetched=1; fi
       ;;
   esac
 
   [ "$fetched" -eq 1 ] && check_addon_markers "$staged_file" "$content"
+
+  if [[ "$staged_file" == *.yml || "$staged_file" == *.yaml ]]; then
+    [ "$fetched" -eq 1 ] && check_yaml_marker_indentation "$staged_file" "$content"
+  fi
 
   if [[ "$staged_file" == *.php ]]; then
     [ "$php_available" -eq 1 ] && [ "$fetched" -eq 1 ] && check_php_syntax "$staged_file" "$content"

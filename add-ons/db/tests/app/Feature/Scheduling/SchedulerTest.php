@@ -7,6 +7,7 @@ namespace tests\Feature\Scheduling;
 use app\Utils\Scheduler;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
+use tests\Support\OutputCaptureTrait;
 
 /**
  * run() calls DB::single() unconditionally for every registered task in its loop, regardless of isDue().
@@ -14,6 +15,8 @@ use ReflectionProperty;
  */
 final class SchedulerTest extends TestCase
 {
+    use OutputCaptureTrait;
+
     private ReflectionProperty $tasksProp;
 
     public function testRunWithNoRegisteredTasksReportsNoneDue(): void
@@ -23,13 +26,6 @@ final class SchedulerTest extends TestCase
 
         // Assert
         $this->assertStringContainsString('No tasks due', $output);
-    }
-
-    private function captured(callable $fn): string
-    {
-        ob_start();
-        $fn();
-        return ob_get_clean();
     }
 
     public function testRunPrintsATestLabelInTestMode(): void

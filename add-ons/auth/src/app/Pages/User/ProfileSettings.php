@@ -85,25 +85,22 @@ class ProfileSettings
             return;
         }
 
+        $profileFields = [
+            'username' => $_POST['username'] ?: null,
+            'first_name' => $_POST['first_name'] ?: null,
+            'last_name' => $_POST['last_name'] ?: null,
+            'email' => $_POST['email'],
+        ];
+
         DB::update(
             UPDATE: 'users',
-            SET: [
-                'username' => $_POST['username'] ?: null,
-                'first_name' => $_POST['first_name'] ?: null,
-                'last_name' => $_POST['last_name'] ?: null,
-                'email' => $_POST['email'],
-            ],
+            SET: $profileFields,
             WHERE: compact('id')
         );
 
         // requireAuth()'s session sync ran before this request's own update, so patch the edited fields in now or the nav bar stays stale until the next request.
         // Only these fields, never a full row refresh, since that would mask a stale status/password_changed_at from requireAuth().
-        $sessionUser = SessionController::get('user');
-        $sessionUser['username'] = $_POST['username'] ?: null;
-        $sessionUser['first_name'] = $_POST['first_name'] ?: null;
-        $sessionUser['last_name'] = $_POST['last_name'] ?: null;
-        $sessionUser['email'] = $_POST['email'];
-        SessionController::set('user', $sessionUser);
+        SessionController::set('user', array_merge(SessionController::get('user'), $profileFields));
 
         if (VERIFICATION_CONFIG['required'] && $emailChanged) {
             AuthController::issueVerificationToken($id, $_POST['email']);

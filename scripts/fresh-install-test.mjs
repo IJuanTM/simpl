@@ -10,13 +10,17 @@
 // Zips are rebuilt from the working tree every run (uncommitted edits to tracked files included,
 // via `git stash create` - new files must be `git add`ed first, since that command only snapshots
 // tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES. The CDN's
-// versions.json is fetched once to resolve `latest`. MariaDB (WAMP, root / no password) is
-// optional; if it's down the migrate/seed steps are skipped.
+// versions.json is fetched once to resolve `latest`.
+// A reachable MariaDB (root / no password) is optional; if none is found, the migrate/seed/test:integration steps are skipped.
+// Docker is tried first: a throwaway MariaDB starts via scripts/docker-compose.yml and tears down on exit.
+// If Docker isn't available, a local MySQL/MariaDB server on localhost:3306 is used instead (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
+// Override with SIMPL_TEST_DB=docker (never fall back to local) or SIMPL_TEST_DB=local (skip the Docker probe); default is 'auto'.
+// SIMPL_TEST_DB_PORT (default 3307) is the host port used for the Docker fallback.
 //
-// Installs land in ~/Desktop/simpl-fresh-install-test/<level>/simpl-test/ (wiped each run,
-// left after). Each is scaffolded with --url = <level>.simpl.test; a wildcard Apache vhost
-// for those is written to <dest>/httpd-vhosts.conf. Overrides: SIMPL_TEST_DEST,
-// SIMPL_TEST_DOMAIN.
+// Installs land in ~/Desktop/simpl-fresh-install-test/<level>/simpl-test/ (wiped each run, left after).
+// Each is scaffolded with --url = <level>.simpl.test.
+// To browse one, either run `composer docker:up` inside it (just needs the printed hosts file line), or use the wildcard Apache vhost written to <dest>/httpd-vhosts.conf for a local Apache setup.
+// Overrides: SIMPL_TEST_DEST, SIMPL_TEST_DOMAIN, SIMPL_TEST_DB, SIMPL_TEST_DB_PORT.
 //
 // Run with no arguments for the interactive picker. Flags:
 //   --all           install a single site with every add-on merged in - no menu
@@ -34,7 +38,11 @@ const CDN_VERSIONS = 'https://cdn.simpl.iwanvanderwal.nl/framework/versions.json
 const NAME = 'Simpl Test';
 const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
 const DEST = process.env.SIMPL_TEST_DEST || path.join(os.homedir(), 'Desktop', 'simpl-fresh-install-test');
-const DB = {host: 'localhost', user: 'root', pass: ''};
+const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
+const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
+const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'docker-compose.yml');
+const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
+let DB = LOCAL_DB;
 
 // Output helpers, matching the installer scripts' style.
 const C = {
@@ -123,8 +131,30 @@ if (!ADDONS.length) die(`no add-ons found under ${REPO}/add-ons`);
 
 const levelLabel = (addons) => addons.length ? 'core-' + addons.join('-') : 'core';
 
-const DB_UP = spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
-  {env: {...process.env, H: DB.host, U: DB.user, P: DB.pass}}).status === 0;
+function pdoUp(db) {
+  return spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
+    {env: {...process.env, H: db.host, U: db.user, P: db.pass}}).status === 0;
+}
+
+let DB_UP = false, dockerDbStarted = false;
+if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['compose', 'version'], {stdio: 'ignore'}).status === 0) {
+  if (spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'up', '-d', 'db', '--wait'],
+    {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}}).status === 0) {
+    dockerDbStarted = true;
+    DB = {host: `127.0.0.1;port=${SIMPL_TEST_DB_PORT}`, user: 'root', pass: ''};
+    DB_UP = pdoUp(DB);
+  }
+}
+if (!DB_UP && SIMPL_TEST_DB !== 'docker' && pdoUp(LOCAL_DB)) {
+  DB = LOCAL_DB;
+  DB_UP = true;
+}
+if (dockerDbStarted) process.on('exit', () => {
+  try {
+    spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'down', '-v'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}});
+  } catch {
+  }
+});
 
 // Core is always selected; a pick's dependencies fill in automatically.
 async function pick() {
@@ -305,7 +335,11 @@ function runLevel(setAddons) {
   if (dbname) {
     if (DB_UP) {
       const envPath = path.join(proj, 'src/.env');
-      fs.writeFileSync(envPath, fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbname}`));
+      let env = fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbname}`);
+      if (DB.host !== 'localhost') env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${DB.host}`);
+      fs.writeFileSync(envPath, env);
+      task('🧪 composer test:integration');
+      if (!run('composer test:integration', proj, log)) return bail();
       task(`💾 composer migrate:fresh ${C.dim}(db: ${dbname})${C.reset}`);
       if (!run('composer migrate:fresh', proj, log)) return bail();
       if (hasSeedable) {
@@ -336,11 +370,11 @@ function writeVhostConf() {
 #
 # Wildcard vhost: <level>.${DOMAIN}  ->  ${win}/<level>/simpl-test/src/public
 #
-# One-time WAMP setup:
+# One-time Apache setup (WAMP, XAMPP, MAMP, a native install, ...):
 #   1. httpd.conf: uncomment  LoadModule vhost_alias_module modules/mod_vhost_alias.so
 #   2. httpd.conf: add        IncludeOptional "${win}/httpd-vhosts.conf"
 #   3. hosts file: add a "127.0.0.1 <level>.${DOMAIN}" line per level (see script output)
-#   4. restart Apache (WAMP tray)
+#   4. restart Apache
 #
 <VirtualHost *:80>
     ServerName ${DOMAIN}
@@ -403,7 +437,9 @@ task('🧰 core' + [...needZip].map((a) => ` + ${a}`).join(''));
 buildZip('core', path.join(RELEASES, 'core.zip'));
 for (const a of ADDONS) if (needZip.has(a)) buildZip(`add-ons/${a}`, path.join(RELEASES, 'add-ons', `${a}.zip`));
 success(`Built ${1 + needZip.size} zip${needZip.size ? 's' : ''}`);
-(DB_UP ? info : warn)(`MariaDB ${DB_UP ? 'reachable' : 'not reachable (migrate/seed will be skipped)'}`);
+(DB_UP ? info : warn)(DB_UP
+  ? `MariaDB reachable${dockerDbStarted ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`
+  : 'MariaDB not reachable (test:integration/migrate/seed will be skipped)');
 
 const results = {};
 for (const s of sets) results[levelLabel(s)] = runLevel(s);
@@ -418,7 +454,8 @@ for (const [label, ok] of Object.entries(results))
 line();
 heading('Details');
 item(`installs: ${C.dim}${DEST}${C.reset}`);
-item(`vhost:    ${C.dim}${conf}${C.reset}`);
+item(`docker:   ${C.dim}run \`composer docker:up\` inside a level's install to browse it that way instead${C.reset}`);
+item(`vhost:    ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
 item('hosts file lines:');
 for (const label of Object.keys(results)) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
 line();

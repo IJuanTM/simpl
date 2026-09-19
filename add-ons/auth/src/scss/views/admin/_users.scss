@@ -3,7 +3,7 @@
 section.users {
   div.users-table {
     @include breakpoint-up(sm) {
-      max-width: 96rem;
+      max-width: $width-xxl;
     }
 
     i.fa-check {

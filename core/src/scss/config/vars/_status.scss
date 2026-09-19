@@ -5,3 +5,10 @@ $status: (
   error: "red",
   info: "cyan",
 );
+
+$status-ink: (
+  success: white,
+  warning: black,
+  error: white,
+  info: white,
+);

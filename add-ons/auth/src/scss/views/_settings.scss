@@ -2,7 +2,7 @@
 
 section.user-settings {
   &.center-x > .col {
-    max-width: 48rem;
+    max-width: $width-ml;
   }
 
   form.profile-image {
@@ -106,8 +106,8 @@ section.user-settings {
     }
 
     &::after {
-      content: "";
       flex: 1 1 auto;
+      content: "";
       border-bottom: var(--border-width) solid var(--border-muted);
     }
   }
@@ -142,10 +142,10 @@ section.user-settings {
   }
 
   label.two-fa-required {
-    gap: .375rem;
     font-size: .875rem;
     cursor: pointer;
     color: var(--text-50);
+    gap: .375rem;
 
     @include hover-focus {
       color: var(--text-75);

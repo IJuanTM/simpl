@@ -4,5 +4,11 @@
 "migrate:rollback": "php src/app/Scripts/migrate.php --rollback",
 "seed": "php src/app/Scripts/seed.php",
 "seed:fresh": "php src/app/Scripts/seed.php --fresh",
-"cron:test": "php src/app/Scripts/scheduler.php --test"
+"cron:test": "php src/app/Scripts/scheduler.php --test",
+"docker:migrate": "docker compose exec app composer migrate",
+"docker:migrate:fresh": "docker compose exec app composer migrate:fresh",
+"docker:migrate:rollback": "docker compose exec app composer migrate:rollback",
+"docker:seed": "docker compose exec app composer seed",
+"docker:seed:fresh": "docker compose exec app composer seed:fresh",
+"docker:cron:test": "docker compose exec app composer cron:test"
 @addon-end

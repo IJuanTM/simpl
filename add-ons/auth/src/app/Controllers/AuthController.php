@@ -349,17 +349,29 @@ class AuthController
             return 'user/settings/change-password';
         }
 
-        if (
-            TWO_FACTOR_CONFIG['enabled']
-            && (
-                (TwoFactorController::isRequiredFor($user) && !TwoFactorController::isEnabledFor((int)$user['id']))
-                || TwoFactorController::missingRequiredMethods($user) !== []
-            )
-        ) {
+        if (TWO_FACTOR_CONFIG['enabled'] && self::twoFactorIsIncomplete($user)) {
             return 'user/settings/two-factor';
         }
 
         return null;
+    }
+
+    /**
+     * Whether $user still needs to act on 2FA, either required-but-not-enabled or enabled-but-missing-a-method.
+     * Fetches the user_two_factor row once and reuses it for both checks instead of querying it twice.
+     *
+     * @param array $user
+     *
+     * @return bool
+     */
+    private static function twoFactorIsIncomplete(array $user): bool
+    {
+        $settings = TwoFactorController::settingsFor((int)$user['id']);
+        $enabled = (bool)($settings['enabled'] ?? false);
+
+        if (TwoFactorController::isRequiredFor($user) && !$enabled) return true;
+
+        return TwoFactorController::missingRequiredMethods($user, $settings) !== [];
     }
 
     /**

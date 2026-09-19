@@ -3,7 +3,7 @@
 section.roles {
   div.roles-table {
     @include breakpoint-up(sm) {
-      max-width: 48rem;
+      max-width: $width-md;
     }
   }
 }

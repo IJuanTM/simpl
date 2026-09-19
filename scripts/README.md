@@ -8,13 +8,24 @@ Does a real fresh install of the **current working tree** through the actual
 installer ecosystem (`npx @ijuantm/simpl-install` + `npx @ijuantm/simpl-addon`).
 For each chosen add-on set it runs the real scaffold, the real add-on merges,
 `composer install`, `composer test`, and - when a database is reachable -
-`composer migrate:fresh` / `seed:fresh`, then `npm install` (which builds Sass and
-Vite). The result is a browsable install.
+`composer test:integration`, `composer migrate:fresh` / `seed:fresh`, then
+`npm install` (which builds Sass and Vite). The result is a browsable install.
 
 Zips are rebuilt from the working tree every run (uncommitted edits to tracked files
 included; new files must be `git add`ed first) and served to the installers locally,
 so nothing has to be committed or published first. A MariaDB/MySQL server (`root`,
-no password) is optional; if it is down the migrate/seed steps are skipped.
+no password) is optional; if it is down, the test:integration/migrate/seed steps are
+skipped.
+
+**DB resolution:** Docker is tried first - the script starts a throwaway MariaDB via
+`scripts/docker-compose.yml` (mapped to host port `3307` by default) and tears it
+down again on exit, so a full `--all` run works with no local MariaDB install at
+all. If Docker isn't available, it falls back to a local MySQL/MariaDB server on
+`localhost:3306` (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
+This is separate from the `docker-compose.yml`/`add-ons/db/docker-compose.yml` pair
+that ships to installed projects (see
+[`core/docker/README.md`](../core/docker/README.md)) - this one is maintainer-only
+and only ever runs the `db` service.
 
 ### Running
 
@@ -28,16 +39,20 @@ Installs land in `<DEST>/<level>/simpl-test/` (default `<DEST>` is
 `~/Desktop/simpl-fresh-install-test`), wiped at the start of each run and left in
 place afterwards so you can browse them. Each level is scaffolded with
 `--url=<level>.<domain>` (default domain `simpl.test`), e.g. `core-db-auth`
-installs to `core-db-auth.simpl.test`.
+installs to `core-db-auth.simpl.test`. To browse a level, either run `composer
+docker:up` inside its install (just needs the hosts entry the script prints), or
+use the generated Apache/WAMP vhost - see below.
 
 ### Environment overrides
 
-| Variable            | Default                              | Purpose                         |
-|---------------------|--------------------------------------|---------------------------------|
-| `SIMPL_TEST_DEST`   | `~/Desktop/simpl-fresh-install-test` | where installs are written      |
-| `SIMPL_TEST_DOMAIN` | `simpl.test`                         | base domain for the level hosts |
+| Variable             | Default                              | Purpose                                          |
+|----------------------|--------------------------------------|--------------------------------------------------|
+| `SIMPL_TEST_DEST`    | `~/Desktop/simpl-fresh-install-test` | where installs are written                       |
+| `SIMPL_TEST_DOMAIN`  | `simpl.test`                         | base domain for the level hosts                  |
+| `SIMPL_TEST_DB`      | `auto`                               | `auto` (Docker then local), `docker`, or `local` |
+| `SIMPL_TEST_DB_PORT` | `3307`                               | host port for the Docker fallback MariaDB        |
 
-## Apache / WAMP setup for the test installs
+## Apache setup for the test installs
 
 The script writes a wildcard vhost to `<DEST>/httpd-vhosts.conf` on every run. It
 maps `*.<domain>` to `<DEST>/%1/simpl-test/src/public`, where `%1` is the first

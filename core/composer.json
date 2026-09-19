@@ -33,10 +33,18 @@
     "vendor-dir": "src/vendor"
   },
   "scripts": {
-    "test": "phpunit",
+    "test": "phpunit --testsuite=Unit,Feature",
+    "test:integration": "phpunit --testsuite=Integration",
     "stan": "phpstan analyse --memory-limit=512M",
     "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
     "post-autoload-dump": "@php src/app/Scripts/app-key.php",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:sh": "docker compose exec app bash",
+    "docker:install": "docker compose run --rm app composer install",
+    "docker:test": "docker compose exec app composer test",
+    "docker:stan": "docker compose exec app composer stan",
+    "docker:key:regenerate": "docker compose exec app composer key:regenerate",
     "@addon-placeholder": "db"
   },
   "keywords": [

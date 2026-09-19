@@ -21,7 +21,7 @@ final class LogTest extends TestCase
 
     private function lastLine(string $level): string
     {
-        $lines = explode("\n\n", trim(file_get_contents(BASEDIR . "/logs/$level.log")));
+        $lines = explode("\n\n", trim(file_get_contents(LOG_DIR . "/$level.log")));
         return end($lines);
     }
 
@@ -133,7 +133,7 @@ final class LogTest extends TestCase
     protected function tearDown(): void
     {
         foreach (['error', 'warning', 'info', 'debug'] as $level) {
-            $file = BASEDIR . "/logs/$level.log";
+            $file = LOG_DIR . "/$level.log";
             if (is_file($file)) unlink($file);
         }
     }

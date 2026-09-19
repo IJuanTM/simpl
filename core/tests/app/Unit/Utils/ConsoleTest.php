@@ -7,9 +7,12 @@ namespace tests\Unit\Utils;
 use app\Enums\Ansi;
 use app\Utils\Console;
 use PHPUnit\Framework\TestCase;
+use tests\Support\OutputCaptureTrait;
 
 final class ConsoleTest extends TestCase
 {
+    use OutputCaptureTrait;
+
     public function testBoxDrawsATopAndBottomBorderAroundTheTitle(): void
     {
         // Act
@@ -19,13 +22,6 @@ final class ConsoleTest extends TestCase
         $this->assertStringContainsString('╭', $output);
         $this->assertStringContainsString('╰', $output);
         $this->assertStringContainsString('My Title', $output);
-    }
-
-    private function captured(callable $fn): string
-    {
-        ob_start();
-        $fn();
-        return ob_get_clean();
     }
 
     public function testBoxTruncatesATitleLongerThanTheBoxWidth(): void
