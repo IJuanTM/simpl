@@ -2,7 +2,6 @@
 .idea
 .vscode
 node_modules
-src/node_modules
 src/vendor
 src/cache
 src/logs

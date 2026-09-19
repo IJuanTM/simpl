@@ -39,9 +39,9 @@ Installs land in `<DEST>/<level>/simpl-test/` (default `<DEST>` is
 `~/Desktop/simpl-fresh-install-test`), wiped at the start of each run and left in
 place afterwards so you can browse them. Each level is scaffolded with
 `--url=<level>.<domain>` (default domain `simpl.test`), e.g. `core-db-auth`
-installs to `core-db-auth.simpl.test`. To browse a level, either run `composer
-docker:up` inside its install (just needs the hosts entry the script prints), or
-use the generated Apache/WAMP vhost - see below.
+installs to `core-db-auth.simpl.test`. To browse a level, either run `docker
+compose up -d --build` inside its install (just needs the hosts entry the script
+prints), or use the generated Apache/WAMP vhost - see below.
 
 ### Environment overrides
 

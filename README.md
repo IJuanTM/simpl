@@ -88,13 +88,13 @@ _If you're going to use Docker (see [Step 4](#step-4-set-up-your-localhost)), yo
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the `src` folder of your project (that's where `package.json` lives), this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `src/public` folder using Vite and the `sass` package.
 
 ### Step 4: Set up your localhost
 
 You have two options for running Simpl locally:
 
-**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with the `./simpl`/`./simpl.ps1` wrapper (or plain `docker compose` commands directly).
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with plain `docker compose` commands (plus a couple of `npm run docker:*` shortcuts for the ones you'll type most).
 
 **Option B: Manual (WAMP/XAMPP/Apache).** If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
@@ -133,13 +133,15 @@ The following scrips are included in the `package.json` file:
 * `dev` - Runs the `watch` and `live` scripts in parallel
 * `build` - Runs the `build:scss` and `build:ts` scripts after one another
 * `watch` - Runs the `watch:scss` and `watch:ts` scripts in parallel
-* `build:scss` - Compiles the Sass files to the `public/css` folder using the `sass` package
-* `build:ts` - Bundles the TypeScript files to the `public/js` folder using Vite
-* `watch:scss` - Watches the Sass files for changes and compiles them to the `public/css` folder using the `sass` package
-* `watch:ts` - Watches the TypeScript files for changes and bundles them to the `public/js` folder using Vite
-* `live` - Runs a local server using `browser-sync` and watches the `public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
+* `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
+* `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
+* `watch:scss` - Watches the Sass files for changes and compiles them to the `src/public/css` folder using the `sass` package
+* `watch:ts` - Watches the TypeScript files for changes and bundles them to the `src/public/js` folder using Vite
+* `live` - Runs a local server using `browser-sync` and watches the `src/public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
+* `docker:sh` - Opens a shell in the running `app` container (Docker setup only)
+* `docker:composer` - Runs a Composer command in the running `app` container, e.g. `npm run docker:composer -- migrate` (Docker setup only)
 
-After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `src/public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
 
 _The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver. _
 
@@ -180,11 +182,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `./simpl test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `npm run docker:composer -- test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
-Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` (or `./simpl stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `composer stan` (or `npm run docker:composer -- stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 

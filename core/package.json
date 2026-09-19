@@ -21,11 +21,13 @@
     "dev": "run-p watch live",
     "build": "run-s build:*",
     "watch": "run-p watch:*",
-    "build:scss": "sass scss/main.scss:public/css/main.min.css -s compressed",
+    "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "build:ts": "vite build",
-    "watch:scss": "sass -w scss/main.scss:public/css/main.min.css -s compressed",
+    "watch:scss": "sass -w src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "watch:ts": "vite build --watch",
-    "live": "browser-sync start --proxy @app-url/ --host @app-host -f public/js/**/*.js public/css/**/*.css views/**/*.phtml --no-notify --no-ui --open external"
+    "live": "browser-sync start --proxy @app-url/ --host @app-host -f src/public/js/**/*.js src/public/css/**/*.css src/views/**/*.phtml --no-notify --no-ui --open external",
+    "docker:sh": "docker compose exec app bash",
+    "docker:composer": "docker compose exec app composer"
   },
   "repository": {
     "type": "git",

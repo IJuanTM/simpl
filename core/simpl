@@ -1,7 +1,0 @@
-#!/usr/bin/env sh
-# Uses exec, not a subshell call, so TTY, signals and exit codes all pass straight through.
-case "$1" in
-  ''|up|down|build|restart|stop|start|logs|ps|pull|config) exec docker compose "$@" ;;
-  sh|bash) exec docker compose exec app bash ;;
-  *) exec docker compose exec app composer "$@" ;;
-esac

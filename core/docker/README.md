@@ -8,28 +8,24 @@ The recommended way to run this project locally - a PHP + Apache container (and,
 
 ## Usage
 
-A `simpl` (macOS/Linux/Git Bash) / `simpl.ps1` (Windows PowerShell) script ships at the project root - it's a thin wrapper that forwards to plain `docker compose`, so it behaves exactly like any other Docker workflow, it's just shorter to type:
+Bring the container(s) up with plain Docker Compose from the project root:
 
 ```bash
-./simpl up -d --build
-```
-
-```powershell
-./simpl.ps1 up -d --build
+docker compose up -d --build
 ```
 
 The first run builds the image, runs `composer install` inside it, and starts the container(s). The site is served over HTTPS - available at `https://localhost/` and at whatever hostname `src/.env`'s `APP_URL` points to (see [Matching your real APP_URL](#matching-your-real-app_url) to make that resolve, and [HTTPS](#https) for the certificate warning you'll see).
 
 `src/` is bind-mounted, so PHP edits reflect immediately - rebuild only after changing `composer.json`, `composer.lock`, or the Dockerfile. After a `composer.json` change, run `docker compose run --rm app composer install`.
 
-Migrations, seeding, and other Composer commands work the same as a manual setup, just run through the wrapper instead of `docker compose exec app composer`:
+Migrations, seeding, and other Composer commands work the same as a manual setup, just run through `docker compose exec` instead of `composer` directly:
 
 ```bash
-./simpl migrate
-./simpl seed:fresh
+docker compose exec app composer migrate
+docker compose exec app composer seed:fresh
 ```
 
-Same goes for a shell inside the container (`./simpl sh`), `./simpl test`/`./simpl stan`, or anything else you'd normally run at the project root - any command the wrapper doesn't recognize as one of Compose's own (`up`, `down`, `build`, `logs`, `ps`, ...) is passed to `composer` inside the `app` container. Prefer plain `docker compose`/`docker compose exec app composer <cmd>` directly if you'd rather not depend on the wrapper - both work identically.
+Two `npm` scripts shortcut the ones you'll type most - `npm run docker:sh` opens a shell in the container, and `npm run docker:composer -- <cmd>` runs any Composer command inside it (`npm run docker:composer -- migrate`, `npm run docker:composer -- test`, ...). The `--` is npm's separator for passing arguments through to the underlying script.
 
 Sass/TypeScript (`npm run build` / `npm run dev`) still run on the host as usual - `npm run dev`'s browser-sync just proxies whatever URL the app is served at.
 
@@ -70,7 +66,6 @@ Replace `myproject.test` with your actual `APP_URL` host, and make sure `APP_URL
 
 Compose sets `DB_SERVER=db` as a real container environment variable, which phpdotenv's `createImmutable()` never overwrites - so `src/.env`'s `DB_SERVER=localhost` default is left untouched. `DB_NAME`/`DB_USERNAME`/`DB_PASSWORD` come straight from the bind-mounted `src/.env`; `migrate:fresh` creates the database itself. If the app can't reach a database that's clearly up, check `docker compose exec app php -i | grep variables_order` includes `E` - without it, `docker/php/simpl.ini`'s `variables_order` never populates `$_ENV`, which `database.php` reads directly.
 
-## The `simpl`/`simpl.ps1` wrapper scripts
+## Why `docker:composer` instead of a fixed script per command
 
-Both live at the project root (not under `docker/`) since that's where `docker-compose.yml` lives and where these are meant to be run from. They exist for one reason: `docker compose exec app composer migrate` typed out in full, every time, for every command, is tedious - and shelling out to `docker` *from inside* a Composer script (the approach this replaced) breaks TTY/signal/exit-code passthrough, so the wrapper has to live outside Composer entirely. Anything the script doesn't recognize as a Compose subcommand runs as `composer <args>` in the `app` container; recognized Compose subcommands (`up`, `down`, `build`, `logs`, `ps`, `restart`, `pull`, `stop`, `start`, `config`) pass straight through to `docker compose`, and `sh`/`bash` open a shell in the container. Both scripts are
-optional - `docker compose`/`docker compose exec app composer` directly always works too.
+Which Composer commands exist depends on which add-ons are installed - `migrate`/`seed` only exist once `db` is merged in, for example - so a fixed list of shortcuts (one npm script per command, or a Makefile target per command) would drift out of sync with whatever's actually installed. `npm run docker:composer -- <cmd>` stays generic and always matches whatever `composer.json` currently has, the same way calling `docker compose exec app composer <cmd>` directly always does.

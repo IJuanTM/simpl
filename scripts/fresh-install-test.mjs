@@ -19,7 +19,7 @@
 //
 // Installs land in ~/Desktop/simpl-fresh-install-test/<level>/simpl-test/ (wiped each run, left after).
 // Each is scaffolded with --url = <level>.simpl.test.
-// To browse one, either run `composer docker:up` inside it (just needs the printed hosts file line), or use the wildcard Apache vhost written to <dest>/httpd-vhosts.conf for a local Apache setup.
+// To browse one, either run `docker compose up -d --build` inside it (just needs the printed hosts file line), or use the wildcard Apache vhost written to <dest>/httpd-vhosts.conf for a local Apache setup.
 // Overrides: SIMPL_TEST_DEST, SIMPL_TEST_DOMAIN, SIMPL_TEST_DB, SIMPL_TEST_DB_PORT.
 //
 // Run with no arguments for the interactive picker. Flags:
@@ -454,7 +454,7 @@ for (const [label, ok] of Object.entries(results))
 line();
 heading('Details');
 item(`installs: ${C.dim}${DEST}${C.reset}`);
-item(`docker:   ${C.dim}run \`composer docker:up\` inside a level's install to browse it that way instead${C.reset}`);
+item(`docker:   ${C.dim}run \`docker compose up -d --build\` inside a level's install to browse it that way instead${C.reset}`);
 item(`vhost:    ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
 item('hosts file lines:');
 for (const label of Object.keys(results)) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);

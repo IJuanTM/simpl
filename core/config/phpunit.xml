@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
+         xsi:noNamespaceSchemaLocation="../src/vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="../tests/bootstrap.php"
          colors="true"
-         cacheDirectory=".phpunit.cache">
+         cacheDirectory="../.phpunit.cache">
   <testsuites>
     <testsuite name="Unit">
-      <directory>tests/app/Unit</directory>
+      <directory>../tests/app/Unit</directory>
     </testsuite>
     <testsuite name="Feature">
-      <directory>tests/app/Feature</directory>
+      <directory>../tests/app/Feature</directory>
     </testsuite>
     <testsuite name="Integration">
-      <directory>tests/app/Integration</directory>
+      <directory>../tests/app/Integration</directory>
     </testsuite>
   </testsuites>
 
@@ -22,7 +22,7 @@
 
   <source>
     <include>
-      <directory>src/app</directory>
+      <directory>../src/app</directory>
     </include>
   </source>
 </phpunit>
