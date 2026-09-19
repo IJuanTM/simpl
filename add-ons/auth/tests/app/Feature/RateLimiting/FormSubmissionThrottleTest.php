@@ -33,7 +33,7 @@ final class FormSubmissionThrottleTest extends TestCase
 
     private function call(FormSubmissionThrottleHost $host, string $method, array $args = []): mixed
     {
-        return (new ReflectionMethod(FormSubmissionThrottleHost::class, $method))->invoke($host, ...$args);
+        return new ReflectionMethod(FormSubmissionThrottleHost::class, $method)->invoke($host, ...$args);
     }
 
     private function rlKey(FormSubmissionThrottleHost $host): void

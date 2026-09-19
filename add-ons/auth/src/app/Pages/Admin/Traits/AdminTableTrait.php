@@ -56,6 +56,8 @@ trait AdminTableTrait
 
     /**
      * JSON-encoded list of column indexes hidden by default, for data-hidden-cols.
+     *
+     * @throws JsonException
      */
     final public function hiddenColumnsJson(): string
     {

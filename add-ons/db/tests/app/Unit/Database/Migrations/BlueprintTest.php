@@ -31,7 +31,7 @@ final class BlueprintTest extends TestCase
     public function testColumnWithANumericDefault(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->intUnsigned('login_attempts', false, 0);
+        $blueprint = new Blueprint('users')->intUnsigned('login_attempts', false, 0);
 
         // Assert
         $this->assertSame(['`login_attempts` INT UNSIGNED DEFAULT 0'], $this->columns($blueprint));
@@ -39,13 +39,13 @@ final class BlueprintTest extends TestCase
 
     private function columns(Blueprint $blueprint): array
     {
-        return (new ReflectionProperty(Blueprint::class, 'columns'))->getValue($blueprint);
+        return new ReflectionProperty(Blueprint::class, 'columns')->getValue($blueprint);
     }
 
     public function testVarcharWithNoOptions(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->varchar('email');
+        $blueprint = new Blueprint('users')->varchar('email');
 
         // Assert
         $this->assertSame(['`email` VARCHAR(255)'], $this->columns($blueprint));
@@ -54,7 +54,7 @@ final class BlueprintTest extends TestCase
     public function testVarcharWithLengthAndNotNull(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->varchar('username', 100, true);
+        $blueprint = new Blueprint('users')->varchar('username', 100, true);
 
         // Assert
         $this->assertSame(['`username` VARCHAR(100) NOT NULL'], $this->columns($blueprint));
@@ -63,7 +63,7 @@ final class BlueprintTest extends TestCase
     public function testColumnWithANullDefault(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->varchar('middle_name', 255, false, null);
+        $blueprint = new Blueprint('users')->varchar('middle_name', 255, false, null);
 
         // Assert
         $this->assertSame(['`middle_name` VARCHAR(255) DEFAULT NULL'], $this->columns($blueprint));
@@ -72,7 +72,7 @@ final class BlueprintTest extends TestCase
     public function testColumnWithAStringDefaultIsQuoted(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->varchar('status', 20, false, 'active');
+        $blueprint = new Blueprint('users')->varchar('status', 20, false, 'active');
 
         // Assert
         $this->assertSame(["`status` VARCHAR(20) DEFAULT 'active'"], $this->columns($blueprint));
@@ -95,7 +95,7 @@ final class BlueprintTest extends TestCase
     public function testVarcharWithANarrowerCharsetThanTheTableDefault(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('webauthn_credentials'))->varchar('credential_id', 1364, true, charset: 'ascii');
+        $blueprint = new Blueprint('webauthn_credentials')->varchar('credential_id', 1364, true, charset: 'ascii');
 
         // Assert
         $this->assertSame(['`credential_id` VARCHAR(1364) CHARACTER SET ascii NOT NULL'], $this->columns($blueprint));
@@ -104,7 +104,7 @@ final class BlueprintTest extends TestCase
     public function testTextColumnNeverGetsADefaultClause(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->text('bio', true);
+        $blueprint = new Blueprint('users')->text('bio', true);
 
         // Assert
         $this->assertSame(['`bio` TEXT NOT NULL'], $this->columns($blueprint));
@@ -113,7 +113,7 @@ final class BlueprintTest extends TestCase
     public function testColumnWithACurrentTimestampDefault(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->timestamp('created_at', true, 'CURRENT_TIMESTAMP');
+        $blueprint = new Blueprint('users')->timestamp('created_at', true, 'CURRENT_TIMESTAMP');
 
         // Assert
         $this->assertSame(['`created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP'], $this->columns($blueprint));
@@ -122,7 +122,7 @@ final class BlueprintTest extends TestCase
     public function testTimestampWithAnExplicitNullDefaultEmitsDefaultNull(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->timestamp('password_changed_at', default: null);
+        $blueprint = new Blueprint('users')->timestamp('password_changed_at', default: null);
 
         // Assert
         $this->assertSame(['`password_changed_at` TIMESTAMP DEFAULT NULL'], $this->columns($blueprint));
@@ -131,7 +131,7 @@ final class BlueprintTest extends TestCase
     public function testEnumBuildsAQuotedValueList(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->enum('status', ['active', 'deactivated', 'deleted'], true);
+        $blueprint = new Blueprint('users')->enum('status', ['active', 'deactivated', 'deleted'], true);
 
         // Assert
         $this->assertSame(["`status` ENUM('active', 'deactivated', 'deleted') NOT NULL"], $this->columns($blueprint));
@@ -140,7 +140,7 @@ final class BlueprintTest extends TestCase
     public function testAutoIncrementAppendsToTheLastColumn(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->bigintUnsigned('id')->autoIncrement();
+        $blueprint = new Blueprint('users')->bigintUnsigned('id')->autoIncrement();
 
         // Assert
         $this->assertSame(['`id` BIGINT UNSIGNED AUTO_INCREMENT'], $this->columns($blueprint));
@@ -150,21 +150,21 @@ final class BlueprintTest extends TestCase
     {
         // Act + Assert
         $this->expectException(InvalidArgumentException::class);
-        (new Blueprint('users'))->autoIncrement();
+        new Blueprint('users')->autoIncrement();
     }
 
     public function testUniqueBeforeAnyColumnThrows(): void
     {
         // Act + Assert
         $this->expectException(InvalidArgumentException::class);
-        (new Blueprint('users'))->unique();
+        new Blueprint('users')->unique();
     }
 
     public function testOnUpdateCurrentTimestampBeforeAnyColumnThrows(): void
     {
         // Act + Assert
         $this->expectException(InvalidArgumentException::class);
-        (new Blueprint('users'))->onUpdateCurrentTimestamp();
+        new Blueprint('users')->onUpdateCurrentTimestamp();
     }
 
     public function testAutoIncrementWithAStartingValueIsStoredSeparately(): void
@@ -173,7 +173,7 @@ final class BlueprintTest extends TestCase
         $prop = new ReflectionProperty(Blueprint::class, 'startAt');
 
         // Act
-        $blueprint = (new Blueprint('users'))->bigintUnsigned('id')->autoIncrement(100);
+        $blueprint = new Blueprint('users')->bigintUnsigned('id')->autoIncrement(100);
 
         // Assert
         $this->assertSame(100, $prop->getValue($blueprint));
@@ -182,7 +182,7 @@ final class BlueprintTest extends TestCase
     public function testUniqueIndexesTheLastColumnByName(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->varchar('email')->unique();
+        $blueprint = new Blueprint('users')->varchar('email')->unique();
 
         // Assert
         $this->assertSame(['UNIQUE (`email`)'], $this->indexes($blueprint));
@@ -190,13 +190,13 @@ final class BlueprintTest extends TestCase
 
     private function indexes(Blueprint $blueprint): array
     {
-        return (new ReflectionProperty(Blueprint::class, 'indexes'))->getValue($blueprint);
+        return new ReflectionProperty(Blueprint::class, 'indexes')->getValue($blueprint);
     }
 
     public function testOnUpdateCurrentTimestampAppendsToTheLastColumn(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->timestamp('updated_at')->onUpdateCurrentTimestamp();
+        $blueprint = new Blueprint('users')->timestamp('updated_at')->onUpdateCurrentTimestamp();
 
         // Assert
         $this->assertSame(['`updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'], $this->columns($blueprint));
@@ -205,7 +205,7 @@ final class BlueprintTest extends TestCase
     public function testPrimaryWithASingleColumn(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('users'))->primary('id');
+        $blueprint = new Blueprint('users')->primary('id');
 
         // Assert
         $this->assertSame('`id`', $this->primaryKey($blueprint));
@@ -213,13 +213,13 @@ final class BlueprintTest extends TestCase
 
     private function primaryKey(Blueprint $blueprint): ?string
     {
-        return (new ReflectionProperty(Blueprint::class, 'primaryKey'))->getValue($blueprint);
+        return new ReflectionProperty(Blueprint::class, 'primaryKey')->getValue($blueprint);
     }
 
     public function testPrimaryWithACompositeKey(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('user_roles'))->primary('user_id', 'role_id');
+        $blueprint = new Blueprint('user_roles')->primary('user_id', 'role_id');
 
         // Assert
         $this->assertSame('`user_id`, `role_id`', $this->primaryKey($blueprint));
@@ -228,7 +228,7 @@ final class BlueprintTest extends TestCase
     public function testForeignWithDefaults(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('tokens'))->foreign('user_id', 'users');
+        $blueprint = new Blueprint('tokens')->foreign('user_id', 'users');
 
         // Assert
         $this->assertSame(['FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE'], $this->foreigns($blueprint));
@@ -236,13 +236,13 @@ final class BlueprintTest extends TestCase
 
     private function foreigns(Blueprint $blueprint): array
     {
-        return (new ReflectionProperty(Blueprint::class, 'foreigns'))->getValue($blueprint);
+        return new ReflectionProperty(Blueprint::class, 'foreigns')->getValue($blueprint);
     }
 
     public function testForeignWithExplicitColumnAndOnDelete(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('user_roles'))->foreign('role_id', 'roles', 'id', 'RESTRICT');
+        $blueprint = new Blueprint('user_roles')->foreign('role_id', 'roles', 'id', 'RESTRICT');
 
         // Assert
         $this->assertSame(['FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE RESTRICT'], $this->foreigns($blueprint));
@@ -251,7 +251,7 @@ final class BlueprintTest extends TestCase
     public function testIndexWithMultipleColumns(): void
     {
         // Arrange + Act
-        $blueprint = (new Blueprint('login_attempts'))->index('idx_ip_created', ['ip_address', 'created_at']);
+        $blueprint = new Blueprint('login_attempts')->index('idx_ip_created', ['ip_address', 'created_at']);
 
         // Assert
         $this->assertSame(['INDEX `idx_ip_created` (`ip_address`, `created_at`)'], $this->indexes($blueprint));

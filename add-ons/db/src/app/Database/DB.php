@@ -111,6 +111,8 @@ class DB
      * @param string $identifier
      *
      * @return string
+     *
+     * @throws PDOException When $identifier isn't a valid identifier.
      */
     private static function sanitize(string $identifier): string
     {
@@ -288,6 +290,8 @@ class DB
      * @param string $context Used in the exception message (e.g. "column", "GROUP BY element")
      *
      * @return string
+     *
+     * @throws PDOException When $elem isn't a valid 'col' or 'table.col' identifier.
      */
     private static function sanitizeIdentifier(string $elem, string $context): string
     {
@@ -418,6 +422,8 @@ class DB
      * @param string $name
      *
      * @return void
+     *
+     * @throws PDOException When the database can't be selected.
      */
     public static function useDatabase(string $name): void
     {
@@ -440,6 +446,8 @@ class DB
      * @param string $identifier
      *
      * @return string
+     *
+     * @throws PDOException When $identifier contains a backtick.
      */
     private static function sanitizeBacktickQuoted(string $identifier): string
     {
@@ -453,6 +461,8 @@ class DB
      * @param PDOException $e
      *
      * @return never
+     *
+     * @throws PDOException Always, when running under the CLI SAPI.
      */
     private static function handleError(PDOException $e): never
     {
@@ -492,6 +502,8 @@ class DB
      * @param array  $VALUES
      *
      * @return bool
+     *
+     * @throws PDOException When $VALUES is empty.
      */
     public static function insert(string $INTO, array $VALUES): bool
     {
@@ -522,6 +534,8 @@ class DB
      * @param array  $ROWS List of column => value arrays, one per row
      *
      * @return bool
+     *
+     * @throws PDOException When $ROWS is empty, or rows don't share the same columns.
      */
     public static function insertMany(string $INTO, array $ROWS): bool
     {
@@ -561,6 +575,8 @@ class DB
      * @return bool True when at least one row was actually changed; MySQL/PDO reports rows
      *               changed, not rows matched, so a matching row whose SET values were already
      *               equal to the new ones returns false here too.
+     *
+     * @throws PDOException When $SET or $WHERE is empty.
      */
     public static function update(string $UPDATE, array $SET, array $WHERE): bool
     {
@@ -586,6 +602,8 @@ class DB
      * @param array  $WHERE
      *
      * @return bool True when at least one row was deleted
+     *
+     * @throws PDOException When $WHERE is empty.
      */
     public static function delete(string $FROM, array $WHERE): bool
     {
@@ -655,6 +673,8 @@ class DB
      * @param string $sql
      *
      * @return void
+     *
+     * @throws PDOException When the statement fails.
      */
     public static function raw(string $sql): void
     {
@@ -729,6 +749,8 @@ class DB
      * @param string $elem
      *
      * @return string
+     *
+     * @throws PDOException When $elem isn't a valid ORDER BY element.
      */
     private static function sanitizeOrderElement(string $elem): string
     {

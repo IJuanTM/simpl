@@ -17,6 +17,8 @@ trait EnsuresDirectory
      * @param string $dir
      *
      * @return void
+     *
+     * @throws RuntimeException When $dir doesn't exist and can't be created.
      */
     private static function ensureDirectory(string $dir): void
     {

@@ -56,7 +56,7 @@ final class AdminTableTraitTest extends TestCase
 
     private function call(AdminTableTraitHost $host, string $method, array $args = []): mixed
     {
-        return (new ReflectionMethod(AdminTableTraitHost::class, $method))->invoke($host, ...$args);
+        return new ReflectionMethod(AdminTableTraitHost::class, $method)->invoke($host, ...$args);
     }
 
     public function testHiddenColumnsJsonListsThePositionalIndexesOfHiddenColumns(): void
@@ -315,7 +315,7 @@ final class AdminTableTraitTest extends TestCase
 
     private function setFilterDefinitions(AdminTableTraitHost $host, array $definitions): void
     {
-        (new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions'))->setValue($host, $definitions);
+        new ReflectionProperty(AdminTableTraitHost::class, 'filterDefinitions')->setValue($host, $definitions);
     }
 
     public function testInitTableOmitsPerPageFromActiveParamsWhenItMatchesTheDefault(): void

@@ -37,7 +37,7 @@ final class DatabaseMigratorTest extends TestCase
 
     private function migrations(): array
     {
-        return (new ReflectionProperty(DatabaseMigrator::class, 'migrations'))->getValue();
+        return new ReflectionProperty(DatabaseMigrator::class, 'migrations')->getValue();
     }
 
     public function testNameKeepsTheFullyQualifiedNameToAvoidBasenameCollisionsAcrossAddOns(): void
@@ -74,6 +74,6 @@ final class DatabaseMigratorTest extends TestCase
 
     protected function tearDown(): void
     {
-        (new ReflectionProperty(DatabaseMigrator::class, 'migrations'))->setValue(null, $this->migrationsBeforeTest);
+        new ReflectionProperty(DatabaseMigrator::class, 'migrations')->setValue(null, $this->migrationsBeforeTest);
     }
 }

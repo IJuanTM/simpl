@@ -32,6 +32,8 @@ class Blueprint
      * @param string $name
      *
      * @return string
+     *
+     * @throws InvalidArgumentException When $name isn't a valid \w+ identifier.
      */
     public static function identifier(string $name): string
     {
@@ -173,6 +175,8 @@ class Blueprint
     /**
      * The array key of the most recently added column, for fluent modifiers that amend it.
      * Throws if called before any column has been added, instead of a confusing null-key TypeError.
+     *
+     * @throws InvalidArgumentException When no column has been added yet.
      */
     private function lastColumnKey(): int
     {

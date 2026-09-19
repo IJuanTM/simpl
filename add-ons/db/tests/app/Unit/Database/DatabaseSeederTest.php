@@ -36,11 +36,11 @@ final class DatabaseSeederTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->seedersBeforeTest = (new ReflectionProperty(DatabaseSeeder::class, 'seeders'))->getValue();
+        $this->seedersBeforeTest = new ReflectionProperty(DatabaseSeeder::class, 'seeders')->getValue();
     }
 
     protected function tearDown(): void
     {
-        (new ReflectionProperty(DatabaseSeeder::class, 'seeders'))->setValue(null, $this->seedersBeforeTest);
+        new ReflectionProperty(DatabaseSeeder::class, 'seeders')->setValue(null, $this->seedersBeforeTest);
     }
 }

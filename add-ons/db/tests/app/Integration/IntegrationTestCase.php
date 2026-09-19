@@ -43,6 +43,6 @@ abstract class IntegrationTestCase extends TestCase
 
     private function pdo(): PDO
     {
-        return (new ReflectionProperty(DB::class, 'pdo'))->getValue();
+        return new ReflectionProperty(DB::class, 'pdo')->getValue();
     }
 }

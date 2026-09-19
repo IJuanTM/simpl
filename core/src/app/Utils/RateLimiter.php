@@ -71,7 +71,8 @@ class RateLimiter
      *
      * @return mixed Whatever $fn returns
      *
-     * @throws JsonException
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
      */
     private static function withLock(string $key, string $mode, int $lockType, callable $fn): mixed
     {

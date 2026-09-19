@@ -57,6 +57,6 @@ final class AliasControllerTest extends TestCase
 
     protected function setUp(): void
     {
-        (new ReflectionProperty(AliasController::class, 'aliases'))->setValue(null, []);
+        new ReflectionProperty(AliasController::class, 'aliases')->setValue(null, []);
     }
 }

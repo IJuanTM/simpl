@@ -23,7 +23,7 @@ final class DBTest extends TestCase
 
     private function call(string $method, array $args): mixed
     {
-        return (new ReflectionMethod(DB::class, $method))->invoke(null, ...$args);
+        return new ReflectionMethod(DB::class, $method)->invoke(null, ...$args);
     }
 
     public function testColumnsSanitizesASimpleColumnName(): void

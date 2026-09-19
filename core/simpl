@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Thin wrapper around `docker compose` - anything not one of Compose's own commands runs as
+# `composer <args>` inside the app container, so `./simpl migrate` replaces
+# `docker compose exec app composer migrate`. Uses exec (not a subshell call) so TTY, signals and
+# exit codes all pass straight through, unlike shelling out to docker from a Composer script.
+case "$1" in
+  ''|up|down|build|restart|stop|start|logs|ps|pull|config) exec docker compose "$@" ;;
+  sh|bash) exec docker compose exec app bash ;;
+  *) exec docker compose exec app composer "$@" ;;
+esac

@@ -23,7 +23,7 @@ final class SchemaTest extends TestCase
 
     private function call(string $method, array $args): mixed
     {
-        return (new ReflectionMethod(Schema::class, $method))->invoke(null, ...$args);
+        return new ReflectionMethod(Schema::class, $method)->invoke(null, ...$args);
     }
 
     public function testDatabaseNameRejectsABacktick(): void

@@ -30,6 +30,8 @@ class Schema
      * @param string $name
      *
      * @return string
+     *
+     * @throws InvalidArgumentException When $name contains a backtick.
      */
     private static function databaseName(string $name): string
     {

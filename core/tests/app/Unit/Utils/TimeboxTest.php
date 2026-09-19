@@ -16,7 +16,7 @@ final class TimeboxTest extends TestCase
         $start = hrtime(true);
 
         // Act
-        $result = (new Timebox())->call(static fn() => 'value', 20_000);
+        $result = new Timebox()->call(static fn() => 'value', 20_000);
         $elapsedMs = (hrtime(true) - $start) / 1_000_000;
 
         // Assert
@@ -30,7 +30,7 @@ final class TimeboxTest extends TestCase
         $start = hrtime(true);
 
         // Act
-        $result = (new Timebox())->call(static function () {
+        $result = new Timebox()->call(static function () {
             usleep(15_000);
             return 'slow';
         }, 5_000);
@@ -48,7 +48,7 @@ final class TimeboxTest extends TestCase
 
         // Act + Assert
         try {
-            (new Timebox())->call(static function () {
+            new Timebox()->call(static function () {
                 throw new RuntimeException('boom');
             }, 20_000);
             $this->fail('Expected exception was not thrown');
@@ -67,7 +67,7 @@ final class TimeboxTest extends TestCase
         $start = hrtime(true);
 
         // Act
-        (new Timebox())->call(static function (Timebox $box) {
+        new Timebox()->call(static function (Timebox $box) {
             $box->returnEarly();
             return 'value';
         }, 200_000);

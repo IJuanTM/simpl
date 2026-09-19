@@ -94,7 +94,7 @@ Next, a few npm packages will need to be installed. You can do this by running `
 
 You have two options for running Simpl locally:
 
-**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and comes with `composer docker:*` shorthand commands for the common actions (starting the stack, migrating, seeding, etc.).
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with the `./simpl`/`./simpl.ps1` wrapper (or plain `docker compose` commands directly).
 
 **Option B: Manual (WAMP/XAMPP/Apache).** If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
@@ -180,11 +180,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `composer docker:test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `./simpl test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
-Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` (or `composer docker:stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`phpstan.neon`). Run `composer stan` (or `./simpl stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -348,7 +348,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Documented the `part()` vs `component()` split on `PageController`, renamed `ts/utils` to `ts/helpers`, and moved generated runtime data out of `app/` into `src/cache` and `src/logs`
 * Modal dialogs now open/close declaratively via the `command`/`commandfor` attributes instead of per-button JavaScript listeners
 * Admin table search boxes are now `<search>` landmarks with `type="search"` inputs, for correct semantics/mobile keyboard affordance
-* Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow, with `composer docker:*` shorthand commands for the common actions
+* Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow
 
 <br>
 

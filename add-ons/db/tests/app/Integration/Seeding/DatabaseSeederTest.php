@@ -19,7 +19,7 @@ final class DatabaseSeederTest extends IntegrationTestCase
     {
         // Arrange
         DatabaseSeeder::truncate();
-        $registered = (new ReflectionProperty(DatabaseSeeder::class, 'seeders'))->getValue();
+        $registered = new ReflectionProperty(DatabaseSeeder::class, 'seeders')->getValue();
 
         // Act
         DatabaseSeeder::run();

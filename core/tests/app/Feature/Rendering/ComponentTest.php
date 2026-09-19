@@ -31,7 +31,7 @@ final class ComponentTest extends TestCase
 
     private function instanceWithoutConstructor(): PageController
     {
-        return (new ReflectionClass(PageController::class))->newInstanceWithoutConstructor();
+        return new ReflectionClass(PageController::class)->newInstanceWithoutConstructor();
     }
 
     public function testComponentRendersAnExistingComponentFile(): void

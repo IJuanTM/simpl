@@ -58,6 +58,6 @@ final class SchedulerTest extends IntegrationTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        (new ReflectionProperty(Scheduler::class, 'tasks'))->setValue(null, []);
+        new ReflectionProperty(Scheduler::class, 'tasks')->setValue(null, []);
     }
 }
