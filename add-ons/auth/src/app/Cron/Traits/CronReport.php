@@ -15,8 +15,8 @@ trait CronReport
      * Prints "<verb> <count> <noun>[s]" when anything happened, otherwise $nothingMessage, then a blank line.
      *
      * @param int    $count
-     * @param string $verb Past-tense action, e.g. 'Deactivated'
-     * @param string $noun Singular noun the count applies to, e.g. 'unverified user'
+     * @param string $verb           Past-tense action, e.g. 'Deactivated'
+     * @param string $noun           Singular noun the count applies to, e.g. 'unverified user'
      * @param string $nothingMessage Line to print when $count is 0
      *
      * @return void
