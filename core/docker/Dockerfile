@@ -15,14 +15,14 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/php/simpl.ini /usr/local/etc/php/conf.d/simpl.ini
 COPY docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 
-# Self-signed cert for local HTTPS; covers localhost/127.0.0.1 plus the *.test/*.local
-# hostnames the "Matching your real APP_URL" docs recommend. A real hostname outside that
-# still works, just with an added browser hostname-mismatch warning on top of the usual
-# self-signed one.
+# Explicit CA:FALSE is required - openssl req -x509's default extensions mark the cert as its own CA, which Chrome rejects outright (ERR_SSL_PROTOCOL_ERROR).
 RUN mkdir -p /etc/apache2/ssl && openssl req -x509 -nodes -newkey rsa:2048 -days 825 \
         -keyout /etc/apache2/ssl/simpl.key -out /etc/apache2/ssl/simpl.crt \
         -subj "/CN=localhost" \
-        -addext "subjectAltName=DNS:localhost,DNS:*.test,DNS:*.local,IP:127.0.0.1"
+        -addext "subjectAltName=DNS:localhost,DNS:*.test,DNS:*.local,IP:127.0.0.1" \
+        -addext "basicConstraints=critical,CA:FALSE" \
+        -addext "keyUsage=critical,digitalSignature,keyEncipherment" \
+        -addext "extendedKeyUsage=serverAuth"
 
 WORKDIR /var/www/html
 
