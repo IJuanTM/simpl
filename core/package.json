@@ -25,9 +25,8 @@
     "build:ts": "vite build",
     "watch:scss": "sass -w src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "watch:ts": "vite build --watch",
-    "live": "browser-sync start --proxy @app-url/ --host @app-host -f src/public/js/**/*.js src/public/css/**/*.css src/views/**/*.phtml --no-notify --no-ui --open external",
-    "docker:sh": "docker compose exec app bash",
-    "docker:composer": "docker compose exec app composer"
+    "live": "browser-sync start --proxy @app-url/ --host @app-host --https -f src/public/js/**/*.js src/public/css/**/*.css src/views/**/*.phtml --no-notify --no-ui --open external",
+    "docker:sh": "docker compose exec app bash"
   },
   "repository": {
     "type": "git",

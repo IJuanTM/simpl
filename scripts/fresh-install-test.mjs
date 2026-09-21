@@ -20,6 +20,10 @@
 // Installs land in ~/Desktop/simpl-fresh-install-test/<level>/simpl-test/ (wiped each run, left after).
 // Each is scaffolded with --url = <level>.simpl.test.
 // To browse one, either run `docker compose up -d --build` inside it (just needs the printed hosts file line), or use the wildcard Apache vhost written to <dest>/httpd-vhosts.conf for a local Apache setup.
+// If mkcert is on PATH, one certificate covering every level + localhost is generated and copied
+// into each install's docker/certs/, so the Docker route is trusted out of the box (run
+// `mkcert -install` once yourself first - that step touches your OS/browser trust store, so it
+// can't be done for you here). Skipped with a warning if mkcert isn't installed.
 // Overrides: SIMPL_TEST_DEST, SIMPL_TEST_DOMAIN, SIMPL_TEST_DB, SIMPL_TEST_DB_PORT.
 //
 // Run with no arguments for the interactive picker. Flags:
@@ -43,6 +47,7 @@ const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
 const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'docker-compose.yml');
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
 let DB = LOCAL_DB;
+let CERT = null; // {crt, key} once generated, shared across every level
 
 // Output helpers, matching the installer scripts' style.
 const C = {
@@ -317,6 +322,13 @@ function runLevel(setAddons) {
   }
   writeCoreEnv(proj, url);
 
+  if (CERT) {
+    const certDir = path.join(proj, 'docker/certs');
+    fs.mkdirSync(certDir, {recursive: true});
+    fs.copyFileSync(CERT.crt, path.join(certDir, 'simpl.crt'));
+    fs.copyFileSync(CERT.key, path.join(certDir, 'simpl.key'));
+  }
+
   const hasSeedable = setAddons.some((a) => a !== 'db');
   for (const a of setAddons) {
     task(`🔀 merge add-on: ${a}`);
@@ -360,6 +372,47 @@ function runLevel(setAddons) {
   if (dbname && DB_UP) item(`database: ${C.cyan}${dbname}${C.reset}`);
   item(`${C.cyan}${url}${C.reset}  →  ${C.dim}${proj}${C.reset}`);
   return true;
+}
+
+// Appends any missing "127.0.0.1  <label>.<domain>" lines straight to the hosts file. Writing it
+// needs elevated/admin privileges (this script isn't run elevated by default), so a failed write
+// falls back to printing the lines for the user to add by hand instead of silently doing nothing.
+function ensureHosts(labels) {
+  const hostsFile = process.platform === 'win32'
+    ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'drivers', 'etc', 'hosts')
+    : '/etc/hosts';
+  let content = '';
+  try {
+    content = fs.readFileSync(hostsFile, 'utf8');
+  } catch {
+    return {hostsFile, written: [], failed: labels}; // can't even read it - assume nothing is present
+  }
+  const domain = DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const missing = labels.filter((label) => !new RegExp(`^\\s*127\\.0\\.0\\.1\\s+${label}\\.${domain}\\s*$`, 'm').test(content));
+  if (!missing.length) return {hostsFile, written: [], failed: []};
+  const lines = missing.map((label) => `127.0.0.1  ${label}.${DOMAIN}`);
+  try {
+    fs.appendFileSync(hostsFile, (content.endsWith('\n') ? '' : os.EOL) + lines.join(os.EOL) + os.EOL);
+    return {hostsFile, written: missing, failed: []};
+  } catch {
+    return {hostsFile, written: [], failed: missing};
+  }
+}
+
+function mkcertAvailable() {
+  return spawnSync('mkcert', ['-version'], {shell: true, stdio: 'ignore'}).status === 0;
+}
+
+// One shared cert covering every level's hostname, generated once and copied into each install -
+// mkcert has no multi-level wildcard support (a *.simpl.test SAN wouldn't cover core-db.simpl.test
+// anyway), but does accept any number of exact hostnames in a single certificate.
+function writeMkcert(labels) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-cert-'));
+  const crt = path.join(dir, 'simpl.crt');
+  const key = path.join(dir, 'simpl.key');
+  const hosts = ['localhost', '127.0.0.1', ...labels.map((l) => `${l}.${DOMAIN}`)];
+  const r = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, ...hosts], {shell: true, encoding: 'utf8'});
+  return r.status === 0 ? {crt, key} : null;
 }
 
 function writeVhostConf() {
@@ -441,6 +494,15 @@ success(`Built ${1 + needZip.size} zip${needZip.size ? 's' : ''}`);
   ? `MariaDB reachable${dockerDbStarted ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`
   : 'MariaDB not reachable (test:integration/migrate/seed will be skipped)');
 
+if (mkcertAvailable()) {
+  CERT = writeMkcert(sets.map(levelLabel));
+  (CERT ? info : warn)(CERT
+    ? 'mkcert certificate generated (covers every level + localhost)'
+    : 'mkcert failed to generate a certificate - Docker HTTPS will use the untrusted self-signed one');
+} else {
+  warn('mkcert not found on PATH - Docker HTTPS will use the untrusted self-signed cert (see core/docker/README.md)');
+}
+
 const results = {};
 for (const s of sets) results[levelLabel(s)] = runLevel(s);
 const failed = Object.values(results).includes(false);
@@ -456,8 +518,17 @@ heading('Details');
 item(`installs: ${C.dim}${DEST}${C.reset}`);
 item(`docker:   ${C.dim}run \`docker compose up -d --build\` inside a level's install to browse it that way instead${C.reset}`);
 item(`vhost:    ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
-item('hosts file lines:');
-for (const label of Object.keys(results)) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
+item(`cert:     ${C.dim}${CERT ? "docker/certs/ in each install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated - install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
+const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts(Object.keys(results));
+if (hostsWritten.length) {
+  item(`hosts file: added ${hostsWritten.length} line(s) to ${hostsFile}`);
+  for (const label of hostsWritten) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
+} else if (hostsFailed.length) {
+  warn(`could not write ${hostsFile} (run this elevated, or add these lines yourself):`);
+  for (const label of hostsFailed) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
+} else {
+  item('hosts file: all levels already present');
+}
 line();
 if (failed) error(styled('Some levels failed', C.bold, C.red), true);
 else success(styled('Installation complete!', C.bold, C.green), true);

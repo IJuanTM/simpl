@@ -38,6 +38,7 @@
     "stan": "phpstan analyse --configuration=config/phpstan.neon --memory-limit=512M",
     "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
     "post-autoload-dump": "@php src/app/Scripts/app-key.php",
+    "docker": "docker compose exec app composer",
     "@addon-placeholder": "db"
   },
   "keywords": [

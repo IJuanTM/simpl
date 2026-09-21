@@ -17,7 +17,7 @@ The dividing line: this add-on owns the *generic engine*, never domain-specific 
 - **`DatabaseSeeder`** - same pattern for seeders, via `DatabaseSeeder::register(SomeSeeder::class)`.
 - **`Scheduler`** / **`ScheduledTask`** - register a named, callable task with a cron expression or interval (`Scheduler::task('name', fn() => ...)->daily()`), then `Scheduler::run()` executes whatever's due, persisting run history in its own `scheduler_runs` table (registered as this add-on's own migration - it's scheduler bookkeeping, not domain data).
 - **CLI scripts** (wired up as composer commands on install): `composer migrate` / `migrate:fresh`
-  / `migrate:rollback`, `composer seed` / `seed:fresh`, `composer cron:test` (or `npm run docker:composer -- migrate`/`migrate:fresh`/`migrate:rollback`/`seed`/`seed:fresh`/`cron:test` if you're using Docker).
+  / `migrate:rollback`, `composer seed` / `seed:fresh`, `composer cron:test` (or `composer docker -- migrate`/`migrate:fresh`/`migrate:rollback`/`seed`/`seed:fresh`/`cron:test` if you're using Docker).
 
 ## Configuration
 
@@ -34,7 +34,7 @@ Schema defaults (engine, charset, collation, foreign key behavior, primary key c
 
 ## Tests
 
-Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `DB`'s private SQL-builders, `Blueprint`'s column/index/foreign-key builders, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration/fluent-chaining, and `DatabaseMigrator`/`DatabaseSeeder`'s `register()` accumulation - all via reflection against pure logic, no live database needed. Once installed, run `composer test` (or `npm run docker:composer -- test` if you're using Docker) from your project's root the same way you would for the framework itself. `DatabaseMigrator::run()`/
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `DB`'s private SQL-builders, `Blueprint`'s column/index/foreign-key builders, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration/fluent-chaining, and `DatabaseMigrator`/`DatabaseSeeder`'s `register()` accumulation - all via reflection against pure logic, no live database needed. Once installed, run `composer test` (or `composer docker -- test` if you're using Docker) from your project's root the same way you would for the framework itself. `DatabaseMigrator::run()`/
 `rollback()`, `DatabaseSeeder::run()`/`truncate()`, `Scheduler::run()` with due tasks, `Schema`, and any real migration class aren't covered here - they call `DB::useDatabase()`/`DB::raw()` as their first line and need a real connection.
 
 ## Requirements

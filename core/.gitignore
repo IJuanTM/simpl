@@ -15,6 +15,9 @@ node_modules/
 # Docker Compose local overrides
 docker-compose.override.yml
 
+# Locally-trusted HTTPS certs (e.g. mkcert output) - private key material, never shipped
+docker/certs/
+
 # Generated build output
 src/public/assets/
 src/public/css/

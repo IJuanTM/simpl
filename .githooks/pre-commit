@@ -39,6 +39,7 @@ check_gitkeep() {
 check_gitkeep "core/src/cache/ratelimit/.gitkeep"
 check_gitkeep "core/src/logs/.gitkeep"
 check_gitkeep "add-ons/auth/src/public/img/profile/.gitkeep"
+check_gitkeep "core/docker/certs/.gitkeep"
 
 # These artifact paths are gitignored, but that's never stopped them from getting force-added by accident after a local verification pass.
 

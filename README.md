@@ -139,7 +139,7 @@ The following scrips are included in the `package.json` file:
 * `watch:ts` - Watches the TypeScript files for changes and bundles them to the `src/public/js` folder using Vite
 * `live` - Runs a local server using `browser-sync` and watches the `src/public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
 * `docker:sh` - Opens a shell in the running `app` container (Docker setup only)
-* `docker:composer` - Runs a Composer command in the running `app` container, e.g. `npm run docker:composer -- migrate` (Docker setup only)
+* `docker` (Composer script, not npm) - Runs a Composer command in the running `app` container, e.g. `composer docker -- migrate` (Docker setup only)
 
 After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `src/public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
 
@@ -182,11 +182,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `npm run docker:composer -- test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `composer docker -- test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
-Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `composer stan` (or `npm run docker:composer -- stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `composer stan` (or `composer docker -- stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -351,6 +351,9 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Modal dialogs now open/close declaratively via the `command`/`commandfor` attributes instead of per-button JavaScript listeners
 * Admin table search boxes are now `<search>` landmarks with `type="search"` inputs, for correct semantics/mobile keyboard affordance
 * Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow
+* Fixed the `live` npm script's browser-sync server not serving HTTPS on its own port, causing `ERR_SSL_PROTOCOL_ERROR` when the app itself runs over HTTPS
+* Added an optional `docker/certs/` mount for the Docker Compose setup, so a real, locally-trusted certificate (e.g. via `mkcert`) can replace the self-signed one and drop the browser's untrusted-certificate warning entirely
+* Replaced the `docker:composer` npm script with a `docker` Composer script (`composer docker -- <cmd>`), so Composer commands inside the container are run through Composer instead of npm
 
 <br>
 

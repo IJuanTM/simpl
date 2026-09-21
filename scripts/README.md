@@ -52,6 +52,17 @@ prints), or use the generated Apache/WAMP vhost - see below.
 | `SIMPL_TEST_DB`      | `auto`                               | `auto` (Docker then local), `docker`, or `local` |
 | `SIMPL_TEST_DB_PORT` | `3307`                               | host port for the Docker fallback MariaDB        |
 
+## Trusted HTTPS for the test installs (Docker route only)
+
+If [mkcert](https://github.com/FiloSottile/mkcert) is on `PATH`, the script generates one
+certificate covering every level's hostname plus `localhost`/`127.0.0.1`, and copies it into
+each install's `docker/certs/` - so `docker compose up -d --build` inside a level serves HTTPS
+with no browser warning, instead of the shipped self-signed cert (see
+[`core/docker/README.md`](../core/docker/README.md#https)). Skipped with a warning if mkcert
+isn't installed. This only removes the warning if you've already run `mkcert -install` once -
+that installs mkcert's local CA into your OS/browser trust stores and has to happen on your host,
+it can't be scripted from here. The Apache/WAMP route below has no equivalent - it's plain HTTP.
+
 ## Apache setup for the test installs
 
 The script writes a wildcard vhost to `<DEST>/httpd-vhosts.conf` on every run. It
@@ -111,7 +122,9 @@ Wildcard DNS does not apply to the hosts file, so each level needs its own line 
 127.0.0.1  core-db-auth.simpl.test
 ```
 
-The script prints the exact lines it needs at the end of each run.
+The script adds these itself at the end of each run, skipping any level that's already
+present. If it can't write the file (no admin/root privileges), it prints the missing
+lines instead so you can add them by hand.
 
 ### 4. Restart Apache
 
