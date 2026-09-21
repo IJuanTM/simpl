@@ -8,13 +8,13 @@ The recommended way to run this project locally - a PHP + Apache container (and,
 
 ## Usage
 
-Bring the container (s) up with plain Docker Compose from the project root:
+Bring the container(s) up with plain Docker Compose from the project root:
 
 ```bash
 docker compose up -d --build
 ```
 
-The first run builds the image, runs `composer install` inside it, and starts the container (s). The site is served over HTTPS - available at `https://localhost/` and at whatever hostname `src/.env`'s `APP_URL` points to (see [Matching your real APP_URL](#matching-your-real-app_url) to make that resolve, and [HTTPS](#https) for the certificate warning you'll see).
+The first run builds the image, runs `composer install` inside it, and starts the container(s). The site is served over HTTPS - available at `https://localhost/` and at whatever hostname `src/.env`'s `APP_URL` points to (see [Matching your real APP_URL](#matching-your-real-app_url) to make that resolve, and [HTTPS](#https) for the certificate warning you'll see).
 
 `src/` is bind-mounted, so PHP edits reflect immediately - rebuild only after changing `composer.json`, `composer.lock`, or the Dockerfile. After a `composer.json` change, run `docker compose run --rm app composer install`.
 
@@ -39,7 +39,7 @@ The container generates a self-signed certificate at build time, covering `local
 
 1. Install mkcert: `choco install mkcert` or `scoop install mkcert` (Windows), `brew install mkcert` (macOS), or your distro's package / the [release binaries](https://github.com/FiloSottile/mkcert/releases) (Linux).
 2. Run `mkcert -install` once. This installs mkcert's local CA into your system and browser trust stores - the step that actually removes the warning, and the reason this can't be automated from inside the container (it needs to modify your host machine, not the image).
-3. Generate a certificate for your actual dev hostname (s), naming them exactly (no wildcard - see the mismatch note above) - from the project root:
+3. Generate a certificate for your actual dev hostname(s), naming them exactly (no wildcard - see the mismatch note above) - from the project root:
    ```bash
    mkcert -cert-file docker/certs/simpl.crt -key-file docker/certs/simpl.key localhost 127.0.0.1 myproject.test
    ```

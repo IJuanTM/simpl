@@ -131,13 +131,13 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 The following scrips are included in the `package.json` file:
 
 * `dev` - Runs the `watch` and `live` scripts in parallel
-* `build` - Runs the `build:scss` and `build:ts` scripts after one another
 * `watch` - Runs the `watch:scss` and `watch:ts` scripts in parallel
-* `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
-* `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
 * `watch:scss` - Watches the Sass files for changes and compiles them to the `src/public/css` folder using the `sass` package
 * `watch:ts` - Watches the TypeScript files for changes and bundles them to the `src/public/js` folder using Vite
 * `live` - Runs a local server using `browser-sync` and watches the `src/public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
+* `build` - Runs the `build:scss` and `build:ts` scripts after one another
+* `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
+* `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
 * `docker:sh` - Opens a shell in the running `app` container (Docker setup only)
 * `docker` (Composer script, not npm) - Runs a Composer command in the running `app` container, e.g. `composer docker -- migrate` (Docker setup only)
 

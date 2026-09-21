@@ -11,21 +11,21 @@
   "devDependencies": {
     "browser-sync": "^3.0.4",
     "npm-run-all": "^4.1.5",
-    "sass": "^1.103.1",
+    "sass": "^1.104.1",
     "terser": "^5.51.2",
     "typescript": "^7.0.2",
-    "vite": "^8.2.2"
+    "vite": "^8.3.0"
   },
   "scripts": {
     "postinstall": "npm run build",
     "dev": "run-p watch live",
-    "build": "run-s build:*",
     "watch": "run-p watch:*",
-    "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
-    "build:ts": "vite build",
     "watch:scss": "sass -w src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "watch:ts": "vite build --watch",
     "live": "browser-sync start --proxy @app-url/ --host @app-host --https -f src/public/js/**/*.js src/public/css/**/*.css src/views/**/*.phtml --no-notify --no-ui --open external",
+    "build": "run-s build:*",
+    "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
+    "build:ts": "vite build",
     "docker:sh": "docker compose exec app bash"
   },
   "repository": {
