@@ -16,6 +16,13 @@ export function raiseGlobalAlert(): void {
   });
 }
 
+export function dismissGlobalAlert(el: HTMLElement): void {
+  if (prefersReducedMotion()) return el.remove();
+
+  el.classList.add('invisible');
+  el.addEventListener('transitionend', () => el.remove(), {once: true});
+}
+
 export function showAlert(message: string, type: AlertType = 'info', timeoutMs = 6000): void {
   const el = document.createElement('div');
   el.className = `alert ${type} global`;
@@ -30,10 +37,5 @@ export function showAlert(message: string, type: AlertType = 'info', timeoutMs =
     // No popover support; the CSS fallback still shows it.
   }
 
-  setTimeout(() => {
-    if (prefersReducedMotion()) return el.remove();
-
-    el.classList.add('invisible');
-    el.addEventListener('transitionend', () => el.remove(), {once: true});
-  }, timeoutMs);
+  setTimeout(() => dismissGlobalAlert(el), timeoutMs);
 }

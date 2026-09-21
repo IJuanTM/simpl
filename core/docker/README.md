@@ -1,6 +1,6 @@
 # Docker
 
-The recommended way to run this project locally - a PHP + Apache container (and, once the `db` add-on is installed, MariaDB), with no WAMP/XAMPP/local PHP/MySQL/Composer required. WAMP/XAMPP/Apache remains available as a manual alternative, see the main [README](../README.md#step-4-set-up-your-localhost).
+The recommended way to run this project locally - a PHP + Apache container (and, once the `db` add-on is installed, MariaDB), with no WAMP/XAMPP/local PHP/MySQL/Composer required. WAMP/XAMPP/Apache remains available as a manual alternative, see [Step 4](https://github.com/IJuanTM/simpl#step-4-set-up-your-localhost) of the main README.
 
 ## Prerequisites
 

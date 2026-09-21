@@ -10,13 +10,13 @@
     "ext-fileinfo": "*",
     "ext-mbstring": "*",
     "ext-sodium": "*",
-    "phpmailer/phpmailer": "^6.9",
-    "vlucas/phpdotenv": "^v5.6.4"
+    "phpmailer/phpmailer": "^7.1.1",
+    "vlucas/phpdotenv": "^v5.7.0"
   },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
-    "phpunit/phpunit": "^13.3.1",
-    "phpstan/phpstan": "^2.2.8"
+    "phpunit/phpunit": "^13.3.4",
+    "phpstan/phpstan": "^2.2.14"
   },
   "autoload": {
     "psr-4": {

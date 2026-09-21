@@ -50,6 +50,8 @@ pre, code {
 
 a.link,
 [data-typo="a"].link {
+  color: var(--text);
+
   &.underline {
     text-decoration: underline;
   }

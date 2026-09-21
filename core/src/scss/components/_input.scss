@@ -37,10 +37,10 @@ textarea {
     transform: translateY(-50%);
     pointer-events: none;
   }
-}
 
-:has(> select:not([multiple]):focus)::after {
-  content: "\f0d8";
+  &:has(> select:not([multiple]):focus)::after {
+    content: "\f0d8";
+  }
 }
 
 input[type="checkbox"] {

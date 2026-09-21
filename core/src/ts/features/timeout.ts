@@ -1,3 +1,4 @@
+import {dismissGlobalAlert} from '../helpers/alert.ts';
 import {prefersReducedMotion} from '../helpers/motion.ts';
 
 function collapseAlert(item: HTMLElement): void {
@@ -9,13 +10,6 @@ function collapseAlert(item: HTMLElement): void {
   item.addEventListener('transitionend', e => {
     if (e.propertyName === 'max-height') item.remove();
   }, {once: true});
-}
-
-function dismissGlobalAlert(item: HTMLElement): void {
-  if (prefersReducedMotion()) return item.remove();
-
-  item.classList.add('invisible');
-  item.addEventListener('transitionend', () => item.remove(), {once: true});
 }
 
 function unlock(item: HTMLElement): void {

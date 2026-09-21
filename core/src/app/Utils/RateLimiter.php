@@ -34,11 +34,14 @@ class RateLimiter
      * Record an attempt and return whether it is within the allowed limit.
      * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
      *
-     * @param string $key           Unique identifier for the action being limited
-     * @param int    $max           Maximum number of attempts allowed in the window
+     * @param string $key Unique identifier for the action being limited
+     * @param int    $max Maximum number of attempts allowed in the window
      * @param int    $windowSeconds Rolling time window in seconds
      *
      * @return bool True if the attempt is allowed, false if the limit is exceeded
+     *
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
      */
     #[NoDiscard]
     public static function attempt(string $key, int $max, int $windowSeconds): bool
@@ -65,9 +68,9 @@ class RateLimiter
      * handle and decoded data (normalized to an array) to $fn, unlocking and closing afterward regardless of outcome.
      *
      * @param string   $key
-     * @param string   $mode     Fopen mode
+     * @param string   $mode Fopen mode
      * @param int      $lockType LOCK_EX or LOCK_SH
-     * @param callable $fn       ($handle, array $data): mixed
+     * @param callable $fn ($handle, array $data): mixed
      *
      * @return mixed Whatever $fn returns
      *
@@ -134,13 +137,16 @@ class RateLimiter
      * It only clears when the whole record ages out of RATE_LIMIT_CACHE_RETENTION.
      * Same escalating-lockout shape as LoginPage::calculateLockout(), on the file-based storage attempt() already uses instead of a dedicated DB table.
      *
-     * @param string $key                Unique identifier for the action being limited
-     * @param int    $maxAttempts        Attempts allowed in one burst before a lockout starts
-     * @param int    $windowSeconds      Burst window: attempts must land within this of the newest to count together
+     * @param string $key Unique identifier for the action being limited
+     * @param int    $maxAttempts Attempts allowed in one burst before a lockout starts
+     * @param int    $windowSeconds Burst window: attempts must land within this of the newest to count together
      * @param int    $minDurationSeconds First lockout duration
      * @param int    $maxDurationSeconds Lockout duration ceiling
      *
      * @return bool True if the attempt is allowed, false if currently within a backoff lockout
+     *
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
      */
     #[NoDiscard]
     public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool

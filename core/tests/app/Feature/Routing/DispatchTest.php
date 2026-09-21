@@ -31,6 +31,7 @@ namespace tests\Feature\Routing {
     use app\Pages\PageControllerFixturePage;
     use PHPUnit\Framework\TestCase;
     use tests\Support\HeadersAssertionTrait;
+    use tests\Support\OutputCaptureTrait;
 
     /**
      * Only the route() branches that return before render() are exercised: the global $ROUTES
@@ -43,9 +44,11 @@ namespace tests\Feature\Routing {
     final class DispatchTest extends TestCase
     {
         use HeadersAssertionTrait;
+        use OutputCaptureTrait;
 
         private string $originalRequestUri;
         private ?string $originalRequestMethod;
+        private mixed $originalRoutes;
 
         public function testConstructorRejectsABackslashEmbeddedSegment(): void
         {
@@ -113,9 +116,7 @@ namespace tests\Feature\Routing {
             $_SERVER['REQUEST_METHOD'] = 'GET';
 
             // Act
-            ob_start();
-            new PageController();
-            $body = ob_get_clean();
+            $body = $this->captured(static fn() => new PageController());
 
             // Assert
             $this->assertSame(404, http_response_code());
@@ -149,9 +150,7 @@ namespace tests\Feature\Routing {
 
             try {
                 // Act
-                ob_start();
-                PageController::error(ErrorCode::NOT_FOUND);
-                $body = ob_get_clean();
+                $body = $this->captured(static fn() => PageController::error(ErrorCode::NOT_FOUND));
 
                 // Assert
                 $this->assertSame(404, http_response_code());
@@ -184,6 +183,8 @@ namespace tests\Feature\Routing {
 
         protected function setUp(): void
         {
+            global $ROUTES;
+
             $_SESSION = [];
             $_GET = [];
             $_POST = [];
@@ -191,12 +192,14 @@ namespace tests\Feature\Routing {
             PageControllerFixturePage::$apiCalled = false;
             $this->originalRequestUri = $_SERVER['REQUEST_URI'];
             $this->originalRequestMethod = $_SERVER['REQUEST_METHOD'] ?? null;
+            $this->originalRoutes = $ROUTES;
         }
 
         protected function tearDown(): void
         {
             global $ROUTES;
-            $ROUTES = null;
+
+            $ROUTES = $this->originalRoutes;
             $_SERVER['REQUEST_URI'] = $this->originalRequestUri;
             if ($this->originalRequestMethod === null) unset($_SERVER['REQUEST_METHOD']);
             else $_SERVER['REQUEST_METHOD'] = $this->originalRequestMethod;

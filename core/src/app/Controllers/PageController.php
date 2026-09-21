@@ -36,7 +36,7 @@ class PageController extends Page
     {
         // strtok() runs first so a bare "?query" root URL also falls back to REDIRECT.
         $requestPath = strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')), '?');
-        $urlArr = explode('/', $requestPath ?: REDIRECT);
+        $urlArr = array_values(array_filter(explode('/', $requestPath ?: REDIRECT), static fn(string $segment) => $segment !== ''));
 
         // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
         // A backslash-containing segment is rejected too, since splitting only on "/" would let one through untouched, and it's a path separator on Windows.
@@ -90,7 +90,7 @@ class PageController extends Page
      * Handles errors: redirects to the matching error page for a normal request, or responds with a JSON error body for an API request.
      * A redirect would otherwise send an API client's fetch() into an HTML page instead of the error it expected.
      *
-     * @param ErrorCode   $code     The specific error code used to determine the error page.
+     * @param ErrorCode   $code The specific error code used to determine the error page.
      * @param string|null $redirect An optional URL to redirect back to after handling the error.
      *
      * @return void
@@ -128,7 +128,7 @@ class PageController extends Page
      * Redirects the user's browser to the given location, via an immediate 302 or a delayed refresh header.
      *
      * @param string   $location The target location URL for the redirect.
-     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param int|null $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -167,7 +167,6 @@ class PageController extends Page
         $page = $this->page;
         $subpage = $this->subpage();
 
-        // Walk back from the most specific subpage to find the closest matching view file.
         $parts = [$page, ...$this->subpages];
         $file = null;
 
@@ -225,10 +224,10 @@ class PageController extends Page
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message  The alert message to show after redirecting.
-     * @param AlertType $type     Visual type/style for the alert.
-     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
-     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     * @param string    $message The alert message to show after redirecting.
+     * @param AlertType $type Visual type/style for the alert.
+     * @param int       $timeout Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param int|null  $refresh Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
@@ -270,7 +269,7 @@ class PageController extends Page
      *
      * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
      *
-     * @param string $name  The name of the view component to load, relative to views/components/.
+     * @param string $name The name of the view component to load, relative to views/components/.
      * @param array  $props Associative array of values extracted into the component's local scope.
      *
      * @return void

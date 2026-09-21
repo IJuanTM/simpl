@@ -9,9 +9,12 @@ use app\Controllers\PageController;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
+use tests\Support\OutputCaptureTrait;
 
 final class ComponentTest extends TestCase
 {
+    use OutputCaptureTrait;
+
     public function testPartEchoesAVisibleMessageInDevModeWhenNotFound(): void
     {
         // Arrange
@@ -20,9 +23,7 @@ final class ComponentTest extends TestCase
         $name = 'does-not-exist-' . uniqid();
 
         // Act
-        ob_start();
-        $method->invoke($page, $name);
-        $output = ob_get_clean();
+        $output = $this->captured(static fn() => $method->invoke($page, $name));
 
         // Assert
         // Exact match, not substring: the non-DEV branch's comment output also contains "not found".
@@ -41,9 +42,7 @@ final class ComponentTest extends TestCase
         $page = $this->instanceWithoutConstructor();
 
         // Act
-        ob_start();
-        $page->component('nav/breadcrumbs');
-        $output = ob_get_clean();
+        $output = $this->captured(static fn() => $page->component('nav/breadcrumbs'));
 
         // Assert
         $this->assertStringContainsString('Home', $output);
@@ -57,9 +56,7 @@ final class ComponentTest extends TestCase
         $name = 'does-not-exist-' . uniqid();
 
         // Act
-        ob_start();
-        $page->component($name);
-        $output = ob_get_clean();
+        $output = $this->captured(static fn() => $page->component($name));
 
         // Assert
         // Exact match, not substring: the non-DEV branch's comment output also contains "not found".

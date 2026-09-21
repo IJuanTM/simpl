@@ -1,5 +1,5 @@
-@addon-insert:after('"phpmailer/phpmailer": "^6.9",')
-"spomky-labs/otphp": "^11.5",
-"bacon/bacon-qr-code": "^3.1",
-"web-auth/webauthn-lib": "^5.3",
+@addon-insert:after('"phpmailer/phpmailer": "^7.1.1",')
+"spomky-labs/otphp": "^11.5.0",
+"bacon/bacon-qr-code": "^3.1.1",
+"web-auth/webauthn-lib": "^5.3.9",
 @addon-end

@@ -1,5 +1,8 @@
 <?php
+use app\Controllers\AppController;
 use app\Models\Url;
+
+$title = AppController::sanitize($this->title) . ' - ' . AppController::sanitize($this->subtitle);
 ?>
 
 <!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl/ -->
@@ -7,7 +10,7 @@ use app\Models\Url;
 <html lang="en" class="h-100">
 <head>
   <!-- Title -->
-  <title><?= ($this->title ?? APP_NAME) . ' - ' . $this->subtitle ?></title>
+  <title><?= $title ?></title>
 
   <!-- Base -->
   <base href="<?= APP_URL ?>">

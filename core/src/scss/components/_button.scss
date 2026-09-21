@@ -12,6 +12,7 @@ label.button {
   transition: background-color .15s ease-in-out;
   white-space: nowrap;
   text-decoration: none;
+  color: var(--text);
   border: var(--border-width) solid var(--border-muted);
   border-radius: var(--radius-md);
   background-color: var(--button);
