@@ -94,7 +94,7 @@ Next, a few npm packages will need to be installed. You can do this by running `
 
 You have two options for running Simpl locally:
 
-**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with plain `docker compose` commands (plus a couple of `npm run docker:*` shortcuts for the ones you'll type most).
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with plain `docker compose` commands (plus `npm run docker:sh` and `composer docker -- <cmd>` shortcuts for the ones you'll type most).
 
 **Option B: Manual (WAMP/XAMPP/Apache).** If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
 
@@ -353,6 +353,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow
 * Fixed the `live` npm script's browser-sync server not serving HTTPS on its own port, causing `ERR_SSL_PROTOCOL_ERROR` when the app itself runs over HTTPS
 * Added an optional `docker/certs/` mount for the Docker Compose setup, so a real, locally-trusted certificate (e.g. via `mkcert`) can replace the self-signed one and drop the browser's untrusted-certificate warning entirely
+* The `live` npm script's browser-sync server now matches its own port's scheme to `APP_URL`'s - HTTPS (reusing the app's own locally-trusted certificate, or falling back to its own self-signed one) only when `APP_URL` actually is HTTPS, plain HTTP for a WAMP/XAMPP setup that never uses it - instead of always forcing HTTPS, which either broke the click-through on a trusted HSTS host or added an unprompted certificate warning to a site that never uses HTTPS at all
 * Replaced the `docker:composer` npm script with a `docker` Composer script (`composer docker -- <cmd>`), so Composer commands inside the container are run through Composer instead of npm
 
 <br>

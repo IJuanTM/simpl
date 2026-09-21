@@ -27,7 +27,7 @@ docker compose exec app composer seed:fresh
 
 Two shortcuts exist for the ones you'll type most - `npm run docker:sh` opens a shell in the container, and `composer docker -- <cmd>` runs any Composer command inside it (`composer docker -- migrate`, `composer docker -- test`, ...). The `--` tells Composer everything after it is an argument to pass through, not a Composer option.
 
-Sass/TypeScript (`npm run build` / `npm run dev`) still run on the host as usual - `npm run dev`'s browser-sync just proxies whatever URL the app is served at.
+Sass/TypeScript (`npm run build` / `npm run dev`) still run on the host as usual - `npm run dev`'s browser-sync proxies whatever URL the app is served at, and matches its own port (`:3000` by default) to the same scheme, HTTPS or plain HTTP. See [HTTPS](#https) below for how it picks a certificate when that's HTTPS - which it is by default with Docker, but not with a plain HTTP WAMP/XAMPP setup.
 
 ## HTTPS
 
@@ -44,9 +44,11 @@ The container generates a self-signed certificate at build time, covering `local
    mkcert -cert-file docker/certs/simpl.crt -key-file docker/certs/simpl.key localhost 127.0.0.1 myproject.test
    ```
    Replace `myproject.test` with your real `APP_URL` host.
-4. Restart the container (`docker compose restart app` is enough - no rebuild needed, `docker/certs/` is picked up from the bind mount at container start).
+4. Restart the container (`docker compose restart app` is enough - no rebuild needed, `docker/certs/` is picked up from the bind mount at container start). Restart `npm run dev` too - browser-sync's `:3000` reuses the same cert automatically (see `bs-config.cjs` in the project root) whenever `APP_URL` is HTTPS, falling back to its own self-signed one if `docker/certs/` is empty.
 
 `docker/certs/` is gitignored - the cert/key pair is local, private key material, and never shipped or committed.
+
+Generating the mkcert certificate matters more than just removing a warning once you've visited the app's own HTTPS URL: it sends an HSTS header ([`core/src/public/.htaccess`](../src/public/.htaccess)), so once a browser has trusted that URL, it refuses to let you click through an untrusted-certificate warning on *any* port of that host - including browser-sync's `:3000` - until browser-sync also presents a trusted certificate. Run mkcert first, *then* start `npm run dev`, to avoid `:3000` getting HSTS-blocked with no click-through option.
 
 ## Configuration
 
