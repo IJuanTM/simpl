@@ -11,18 +11,20 @@
 // included, via `git stash create` - new files must be `git add`ed first, since that command
 // only snapshots tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES.
 // The CDN's versions.json is fetched once to resolve `latest`.
-// A reachable MariaDB (root / no password) is optional; if none is found, the migrate/seed/test:integration steps are skipped.
+// A reachable MariaDB (root / no password) is optional; if none is found, the test:integration/migrate/seed steps are skipped.
 // Docker is tried first: a throwaway MariaDB starts via scripts/docker-compose.yml and tears down on exit.
 // If Docker isn't available, a local MySQL/MariaDB server on localhost:3306 is used instead (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
 // Override with SIMPL_TEST_DB=docker (never fall back to local) or SIMPL_TEST_DB=local (skip the Docker probe); default is 'auto'.
 // SIMPL_TEST_DB_PORT (default 3307) is the host port used for the Docker fallback.
 //
 // The install lands in ~/Desktop/simpl-fresh-install-test/simpl-test/ (wiped each run, left
-// after). It's always named "Simpl Test", scaffolded with --url=http://simpl.test/, and uses
+// after). It's always named "Simpl Test", scaffolded with --url=https://simpl.test/, and uses
 // simpl-test as the db name.
-// To browse it, either run `docker compose up -d --build` inside it (just needs the printed
-// hosts file line), or use the Apache vhost written to <dest>/httpd-vhosts.conf for a local
-// Apache setup.
+// Browse it via `docker compose up -d --build` inside it (just needs the printed hosts file
+// line). Docker's Apache always terminates TLS on :443 regardless of APP_URL, which is why the
+// scaffold uses https. A httpd-vhosts.conf is also written for a local Apache setup (WAMP/XAMPP/...),
+// but that serves plain HTTP on :80 - browsing that route means editing the installed .env's
+// APP_URL back to http first.
 // If mkcert is on PATH, a certificate covering simpl.test + localhost is generated and copied
 // into docker/certs/, so the Docker route is trusted out of the box (run `mkcert -install` once
 // yourself first - that step touches your OS/browser trust store, so it can't be done for you
@@ -44,6 +46,7 @@ const REPO = path.resolve(path.dirname(SELF), '..');
 const CDN_VERSIONS = 'https://cdn.simpl.iwanvanderwal.nl/framework/versions.json';
 const NAME = 'Simpl Test';
 const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
+const SITE_URL = `https://${DOMAIN}/`;
 const DEST = process.env.SIMPL_TEST_DEST || path.join(os.homedir(), 'Desktop', 'simpl-fresh-install-test');
 const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
 const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
@@ -121,15 +124,15 @@ function addonDeps() {
 }
 
 function topo(deps, roots) {
-  const out = [], seen = new Set();
+  const order = [], seen = new Set();
   const visit = (n) => {
     if (!(n in deps) || seen.has(n)) return;
     seen.add(n);
     (deps[n] || []).forEach(visit);
-    out.push(n);
+    order.push(n);
   };
   (roots || Object.keys(deps)).forEach(visit);
-  return out;
+  return order;
 }
 
 const DEPS = addonDeps();
@@ -146,6 +149,7 @@ if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['compose', 'version'], {st
   if (spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'up', '-d', 'db', '--wait'],
     {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}}).status === 0) {
     dockerDbStarted = true;
+    // host carries a trailing ";port=..." DSN clause - see runInstall()'s DB_SERVER write for why.
     DB = {host: `127.0.0.1;port=${SIMPL_TEST_DB_PORT}`, user: 'root', pass: ''};
     DB_UP = pdoUp(DB);
   }
@@ -186,11 +190,11 @@ async function pick() {
     const eff = effective();
     items.forEach((name, i) => {
       const ptr = i === cur ? `${C.cyan}❯${C.reset} ` : '  ';
-      const box =
+      const checkbox =
         i === 0 ? `${C.gray}[x]${C.reset}` :
           on.has(i) ? `${C.green}[x]${C.reset}` :
             eff.has(i) ? `${C.cyan}[x]${C.reset}` : '[ ]';
-      o.write(`\r\x1b[K${PAD}${ptr}${box} ${name}${notes[i] ? ' ' + notes[i] : ''}\n`);
+      o.write(`\r\x1b[K${PAD}${ptr}${checkbox} ${name}${notes[i] ? ' ' + notes[i] : ''}\n`);
     });
     o.write(`\r\x1b[K${PAD}${C.dim}↑/↓ move · space select · click · a all · n none · enter run · q cancel${C.reset}\n`);
     o.write(`\r\x1b[K${PAD}${C.green}[x]${C.dim} selected    ${C.reset}${C.cyan}[x]${C.reset}${C.dim}${C.cyan} required by a selection${C.reset}\n`);
@@ -299,11 +303,10 @@ function run(cmd, cwd, log) {
 
 function runInstall(addons) {
   const proj = path.join(DEST, 'simpl-test');
-  const url = `http://${DOMAIN}/`;
   const log = path.join(DEST, 'install.log');
   const dbname = addons.includes('db') ? 'simpl-test' : null;
   fs.writeFileSync(log, '');
-  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}${url}${C.reset}`);
+  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}${SITE_URL}${C.reset}`);
   line();
 
   const bail = () => {
@@ -313,19 +316,18 @@ function runInstall(addons) {
   };
 
   task('📦 scaffold via simpl-install');
-  if (!run(`npx --yes @ijuantm/simpl-install --local --version=latest --name="${NAME}" --url="${url}"`, DEST, log)) return bail();
+  if (!run(`npx --yes @ijuantm/simpl-install --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
   if (!fs.existsSync(path.join(proj, 'composer.json'))) {
     fs.appendFileSync(log, '\n>> installer did not scaffold a project\n');
     return bail();
   }
-  writeCoreEnv(proj, url);
+  writeCoreEnv(proj, SITE_URL);
 
   if (CERT) {
     const certDir = path.join(proj, 'docker/certs');
     fs.mkdirSync(certDir, {recursive: true});
     fs.copyFileSync(CERT.crt, path.join(certDir, 'simpl.crt'));
     fs.copyFileSync(CERT.key, path.join(certDir, 'simpl.key'));
-    fs.rmSync(path.dirname(CERT.crt), {recursive: true, force: true});
   }
 
   const hasSeedable = addons.some((a) => a !== 'db');
@@ -347,6 +349,9 @@ function runInstall(addons) {
     if (DB_UP) {
       const envPath = path.join(proj, 'src/.env');
       let env = fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbname}`);
+      // The db add-on's .env only has DB_SERVER, no DB_PORT, and DB.php interpolates DB_SERVER
+      // straight into the PDO DSN after "host=" - so the Docker fallback's port is tacked onto
+      // DB.host as a trailing ";port=..." DSN clause instead (see the Docker block above).
       if (DB.host !== 'localhost') env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${DB.host}`);
       fs.writeFileSync(envPath, env);
       task('🧪 composer test:integration');
@@ -358,7 +363,7 @@ function runInstall(addons) {
         if (!run('composer seed:fresh', proj, log)) return bail();
       }
     } else {
-      warn('MariaDB not reachable - skipped migrate/seed');
+      warn('MariaDB not reachable - skipped test:integration/migrate/seed');
     }
   }
 
@@ -369,7 +374,7 @@ function runInstall(addons) {
   line();
   success(m ? `OK (${m[1]} tests, ${m[2]} assertions)` : 'tests ran', true);
   if (dbname && DB_UP) item(`database: ${C.cyan}${dbname}${C.reset}`);
-  item(`${C.cyan}${url}${C.reset}  →  ${C.dim}${proj}${C.reset}`);
+  item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${proj}${C.reset}`);
   return true;
 }
 
@@ -403,6 +408,14 @@ function mkcertAvailable() {
 // One certificate covering simpl.test + localhost, generated once and copied into the install.
 function writeMkcert() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-cert-'));
+  // Registered here, not just after a successful copy in runInstall(), so a failed mkcert
+  // run or an early bail doesn't leak this dir.
+  process.on('exit', () => {
+    try {
+      fs.rmSync(dir, {recursive: true, force: true});
+    } catch {
+    }
+  });
   const crt = path.join(dir, 'simpl.crt');
   const key = path.join(dir, 'simpl.key');
   const r = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, 'localhost', '127.0.0.1', DOMAIN], {shell: true, encoding: 'utf8'});
@@ -441,7 +454,12 @@ if (!mode) mode = process.stdin.isTTY ? 'pick' : 'all';
 
 const addons = mode === 'all' ? ADDONS : topo(DEPS, await pick());
 
-const VERSION = await resolveLatest();
+let VERSION;
+try {
+  VERSION = await resolveLatest();
+} catch (e) {
+  die(`could not reach ${CDN_VERSIONS}: ${e.message}`);
+}
 if (!VERSION) die(`could not resolve 'latest' from ${CDN_VERSIONS}`);
 
 const BUILD = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
@@ -463,8 +481,12 @@ divider();
 heading(`Building ${VERSION} release zips`);
 line();
 task('🧰 core' + [...needZip].map((a) => ` + ${a}`).join(''));
-buildZip('core', path.join(RELEASES, 'core.zip'));
-for (const a of ADDONS) if (needZip.has(a)) buildZip(`add-ons/${a}`, path.join(RELEASES, 'add-ons', `${a}.zip`));
+try {
+  buildZip('core', path.join(RELEASES, 'core.zip'));
+  for (const a of ADDONS) if (needZip.has(a)) buildZip(`add-ons/${a}`, path.join(RELEASES, 'add-ons', `${a}.zip`));
+} catch (e) {
+  die(`failed to build release zip: ${e.message}`);
+}
 success(`Built ${1 + needZip.size} zip${needZip.size ? 's' : ''}`);
 (DB_UP ? info : warn)(DB_UP
   ? `MariaDB reachable${dockerDbStarted ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`
@@ -485,7 +507,7 @@ const conf = writeVhostConf();
 divider();
 heading('Summary');
 line();
-(ok ? success : error)(`${DOMAIN.padEnd(16)} ${C.dim}http://${DOMAIN}/${C.reset}`);
+(ok ? success : error)(`${DOMAIN.padEnd(16)} ${C.dim}${SITE_URL}${C.reset}`);
 line();
 heading('Details');
 item(`install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
