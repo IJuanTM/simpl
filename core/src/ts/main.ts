@@ -5,7 +5,7 @@ import {timeoutModule} from './features/timeout.ts';
 import {codeModule} from './features/code.ts';
 import {multiSelectModule} from './features/multi-select.ts';
 
-// Import external stylesheets for Vite to bundle them, local stylesheets are handled by sass
+// Imported here so Vite bundles it; local stylesheets go through Sass instead.
 import './libs.css';
 
 console.info('This website is made using the Simpl framework. Read more about Simpl here: https://www.github.com/IJuanTM/simpl/');

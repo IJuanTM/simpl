@@ -4,31 +4,34 @@
 // (`npx @ijuantm/simpl-install` + `npx @ijuantm/simpl-addon`). For the chosen add-on set
 // it runs: real scaffold -> real add-on merges -> `composer install` -> `composer test` ->
 // (with `db`) `composer migrate:fresh` (+ `seed:fresh` when another add-on is present,
-// against a per-level db named <addons>-simpl) -> `npm install` (postinstall sass/vite
-// build). So the install is ready to browse.
+// against a db named simpl-test) -> `npm install` (postinstall sass/vite build). So the
+// install is ready to browse.
 //
-// Zips are rebuilt from the working tree every run (uncommitted edits to tracked files included,
-// via `git stash create` - new files must be `git add`ed first, since that command only snapshots
-// tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES. The CDN's
-// versions.json is fetched once to resolve `latest`.
+// The zip is rebuilt from the working tree every run (uncommitted edits to tracked files
+// included, via `git stash create` - new files must be `git add`ed first, since that command
+// only snapshots tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES.
+// The CDN's versions.json is fetched once to resolve `latest`.
 // A reachable MariaDB (root / no password) is optional; if none is found, the migrate/seed/test:integration steps are skipped.
 // Docker is tried first: a throwaway MariaDB starts via scripts/docker-compose.yml and tears down on exit.
 // If Docker isn't available, a local MySQL/MariaDB server on localhost:3306 is used instead (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
 // Override with SIMPL_TEST_DB=docker (never fall back to local) or SIMPL_TEST_DB=local (skip the Docker probe); default is 'auto'.
 // SIMPL_TEST_DB_PORT (default 3307) is the host port used for the Docker fallback.
 //
-// Installs land in ~/Desktop/simpl-fresh-install-test/<level>/simpl-test/ (wiped each run, left after).
-// Each is scaffolded with --url = <level>.simpl.test.
-// To browse one, either run `docker compose up -d --build` inside it (just needs the printed hosts file line), or use the wildcard Apache vhost written to <dest>/httpd-vhosts.conf for a local Apache setup.
-// If mkcert is on PATH, one certificate covering every level + localhost is generated and copied
-// into each install's docker/certs/, so the Docker route is trusted out of the box (run
-// `mkcert -install` once yourself first - that step touches your OS/browser trust store, so it
-// can't be done for you here). Skipped with a warning if mkcert isn't installed.
+// The install lands in ~/Desktop/simpl-fresh-install-test/simpl-test/ (wiped each run, left
+// after). It's always named "Simpl Test", scaffolded with --url=http://simpl.test/, and uses
+// simpl-test as the db name.
+// To browse it, either run `docker compose up -d --build` inside it (just needs the printed
+// hosts file line), or use the Apache vhost written to <dest>/httpd-vhosts.conf for a local
+// Apache setup.
+// If mkcert is on PATH, a certificate covering simpl.test + localhost is generated and copied
+// into docker/certs/, so the Docker route is trusted out of the box (run `mkcert -install` once
+// yourself first - that step touches your OS/browser trust store, so it can't be done for you
+// here). Skipped with a warning if mkcert isn't installed.
 // Overrides: SIMPL_TEST_DEST, SIMPL_TEST_DOMAIN, SIMPL_TEST_DB, SIMPL_TEST_DB_PORT.
 //
-// Run with no arguments for the interactive picker. Flags:
-//   --all           install a single site with every add-on merged in - no menu
-//   --only=<level>  run just that cumulative level (core, core-db, core-db-auth, ...) - no menu
+// Run with no arguments for the interactive add-on picker (default: everything selected).
+// Flags:
+//   --all  install with every add-on merged in - no menu
 //
 import fs from 'node:fs';
 import os from 'node:os';
@@ -47,7 +50,7 @@ const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
 const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'docker-compose.yml');
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
 let DB = LOCAL_DB;
-let CERT = null; // {crt, key} once generated, shared across every level
+let CERT = null; // {crt, key} once generated
 
 // Output helpers, matching the installer scripts' style.
 const C = {
@@ -89,10 +92,9 @@ const die = (msg) => {
   process.exit(1);
 };
 
-let mode = null; // 'all' | { only: label } | 'pick'
+let mode = null; // 'all' | 'pick'
 for (const a of process.argv.slice(2)) {
   if (a === '--all') mode = 'all';
-  else if (a.startsWith('--only=')) mode = {only: a.slice(7)};
   else if (a === '-h' || a === '--help') {
     const body = fs.readFileSync(SELF, 'utf8').split('\n').slice(1);
     console.log(body.slice(0, body.findIndex((l) => !l.startsWith('//'))).join('\n'));
@@ -134,8 +136,6 @@ const DEPS = addonDeps();
 const ADDONS = topo(DEPS);
 if (!ADDONS.length) die(`no add-ons found under ${REPO}/add-ons`);
 
-const levelLabel = (addons) => addons.length ? 'core-' + addons.join('-') : 'core';
-
 function pdoUp(db) {
   return spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
     {env: {...process.env, H: db.host, U: db.user, P: db.pass}}).status === 0;
@@ -161,10 +161,11 @@ if (dockerDbStarted) process.on('exit', () => {
   }
 });
 
-// Core is always selected; a pick's dependencies fill in automatically.
+// Core is always selected; everything else defaults to selected too, and a pick's
+// dependencies fill in automatically as items are deselected.
 async function pick() {
   const items = ['core', ...ADDONS];
-  const on = new Set([0]); // the user's explicit picks; index 0 is core, always on
+  const on = new Set(items.map((_, i) => i)); // the user's explicit picks; index 0 is core, always on
   const notes = ['', ...ADDONS.map((a) => {
     const d = topo(DEPS, [a]).filter((x) => x !== a);
     return d.length ? `${C.gray}(requires: ${d.join(', ')})${C.reset}` : '';
@@ -296,16 +297,13 @@ function run(cmd, cwd, log) {
   return r.status === 0;
 }
 
-function runLevel(setAddons) {
-  const label = levelLabel(setAddons);
-  const ws = path.join(DEST, label);
-  const proj = path.join(ws, 'simpl-test');
-  const url = `http://${label}.${DOMAIN}/`;
-  const log = path.join(DEST, label + '.log');
-  const dbname = setAddons.includes('db') ? setAddons.join('-') + '-simpl' : null;
-  fs.mkdirSync(ws, {recursive: true});
+function runInstall(addons) {
+  const proj = path.join(DEST, 'simpl-test');
+  const url = `http://${DOMAIN}/`;
+  const log = path.join(DEST, 'install.log');
+  const dbname = addons.includes('db') ? 'simpl-test' : null;
   fs.writeFileSync(log, '');
-  box(`Installing: ${C.cyan}${label}${C.reset} ${C.dim}${url}${C.reset}`);
+  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}${url}${C.reset}`);
   line();
 
   const bail = () => {
@@ -315,7 +313,7 @@ function runLevel(setAddons) {
   };
 
   task('📦 scaffold via simpl-install');
-  if (!run(`npx --yes @ijuantm/simpl-install --local --version=latest --name="${NAME}" --url="${url}"`, ws, log)) return bail();
+  if (!run(`npx --yes @ijuantm/simpl-install --local --version=latest --name="${NAME}" --url="${url}"`, DEST, log)) return bail();
   if (!fs.existsSync(path.join(proj, 'composer.json'))) {
     fs.appendFileSync(log, '\n>> installer did not scaffold a project\n');
     return bail();
@@ -327,10 +325,11 @@ function runLevel(setAddons) {
     fs.mkdirSync(certDir, {recursive: true});
     fs.copyFileSync(CERT.crt, path.join(certDir, 'simpl.crt'));
     fs.copyFileSync(CERT.key, path.join(certDir, 'simpl.key'));
+    fs.rmSync(path.dirname(CERT.crt), {recursive: true, force: true});
   }
 
-  const hasSeedable = setAddons.some((a) => a !== 'db');
-  for (const a of setAddons) {
+  const hasSeedable = addons.some((a) => a !== 'db');
+  for (const a of addons) {
     task(`🔀 merge add-on: ${a}`);
     if (!run(`npx --yes @ijuantm/simpl-addon --local --addon=${a}`, proj, log)) return bail();
     if (!fs.readFileSync(path.join(proj, '.simpl'), 'utf8').includes(`"${a}"`)) {
@@ -374,10 +373,10 @@ function runLevel(setAddons) {
   return true;
 }
 
-// Appends any missing "127.0.0.1  <label>.<domain>" lines straight to the hosts file. Writing it
-// needs elevated/admin privileges (this script isn't run elevated by default), so a failed write
-// falls back to printing the lines for the user to add by hand instead of silently doing nothing.
-function ensureHosts(labels) {
+// Appends a missing "127.0.0.1  simpl.test" line straight to the hosts file. Writing it needs
+// elevated/admin privileges (this script isn't run elevated by default), so a failed write falls
+// back to printing the line for the user to add by hand instead of silently doing nothing.
+function ensureHosts() {
   const hostsFile = process.platform === 'win32'
     ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'drivers', 'etc', 'hosts')
     : '/etc/hosts';
@@ -385,17 +384,15 @@ function ensureHosts(labels) {
   try {
     content = fs.readFileSync(hostsFile, 'utf8');
   } catch {
-    return {hostsFile, written: [], failed: labels}; // can't even read it - assume nothing is present
+    return {hostsFile, written: false, failed: true}; // can't even read it - assume it's missing
   }
   const domain = DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const missing = labels.filter((label) => !new RegExp(`^\\s*127\\.0\\.0\\.1\\s+${label}\\.${domain}\\s*$`, 'm').test(content));
-  if (!missing.length) return {hostsFile, written: [], failed: []};
-  const lines = missing.map((label) => `127.0.0.1  ${label}.${DOMAIN}`);
+  if (new RegExp(`^\\s*127\\.0\\.0\\.1\\s+${domain}\\s*$`, 'm').test(content)) return {hostsFile, written: false, failed: false};
   try {
-    fs.appendFileSync(hostsFile, (content.endsWith('\n') ? '' : os.EOL) + lines.join(os.EOL) + os.EOL);
-    return {hostsFile, written: missing, failed: []};
+    fs.appendFileSync(hostsFile, (content.endsWith('\n') ? '' : os.EOL) + `127.0.0.1  ${DOMAIN}` + os.EOL);
+    return {hostsFile, written: true, failed: false};
   } catch {
-    return {hostsFile, written: [], failed: missing};
+    return {hostsFile, written: false, failed: true};
   }
 }
 
@@ -403,15 +400,12 @@ function mkcertAvailable() {
   return spawnSync('mkcert', ['-version'], {shell: true, stdio: 'ignore'}).status === 0;
 }
 
-// One shared cert covering every level's hostname, generated once and copied into each install -
-// mkcert has no multi-level wildcard support (a *.simpl.test SAN wouldn't cover core-db.simpl.test
-// anyway), but does accept any number of exact hostnames in a single certificate.
-function writeMkcert(labels) {
+// One certificate covering simpl.test + localhost, generated once and copied into the install.
+function writeMkcert() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-cert-'));
   const crt = path.join(dir, 'simpl.crt');
   const key = path.join(dir, 'simpl.key');
-  const hosts = ['localhost', '127.0.0.1', ...labels.map((l) => `${l}.${DOMAIN}`)];
-  const r = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, ...hosts], {shell: true, encoding: 'utf8'});
+  const r = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, 'localhost', '127.0.0.1', DOMAIN], {shell: true, encoding: 'utf8'});
   return r.status === 0 ? {crt, key} : null;
 }
 
@@ -421,21 +415,18 @@ function writeVhostConf() {
   fs.writeFileSync(conf,
     `# Generated by scripts/fresh-install-test.mjs
 #
-# Wildcard vhost: <level>.${DOMAIN}  ->  ${win}/<level>/simpl-test/src/public
+# Vhost: ${DOMAIN}  ->  ${win}/simpl-test/src/public
 #
 # One-time Apache setup (WAMP, XAMPP, MAMP, a native install, ...):
-#   1. httpd.conf: uncomment  LoadModule vhost_alias_module modules/mod_vhost_alias.so
-#   2. httpd.conf: add        IncludeOptional "${win}/httpd-vhosts.conf"
-#   3. hosts file: add a "127.0.0.1 <level>.${DOMAIN}" line per level (see script output)
-#   4. restart Apache
+#   1. httpd.conf: add        IncludeOptional "${win}/httpd-vhosts.conf"
+#   2. hosts file: add a "127.0.0.1 ${DOMAIN}" line (see script output)
+#   3. restart Apache
 #
 <VirtualHost *:80>
     ServerName ${DOMAIN}
-    ServerAlias *.${DOMAIN}
-    UseCanonicalName Off
-    VirtualDocumentRoot "${win}/%1/simpl-test/src/public"
+    DocumentRoot "${win}/simpl-test/src/public"
 
-    <Directory "${win}">
+    <Directory "${win}/simpl-test/src/public">
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require local
@@ -448,22 +439,7 @@ function writeVhostConf() {
 box('Simpl Fresh Install Test');
 if (!mode) mode = process.stdin.isTTY ? 'pick' : 'all';
 
-let sets; // one add-on array per level, each dep-ordered
-if (mode === 'pick') {
-  sets = [topo(DEPS, await pick())];
-} else if (mode === 'all') {
-  sets = [ADDONS];
-} else {
-  const levels = [[]];
-  const acc = [];
-  for (const a of ADDONS) {
-    acc.push(a);
-    levels.push([...acc]);
-  }
-  const want = levels.find((s) => levelLabel(s) === mode.only);
-  if (!want) die(`--only=${mode.only} matched no level`);
-  sets = [want];
-}
+const addons = mode === 'all' ? ADDONS : topo(DEPS, await pick());
 
 const VERSION = await resolveLatest();
 if (!VERSION) die(`could not resolve 'latest' from ${CDN_VERSIONS}`);
@@ -482,7 +458,7 @@ process.on('exit', () => {
 fs.rmSync(DEST, {recursive: true, force: true});
 fs.mkdirSync(DEST, {recursive: true});
 
-const needZip = new Set(sets.flat());
+const needZip = new Set(addons);
 divider();
 heading(`Building ${VERSION} release zips`);
 line();
@@ -495,42 +471,39 @@ success(`Built ${1 + needZip.size} zip${needZip.size ? 's' : ''}`);
   : 'MariaDB not reachable (test:integration/migrate/seed will be skipped)');
 
 if (mkcertAvailable()) {
-  CERT = writeMkcert(sets.map(levelLabel));
+  CERT = writeMkcert();
   (CERT ? info : warn)(CERT
-    ? 'mkcert certificate generated (covers every level + localhost)'
+    ? 'mkcert certificate generated (covers simpl.test + localhost)'
     : 'mkcert failed to generate a certificate - Docker HTTPS will use the untrusted self-signed one');
 } else {
   warn('mkcert not found on PATH - Docker HTTPS will use the untrusted self-signed cert (see core/docker/README.md)');
 }
 
-const results = {};
-for (const s of sets) results[levelLabel(s)] = runLevel(s);
-const failed = Object.values(results).includes(false);
+const ok = runInstall(addons);
 
 const conf = writeVhostConf();
 divider();
 heading('Summary');
 line();
-for (const [label, ok] of Object.entries(results))
-  (ok ? success : error)(`${label.padEnd(16)} ${C.dim}http://${label}.${DOMAIN}/${C.reset}`);
+(ok ? success : error)(`${DOMAIN.padEnd(16)} ${C.dim}http://${DOMAIN}/${C.reset}`);
 line();
 heading('Details');
-item(`installs: ${C.dim}${DEST}${C.reset}`);
-item(`docker:   ${C.dim}run \`docker compose up -d --build\` inside a level's install to browse it that way instead${C.reset}`);
-item(`vhost:    ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
-item(`cert:     ${C.dim}${CERT ? "docker/certs/ in each install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated - install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
-const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts(Object.keys(results));
-if (hostsWritten.length) {
-  item(`hosts file: added ${hostsWritten.length} line(s) to ${hostsFile}`);
-  for (const label of hostsWritten) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
-} else if (hostsFailed.length) {
-  warn(`could not write ${hostsFile} (run this elevated, or add these lines yourself):`);
-  for (const label of hostsFailed) out(PAD + PAD + C.dim + `127.0.0.1  ${label}.${DOMAIN}` + C.reset);
+item(`install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
+item(`docker:  ${C.dim}run \`docker compose up -d --build\` inside the install to browse it that way instead${C.reset}`);
+item(`vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
+item(`cert:    ${C.dim}${CERT ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated - install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
+const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts();
+if (hostsWritten) {
+  item(`hosts file: added 1 line to ${hostsFile}`);
+  out(PAD + PAD + C.dim + `127.0.0.1  ${DOMAIN}` + C.reset);
+} else if (hostsFailed) {
+  warn(`could not write ${hostsFile} (run this elevated, or add this line yourself):`);
+  out(PAD + PAD + C.dim + `127.0.0.1  ${DOMAIN}` + C.reset);
 } else {
-  item('hosts file: all levels already present');
+  item('hosts file: already present');
 }
 line();
-if (failed) error(styled('Some levels failed', C.bold, C.red), true);
+if (!ok) error(styled('Installation failed', C.bold, C.red), true);
 else success(styled('Installation complete!', C.bold, C.green), true);
 line();
-process.exit(failed ? 1 : 0);
+process.exit(ok ? 0 : 1);
