@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 //
-// Real fresh install of the CURRENT WORKING TREE via the actual installer ecosystem
-// (`npx @ijuantm/simpl-install` + `npx @ijuantm/simpl-addon`). For the chosen add-on set
+// Real fresh install of the CURRENT WORKING TREE via the actual Simpl CLI
+// (`simpl new` + `simpl add`, run through `npx @ijuantm/simpl`). For the chosen add-on set
 // it runs: real scaffold -> real add-on merges -> `composer install` -> `composer test` ->
 // (with `db`) `composer migrate:fresh` (+ `seed:fresh` when another add-on is present,
 // against a db named simpl-test) -> `npm install` (postinstall sass/vite build). So the
@@ -9,7 +9,8 @@
 //
 // The zip is rebuilt from the working tree every run (uncommitted edits to tracked files
 // included, via `git stash create` - new files must be `git add`ed first, since that command
-// only snapshots tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES.
+// only snapshots tracked changes) and served to the CLI through SIMPL_LOCAL_RELEASES.
+// Each zip is a `git archive` of its subtree, since the CLI extracts it as-is with no wrapping folder stripped.
 // The CDN's versions.json is fetched once to resolve `latest`.
 // A reachable MariaDB (root / no password) is optional; if none is found, the test:integration/migrate/seed steps are skipped.
 // Docker is tried first: a throwaway MariaDB starts via scripts/compose.yaml and tears down on exit.
@@ -55,7 +56,7 @@ const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
 let DB = LOCAL_DB;
 let CERT = null; // {crt, key} once generated
 
-// Output helpers, matching the installer scripts' style.
+// Output helpers, matching the Simpl CLI's style.
 const C = {
   reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
   cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m',
@@ -315,8 +316,8 @@ function runInstall(addons) {
     return false;
   };
 
-  task('📦 scaffold via simpl-install');
-  if (!run(`npx --yes @ijuantm/simpl-install --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
+  task('📦 scaffold via simpl new');
+  if (!run(`npx --yes @ijuantm/simpl new --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
   if (!fs.existsSync(path.join(proj, 'composer.json'))) {
     fs.appendFileSync(log, '\n>> installer did not scaffold a project\n');
     return bail();
@@ -333,7 +334,7 @@ function runInstall(addons) {
   const hasSeedable = addons.some((a) => a !== 'db');
   for (const a of addons) {
     task(`🔀 merge add-on: ${a}`);
-    if (!run(`npx --yes @ijuantm/simpl-addon --local --addon=${a}`, proj, log)) return bail();
+    if (!run(`npx --yes @ijuantm/simpl add ${a} --local`, proj, log)) return bail();
     if (!fs.readFileSync(path.join(proj, '.simpl'), 'utf8').includes(`"${a}"`)) {
       fs.appendFileSync(log, `\n>> '${a}' not recorded in .simpl\n`);
       return bail();

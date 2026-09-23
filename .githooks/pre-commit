@@ -41,7 +41,7 @@ check_gitkeep "core/src/logs/.gitkeep"
 check_gitkeep "add-ons/auth/src/public/img/profile/.gitkeep"
 check_gitkeep "core/docker/certs/.gitkeep"
 
-# core/src/.env is the shipped template - simpl-installer substitutes @app-key at scaffold time.
+# core/src/.env is the shipped template - src/app/Scripts/app-key.php replaces @app-key on the project's first composer install.
 # A real generated key has leaked into this file and gotten committed before; this must never happen again.
 
 check_app_key_placeholder() {
@@ -99,7 +99,7 @@ check_addon_markers() {
   fi
 }
 
-# simpl-addon-installer's mergeFile() splices marker content verbatim with no re-indent, so a patch block's leading whitespace must already match the depth of the line it targets.
+# `simpl add` splices marker content verbatim with no re-indent, so a patch block's leading whitespace must already match the depth of the line it targets.
 # Scoped to YAML only, since a mismatch here produces invalid YAML at install time, unlike JSON/PHP patches which tolerate wrong indentation.
 
 check_yaml_marker_indentation() {

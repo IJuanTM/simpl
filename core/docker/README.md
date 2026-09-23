@@ -1,6 +1,6 @@
 # Docker
 
-The recommended way to run this project locally - a PHP + Apache container (and, once the `db` add-on is installed, MariaDB), with no WAMP/XAMPP/local PHP/MySQL/Composer required. WAMP/XAMPP/Apache remains available as a manual alternative, see [Step 4](https://github.com/IJuanTM/simpl#step-4-set-up-your-localhost) of the main README.
+The recommended way to run this project locally - a PHP + Apache container (and, once the `db` add-on is installed, MariaDB), with no WAMP/XAMPP/local PHP/MySQL/Composer required. A local server of your own (e.g. WAMP or XAMPP) works too - run `simpl help manual` for that setup.
 
 ## Prerequisites
 
@@ -8,24 +8,27 @@ The recommended way to run this project locally - a PHP + Apache container (and,
 
 ## Usage
 
-Bring the container (s) up with plain Docker Compose from the project root:
+Bring the container (s) up with the `simpl` CLI from anywhere inside the project:
 
 ```bash
-docker compose up -d --build
+simpl up
 ```
+
+`simpl up` runs `docker compose up -d --build`, `simpl down` stops the stack again, and `simpl logs` shows its output (e.g. `simpl logs -f app`).
 
 The first run builds the image, runs `composer install` inside it, and starts the container (s). The site is served over HTTPS - available at `https://localhost/` and at whatever hostname `src/.env`'s `APP_URL` points to (see [Matching your real APP_URL](#matching-your-real-app_url) to make that resolve, and [HTTPS](#https) for the certificate warning you'll see).
 
-`src/` is bind-mounted, so PHP edits reflect immediately - rebuild only after changing `composer.json`, `composer.lock`, or the Dockerfile. After a `composer.json` change, run `npm run docker:composer -- install`.
+`src/` is bind-mounted, so PHP edits reflect immediately - rebuild only after changing `composer.json`, `composer.lock`, or the Dockerfile. After a `composer.json` change, run `simpl composer install`.
 
-Migrations, seeding, and other Composer commands work the same as a manual setup, just run through `docker compose exec` instead of `composer` directly - as the `www-data` user Apache runs as, so anything they write stays owned by you on the host (see [Linux file ownership](#linux-file-ownership)):
+Migrations, seeding, and other Composer commands run inside the `app` container while the stack is up - as the `www-data` user Apache runs as, so anything they write stays owned by you on the host (see [Linux file ownership](#linux-file-ownership)):
 
 ```bash
-docker compose exec -u www-data app composer migrate
-docker compose exec -u www-data app composer seed:fresh
+simpl migrate
+simpl seed:fresh
+simpl composer <cmd>
 ```
 
-Two shortcuts exist for the ones you'll type most - `npm run docker:sh` opens a shell in the container, and `npm run docker:composer -- <cmd>` runs any Composer command inside it (`npm run docker:composer -- migrate`, `npm run docker:composer -- test`, ...). The `--` tells npm everything after it is an argument to pass through, not an npm option. Both go through npm rather than Composer so the host needs no PHP or Composer, only the Node.js it already uses for the Sass/TypeScript build.
+`simpl migrate`, `migrate:fresh`, `migrate:rollback`, `seed`, `seed:fresh`, `test`, `test:integration` and `stan` are shortcuts for the Composer scripts of the same name, `simpl composer <cmd>` runs any Composer command, and `simpl sh` opens a shell in the container. The host needs no PHP or Composer for any of these, only the Node.js it already uses for the Sass/TypeScript build.
 
 Sass/TypeScript (`npm run build` / `npm run dev`) still run on the host as usual - `npm run dev`'s browser-sync proxies whatever URL the app is served at, and matches its own port (`:3000` by default) to the same scheme, HTTPS or plain HTTP. See [HTTPS](#https) below for how it picks a certificate when that's HTTPS - which it is by default with Docker, but not with a plain HTTP WAMP/XAMPP setup.
 
@@ -84,7 +87,7 @@ services:
 
 ### Linux file ownership
 
-On Linux, the container's `www-data` user writes straight into your bind-mounted project (`src/logs/`, `src/cache/`, `composer.lock`, ...), so its user ID has to match yours. The image defaults to `1000`, the first regular user on most distros - if `id -u`/`id -g` print something else, set `UID`/`GID` in the project-root `.env` and run `docker compose up -d --build`. Docker Desktop (Windows/macOS) maps ownership for you, so there this setting doesn't matter.
+On Linux, the container's `www-data` user writes straight into your bind-mounted project (`src/logs/`, `src/cache/`, `composer.lock`, ...), so its user ID has to match yours. The image defaults to `1000`, the first regular user on most distros - if `id -u`/`id -g` print something else, set `UID`/`GID` in the project-root `.env` and run `simpl up`. Docker Desktop (Windows/macOS) maps ownership for you, so there this setting doesn't matter.
 
 ### Windows performance
 
@@ -102,12 +105,12 @@ Replace `myproject.test` with your actual `APP_URL` host, and make sure `APP_URL
 
 ## This is a template, not a site
 
-`APP_NAME`/`APP_URL` are placeholders that only `simpl-installer` substitutes, at scaffold time - running Docker directly against this repo's own checkout leaves them literal, since there's no real site here yet. Use Docker the same way as `npm run dev`: on a real installed site (`npx @ijuantm/simpl-install`), not on this template repo itself.
+`APP_NAME`/`APP_URL` are placeholders that only `simpl new` substitutes, at scaffold time - running Docker directly against this repo's own checkout leaves them literal, since there's no real site here yet. Use Docker the same way as `npm run dev`: on a real installed site (`simpl new`), not on this template repo itself.
 
 ## Why `.env` doesn't need editing
 
 Compose sets `DB_SERVER=db` as a real container environment variable, which phpdotenv's `createImmutable()` never overwrites - so `src/.env`'s `DB_SERVER=localhost` default is left untouched. `DB_NAME`/`DB_USERNAME`/`DB_PASSWORD` come straight from the bind-mounted `src/.env`; `migrate:fresh` creates the database itself. If the app can't reach a database that's clearly up, check `docker compose exec app php -i | grep variables_order` includes `E` - without it, `docker/php/simpl.ini`'s `variables_order` never populates `$_ENV`, which `database.php` reads directly.
 
-## Why `docker:composer` instead of a fixed script per command
+## Why `simpl composer` next to the shortcuts
 
-Which Composer commands exist depends on which add-ons are installed - `migrate`/`seed` only exist once `db` is merged in, for example - so a fixed list of shortcuts (one Composer script per command, or a Makefile target per command) would drift out of sync with whatever's actually installed. `npm run docker:composer -- <cmd>` stays generic and always matches whatever `composer.json` currently has, the same way calling `docker compose exec -u www-data app composer <cmd>` directly always does.
+Which Composer commands exist depends on which add-ons are installed - `migrate`/`seed` only exist once `db` is merged in, for example - so the shortcuts only cover the common scripts, and `simpl composer <cmd>` stays generic: it passes anything through to whatever `composer.json` currently has, the same way calling `docker compose exec -u www-data app composer <cmd>` directly does. When the stack isn't running, both use the Composer on your machine instead.

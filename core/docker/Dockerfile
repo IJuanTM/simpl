@@ -37,7 +37,7 @@ COPY composer.jso[n] composer.loc[k] ./
 COPY src/app ./src/app
 COPY src/.env ./src/.env
 
-# Installed as www-data so the vendor volume it seeds stays writable for later `npm run docker:composer -- install` runs.
+# Installed as www-data so the vendor volume it seeds stays writable for later `simpl composer install` runs.
 RUN mkdir -p src/vendor && chown -R www-data:www-data /var/www
 USER www-data
 RUN composer install --no-interaction --no-progress --optimize-autoloader

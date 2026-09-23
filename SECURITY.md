@@ -6,8 +6,8 @@ The table below shows which versions of the project are currently being supporte
 
 | Version  | Supported          |
 |----------|--------------------|
-| < 1.6.0  | :x:                |
-| >= 1.6.0 | :heavy_check_mark: |
+| < 2.0.0  | :x:                |
+| >= 2.0.0 | :heavy_check_mark: |
 
 ## Reporting an Issue
 

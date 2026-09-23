@@ -2,7 +2,7 @@
 
 Complete authentication system for Simpl projects with user management, email verification, password reset, and admin controls.
 
-**Depends on the [`db`](../db/README.md) add-on** for its query builder, migration/seeder runners, and scheduler - the installer resolves this automatically, installing `db` first if it isn't already present.
+**Depends on the [`db`](../db/README.md) add-on** for its query builder, migration/seeder runners, and scheduler - `simpl add` resolves this automatically, installing `db` first if it isn't already present.
 
 ## Features
 
@@ -42,9 +42,8 @@ Complete authentication system for Simpl projects with user management, email ve
 
 ## Database
 
-Auth's migrations and seeders are *data* registered with the [`db`](../db/README.md) add-on's generic `DatabaseMigrator`/`DatabaseSeeder` runners - the runners themselves, the `DB` query builder, and the `Blueprint`/`Schema` DDL builder all live in `db`. Auth ships its own
-`Config/migrations.php` and `Config/seeders.php`, which patch into `db`'s base files of the same name via `@addon-insert`/`@addon-end` markers on install - `db` owns the base file (a placeholder extension point), `auth`'s patch inserts its own `DatabaseMigrator::register(...)`/
-`DatabaseSeeder::register(...)` calls in place of it. Auth's own `Database/` folder only holds its table/seeder *definitions* (`users`, `roles`, `tokens`, `login_attempts`, ...), in dependency order. Auth's scheduled cleanup tasks (`Config/scheduler.php`) work the same way, patched into `db`'s base `Config/scheduler.php`.
+Auth's migrations and seeders are *data* registered with the [`db`](../db/README.md) add-on's generic `DatabaseMigrator`/`DatabaseSeeder` runners - the runners themselves, the `DB` query builder, and the `Blueprint`/`Schema` DDL builder all live in `db`. Auth ships its own `Config/migrations.php` and `Config/seeders.php`, which patch into `db`'s base files of the same name via `@addon-insert`/`@addon-end` markers on install - `db` owns the base file (a placeholder extension point), `auth`'s patch inserts its own `DatabaseMigrator::register(...)`/`DatabaseSeeder::register(...)` calls in place of it. Auth's own `Database/` folder only holds its table/seeder *definitions* (`users`, `roles`, `tokens`, `login_attempts`, ...), in dependency order. Auth's scheduled cleanup tasks
+(`Config/scheduler.php`) work the same way, patched into `db`'s base `Config/scheduler.php`.
 
 ## Structure
 
@@ -53,16 +52,17 @@ auth/
 ├── README.md
 ├── src/                 # Merges into a project's src/
 │   ├── app/
-│   │   ├── Config/       # auth.php, mail.php, lockout.php, upload.php, validation.php, migrations.php/seeders.php/scheduler.php (patches into db's base files)
-│   │   ├── Controllers/  # AuthController, MailController, plus patches into App/Alias/Form
+│   │   ├── Config/       # auth.php, mail.php, lockout.php, two-factor.php, upload.php, validation.php, migrations.php/seeders.php/scheduler.php (patches into db's base files)
+│   │   ├── Controllers/  # AuthController, MailController, TwoFactorController, WebauthnController, plus patches into App/Alias/Form
 │   │   ├── Cron/         # Scheduled task implementations
 │   │   ├── Database/     # Table/seeder definitions only - run by the db add-on's runners
-│   │   ├── Enums/        # Role, TokenType, UserStatus
+│   │   ├── Enums/        # Role, TokenType, TwoFactorMethod, UserStatus
 │   │   ├── Mails/        # Email templates (verification, reset, account-created, contact)
-│   │   └── Pages/        # Page controllers (Login, Register, Profile, Users, etc.)
+│   │   ├── Pages/        # Page controllers (Login, Register, Profile, Users, etc.)
+│   │   └── Utils/        # UserAgentParser
 │   ├── scss/             # Styling for forms, tables, and pages
-│   ├── ts/                # TypeScript for form interactions
-│   └── views/             # Templates for all auth pages
+│   ├── ts/               # TypeScript for form interactions
+│   └── views/            # Templates for all auth pages
 └── tests/                # Merges into a project's tests/ - PHPUnit test classes
     └── app/
 ```
@@ -101,10 +101,10 @@ DB_PASSWORD=your_password
 From your Simpl project's root directory, run:
 
 ```bash
-npx @ijuantm/simpl-addon auth
+simpl add auth
 ```
 
-The installer will:
+`simpl add` will:
 
 - Install the [`db`](../db/README.md) add-on first automatically if it isn't already present - it's `db`'s composer.json patch that adds the `migrate`/`seed`/`cron:test` commands
 - Copy all new files from the add-on into your project's `src/` and `tests/`
@@ -115,10 +115,9 @@ The installer will:
 **Post-Installation Steps:**
 
 1. Update `.env` with your database and mail credentials
-2. Run `composer install` (if needed)
-3. Run `composer migrate` (or `npm run docker:composer -- migrate` if you're using Docker) to create the database tables, then `composer seed` (`npm run docker:composer -- seed`) to populate default roles/data - this picks up auth's registered migrations/seeders automatically
-4. Manually merge `src/views/parts/layout/header.phtml` for navigation links (if needed)
-5. Run `npm run build` to compile assets
+2. Run `simpl composer install` (if needed)
+3. Run `simpl migrate` to create the database tables, then `simpl seed` to populate default roles/data - this picks up auth's registered migrations/seeders automatically
+4. Run `npm run build` to compile assets
 
 **Manual Method (If needed):**
 
@@ -128,10 +127,7 @@ The installer will:
 
 ## Tests
 
-Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `AuthController`'s config-driven password-policy/token surface, `FormController::validatePasswords()`,
-`AdminTableTrait`'s pagination/sort/filter logic, `RateLimitedForm`, `MailController::template`'s not-found branch, and the `PruneRateLimitCache` cron task. Once installed, run `composer test`
-(or `npm run docker:composer -- test` if you're using Docker) from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*`
-classes) isn't covered here - that requires a real database connection.
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `AuthController`'s config-driven password-policy/token surface, `FormController::validatePasswords()`, `AdminTableTrait`'s pagination/sort/filter logic, `RateLimitedForm`, `MailController::template`'s not-found branch, and the `PruneRateLimitCache` cron task. Once installed, run `simpl test` from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*` classes) isn't covered here - that requires a real database connection.
 
 ## Requirements
 

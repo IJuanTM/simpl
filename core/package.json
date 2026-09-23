@@ -25,9 +25,7 @@
     "live": "browser-sync start --config bs-config.cjs",
     "build": "run-s build:*",
     "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
-    "build:ts": "vite build",
-    "docker:sh": "docker compose exec -u www-data app bash",
-    "docker:composer": "docker compose exec -u www-data app composer"
+    "build:ts": "vite build"
   },
   "repository": {
     "type": "git",

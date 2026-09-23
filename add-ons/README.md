@@ -35,6 +35,7 @@ A production-ready authentication system with modern security practices. Depends
 - User authentication (login/logout/register)
 - Email verification system
 - Password reset flow
+- Two-factor authentication (email codes, authenticator apps, passkeys)
 - User profile management
 - Role-based access control
 - Admin dashboard for user management
@@ -65,17 +66,17 @@ Navigate to your project directory and run (this should be a clean installation 
 
 ```bash
 # List available add-ons
-npx @ijuantm/simpl-addon --list
+simpl add --list
 
 # Install an add-on (e.g. auth)
-npx @ijuantm/simpl-addon auth
+simpl add auth
 ```
 
 Available commands:
 
-- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
-- `npx @ijuantm/simpl-addon --list` - List all available add-ons
-- `npx @ijuantm/simpl-addon --help` - Show help
+- `simpl add <addon-name>` - Install an add-on
+- `simpl add --list` - List all available add-ons
+- `simpl add --help` - Show help
 
 ## Contributing
 

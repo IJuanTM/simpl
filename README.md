@@ -32,7 +32,7 @@
 * Quick setup
 * Composer PSR-4 autoloading
 * Makes use of an MVC system using PHP
-* Works with both Windows and Linux
+* Works on Windows, macOS and Linux
 * Made to work with the latest versions of PHP, Composer, Node.js, npm and Sass
 * Makes use of Vite for bundling TypeScript files and compiling Sass files, as well as live reloading
 * Comes with example pages and a default landing page
@@ -56,23 +56,25 @@ Before you can start using Simpl, you will need to make sure you have the follow
 You'll also need a way to run PHP locally - see [Step 4](#step-4-set-up-your-localhost) for the two options:
 
 * **Docker** (recommended): [Docker Desktop](https://www.docker.com/products/docker-desktop/) - PHP, Composer and (optionally) MariaDB all run inside the container, nothing else to install.
-* **Manual (WAMP/XAMPP/Apache)**: [PHP](https://www.php.net/) >= 8.5.x, [Composer](https://getcomposer.org/) >= 2.9.x, and [WAMP](https://www.wampserver.com/)/[XAMPP](https://www.apachefriends.org/)/Apache installed on your host.
+* **A local server of your own** (e.g. [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/)): [PHP](https://www.php.net/) >= 8.5.x and [Composer](https://getcomposer.org/) >= 2.9.x installed on your host.
 
 ### Step 1: Download Simpl
 
-You can set up a new Simpl project by running the following commands in your terminal:
+You can set up a new Simpl project with the `simpl` CLI by running the following commands in your terminal:
 
 ```bash
-npx @ijuantm/simpl-install <project-name>
+npm i -g @ijuantm/simpl
+simpl new <project-name>
 ```
 
-Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl, with all dependencies installed and ready to use.
+Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl. You can also run the CLI without installing it, e.g. `npx @ijuantm/simpl new <project-name>`.
 
 Available commands:
 
-- `npx @ijuantm/simpl-install` - You will be prompted to enter a project name
-- `npx @ijuantm/simpl-install <project-name>` - Create a new Simpl project with the specified name
-- `npx @ijuantm/simpl-install --help` - Show help
+- `simpl new` - You will be prompted to enter a project name
+- `simpl new <project-name>` - Create a new Simpl project with the specified name
+- `simpl new --help` - Show all options, like the app URL and framework version
+- `simpl help` - Show every `simpl` command
 
 Alternatively, you can also set up a new Simpl project manually by following these steps:
 
@@ -94,33 +96,33 @@ Next, a few npm packages will need to be installed. You can do this by running `
 
 You have two options for running Simpl locally:
 
-**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`docker/README.md`](docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with plain `docker compose` commands (plus `npm run docker:sh` and `npm run docker:composer -- <cmd>` shortcuts for the ones you'll type most).
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`core/docker/README.md`](core/docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with the `simpl` CLI: `simpl up` builds and starts it, `simpl down` stops it, `simpl sh` opens a shell in the `app` container and `simpl composer <cmd>` runs Composer inside it.
 
-**Option B: Manual (WAMP/XAMPP/Apache).** If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
+**Option B: a local server of your own (e.g. WAMP or XAMPP).** Point a virtual host for your app URL at the `src/public` folder of your project. Run `simpl help manual` for the full steps.
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling, there is a chance there was an issue compiling the Sass files; you can try to fix this by running the `build` script again manually using `npm run build`.
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
+Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use `simpl add`.
 
 Navigate to your project directory and run:
 
 ```bash
 # List available add-ons
-npx @ijuantm/simpl-addon --list
+simpl add --list
 
 # Install an add-on (e.g. auth)
-npx @ijuantm/simpl-addon auth
+simpl add auth
 ```
 
 Available commands:
 
-- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
-- `npx @ijuantm/simpl-addon --list` - List all available add-ons
-- `npx @ijuantm/simpl-addon --help` - Show help
+- `simpl add <addon-name>` - Install an add-on
+- `simpl add --list` - List all available add-ons
+- `simpl add --help` - Show help
 
-Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - the installer resolves and installs dependencies automatically. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
+Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - `simpl add` installs dependencies first automatically. If part of an add-on can't be merged into one of your files (because the line it targets is missing), `simpl add` lists what it skipped so you can add it by hand. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
 
 ### Step 6: Start coding!
 
@@ -128,7 +130,7 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 
 #### Npm scripts
 
-The following scrips are included in the `package.json` file:
+The following scripts are included in the `package.json` file:
 
 * `dev` - Runs the `watch` and `live` scripts in parallel
 * `watch` - Runs the `watch:scss` and `watch:ts` scripts in parallel
@@ -138,12 +140,10 @@ The following scrips are included in the `package.json` file:
 * `build` - Runs the `build:scss` and `build:ts` scripts after one another
 * `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
 * `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
-* `docker:sh` - Opens a shell in the running `app` container (Docker setup only)
-* `docker:composer` - Runs a Composer command in the running `app` container, e.g. `npm run docker:composer -- migrate` (Docker setup only)
 
 After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `src/public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
 
-_The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver. _
+_The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver._
 
 #### Config
 
@@ -182,11 +182,11 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `composer install` once, then `composer test` (or `npm run docker:composer -- test` if you're using Docker), to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `simpl test` (inside the Docker `app` container when the stack is up, otherwise with the Composer on your machine after a `composer install`) to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
-Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `composer stan` (or `npm run docker:composer -- stan` if you're using Docker) to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `simpl stan` to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -199,7 +199,7 @@ _If you need more information about the framework and its features, you can find
 Run the following command to download the latest version of Simpl:
 
 ```bash
-npx @ijuantm/simpl-install
+npx @ijuantm/simpl new
 ```
 
 Alternatively, download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
@@ -321,42 +321,42 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 #### Version 2.0.0 (2026-09-06)
 
-* Added a full admin panel to the auth add-on: user management (view, edit, soft-delete and restore, admin-created accounts), role management, and a login attempts page, all with sortable/searchable/paginated tables, breadcrumb navigation and hideable columns
-* Added proper migration and seeder classes for the auth add-on's database, replacing the old example `.sql` schema file
-* Added a scheduling system for running cron jobs
-* Added password policy enforcement, validated live as you type and again server-side
-* Added login lockout protection with exponential backoff, and per-account/per-IP rate limiting for the contact, forgot-password and verification forms
-* Hardened CSRF validation and session cookie handling
-* Added a shared modal for admin user actions
-* Automated subpage loading, reducing the PHP boilerplate a page needs; improved error page handling with its own redirect function and a new `ErrorCode` enum
-* Added a user profile page accessible to every user, with inline editing and profile image handling
-* Various console output, email template, and accessibility improvements throughout
-* Restructured the repo into `core/` (renamed from `framework/`) and `add-ons/`, each split into a `src/` and `tests/` folder that both ship to installed projects
-* Split the database layer and scheduler out of the auth add-on into their own `db` add-on, so any add-on needing persistence or scheduled tasks can depend on it without pulling in auth-specific tables
-* Added a full PHPUnit test suite covering the framework and add-ons
-* Added PHPStan static analysis, configured at level 6
-* Added a `TokenType` enum for token management, replacing loose string literals
-* Fixed rate-limiting, timing-safety and account/token enumeration gaps across the login, registration, password reset, verification and contact flows, plus a set of correctness bugs (remember-me token rotation, session handling, breadcrumb sanitization and more)
-* Updated npm and composer dependencies
-* Accessibility (ARIA) improvements and cross-page HTML/styling consistency pass across all views
-* Additional correctness and security hardening found via a full-project code review (page routing path validation, query builder parameter handling, login rate limiting, password reset throttling, task scheduler timing, and more)
-* Changing a password now invalidates every session for that account, on any device, not just its remember-me token
-* Verification and password-reset lockouts now back off exponentially the more repeated bursts of wrong attempts land, instead of a single fixed lockout duration
-* Added `IN`/`NOT IN` support to the query builder's WHERE clause
-* Admin user/role tables now push filtering, sorting and pagination down into the database query instead of fetching everything and filtering in PHP
-* Modernised all styling: CSS cascade layers, `light-dark()` theming, native `<dialog>` modals, a popover + CSS-anchor-positioned column menu, container queries, `field-sizing`, `text-wrap: balance`, `accent-color`, and a `prefers-reduced-motion` pass
-* Restructured the `scss` folder - `config/` now holds only Sass definitions (re-exported through a `config/_index.scss` barrel), with `base/`, `utilities/` and `components/` alongside `views/`; visible page chrome moved to `views/parts/layout/`
-* Reworked the TypeScript into one consistent module shape (private helpers, a single `init()` per feature), dropped the `window.load` handler, switched clipboard copy to `navigator.clipboard`, and added a client-side alert helper in place of native `alert()`
-* Documented the `part()` vs `component()` split on `PageController`, renamed `ts/utils` to `ts/helpers`, and moved generated runtime data out of `app/` into `src/cache` and `src/logs`
-* Modal dialogs now open/close declaratively via the `command`/`commandfor` attributes instead of per-button JavaScript listeners
-* Admin table search boxes are now `<search>` landmarks with `type="search"` inputs, for correct semantics/mobile keyboard affordance
-* Added a Docker Compose setup (PHP + Apache, and MariaDB once the `db` add-on is installed) as the recommended way to run a project locally, alongside the existing WAMP/XAMPP/Apache workflow
-* Fixed the `live` npm script's browser-sync server not serving HTTPS on its own port, causing `ERR_SSL_PROTOCOL_ERROR` when the app itself runs over HTTPS
-* Added an optional `docker/certs/` mount for the Docker Compose setup, so a real, locally-trusted certificate (e.g. via `mkcert`) can replace the self-signed one and drop the browser's untrusted-certificate warning entirely
-* The `live` npm script's browser-sync server now matches its own port's scheme to `APP_URL`'s - HTTPS (reusing the app's own locally-trusted certificate, or falling back to its own self-signed one) only when `APP_URL` actually is HTTPS, plain HTTP for a WAMP/XAMPP setup that never uses it - instead of always forcing HTTPS, which either broke the click-through on a trusted HSTS host or added an unprompted certificate warning to a site that never uses HTTPS at all
-* Added a Mailpit container to the Docker setup once the auth add-on is installed, catching every development email in a local web UI; the development SMTP host/port are now configurable through `SMTP_DEV_HOST`/`SMTP_DEV_PORT`
-* Docker ports are now published on `127.0.0.1` only, the container's `www-data` user can match the host's UID/GID so bind-mounted files stay writable on Linux, and MariaDB upgrades its data files automatically when its version changes
-* Slimmed the Docker image down to the one PHP extension the base image doesn't already ship, switched it to PHP's development `php.ini`, and renamed the Compose files to the spec's preferred `compose.yaml`
+* Now requires PHP 8.5
+* Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
+* Moved the database classes and the scheduler out of the auth add-on into a new `db` add-on, which the auth add-on now depends on
+* Add-ons can now depend on other add-ons, which get installed automatically
+* Replaced the npx tools with the `simpl` CLI, used to create projects, install add-ons and run the Docker setup
+* Added a Docker setup as the recommended way to run a project locally, served over HTTPS, with MariaDB when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
+* Added support for a locally trusted certificate (e.g. from mkcert) in the Docker setup
+* The `live` npm script now uses the project's `APP_URL` and matches its HTTP or HTTPS scheme, configured in a new `bs-config.cjs` file
+* Added migration and seeder classes, replacing the example `.sql` file
+* Added a scheduler for running cron jobs
+* Added `IN` and `NOT IN` support to the query builder
+* Added an admin panel to the auth add-on for managing users and roles and viewing login attempts, with sortable, searchable and paginated tables
+* Added a profile page and account settings pages for users
+* Added two-factor authentication to the auth add-on, using email codes, authenticator apps or passkeys, with recovery codes, trusted devices and the option to require specific methods per role or user
+* Added an `APP_KEY` to the `.env` file, generated on `composer install` and used to encrypt two-factor secrets
+* Added password requirements that are checked while typing and again when submitting
+* Added login lockouts and rate limiting to the login, contact, forgot password and verification forms, with longer lockouts after repeated failed attempts
+* Changing a password now logs the account out on every device
+* Added breadcrumb navigation
+* Added a multi-select form component
+* Pages no longer need their own code to load subpages
+* Improved error page handling
+* Added `ErrorCode` and `TokenType` enums
+* Added PHPUnit tests for the framework and add-ons, split into unit, feature and integration tests
+* Added PHPStan static analysis
+* Security fixes and improvements all around, including CSRF validation, session cookies, rate limiting and page routing
+* Added extra security headers to the .htaccess file and a stricter Content Security Policy for styles
+* Fixed the namespace in the sitemap.xml file
+* Updated the PHP code to use new PHP 8.5 features
+* Improved the styling with CSS cascade layers, `light-dark()` theming, native `<dialog>` modals and popovers
+* The theme now follows the system's light or dark mode until another one is picked
+* Improved the Sass and TypeScript folder structure
+* Moved the log and cache files out of `src/app` into `src/logs` and `src/cache`
+* Accessibility improvements across all pages
+* Improved the console output and email templates
+* Updated npm and composer packages
 
 <br>
 

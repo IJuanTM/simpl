@@ -21,7 +21,7 @@ const key = path.join(__dirname, 'docker', 'certs', 'simpl.key');
 const cert = path.join(__dirname, 'docker', 'certs', 'simpl.crt');
 const hasTrustedCert = fs.existsSync(key) && fs.existsSync(cert);
 
-// Deriving from @app-url rather than using simpl-installer's separate @app-host placeholder on purpose:
+// Deriving from @app-url rather than using `simpl new`'s separate @app-host placeholder on purpose:
 // that placeholder is URL.host, which keeps the port for any non-default APP_URL port, but browser-sync's
 // `host` option always appends its own port on top - a port-bearing value produces a malformed
 // double-port URL (e.g. host:8092:3000) that silently breaks `open: 'external'`.
