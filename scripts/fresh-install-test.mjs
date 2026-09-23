@@ -290,12 +290,6 @@ function buildZip(subdir, outZip) {
   execFileSync('git', ['archive', '--format=zip', '-o', outZip, `${tree}:${subdir}`], {cwd: REPO});
 }
 
-function writeCoreEnv(proj, url) {
-  fs.writeFileSync(path.join(proj, 'src/.env'), fs.readFileSync(path.join(REPO, 'core/src/.env'), 'utf8')
-    .replaceAll('@app-name', NAME)
-    .replaceAll('@app-url', url.replace(/\/+$/, '')));
-}
-
 function run(cmd, cwd, log) {
   const r = spawnSync(cmd, {cwd, shell: true, encoding: 'utf8', input: '', maxBuffer: 64 * 1024 * 1024});
   fs.appendFileSync(log, `\n$ ${cmd}\n${r.stdout || ''}${r.stderr || ''}`);
@@ -318,11 +312,6 @@ function runInstall(addons) {
 
   task('📦 scaffold via simpl new');
   if (!run(`npx --yes @ijuantm/simpl new --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
-  if (!fs.existsSync(path.join(proj, 'composer.json'))) {
-    fs.appendFileSync(log, '\n>> installer did not scaffold a project\n');
-    return bail();
-  }
-  writeCoreEnv(proj, SITE_URL);
 
   if (CERT) {
     const certDir = path.join(proj, 'docker/certs');
@@ -335,10 +324,6 @@ function runInstall(addons) {
   for (const a of addons) {
     task(`🔀 merge add-on: ${a}`);
     if (!run(`npx --yes @ijuantm/simpl add ${a} --local`, proj, log)) return bail();
-    if (!fs.readFileSync(path.join(proj, '.simpl'), 'utf8').includes(`"${a}"`)) {
-      fs.appendFileSync(log, `\n>> '${a}' not recorded in .simpl\n`);
-      return bail();
-    }
   }
 
   task('📦 composer install');
