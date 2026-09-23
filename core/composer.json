@@ -38,7 +38,6 @@
     "test:integration": "phpunit --configuration=config/phpunit.xml --testsuite=Integration",
     "stan": "phpstan analyse --configuration=config/phpstan.neon --memory-limit=512M",
     "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
-    "docker": "docker compose exec app composer",
     "@addon-placeholder": "db"
   },
   "keywords": [

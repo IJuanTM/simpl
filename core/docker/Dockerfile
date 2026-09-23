@@ -1,15 +1,21 @@
 ARG PHP_VERSION=8.5
 FROM php:${PHP_VERSION}-apache
 
-# ext-fileinfo ships enabled by default on this base image; the others still need building.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        git unzip libonig-dev libsodium-dev openssl \
-        default-libmysqlclient-dev default-mysql-client \
-    && docker-php-ext-install pdo pdo_mysql mbstring sodium \
+ARG UID=1000
+ARG GID=1000
+
+# PDO, mbstring, sodium and fileinfo ship compiled into this base image; only pdo_mysql needs building.
+RUN apt-get update && apt-get install -y --no-install-recommends git unzip openssl \
+    && docker-php-ext-install pdo_mysql \
     && a2enmod rewrite headers deflate expires ssl \
     && rm -rf /var/lib/apt/lists/*
 
+# Matching the host user's UID/GID keeps bind-mounted files writable by Apache and owned by the host user on Linux; -o tolerates IDs already taken in the image (e.g. macOS's GID 20).
+RUN groupmod -o -g ${GID} www-data && usermod -o -u ${UID} -g www-data www-data
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
 
 # Makes container environment variables visible to $_ENV, which database.php reads directly.
 COPY docker/php/simpl.ini /usr/local/etc/php/conf.d/simpl.ini
@@ -30,6 +36,11 @@ WORKDIR /var/www/html
 COPY composer.jso[n] composer.loc[k] ./
 COPY src/app ./src/app
 COPY src/.env ./src/.env
-RUN composer install --no-interaction --no-progress --optimize-autoloader
 
-EXPOSE 80
+# Installed as www-data so the vendor volume it seeds stays writable for later `npm run docker:composer -- install` runs.
+RUN mkdir -p src/vendor && chown -R www-data:www-data /var/www
+USER www-data
+RUN composer install --no-interaction --no-progress --optimize-autoloader
+USER root
+
+EXPOSE 80 443

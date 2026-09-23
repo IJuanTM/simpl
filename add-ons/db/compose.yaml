@@ -1,29 +1,28 @@
-@addon-insert:replace('# @addon-placeholder:environment')
+@addon-insert:before('# @addon-placeholder:environment')
       DB_SERVER: db
 @addon-end
 
-@addon-insert:replace('# @addon-placeholder:depends_on')
+@addon-insert:before('# @addon-placeholder:depends_on')
     depends_on:
       db:
         condition: service_healthy
 @addon-end
 
-@addon-insert:replace('# @addon-placeholder:volumes')
+@addon-insert:before('# @addon-placeholder:volumes')
   simpl_db_data:
 @addon-end
 
-@addon-insert:replace('# @addon-placeholder:services')
+@addon-insert:before('# @addon-placeholder:services')
   db:
     image: mariadb:${MARIADB_VERSION:-12.3}
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-}
       MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+      MARIADB_AUTO_UPGRADE: "1"
     ports:
-      - "${DB_PORT:-3307}:3306"
+      - "127.0.0.1:${DB_PORT:-3307}:3306"
     volumes:
       - simpl_db_data:/var/lib/mysql
-    networks:
-      - simpl
     healthcheck:
       test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
       interval: 5s

@@ -26,7 +26,8 @@
     "build": "run-s build:*",
     "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "build:ts": "vite build",
-    "docker:sh": "docker compose exec app bash"
+    "docker:sh": "docker compose exec -u www-data app bash",
+    "docker:composer": "docker compose exec -u www-data app composer"
   },
   "repository": {
     "type": "git",

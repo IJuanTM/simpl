@@ -91,6 +91,7 @@ DB_PASSWORD=your_password
 
 - Site/no-reply sender addresses and the mail logo URL
 - SMTP server configuration (dev/production), sent via [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+- Development SMTP server via `.env`'s `SMTP_DEV_HOST`/`SMTP_DEV_PORT` (default `localhost:25`) - with Docker, this points at a bundled [Mailpit](https://mailpit.axllent.org/) container that catches every email at `http://127.0.0.1:8025/`
 - Email templates (verification, password reset, admin-created account, contact)
 
 ## Installation
@@ -115,7 +116,7 @@ The installer will:
 
 1. Update `.env` with your database and mail credentials
 2. Run `composer install` (if needed)
-3. Run `composer migrate` (or `composer docker -- migrate` if you're using Docker) to create the database tables, then `composer seed` (`composer docker -- seed`) to populate default roles/data - this picks up auth's registered migrations/seeders automatically
+3. Run `composer migrate` (or `npm run docker:composer -- migrate` if you're using Docker) to create the database tables, then `composer seed` (`npm run docker:composer -- seed`) to populate default roles/data - this picks up auth's registered migrations/seeders automatically
 4. Manually merge `src/views/parts/layout/header.phtml` for navigation links (if needed)
 5. Run `npm run build` to compile assets
 
@@ -129,7 +130,7 @@ The installer will:
 
 Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `AuthController`'s config-driven password-policy/token surface, `FormController::validatePasswords()`,
 `AdminTableTrait`'s pagination/sort/filter logic, `RateLimitedForm`, `MailController::template`'s not-found branch, and the `PruneRateLimitCache` cron task. Once installed, run `composer test`
-(or `composer docker -- test` if you're using Docker) from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*`
+(or `npm run docker:composer -- test` if you're using Docker) from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*`
 classes) isn't covered here - that requires a real database connection.
 
 ## Requirements

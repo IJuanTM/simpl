@@ -12,9 +12,6 @@ node_modules/
 # Environment variables
 .env
 
-# Docker Compose local overrides
-docker-compose.override.yml
-
 # Locally-trusted HTTPS certs (e.g. mkcert output) - private key material, never shipped
 docker/certs/
 

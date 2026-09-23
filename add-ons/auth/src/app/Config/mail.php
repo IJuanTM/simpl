@@ -10,8 +10,8 @@ define('MAIL_CONFIG', [
 
 define('SMTP_CONFIG', [
     'development' => [
-        'host' => 'localhost',
-        'port' => 25,
+        'host' => $_ENV['SMTP_DEV_HOST'] ?? 'localhost',
+        'port' => $_ENV['SMTP_DEV_PORT'] ?? 25,
         'smtp_auth' => false,
         'encryption' => null
     ],

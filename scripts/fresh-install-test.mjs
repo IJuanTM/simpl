@@ -12,7 +12,7 @@
 // only snapshots tracked changes) and served to the installers through SIMPL_LOCAL_RELEASES.
 // The CDN's versions.json is fetched once to resolve `latest`.
 // A reachable MariaDB (root / no password) is optional; if none is found, the test:integration/migrate/seed steps are skipped.
-// Docker is tried first: a throwaway MariaDB starts via scripts/docker-compose.yml and tears down on exit.
+// Docker is tried first: a throwaway MariaDB starts via scripts/compose.yaml and tears down on exit.
 // If Docker isn't available, a local MySQL/MariaDB server on localhost:3306 is used instead (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
 // Override with SIMPL_TEST_DB=docker (never fall back to local) or SIMPL_TEST_DB=local (skip the Docker probe); default is 'auto'.
 // SIMPL_TEST_DB_PORT (default 3307) is the host port used for the Docker fallback.
@@ -50,7 +50,7 @@ const SITE_URL = `https://${DOMAIN}/`;
 const DEST = process.env.SIMPL_TEST_DEST || path.join(os.homedir(), 'Desktop', 'simpl-fresh-install-test');
 const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
 const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
-const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'docker-compose.yml');
+const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'compose.yaml');
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
 let DB = LOCAL_DB;
 let CERT = null; // {crt, key} once generated

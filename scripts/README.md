@@ -18,11 +18,11 @@ no password) is optional; if it is down, the test:integration/migrate/seed steps
 skipped.
 
 **DB resolution:** Docker is tried first - the script starts a throwaway MariaDB via
-`scripts/docker-compose.yml` (mapped to host port `3307` by default) and tears it
+`scripts/compose.yaml` (mapped to host port `3307` by default) and tears it
 down again on exit, so a full `--all` run works with no local MariaDB install at
 all. If Docker isn't available, it falls back to a local MySQL/MariaDB server on
 `localhost:3306` (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
-This is separate from the `docker-compose.yml`/`add-ons/db/docker-compose.yml` pair
+This is separate from the `compose.yaml`/`add-ons/db/compose.yaml` pair
 that ships to installed projects (see
 [`core/docker/README.md`](../core/docker/README.md)) - this one is maintainer-only
 and only ever runs the `db` service.

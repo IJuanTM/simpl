@@ -113,7 +113,7 @@ check_yaml_marker_indentation() {
       next_indent=$(sed -E 's/[^ ].*$//' <<< "$line")
       awaiting=0
 
-      target_hit=$(git grep --cached -F -n -- "$search_text" -- '*.yml' '*.yaml' 2>/dev/null | grep -v "^$file:" | head -n1) || true
+      target_hit=$(git grep --cached -F -n -- "$search_text" -- '*.yml' '*.yaml' 2>/dev/null | grep -v "^$file:" | grep -v "@addon-insert" | head -n1) || true
       [ -z "$target_hit" ] && continue
 
       target_indent=$(cut -d: -f3- <<< "$target_hit" | sed -E 's/[^ ].*$//')

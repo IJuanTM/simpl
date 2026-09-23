@@ -1,0 +1,27 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.5}
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    # Rerun (idempotent) at container start: app-key.php because the bind mount below hides the key already generated at build time behind the host's own unkeyed src/.env; the cert copy because a real cert dropped into docker/certs/ after the image was built still needs to land where Apache actually looks; the vendor chown because the named volume keeps the owner it was first seeded with, which a later UID/GID change would leave unwritable for www-data.
+    command: sh -c "if [ -f docker/certs/simpl.crt ] && [ -f docker/certs/simpl.key ]; then cp docker/certs/simpl.crt /etc/apache2/ssl/simpl.crt && cp docker/certs/simpl.key /etc/apache2/ssl/simpl.key; fi && chown -R www-data:www-data src/vendor && php src/app/Scripts/app-key.php && apache2-foreground"
+    # Loopback-only: Docker's published ports bypass host firewalls (ufw/firewalld) and would otherwise expose the dev site to the whole network.
+    ports:
+      - "127.0.0.1:${APP_PORT:-80}:80"
+      - "127.0.0.1:${APP_SSL_PORT:-443}:443"
+    environment:
+      DEV: ${DEV:-true}
+      # @addon-placeholder:environment
+    volumes:
+      - .:/var/www/html
+      - simpl_vendor:/var/www/html/src/vendor
+    # @addon-placeholder:depends_on
+  # @addon-placeholder:services
+
+volumes:
+  simpl_vendor:
+  # @addon-placeholder:volumes
