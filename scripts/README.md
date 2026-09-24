@@ -11,7 +11,8 @@ git tag v2.0.0
 node scripts/release.mjs 2.0.0
 ```
 
-It builds `core.zip` and one zip per folder in `add-ons/` from the `v<version>` tag with `git archive`, so only committed files are released. It then adds the version to `versions.json` with the add-on list taken from `add-ons/`, and marks it as latest. The version must directly follow the latest one on the CDN (e.g. after 2.0.0: 2.0.1, 2.1.0 or 3.0.0), or be the latest one itself to replace it. It also stops if the version in `core/.simpl`, `core/composer.json`, `core/package.json` or `SIMPL_VERSION` in `core/src/.env` doesn't match, and warns if the tag isn't pushed yet. It shows what it built and asks before uploading anything over SSH. Answer no to keep the files locally for inspection.
+It builds `core.zip` and one zip per folder in `add-ons/` from the `v<version>` tag with `git archive`, so only committed files are released. It then adds the version to `versions.json` with the add-on list taken from `add-ons/`, and marks it as latest. The version must directly follow the latest one on the CDN (e.g. after 2.0.0: 2.0.1, 2.1.0 or 3.0.0), or be the latest one itself to replace it. It also stops if the version in `core/.simpl`, `core/composer.json`, `core/package.json` or `SIMPL_VERSION` in `core/src/.env` doesn't match, or if `SIMPL_LAST_UPDATE` in `core/src/.env` doesn't match the date of the version's entry in the root `README.md`. It warns if that date isn't today or the tag isn't pushed yet. It shows what it built and asks before uploading anything over SSH. Answer no to
+keep the files locally for inspection.
 
 The version folder is uploaded next to the live one and then swapped in, so releasing the same version again replaces it cleanly. `versions.json` is uploaded last, so it never lists a version whose zips aren't there yet.
 

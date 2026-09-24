@@ -51,14 +51,20 @@ try {
 
 // Installed projects read their version from these files, so a forgotten bump would break `simpl add` for them.
 const show = (file) => git('show', `${tag}:${file}`);
+const env = show('core/src/.env');
 const stamped = {
   'core/.simpl': JSON.parse(show('core/.simpl')).version,
   'core/composer.json': JSON.parse(show('core/composer.json')).version,
   'core/package.json': JSON.parse(show('core/package.json')).version,
-  'core/src/.env': show('core/src/.env').match(/^SIMPL_VERSION=(.*)$/m)?.[1].trim(),
+  'core/src/.env': env.match(/^SIMPL_VERSION=(.*)$/m)?.[1].trim(),
 };
 const mismatched = Object.entries(stamped).filter(([, v]) => v !== version);
 if (mismatched.length) fail(`${tag} has the wrong version in: ${mismatched.map(([file, v]) => `${file} (${v})`).join(', ')}`);
+
+const releaseDate = env.match(/^SIMPL_LAST_UPDATE=(.*)$/m)?.[1].trim();
+const changelogDate = show('README.md').match(new RegExp(`^#### Version ${version.replaceAll('.', '\\.')} \\((.+)\\)$`, 'm'))?.[1];
+if (!changelogDate) fail(`${tag} has no "#### Version ${version} (<date>)" entry in README.md`);
+if (releaseDate !== changelogDate) fail(`${tag} has a different release date in core/src/.env SIMPL_LAST_UPDATE (${releaseDate}) than in README.md (${changelogDate})`);
 
 const addons = git('ls-tree', '-d', '--name-only', `${tag}:add-ons`).split('\n').filter(Boolean);
 const out = fs.mkdtempSync(path.join(os.tmpdir(), `simpl-release-${version}-`));
@@ -80,6 +86,9 @@ console.log(`  Release ${version} from ${tag} (${git('rev-parse', '--short', `${
 console.log(`  • core.zip (${kb('core.zip')})`);
 for (const name of addons) console.log(`  • add-ons/${name}.zip (${kb(`add-ons/${name}.zip`)})`);
 console.log('  • versions.json');
+// sv-SE formats as YYYY-MM-DD in local time, unlike toISOString() which is UTC.
+const today = new Date().toLocaleDateString('sv-SE');
+if (releaseDate !== today) console.log(`\n  ⚠ The release date is ${releaseDate}, not today (${today})`);
 try {
   if (!git('ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) console.log(`\n  ⚠ ${tag} is not pushed to GitHub yet: git push origin ${tag}`);
 } catch {

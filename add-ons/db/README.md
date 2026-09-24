@@ -11,7 +11,7 @@ The dividing line: this add-on owns the *generic engine*, never domain-specific 
 - **`DatabaseMigrator`** - runs migration classes registered via `DatabaseMigrator::register(SomeMigration::class)`, tracking what's already run in its own `migrations` table. Add an add-on's own migrations from its own Config file, in dependency order.
 - **`DatabaseSeeder`** - same pattern for seeders, via `DatabaseSeeder::register(SomeSeeder::class)`.
 - **`Scheduler`** / **`ScheduledTask`** - register a named, callable task with a cron expression or interval (`Scheduler::task('name', fn() => ...)->daily()`), then `Scheduler::run()` executes whatever's due, persisting run history in its own `scheduler_runs` table (registered as this add-on's own migration - it's scheduler bookkeeping, not domain data).
-- **CLI scripts** (wired up as composer commands on install): `composer migrate` / `migrate:fresh` / `migrate:rollback`, `composer seed` / `seed:fresh`, `composer cron:test` (run them with `simpl migrate`, `simpl seed:fresh`, ... and `simpl composer cron:test`, inside the Docker `app` container when the stack is up).
+- **CLI scripts** (wired up as composer commands on install): `composer migrate` / `migrate:fresh` / `migrate:rollback`, `composer seed` / `seed:fresh`, `composer cron:test`, `composer test:integration` (run them with `simpl migrate`, `simpl seed:fresh`, `simpl test:integration`, ... and `simpl composer cron:test`, inside the Docker `app` container when the stack is up).
 
 ## Configuration
 

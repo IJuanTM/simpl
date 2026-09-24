@@ -1,4 +1,5 @@
 @addon-insert:replace('"@addon-placeholder": "db"')
+"test:integration": "phpunit --configuration=config/phpunit.xml --testsuite=Integration",
 "migrate": "php src/app/Scripts/migrate.php",
 "migrate:fresh": "php src/app/Scripts/migrate.php --fresh",
 "migrate:rollback": "php src/app/Scripts/migrate.php --rollback",

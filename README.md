@@ -319,7 +319,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 ### Version 2.0
 
-#### Version 2.0.0 (2026-09-06)
+#### Version 2.0.0 (2026-09-25)
 
 * Now requires PHP 8.5
 * Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
@@ -374,6 +374,9 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 * [PHP dotenv](https://github.com/vlucas/phpdotenv/)
 * [PHPMailer](https://github.com/PHPMailer/PHPMailer/)
+* [OTPHP](https://github.com/Spomky-Labs/otphp/) (auth add-on)
+* [BaconQrCode](https://github.com/Bacon/BaconQrCode/) (auth add-on)
+* [WebAuthn Framework](https://github.com/web-auth/webauthn-framework/) (auth add-on)
 
 ### Node packages
 
