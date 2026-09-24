@@ -15,7 +15,20 @@ class Console
     private const int BOX_WIDTH = 62;
 
     /**
-     * Prints a bordered box containing $title.
+     * Prints the "Simpl - $title ($detail)" box every script opens with.
+     *
+     * @param string      $title
+     * @param string|null $detail
+     *
+     * @return void
+     */
+    public static function titleBox(string $title, ?string $detail = null): void
+    {
+        self::box('Simpl ' . Ansi::wrap('-', Ansi::DIM) . ' ' . Ansi::wrap($title, Ansi::BLUE) . ($detail !== null ? ' ' . Ansi::wrap("($detail)", Ansi::DIM) : ''));
+    }
+
+    /**
+     * Prints a bordered box containing $title, which may contain ANSI styling.
      *
      * @param string $title
      *
@@ -24,11 +37,13 @@ class Console
     public static function box(string $title): void
     {
         $pad = self::pad();
-        $title = self::fit($title, self::BOX_WIDTH - self::LEFT_PADDING);
-        $spaces = str_repeat(' ', self::BOX_WIDTH - self::LEFT_PADDING - mb_strlen($title));
+        $plain = preg_replace('/\e\[[0-9;]*m/', '', $title);
+        // A title that has to be cut loses its styling, since cutting through an escape sequence would corrupt it.
+        if (mb_strlen($plain) > self::BOX_WIDTH - 2) $title = $plain = self::fit($plain, self::BOX_WIDTH - 2);
+        $spaces = str_repeat(' ', self::BOX_WIDTH - 2 - mb_strlen($plain));
         self::line();
         self::out($pad . '╭' . str_repeat('─', self::BOX_WIDTH) . '╮');
-        self::out($pad . '│' . $pad . self::styled($title, Ansi::BOLD) . $spaces . '│');
+        self::out($pad . '│ ' . self::styled($title, Ansi::BOLD) . $spaces . ' │');
         self::out($pad . '╰' . str_repeat('─', self::BOX_WIDTH) . '╯');
     }
 
@@ -94,7 +109,20 @@ class Console
     }
 
     /**
-     * Prints a blank line followed by a short dim horizontal divider.
+     * Formats "$count $word", pluralizing $word when $count isn't 1.
+     *
+     * @param int    $count
+     * @param string $word
+     *
+     * @return string
+     */
+    public static function plural(int $count, string $word): string
+    {
+        return self::styled((string)$count, Ansi::BOLD) . " $word" . ($count !== 1 ? 's' : '');
+    }
+
+    /**
+     * Prints a short dim horizontal divider with a blank line on either side.
      *
      * @return void
      */
@@ -102,6 +130,7 @@ class Console
     {
         self::line();
         self::out(self::pad() . str_repeat('─', 16), Ansi::DIM);
+        self::line();
     }
 
     /**

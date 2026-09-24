@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\Database\DatabaseSeeder;
+use app\Enums\Ansi;
 use app\Utils\Console;
 
 /* ---------------------------------------------------------------- */
@@ -15,7 +16,7 @@ require_once 'start.php';
 // Refuse to run outside of development to avoid seeding those into a production database.
 if (!DEV) Console::fail('Seeding is disabled outside of development. Set DEV=true to seed.');
 
-Console::box('Seeding Database: ' . DB_NAME);
+Console::titleBox('Seed database', DB_NAME);
 Console::line();
 
 if (in_array('--fresh', $_SERVER['argv'] ?? [], true)) {
@@ -41,6 +42,5 @@ try {
 }
 
 Console::divider();
-Console::line();
-Console::success("Database seeded successfully!", true);
+Console::success(Console::styled('Database seeded!', Ansi::BOLD, Ansi::GREEN), true);
 Console::line();

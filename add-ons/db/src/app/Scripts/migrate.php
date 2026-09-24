@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use app\Database\DatabaseMigrator;
+use app\Enums\Ansi;
 use app\Utils\Console;
 
 /* ---------------------------------------------------------------- */
@@ -11,7 +12,7 @@ require_once 'start.php';
 
 /* ---------------------------------------------------------------- */
 
-Console::box('Migrating Database: ' . DB_NAME);
+Console::titleBox('Migrate database', DB_NAME);
 Console::line();
 
 if (in_array('--rollback', $_SERVER['argv'] ?? [], true)) {
@@ -24,14 +25,13 @@ if (in_array('--rollback', $_SERVER['argv'] ?? [], true)) {
     }
 
     Console::divider();
-    Console::line();
 
-    if (empty($rolled)) Console::info("Nothing to roll back.");
+    if (empty($rolled)) Console::info("Nothing to roll back");
     else {
-        foreach ($rolled as $migration) Console::warn("↩ $migration");
+        foreach ($rolled as $migration) Console::item($migration);
 
         Console::line();
-        Console::success("Rolled back " . count($rolled) . " migration(s)!", true);
+        Console::success(Console::styled('Rolled back ' . Console::plural(count($rolled), 'migration') . '!', Ansi::BOLD, Ansi::GREEN), true);
     }
 
     Console::line();
@@ -61,14 +61,13 @@ try {
 }
 
 Console::divider();
-Console::line();
 
-if (empty($applied)) Console::info("Nothing to migrate.");
+if (empty($applied)) Console::info("Nothing to migrate");
 else {
     foreach ($applied as $migration) Console::success($migration);
 
     Console::line();
-    Console::success("Migrated " . count($applied) . " migration(s)!", true);
+    Console::success(Console::styled('Ran ' . Console::plural(count($applied), 'migration') . '!', Ansi::BOLD, Ansi::GREEN), true);
 }
 
 Console::line();

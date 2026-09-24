@@ -81,14 +81,23 @@ const divider = () => {
   line();
 };
 const heading = (m) => out(PAD + styled(m, C.bold), C.blue);
+const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
 const box = (title) => {
-  const plain = stripAnsi(title);
-  const shown = plain.length > BOX_W - 2 ? plain.slice(0, BOX_W - 5) + '...' : plain;
+  const parts = title.split(/(\x1b\[[0-9;]*m)/);
+  const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
+  let shown = title, remaining = BOX_W - 5;
+  if (length > BOX_W - 2) shown = parts.map((part, i) => {
+    if (i % 2) return part;
+    const kept = part.slice(0, remaining);
+    remaining -= kept.length;
+    return kept;
+  }).join('') + '...';
   line();
   out(PAD + '╭' + '─'.repeat(BOX_W) + '╮');
-  out(PAD + '│ ' + styled(title.replace(plain, shown), C.bold) + ' '.repeat(BOX_W - 2 - shown.length) + ' │');
+  out(PAD + '│ ' + styled(shown, C.bold) + ' '.repeat(Math.max(0, BOX_W - 2 - length)) + ' │');
   out(PAD + '╰' + '─'.repeat(BOX_W) + '╯');
 };
+const titleBox = (title, detail) => box(`Simpl ${C.dim}-${C.reset} ${C.blue}${title}${C.reset}` + (detail ? ` ${C.dim}(${detail})${C.reset}` : ''));
 const die = (msg) => {
   line();
   error(msg);
@@ -103,11 +112,11 @@ for (const a of process.argv.slice(2)) {
     const body = fs.readFileSync(SELF, 'utf8').split('\n').slice(1);
     console.log(body.slice(0, body.findIndex((l) => !l.startsWith('//'))).join('\n'));
     process.exit(0);
-  } else die(`unknown option: ${a}`);
+  } else die(`Unknown option: ${a}`);
 }
 
 for (const bin of ['php', 'node', 'npm', 'npx', 'composer', 'git']) {
-  if (spawnSync(`${bin} --version`, {shell: true, stdio: 'ignore'}).status !== 0) die(`missing required tool: ${bin}`);
+  if (spawnSync(`${bin} --version`, {shell: true, stdio: 'ignore'}).status !== 0) die(`Missing required tool: ${bin}`);
 }
 
 function addonDeps() {
@@ -138,7 +147,7 @@ function topo(deps, roots) {
 
 const DEPS = addonDeps();
 const ADDONS = topo(DEPS);
-if (!ADDONS.length) die(`no add-ons found under ${REPO}/add-ons`);
+if (!ADDONS.length) die(`No add-ons found under ${REPO}/add-ons`);
 
 function pdoUp(db) {
   return spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
@@ -182,9 +191,7 @@ async function pick() {
   let cur = 0, drawn = 0;
   const o = process.stdout;
 
-  line();
-  out(PAD + styled('Select what to install', C.bold), C.blue);
-  line();
+  heading('Select what to install:');
 
   const draw = () => {
     if (drawn) o.write(`\x1b[${drawn}A`);
@@ -248,9 +255,9 @@ async function pick() {
       if (k === '\x03' || k === 'q' || k === 'Q' || k === '\x1b') {
         restore();
         line();
-        info('cancelled');
+        info('Cancelled');
         line();
-        process.exit(0);
+        process.exit(k === '\x03' ? 130 : 0);
       } else if (k === '\x1b[A') cur = Math.max(0, cur - 1);
       else if (k === '\x1b[B') cur = Math.min(items.length - 1, cur + 1);
       else if (k === ' ' && cur !== 0) on.has(cur) ? on.delete(cur) : on.add(cur);
@@ -301,16 +308,20 @@ function runInstall(addons) {
   const log = path.join(DEST, 'install.log');
   const dbname = addons.includes('db') ? 'simpl-test' : null;
   fs.writeFileSync(log, '');
-  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}${SITE_URL}${C.reset}`);
+  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}(${SITE_URL})${C.reset}`);
   line();
 
+  const step = (m) => {
+    task(m);
+    line();
+  };
   const bail = () => {
-    error(`failed - log: ${log}`);
+    error(`Failed, see the log: ${log}`);
     stripAnsi(fs.readFileSync(log, 'utf8')).split('\n').slice(-18).forEach((l) => out(PAD + C.dim + '| ' + l + C.reset));
     return false;
   };
 
-  task('📦 scaffold via simpl new');
+  step(`📦 Scaffolding ${C.dim}(simpl new)${C.reset}...`);
   if (!run(`npx --yes @ijuantm/simpl new --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
 
   if (CERT) {
@@ -322,13 +333,13 @@ function runInstall(addons) {
 
   const hasSeedable = addons.some((a) => a !== 'db');
   for (const a of addons) {
-    task(`🔀 merge add-on: ${a}`);
+    step(`🔀 Adding the ${C.cyan}${a}${C.reset} add-on ${C.dim}(simpl add)${C.reset}...`);
     if (!run(`npx --yes @ijuantm/simpl add ${a} --local`, proj, log)) return bail();
   }
 
-  task('📦 composer install');
+  step('📦 Running composer install...');
   if (!run('composer install --no-interaction --no-progress', proj, log)) return bail();
-  task('🧪 composer test');
+  step('🧪 Running composer test...');
   if (!run('composer test', proj, log)) return bail();
 
   if (dbname) {
@@ -340,26 +351,26 @@ function runInstall(addons) {
       // DB.host as a trailing ";port=..." DSN clause instead (see the Docker block above).
       if (DB.host !== 'localhost') env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${DB.host}`);
       fs.writeFileSync(envPath, env);
-      task('🧪 composer test:integration');
+      step('🧪 Running composer test:integration...');
       if (!run('composer test:integration', proj, log)) return bail();
-      task(`💾 composer migrate:fresh ${C.dim}(db: ${dbname})${C.reset}`);
+      step(`💾 Running composer migrate:fresh ${C.dim}(db: ${dbname})${C.reset}...`);
       if (!run('composer migrate:fresh', proj, log)) return bail();
       if (hasSeedable) {
-        task('🌱 composer seed:fresh');
+        step('🌱 Running composer seed:fresh...');
         if (!run('composer seed:fresh', proj, log)) return bail();
       }
     } else {
-      warn('MariaDB not reachable - skipped test:integration/migrate/seed');
+      warn('MariaDB not reachable, skipped test:integration/migrate/seed');
+      line();
     }
   }
 
-  task(`🎨 npm install ${C.dim}(sass + vite build)${C.reset}`);
+  step(`🎨 Running npm install ${C.dim}(sass + vite build)${C.reset}...`);
   if (!run('npm install --no-audit --no-fund', path.join(proj, 'src'), log)) return bail();
 
   const m = /OK \((\d+) tests, (\d+) assertions\)/.exec(fs.readFileSync(log, 'utf8'));
-  line();
-  success(m ? `OK (${m[1]} tests, ${m[2]} assertions)` : 'tests ran', true);
-  if (dbname && DB_UP) item(`database: ${C.cyan}${dbname}${C.reset}`);
+  success(m ? `OK (${m[1]} tests, ${m[2]} assertions)` : 'Tests ran', true);
+  if (dbname && DB_UP) item(`Database: ${C.cyan}${dbname}${C.reset}`);
   item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${proj}${C.reset}`);
   return true;
 }
@@ -435,18 +446,20 @@ function writeVhostConf() {
   return conf;
 }
 
-box('Simpl Fresh Install Test');
+titleBox('Fresh install test');
+line();
 if (!mode) mode = process.stdin.isTTY ? 'pick' : 'all';
 
 const addons = mode === 'all' ? ADDONS : topo(DEPS, await pick());
+if (mode === 'pick') divider();
 
 let VERSION;
 try {
   VERSION = await resolveLatest();
 } catch (e) {
-  die(`could not reach ${CDN_VERSIONS}: ${e.message}`);
+  die(`Could not reach ${CDN_VERSIONS}: ${e.message}`);
 }
-if (!VERSION) die(`could not resolve 'latest' from ${CDN_VERSIONS}`);
+if (!VERSION) die(`Could not resolve 'latest' from ${CDN_VERSIONS}`);
 
 const BUILD = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
 const RELEASES_ROOT = path.join(BUILD, 'releases');
@@ -463,17 +476,15 @@ fs.rmSync(DEST, {recursive: true, force: true});
 fs.mkdirSync(DEST, {recursive: true});
 
 const needZip = new Set(addons);
-divider();
-heading(`Building ${VERSION} release zips`);
+task(`🧰 Building ${VERSION} release zips...`);
 line();
-task('🧰 core' + [...needZip].map((a) => ` + ${a}`).join(''));
 try {
   buildZip('core', path.join(RELEASES, 'core.zip'));
   for (const a of ADDONS) if (needZip.has(a)) buildZip(`add-ons/${a}`, path.join(RELEASES, 'add-ons', `${a}.zip`));
 } catch (e) {
-  die(`failed to build release zip: ${e.message}`);
+  die(`Failed to build release zip: ${e.message}`);
 }
-success(`Built ${1 + needZip.size} zip${needZip.size ? 's' : ''}`);
+success(`Built ${plural(1 + needZip.size, 'zip')} ${C.dim}(${['core', ...needZip].join(', ')})${C.reset}`);
 (DB_UP ? info : warn)(DB_UP
   ? `MariaDB reachable${dockerDbStarted ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`
   : 'MariaDB not reachable (test:integration/migrate/seed will be skipped)');
@@ -482,33 +493,32 @@ if (mkcertAvailable()) {
   CERT = writeMkcert();
   (CERT ? info : warn)(CERT
     ? 'mkcert certificate generated (covers simpl.test + localhost)'
-    : 'mkcert failed to generate a certificate - Docker HTTPS will use the untrusted self-signed one');
+    : 'mkcert failed to generate a certificate, Docker HTTPS will use the untrusted self-signed one');
 } else {
-  warn('mkcert not found on PATH - Docker HTTPS will use the untrusted self-signed cert (see core/docker/README.md)');
+  warn('mkcert not found on PATH, Docker HTTPS will use the untrusted self-signed cert (see core/docker/README.md)');
 }
 
 const ok = runInstall(addons);
 
 const conf = writeVhostConf();
 divider();
-heading('Summary');
-line();
+heading('Summary:');
 (ok ? success : error)(`${DOMAIN.padEnd(16)} ${C.dim}${SITE_URL}${C.reset}`);
 line();
-heading('Details');
-item(`install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
-item(`docker:  ${C.dim}run \`docker compose up -d --build\` inside the install to browse it that way instead${C.reset}`);
-item(`vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
-item(`cert:    ${C.dim}${CERT ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated - install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
+heading('Details:');
+item(`Install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
+item(`Docker:  ${C.dim}run \`docker compose up -d --build\` inside the install to browse it that way instead${C.reset}`);
+item(`Vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
+item(`Cert:    ${C.dim}${CERT ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated, install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
 const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts();
 if (hostsWritten) {
-  item(`hosts file: added 1 line to ${hostsFile}`);
+  item(`Hosts:   ${C.dim}added 1 line to ${hostsFile}${C.reset}`);
   out(PAD + PAD + C.dim + `127.0.0.1  ${DOMAIN}` + C.reset);
 } else if (hostsFailed) {
-  warn(`could not write ${hostsFile} (run this elevated, or add this line yourself):`);
+  warn(`Could not write ${hostsFile} (run this elevated, or add this line yourself):`);
   out(PAD + PAD + C.dim + `127.0.0.1  ${DOMAIN}` + C.reset);
 } else {
-  item('hosts file: already present');
+  item(`Hosts:   ${C.dim}already present${C.reset}`);
 }
 line();
 if (!ok) error(styled('Installation failed', C.bold, C.red), true);

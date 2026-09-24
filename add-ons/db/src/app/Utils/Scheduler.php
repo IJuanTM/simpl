@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\Utils;
 
 use app\Database\DB;
+use app\Enums\Ansi;
 use PDOException;
 use Throwable;
 
@@ -24,10 +25,7 @@ class Scheduler
      */
     public static function run(bool $test = false): int
     {
-        $title = 'Scheduler - ' . date('Y-m-d H:i:s');
-        if ($test) $title .= ' [TEST]';
-
-        Console::box($title);
+        Console::titleBox('Scheduler', date('Y-m-d H:i:s') . ($test ? ', test run' : ''));
         Console::line();
 
         $ran = 0;
@@ -45,6 +43,7 @@ class Scheduler
 
             if (!$test && !$task->isDue($lastRun)) continue;
 
+            if ($ran > 0) Console::line();
             Console::task("⚙️ Running: $task->name...");
             Console::line();
 
@@ -82,18 +81,15 @@ class Scheduler
                 DB::update(UPDATE: 'scheduler_runs', SET: $set, WHERE: $where);
             }
 
-            Console::line();
             if ($status === 'success') Console::success("Completed in {$duration}ms");
-            Console::line();
             $ran++;
         }
 
         if ($ran === 0) Console::info("No tasks due");
 
         Console::divider();
-        Console::line();
-        if ($failed > 0) Console::error("Scheduler finished with $failed failed task(s).");
-        else Console::success("Scheduler completed!", true);
+        if ($failed > 0) Console::error(Console::styled('Scheduler finished with ' . Console::plural($failed, 'failed task'), Ansi::BOLD, Ansi::RED), true);
+        else Console::success(Console::styled('Scheduler completed!', Ansi::BOLD, Ansi::GREEN), true);
         Console::line();
 
         return $failed;

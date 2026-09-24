@@ -37,6 +37,35 @@ final class ConsoleTest extends TestCase
         $this->assertStringNotContainsString($longTitle, $output);
     }
 
+    public function testBoxIgnoresAnsiCodesWhenPaddingTheTitle(): void
+    {
+        // Arrange
+        $strip = static fn(string $s): string => preg_replace('/\e\[[0-9;]*m/', '', $s);
+
+        // Act
+        $plain = $this->captured(static fn() => Console::box('My Title'));
+        $styled = $this->captured(static fn() => Console::box(Console::styled('My Title', Ansi::CYAN)));
+
+        // Assert
+        $this->assertSame($strip($plain), $strip($styled));
+    }
+
+    public function testTitleBoxShowsTheTitleAndDetail(): void
+    {
+        // Act
+        $output = preg_replace('/\e\[[0-9;]*m/', '', $this->captured(static fn() => Console::titleBox('Migrate database', 'simpl')));
+
+        // Assert
+        $this->assertStringContainsString('Simpl - Migrate database (simpl)', $output);
+    }
+
+    public function testPluralAddsAnSOnlyWhenTheCountIsNotOne(): void
+    {
+        // Act + Assert
+        $this->assertSame("\x1b[1m1\x1b[0m file", Console::plural(1, 'file'));
+        $this->assertSame("\x1b[1m2\x1b[0m files", Console::plural(2, 'file'));
+    }
+
     public function testLineOutputsTheMessageWithATrailingNewline(): void
     {
         // Act + Assert

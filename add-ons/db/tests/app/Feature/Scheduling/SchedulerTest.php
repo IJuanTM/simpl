@@ -34,7 +34,7 @@ final class SchedulerTest extends TestCase
         $output = $this->captured(static fn() => Scheduler::run(true));
 
         // Assert
-        $this->assertStringContainsString('[TEST]', $output);
+        $this->assertStringContainsString('test run', $output);
     }
 
     public function testTaskRegistersAScheduledTaskUnderTheGivenName(): void

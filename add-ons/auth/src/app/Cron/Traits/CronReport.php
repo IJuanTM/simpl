@@ -12,7 +12,7 @@ use app\Utils\Console;
 trait CronReport
 {
     /**
-     * Prints "<verb> <count> <noun>[s]" when anything happened, otherwise $nothingMessage, then a blank line.
+     * Prints "<verb> <count> <noun>[s]" when anything happened, otherwise $nothingMessage.
      *
      * @param int    $count
      * @param string $verb           Past-tense action, e.g. 'Deactivated'
@@ -26,7 +26,5 @@ trait CronReport
         Console::info($count > 0
             ? "$verb $count $noun" . ($count !== 1 ? 's' : '')
             : $nothingMessage);
-
-        Console::line();
     }
 }

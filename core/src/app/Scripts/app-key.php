@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use app\Enums\Ansi;
 use app\Utils\Console;
 use Random\RandomException;
 
@@ -35,7 +36,7 @@ $env = $hasLine
 
 if (file_put_contents($envPath, $env) === false) Console::fail('Could not write APP_KEY to .env');
 
-Console::box('Application key');
+Console::titleBox('Application key');
 Console::line();
-Console::success($fresh ? 'APP_KEY regenerated in .env' : 'APP_KEY written to .env', true);
+Console::success(Console::styled($fresh ? 'APP_KEY regenerated in .env!' : 'APP_KEY written to .env!', Ansi::BOLD, Ansi::GREEN), true);
 Console::line();

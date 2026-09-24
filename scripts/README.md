@@ -9,7 +9,12 @@ Publishes a tagged version to the CDN.
 ```bash
 git tag v2.0.0
 node scripts/release.mjs 2.0.0
+node scripts/release.mjs          # pick the next patch, minor or major version from a list
 ```
+
+Without a version it shows the next patch, minor and major version after the latest release on the CDN. Answer with a number or type a version.
+
+Append `a` or `b` for an alpha or beta (e.g. `2.1.0a`, or `2a` in the list). A pre-release has to follow the latest stable release the same way, and an alpha can't come after a beta of the same version. Pre-releases are marked `is-pre-release` in `versions.json` and never become latest, so `simpl new` keeps using the latest stable release unless a pre-release is asked for by name. The tag, the version stamps and the changelog entry all use the full version, e.g. `v2.1.0a` and `#### Version 2.1.0a (<date>)`.
 
 It builds `core.zip` and one zip per folder in `add-ons/` from the `v<version>` tag with `git archive`, so only committed files are released. It then adds the version to `versions.json` with the add-on list taken from `add-ons/`, and marks it as latest. The version must directly follow the latest one on the CDN (e.g. after 2.0.0: 2.0.1, 2.1.0 or 3.0.0), or be the latest one itself to replace it. It also stops if the version in `core/.simpl`, `core/composer.json`, `core/package.json` or `SIMPL_VERSION` in `core/src/.env` doesn't match, or if `SIMPL_LAST_UPDATE` in `core/src/.env` doesn't match the date of the version's entry in the root `README.md`. It warns if that date isn't today or the tag isn't pushed yet. It shows what it built and asks before uploading anything over SSH. Answer no to
 keep the files locally for inspection.
