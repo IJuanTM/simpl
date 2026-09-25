@@ -163,16 +163,18 @@ class Console
     }
 
     /**
-     * Prints $message as an error and exits with status 1.
+     * Prints $message as an error, followed by any $hints as info lines, and exits with status 1.
      *
      * @param string $message
+     * @param string ...$hints Full sentences telling the user how to fix it.
      *
      * @return never
      */
-    public static function fail(string $message): never
+    public static function fail(string $message, string ...$hints): never
     {
         self::line();
         self::error($message);
+        foreach ($hints as $hint) self::info($hint);
         self::line();
         exit(1);
     }
@@ -191,6 +193,18 @@ class Console
     }
 
     /**
+     * Prints $message as a dim info line, prefixed with a cyan circle.
+     *
+     * @param string $message
+     *
+     * @return void
+     */
+    public static function info(string $message): void
+    {
+        self::prefixed('◌', Ansi::CYAN, $message, dim: true);
+    }
+
+    /**
      * Prints $message as a warning line, prefixed with a yellow warning sign.
      *
      * @param string $message
@@ -201,18 +215,6 @@ class Console
     public static function warn(string $message, bool $bold = false): void
     {
         self::prefixed('⚠', Ansi::YELLOW, $message, bold: $bold);
-    }
-
-    /**
-     * Prints $message as a dim info line, prefixed with a cyan circle.
-     *
-     * @param string $message
-     *
-     * @return void
-     */
-    public static function info(string $message): void
-    {
-        self::prefixed('◌', Ansi::CYAN, $message, dim: true);
     }
 
     /**

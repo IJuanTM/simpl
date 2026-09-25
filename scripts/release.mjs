@@ -1,8 +1,8 @@
 #!/usr/bin/env node
+import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {execFileSync} from 'node:child_process';
 import {createInterface} from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
 
@@ -14,48 +14,50 @@ const VERSION = /^(\d+)\.(\d+)\.(\d+)([ab]?)$/;
 const PRE_RELEASES = {a: 'alpha', b: 'beta'};
 const RANK = {a: 0, b: 1, '': 2};
 
-// Output helpers, matching the Simpl CLI's style.
-const C = {
+// Output helpers, copied from the Simpl CLI's lib/ui.js.
+const CODES = {
   reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
-  cyan: '\x1b[36m', blue: '\x1b[34m', bold: '\x1b[1m', dim: '\x1b[2m',
+  cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m',
 };
+const C = Object.fromEntries(Object.entries(CODES).map(([name, code]) => [name, process.stdout.hasColors?.() ? code : '']));
+const BOX_WIDTH = 62;
 const PAD = '  ';
-const BOX_W = 62;
 const interactive = Boolean(process.stdin.isTTY);
-const styled = (m, ...s) => s.join('') + m + C.reset;
-const line = (m = '') => console.log(m);
-const out = (m, color = C.reset) => console.log(color + m + C.reset);
-const prefixed = (sym, color, m, bold = false, dim = false) =>
-  out(PAD + color + sym + C.reset + ' ' + (bold ? styled(m, C.bold) : dim ? styled(m, C.dim) : m));
-const success = (m, bold = false) => prefixed('✓', C.green, m, bold);
-const error = (m, bold = false) => prefixed('✕', C.red, m, bold);
-const warn = (m) => prefixed('⚠', C.yellow, m);
-const info = (m) => prefixed('◌', C.cyan, m, false, true);
-const task = (m) => out(PAD + m);
-const item = (m, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(m, C.dim) : m));
-const divider = () => {
-  line();
-  out(PAD + '─'.repeat(16), C.dim);
-  line();
-};
-const heading = (m) => out(PAD + styled(m, C.bold), C.blue);
+const styled = (msg, ...styles) => styles.join('') + msg + C.reset;
+const line = (msg = '') => console.log(msg);
+const out = (msg, color = C.reset) => console.log(color + msg + C.reset);
+const prefixed = (symbol, color, msg, bold = false, dim = false) => out(PAD + color + symbol + C.reset + ' ' + (bold ? styled(msg, C.bold) : dim ? styled(msg, C.dim) : msg));
+const success = (msg, bold = false) => prefixed('✓', C.green, msg, bold);
+const error = (msg, bold = false) => prefixed('✕', C.red, msg, bold);
+const warn = (msg, bold = false) => prefixed('⚠', C.yellow, msg, bold);
+const info = (msg) => prefixed('◌', C.cyan, msg, false, true);
+const task = (msg) => out(PAD + msg);
+const item = (msg, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(msg, C.dim) : msg));
+const heading = (msg) => out(PAD + styled(msg, C.bold), C.blue);
 const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
+const row = (left, right = '') => out(PAD + styled(right ? left.padEnd(30) : left, C.dim) + right);
 const box = (title) => {
   const parts = title.split(/(\x1b\[[0-9;]*m)/);
   const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
-  let shown = title, remaining = BOX_W - 5;
-  if (length > BOX_W - 2) shown = parts.map((part, i) => {
+  let displayTitle = title, remaining = BOX_WIDTH - 5;
+  if (length > BOX_WIDTH - 2) displayTitle = parts.map((part, i) => {
     if (i % 2) return part;
     const kept = part.slice(0, remaining);
     remaining -= kept.length;
     return kept;
   }).join('') + '...';
+  const spaces = ' '.repeat(Math.max(0, BOX_WIDTH - 2 - length));
   line();
-  out(PAD + '╭' + '─'.repeat(BOX_W) + '╮');
-  out(PAD + '│ ' + styled(shown, C.bold) + ' '.repeat(Math.max(0, BOX_W - 2 - length)) + ' │');
-  out(PAD + '╰' + '─'.repeat(BOX_W) + '╯');
+  out(PAD + '╭' + '─'.repeat(BOX_WIDTH) + '╮');
+  out(PAD + '│ ' + styled(displayTitle, C.bold) + spaces + ' │');
+  out(PAD + '╰' + '─'.repeat(BOX_WIDTH) + '╯');
 };
 const titleBox = (title, detail) => box(`Simpl ${C.dim}-${C.reset} ${C.blue}${title}${C.reset}` + (detail ? ` ${C.dim}(${detail})${C.reset}` : ''));
+const divider = () => {
+  line();
+  out(PAD + '─'.repeat(16), C.dim);
+  line();
+};
 const printAnswer = (question, value) => out(`${PAD}${question}: ${C.cyan}${value}${C.reset}`);
 const die = (msg, ...hints) => {
   line();
@@ -65,9 +67,12 @@ const die = (msg, ...hints) => {
   process.exit(1);
 };
 
-// Without a TTY there is nobody to answer, so the default is taken instead of waiting on stdin.
+// Without a TTY there is nobody to answer, so the default is taken (and echoed) instead of waiting on stdin.
 const ask = async (question, defaultValue = '', hint = defaultValue) => {
-  if (!interactive) return defaultValue;
+  if (!interactive) {
+    if (defaultValue) printAnswer(question, defaultValue);
+    return defaultValue;
+  }
   const rl = createInterface({input: process.stdin, output: process.stdout});
   try {
     return (await rl.question(`${PAD}${question}${hint ? ` ${C.dim}(${hint})${C.reset}` : ''}: `)).trim() || defaultValue;
@@ -81,10 +86,10 @@ const ask = async (question, defaultValue = '', hint = defaultValue) => {
     rl.close();
   }
 };
-const confirm = async (question) => {
+const confirm = async (question, defaultYes = false) => {
   line();
   while (true) {
-    const answer = (await ask(question, 'no', 'y/N')).toLowerCase();
+    const answer = (await ask(question, defaultYes ? 'yes' : 'no', defaultYes ? 'Y/n' : 'y/N')).toLowerCase();
     if (['y', 'yes'].includes(answer)) return true;
     if (['n', 'no'].includes(answer)) return false;
     warn('Please answer [Y] Yes or [N] No');
@@ -92,7 +97,26 @@ const confirm = async (question) => {
   }
 };
 
-const git = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8'}).trim();
+const help = () => {
+  titleBox('Release');
+  line();
+  heading('Usage:');
+  row('node scripts/release.mjs [version] [options]');
+  line();
+  heading('Options:');
+  row('--help, -h', 'Show this help message');
+  line();
+  heading('Examples:');
+  row('node scripts/release.mjs');
+  row('node scripts/release.mjs 2.1.0');
+  row('node scripts/release.mjs 2.1.0b');
+  line();
+  heading('Note:');
+  item('The v<version> tag must exist first, see scripts/README.md for everything that is checked.');
+  line();
+};
+
+const git = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim();
 const ssh = (command) => execFileSync('ssh', ['-o', 'LogLevel=ERROR', SERVER, command], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit']});
 // Run from the build folder with relative paths, since scp reads a Windows drive letter like "C:" as a host name.
 const scp = (cwd, source, dest) => execFileSync('scp', ['-q', '-r', '-o', 'LogLevel=ERROR', source, `${SERVER}:${dest}`], {cwd, stdio: 'inherit'});
@@ -105,6 +129,14 @@ const compareVersions = (a, b) => {
 const withoutSuffix = (v) => v.replace(/[ab]$/, '');
 const describe = (v) => PRE_RELEASES[v.at(-1)] ? `${v} ${C.dim}(${PRE_RELEASES[v.at(-1)]})${C.reset}` : v;
 
+const args = process.argv.slice(2);
+if (args.includes('--help') || args.includes('-h')) {
+  help();
+  process.exit(0);
+}
+const unknownOption = args.find(arg => arg.startsWith('-'));
+if (unknownOption) die(`Unknown option: ${unknownOption}`, 'Run with --help to see all available options.');
+
 titleBox('Release');
 line();
 task(`📦 Fetching versions from ${SERVER}...`);
@@ -115,7 +147,12 @@ try {
 } catch {
   die(`Could not read versions.json from the "${SERVER}" SSH host`, 'If the host is unknown, add it to ~/.ssh/config, see scripts/README.md.');
 }
-const {versions} = JSON.parse(current);
+let versions;
+try {
+  ({versions} = JSON.parse(current));
+} catch (err) {
+  die(`versions.json on ${SERVER} is not valid JSON`, err.message);
+}
 const latest = Object.keys(versions).filter(v => VERSION.test(v) && withoutSuffix(v) === v).sort(compareVersions).at(-1);
 const next = latest ? (([major, minor, patch]) => [`${major}.${minor}.${patch + 1}`, `${major}.${minor + 1}.0`, `${major + 1}.0.0`])(latest.split('.').map(Number)) : [];
 
@@ -128,7 +165,7 @@ const versionProblem = (v) => {
 };
 
 const resolveVersion = async () => {
-  const preset = process.argv[2];
+  const [preset] = args;
   if (preset) {
     const problem = versionProblem(preset);
     if (problem) die(problem);
@@ -187,21 +224,26 @@ if (mismatched.length) die(`${tag} has the wrong version in: ${mismatched.map(([
 
 const releaseDate = env.match(/^SIMPL_LAST_UPDATE=(.*)$/m)?.[1].trim();
 const changelogDate = show('README.md').match(new RegExp(`^#### Version ${version.replaceAll('.', '\\.')} \\((.+)\\)$`, 'm'))?.[1];
-if (!changelogDate) die(`${tag} has no "#### Version ${version} (<date>)" entry in README.md`);
-if (releaseDate !== changelogDate) die(`${tag} has a different release date in core/src/.env SIMPL_LAST_UPDATE (${releaseDate}) than in README.md (${changelogDate})`);
+if (!changelogDate && !preRelease) die(`${tag} has no "#### Version ${version} (<date>)" entry in README.md`);
+if (changelogDate && releaseDate !== changelogDate) die(`${tag} has a different release date in core/src/.env SIMPL_LAST_UPDATE (${releaseDate}) than in README.md (${changelogDate})`);
 
 box(`Releasing: ${C.cyan}${version}${C.reset} ${C.dim}(${preRelease ? PRE_RELEASES[version.at(-1)] + ', ' : ''}${tag} ${git('rev-parse', '--short', `${tag}^{commit}`)})${C.reset}`);
 line();
 task('🧰 Building release zips...');
 
-const addons = git('ls-tree', '-d', '--name-only', `${tag}:add-ons`).split('\n').filter(Boolean);
 const build = fs.mkdtempSync(path.join(os.tmpdir(), `simpl-release-${version}-`));
 fs.mkdirSync(path.join(build, version, 'add-ons'), {recursive: true});
 
 // autocrlf is forced off so the zips hold LF files regardless of the local git config.
 const archive = (tree, file) => git('-c', 'core.autocrlf=false', 'archive', '--format=zip', '-o', path.join(build, version, file), `${tag}:${tree}`);
-archive('core', 'core.zip');
-for (const name of addons) archive(`add-ons/${name}`, `add-ons/${name}.zip`);
+let addons;
+try {
+  addons = git('ls-tree', '-d', '--name-only', `${tag}:add-ons`).split('\n').filter(Boolean);
+  archive('core', 'core.zip');
+  for (const name of addons) archive(`add-ons/${name}`, `add-ons/${name}.zip`);
+} catch (err) {
+  die('Could not build the release zips', err.stderr?.trim() || err.message);
+}
 
 // A pre-release never becomes latest, so `simpl new` keeps defaulting to the newest stable release.
 const withoutLatest = ({'is-latest': _, 'script-compatible': __, ...meta} = {}) => meta;
@@ -220,6 +262,7 @@ item('versions.json');
 // sv-SE formats as YYYY-MM-DD in local time, unlike toISOString() which is UTC.
 const today = new Date().toLocaleDateString('sv-SE');
 const warnings = [];
+if (!changelogDate) warnings.push(`${tag} has no "#### Version ${version} (<date>)" entry in README.md`);
 if (releaseDate !== today) warnings.push(`The release date is ${releaseDate}, not today (${today})`);
 try {
   if (!git('ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) warnings.push(`${tag} is not pushed to GitHub yet: git push origin ${tag}`);
@@ -239,13 +282,18 @@ if (!await confirm(`Upload to ${SERVER}?`)) {
 
 divider();
 task(`🚀 Uploading to ${SERVER}...`);
-// The version folder is uploaded beside the live one and swapped in, so a re-release never serves half-uploaded or stale zips.
-ssh(`rm -rf ${CDN_DIR}/${version}.new`);
-scp(build, version, `${CDN_DIR}/${version}.new`);
-ssh(`cd ${CDN_DIR} && rm -rf ${version}.old && { [ ! -e ${version} ] || mv ${version} ${version}.old; } && mv ${version}.new ${version} && rm -rf ${version}.old`);
-// versions.json goes last, so the CDN never lists a version whose zips aren't there yet.
-scp(build, 'versions.json', `${CDN_DIR}/versions.json.tmp`);
-ssh(`mv ${CDN_DIR}/versions.json.tmp ${CDN_DIR}/versions.json`);
+try {
+  // The version folder is uploaded beside the live one and swapped in, so a re-release never serves half-uploaded or stale zips.
+  ssh(`rm -rf ${CDN_DIR}/${version}.new`);
+  scp(build, version, `${CDN_DIR}/${version}.new`);
+  ssh(`cd ${CDN_DIR} && rm -rf ${version}.old && { [ ! -e ${version} ] || mv ${version} ${version}.old; } && mv ${version}.new ${version} && rm -rf ${version}.old`);
+
+  // versions.json goes last, so the CDN never lists a version whose zips aren't there yet.
+  scp(build, 'versions.json', `${CDN_DIR}/versions.json.tmp`);
+  ssh(`mv ${CDN_DIR}/versions.json.tmp ${CDN_DIR}/versions.json`);
+} catch {
+  die(`Upload to ${SERVER} failed`, `The files are still in ${build}.`, 'Run the release again to retry.');
+}
 fs.rmSync(build, {recursive: true});
 
 line();

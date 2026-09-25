@@ -17,6 +17,8 @@
   </testsuites>
 
   <php>
+    <!-- The tests assert on escape codes, which Ansi::wrap() drops when stdout isn't a terminal. -->
+    <env name="FORCE_COLOR" value="1"/>
     <env name="APP_KEY" value="4d2e8f1a6b3c9d7e0f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4c7d0e3f6a9b2c5d8e"/>
   </php>
 

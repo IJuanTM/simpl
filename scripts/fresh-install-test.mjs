@@ -1,49 +1,11 @@
 #!/usr/bin/env node
-//
-// Real fresh install of the CURRENT WORKING TREE via the actual Simpl CLI
-// (`simpl new` + `simpl add`, run through `npx @ijuantm/simpl`). For the chosen add-on set
-// it runs: real scaffold -> real add-on merges -> `composer install` -> `composer test` ->
-// (with `db`) `composer migrate:fresh` (+ `seed:fresh` when another add-on is present,
-// against a db named simpl-test) -> `npm install` (postinstall sass/vite build). So the
-// install is ready to browse.
-//
-// The zip is rebuilt from the working tree every run (uncommitted edits to tracked files
-// included, via `git stash create` - new files must be `git add`ed first, since that command
-// only snapshots tracked changes) and served to the CLI through SIMPL_LOCAL_RELEASES.
-// Each zip is a `git archive` of its subtree, since the CLI extracts it as-is with no wrapping folder stripped.
-// The CDN's versions.json is fetched once to resolve `latest`.
-// A reachable MariaDB (root / no password) is optional; if none is found, the test:integration/migrate/seed steps are skipped.
-// Docker is tried first: a throwaway MariaDB starts via scripts/compose.yaml and tears down on exit.
-// If Docker isn't available, a local MySQL/MariaDB server on localhost:3306 is used instead (WAMP, XAMPP, MAMP, a native install, ... - whatever's already running).
-// Override with SIMPL_TEST_DB=docker (never fall back to local) or SIMPL_TEST_DB=local (skip the Docker probe); default is 'auto'.
-// SIMPL_TEST_DB_PORT (default 3307) is the host port used for the Docker fallback.
-//
-// The install lands in ~/Desktop/simpl-fresh-install-test/simpl-test/ (wiped each run, left
-// after). It's always named "Simpl Test", scaffolded with --url=https://simpl.test/, and uses
-// simpl-test as the db name.
-// Browse it via `docker compose up -d --build` inside it (just needs the printed hosts file
-// line). Docker's Apache always terminates TLS on :443 regardless of APP_URL, which is why the
-// scaffold uses https. A httpd-vhosts.conf is also written for a local Apache setup (WAMP/XAMPP/...),
-// but that serves plain HTTP on :80 - browsing that route means editing the installed .env's
-// APP_URL back to http first.
-// If mkcert is on PATH, a certificate covering simpl.test + localhost is generated and copied
-// into docker/certs/, so the Docker route is trusted out of the box (run `mkcert -install` once
-// yourself first - that step touches your OS/browser trust store, so it can't be done for you
-// here). Skipped with a warning if mkcert isn't installed.
-// Overrides: SIMPL_TEST_DEST, SIMPL_TEST_DOMAIN, SIMPL_TEST_DB, SIMPL_TEST_DB_PORT.
-//
-// Run with no arguments for the interactive add-on picker (default: everything selected).
-// Flags:
-//   --all  install with every add-on merged in - no menu
-//
+import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {execFileSync, spawnSync} from 'node:child_process';
 
-const SELF = fileURLToPath(import.meta.url);
-const REPO = path.resolve(path.dirname(SELF), '..');
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CDN_VERSIONS = 'https://cdn.simpl.iwanvanderwal.nl/framework/versions.json';
 const NAME = 'Simpl Test';
 const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
@@ -53,159 +15,155 @@ const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' |
 const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
 const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'compose.yaml');
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
-let DB = LOCAL_DB;
-let CERT = null; // {crt, key} once generated
 
-// Output helpers, matching the Simpl CLI's style.
-const C = {
+// Output helpers, copied from the Simpl CLI's lib/ui.js.
+const CODES = {
   reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
   cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m',
 };
+const C = Object.fromEntries(Object.entries(CODES).map(([name, code]) => [name, process.stdout.hasColors?.() ? code : '']));
+const BOX_WIDTH = 62;
 const PAD = '  ';
-const BOX_W = 62;
-const stripAnsi = (s) => s.replace(/\x1b\[[0-9;]*m/g, '');
-const styled = (m, ...s) => s.join('') + m + C.reset;
-const line = (m = '') => console.log(m);
-const out = (m, color = C.reset) => console.log(color + m + C.reset);
-const prefixed = (sym, color, m, bold = false, dim = false) =>
-  out(PAD + color + sym + C.reset + ' ' + (bold ? styled(m, C.bold) : dim ? styled(m, C.dim) : m));
-const success = (m, bold = false) => prefixed('✓', C.green, m, bold);
-const error = (m, bold = false) => prefixed('✕', C.red, m, bold);
-const warn = (m) => prefixed('⚠', C.yellow, m);
-const info = (m) => prefixed('◌', C.cyan, m, false, true);
-const task = (m) => out(PAD + m);
-const item = (m, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(m, C.dim) : m));
-const divider = () => {
-  line();
-  out(PAD + '─'.repeat(16), C.dim);
-  line();
-};
-const heading = (m) => out(PAD + styled(m, C.bold), C.blue);
+const styled = (msg, ...styles) => styles.join('') + msg + C.reset;
+const line = (msg = '') => console.log(msg);
+const out = (msg, color = C.reset) => console.log(color + msg + C.reset);
+const prefixed = (symbol, color, msg, bold = false, dim = false) => out(PAD + color + symbol + C.reset + ' ' + (bold ? styled(msg, C.bold) : dim ? styled(msg, C.dim) : msg));
+const success = (msg, bold = false) => prefixed('✓', C.green, msg, bold);
+const error = (msg, bold = false) => prefixed('✕', C.red, msg, bold);
+const warn = (msg, bold = false) => prefixed('⚠', C.yellow, msg, bold);
+const info = (msg) => prefixed('◌', C.cyan, msg, false, true);
+const task = (msg) => out(PAD + msg);
+const item = (msg, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(msg, C.dim) : msg));
+const heading = (msg) => out(PAD + styled(msg, C.bold), C.blue);
 const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
+const row = (left, right = '') => out(PAD + styled(right ? left.padEnd(30) : left, C.dim) + right);
 const box = (title) => {
   const parts = title.split(/(\x1b\[[0-9;]*m)/);
   const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
-  let shown = title, remaining = BOX_W - 5;
-  if (length > BOX_W - 2) shown = parts.map((part, i) => {
+  let displayTitle = title, remaining = BOX_WIDTH - 5;
+  if (length > BOX_WIDTH - 2) displayTitle = parts.map((part, i) => {
     if (i % 2) return part;
     const kept = part.slice(0, remaining);
     remaining -= kept.length;
     return kept;
   }).join('') + '...';
+  const spaces = ' '.repeat(Math.max(0, BOX_WIDTH - 2 - length));
   line();
-  out(PAD + '╭' + '─'.repeat(BOX_W) + '╮');
-  out(PAD + '│ ' + styled(shown, C.bold) + ' '.repeat(Math.max(0, BOX_W - 2 - length)) + ' │');
-  out(PAD + '╰' + '─'.repeat(BOX_W) + '╯');
+  out(PAD + '╭' + '─'.repeat(BOX_WIDTH) + '╮');
+  out(PAD + '│ ' + styled(displayTitle, C.bold) + spaces + ' │');
+  out(PAD + '╰' + '─'.repeat(BOX_WIDTH) + '╯');
 };
+const installBox = (name, version) => box(`Installing: ${C.cyan}${name}${C.reset} ${C.dim}(v${version})${C.reset}`);
 const titleBox = (title, detail) => box(`Simpl ${C.dim}-${C.reset} ${C.blue}${title}${C.reset}` + (detail ? ` ${C.dim}(${detail})${C.reset}` : ''));
-const die = (msg) => {
+const divider = () => {
+  line();
+  out(PAD + '─'.repeat(16), C.dim);
+  line();
+};
+const die = (msg, ...hints) => {
   line();
   error(msg);
+  hints.forEach(info);
   line();
   process.exit(1);
 };
+const stripAnsi = (text) => text.replace(/\x1b\[[0-9;]*m/g, '');
 
-let mode = null; // 'all' | 'pick'
-for (const a of process.argv.slice(2)) {
-  if (a === '--all') mode = 'all';
-  else if (a === '-h' || a === '--help') {
-    const body = fs.readFileSync(SELF, 'utf8').split('\n').slice(1);
-    console.log(body.slice(0, body.findIndex((l) => !l.startsWith('//'))).join('\n'));
+const help = () => {
+  titleBox('Fresh install test');
+  line();
+  heading('Usage:');
+  row('node scripts/fresh-install-test.mjs [options]');
+  line();
+  heading('Options:');
+  row('--all', 'Install every add-on, without the picker');
+  row('--help, -h', 'Show this help message');
+  line();
+  heading('Environment:');
+  row('SIMPL_TEST_DEST', 'Install folder (default: ~/Desktop/simpl-fresh-install-test)');
+  row('SIMPL_TEST_DOMAIN', 'Domain to install at (default: simpl.test)');
+  row('SIMPL_TEST_DB', 'auto, docker or local (default: auto)');
+  row('SIMPL_TEST_DB_PORT', 'Host port for the Docker database (default: 3307)');
+  line();
+  heading('Note:');
+  item('See scripts/README.md for how the database, browsing, hosts file and certificate work.');
+  line();
+};
+
+let mode = process.stdin.isTTY ? 'pick' : 'all';
+for (const arg of process.argv.slice(2)) {
+  if (arg === '--all') mode = 'all';
+  else if (arg === '-h' || arg === '--help') {
+    help();
     process.exit(0);
-  } else die(`Unknown option: ${a}`);
+  } else die(`Unknown option: ${arg}`, 'Run with --help to see all available options.');
 }
 
 for (const bin of ['php', 'node', 'npm', 'npx', 'composer', 'git']) {
   if (spawnSync(`${bin} --version`, {shell: true, stdio: 'ignore'}).status !== 0) die(`Missing required tool: ${bin}`);
 }
 
-function addonDeps() {
+const readAddonDependencies = () => {
   const dir = path.join(REPO, 'add-ons');
-  const names = fs.readdirSync(dir, {withFileTypes: true}).filter((e) => e.isDirectory()).map((e) => e.name);
-  const deps = {};
-  for (const n of names) {
+  const names = fs.readdirSync(dir, {withFileTypes: true}).filter(entry => entry.isDirectory()).map(entry => entry.name);
+  const dependencies = {};
+  for (const name of names) {
     try {
-      deps[n] = JSON.parse(fs.readFileSync(path.join(dir, n, 'addon.json'), 'utf8')).dependencies || [];
+      dependencies[name] = JSON.parse(fs.readFileSync(path.join(dir, name, 'addon.json'), 'utf8')).dependencies || [];
     } catch {
-      deps[n] = [];
+      dependencies[name] = [];
     }
   }
-  return deps;
-}
+  return dependencies;
+};
 
-function topo(deps, roots) {
+const topo = (dependencies, roots) => {
   const order = [], seen = new Set();
-  const visit = (n) => {
-    if (!(n in deps) || seen.has(n)) return;
-    seen.add(n);
-    (deps[n] || []).forEach(visit);
-    order.push(n);
+  const visit = (name) => {
+    if (!(name in dependencies) || seen.has(name)) return;
+    seen.add(name);
+    (dependencies[name] || []).forEach(visit);
+    order.push(name);
   };
-  (roots || Object.keys(deps)).forEach(visit);
+  (roots || Object.keys(dependencies)).forEach(visit);
   return order;
-}
+};
 
-const DEPS = addonDeps();
-const ADDONS = topo(DEPS);
-if (!ADDONS.length) die(`No add-ons found under ${REPO}/add-ons`);
+const addonDependencies = readAddonDependencies();
+const allAddons = topo(addonDependencies);
+if (!allAddons.length) die(`No add-ons found under ${REPO}/add-ons`);
 
-function pdoUp(db) {
-  return spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
-    {env: {...process.env, H: db.host, U: db.user, P: db.pass}}).status === 0;
-}
+const pdoUp = (db) => spawnSync('php', ['-r', 'try { new PDO("mysql:host=".getenv("H"), getenv("U"), getenv("P")); } catch (Throwable $e) { exit(1); }'],
+  {env: {...process.env, H: db.host, U: db.user, P: db.pass}}).status === 0;
 
-let DB_UP = false, dockerDbStarted = false;
-if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['compose', 'version'], {stdio: 'ignore'}).status === 0) {
-  if (spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'up', '-d', 'db', '--wait'],
-    {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}}).status === 0) {
-    dockerDbStarted = true;
-    // host carries a trailing ";port=..." DSN clause - see runInstall()'s DB_SERVER write for why.
-    DB = {host: `127.0.0.1;port=${SIMPL_TEST_DB_PORT}`, user: 'root', pass: ''};
-    DB_UP = pdoUp(DB);
-  }
-}
-if (!DB_UP && SIMPL_TEST_DB !== 'docker' && pdoUp(LOCAL_DB)) {
-  DB = LOCAL_DB;
-  DB_UP = true;
-}
-if (dockerDbStarted) process.on('exit', () => {
-  try {
-    spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'down', '-v'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}});
-  } catch {
-  }
-});
-
-// Core is always selected; everything else defaults to selected too, and a pick's
-// dependencies fill in automatically as items are deselected.
-async function pick() {
-  const items = ['core', ...ADDONS];
-  const on = new Set(items.map((_, i) => i)); // the user's explicit picks; index 0 is core, always on
-  const notes = ['', ...ADDONS.map((a) => {
-    const d = topo(DEPS, [a]).filter((x) => x !== a);
-    return d.length ? `${C.gray}(requires: ${d.join(', ')})${C.reset}` : '';
+const pick = async () => {
+  const items = ['core', ...allAddons];
+  const picked = new Set(items.map((_, i) => i)); // index 0 is core, always on
+  const notes = ['', ...allAddons.map(addon => {
+    const requires = topo(addonDependencies, [addon]).filter(dep => dep !== addon);
+    return requires.length ? `${C.gray}(requires: ${requires.join(', ')})${C.reset}` : '';
   })];
-  // indices that end up selected once each pick's dependencies are pulled in
-  const effective = () => new Set(
-    topo(DEPS, [...on].filter((i) => i !== 0).map((i) => items[i])).map((a) => 1 + ADDONS.indexOf(a)),
+  const withDependencies = () => new Set(
+    topo(addonDependencies, [...picked].filter(i => i !== 0).map(i => items[i])).map(addon => 1 + allAddons.indexOf(addon)),
   );
-  let cur = 0, drawn = 0;
-  const o = process.stdout;
+  let cursor = 0, drawn = 0;
+  const stdout = process.stdout;
 
   heading('Select what to install:');
 
   const draw = () => {
-    if (drawn) o.write(`\x1b[${drawn}A`);
-    const eff = effective();
+    if (drawn) stdout.write(`\x1b[${drawn}A`);
+    const selected = withDependencies();
     items.forEach((name, i) => {
-      const ptr = i === cur ? `${C.cyan}❯${C.reset} ` : '  ';
+      const pointer = i === cursor ? `${C.cyan}❯${C.reset} ` : '  ';
       const checkbox =
         i === 0 ? `${C.gray}[x]${C.reset}` :
-          on.has(i) ? `${C.green}[x]${C.reset}` :
-            eff.has(i) ? `${C.cyan}[x]${C.reset}` : '[ ]';
-      o.write(`\r\x1b[K${PAD}${ptr}${checkbox} ${name}${notes[i] ? ' ' + notes[i] : ''}\n`);
+          picked.has(i) ? `${C.green}[x]${C.reset}` :
+            selected.has(i) ? `${C.cyan}[x]${C.reset}` : '[ ]';
+      stdout.write(`\r\x1b[K${PAD}${pointer}${checkbox} ${name}${notes[i] ? ' ' + notes[i] : ''}\n`);
     });
-    o.write(`\r\x1b[K${PAD}${C.dim}↑/↓ move · space select · click · a all · n none · enter run · q cancel${C.reset}\n`);
-    o.write(`\r\x1b[K${PAD}${C.green}[x]${C.dim} selected    ${C.reset}${C.cyan}[x]${C.reset}${C.dim}${C.cyan} required by a selection${C.reset}\n`);
+    stdout.write(`\r\x1b[K${PAD}${C.dim}↑/↓ move · space select · click · a all · n none · enter run · q cancel${C.reset}\n`);
+    stdout.write(`\r\x1b[K${PAD}${C.green}[x]${C.dim} selected    ${C.reset}${C.cyan}[x]${C.reset}${C.dim}${C.cyan} required by a selection${C.reset}\n`);
     drawn = items.length + 2;
   };
 
@@ -217,62 +175,62 @@ async function pick() {
       stdin.setRawMode(wasRaw);
     } catch {
     }
-    o.write('\x1b[?25h\x1b[?1000l\x1b[?1006l');
+    stdout.write('\x1b[?25h\x1b[?1000l\x1b[?1006l');
   };
 
   if (stdin.isTTY) {
     stdin.setRawMode(true);
-    listTop = await new Promise((res) => {
-      const onResp = (d) => {
-        const m = /\x1b\[(\d+);\d+R/.exec(d.toString());
-        if (m) {
-          stdin.off('data', onResp);
-          res(+m[1]);
+    listTop = await new Promise(resolve => {
+      const onResponse = (data) => {
+        const match = /\x1b\[(\d+);\d+R/.exec(data.toString());
+        if (match) {
+          stdin.off('data', onResponse);
+          resolve(+match[1]);
         }
       };
-      stdin.on('data', onResp);
-      o.write('\x1b[6n');
+      stdin.on('data', onResponse);
+      stdout.write('\x1b[6n');
       setTimeout(() => {
-        stdin.off('data', onResp);
-        res(0);
+        stdin.off('data', onResponse);
+        resolve(0);
       }, 300);
     });
-    o.write('\x1b[?25l\x1b[?1000h\x1b[?1006h');
+    stdout.write('\x1b[?25l\x1b[?1000h\x1b[?1006h');
   }
   stdin.resume();
   stdin.setEncoding('utf8');
   draw();
 
-  const selected = await new Promise((resolve) => {
-    const finish = (val) => {
+  const chosen = await new Promise(resolve => {
+    const finish = (value) => {
       stdin.off('data', onData);
       restore();
       process.off('exit', restore);
-      resolve(val);
+      resolve(value);
     };
-    const onData = (d) => {
-      const k = d.toString();
-      if (k === '\x03' || k === 'q' || k === 'Q' || k === '\x1b') {
+    const onData = (data) => {
+      const key = data.toString();
+      if (key === '\x03' || key === 'q' || key === 'Q' || key === '\x1b') {
         restore();
         line();
         info('Cancelled');
         line();
-        process.exit(k === '\x03' ? 130 : 0);
-      } else if (k === '\x1b[A') cur = Math.max(0, cur - 1);
-      else if (k === '\x1b[B') cur = Math.min(items.length - 1, cur + 1);
-      else if (k === ' ' && cur !== 0) on.has(cur) ? on.delete(cur) : on.add(cur);
-      else if (k === 'a' || k === 'A') items.forEach((_, i) => on.add(i));
-      else if (k === 'n' || k === 'N') {
-        on.clear();
-        on.add(0);
-      } else if (k === '\r' || k === '\n') return finish([...on].filter((i) => i !== 0).map((i) => items[i]));
+        process.exit(key === '\x03' ? 130 : 0);
+      } else if (key === '\x1b[A') cursor = Math.max(0, cursor - 1);
+      else if (key === '\x1b[B') cursor = Math.min(items.length - 1, cursor + 1);
+      else if (key === ' ' && cursor !== 0) picked.has(cursor) ? picked.delete(cursor) : picked.add(cursor);
+      else if (key === 'a' || key === 'A') items.forEach((_, i) => picked.add(i));
+      else if (key === 'n' || key === 'N') {
+        picked.clear();
+        picked.add(0);
+      } else if (key === '\r' || key === '\n') return finish([...picked].filter(i => i !== 0).map(i => items[i]));
       else {
-        const m = /\x1b\[<(\d+);(\d+);(\d+)M/.exec(k); // SGR mouse press
-        if (m && +m[1] === 0) {
-          const i = +m[3] - listTop;
+        const click = /\x1b\[<(\d+);(\d+);(\d+)M/.exec(key); // SGR mouse press
+        if (click && +click[1] === 0) {
+          const i = +click[3] - listTop;
           if (i >= 1 && i < items.length) {
-            cur = i;
-            on.has(i) ? on.delete(i) : on.add(i);
+            cursor = i;
+            picked.has(i) ? picked.delete(i) : picked.add(i);
           }
         }
       }
@@ -283,81 +241,101 @@ async function pick() {
   });
 
   stdin.pause();
-  return selected;
-}
+  return chosen;
+};
 
-async function resolveLatest() {
-  const {versions = {}} = await (await fetch(CDN_VERSIONS, {signal: AbortSignal.timeout(15000)})).json();
-  return Object.keys(versions).find((k) => versions[k]['is-latest']) || null;
-}
+const resolveLatest = async () => {
+  let versions;
+  try {
+    ({versions} = await (await fetch(CDN_VERSIONS, {signal: AbortSignal.timeout(10_000)})).json());
+  } catch {
+    die('The CDN server is currently unreachable', 'Please try again later.');
+  }
+  if (!versions || !Object.keys(versions).length) die('The CDN returned no versions');
+  return Object.entries(versions).find(([, meta]) => meta['is-latest'] === true)?.[0] ?? Object.keys(versions)[0];
+};
 
-function buildZip(subdir, outZip) {
+const buildZip = (subdir, outZip) => {
   fs.mkdirSync(path.dirname(outZip), {recursive: true});
-  const tree = execFileSync('git', ['stash', 'create'], {cwd: REPO, encoding: 'utf8'}).trim() || 'HEAD';
-  execFileSync('git', ['archive', '--format=zip', '-o', outZip, `${tree}:${subdir}`], {cwd: REPO});
-}
+  const tree = execFileSync('git', ['stash', 'create'], {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim() || 'HEAD';
+  execFileSync('git', ['archive', '--format=zip', '-o', outZip, `${tree}:${subdir}`], {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+};
 
-function run(cmd, cwd, log) {
-  const r = spawnSync(cmd, {cwd, shell: true, encoding: 'utf8', input: '', maxBuffer: 64 * 1024 * 1024});
-  fs.appendFileSync(log, `\n$ ${cmd}\n${r.stdout || ''}${r.stderr || ''}`);
-  return r.status === 0;
-}
+const connectDatabase = () => {
+  if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['compose', 'version'], {stdio: 'ignore'}).status === 0
+    && spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'up', '-d', 'db', '--wait'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}}).status === 0) {
+    process.on('exit', () => {
+      try {
+        spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'down', '-v'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}});
+      } catch {
+      }
+    });
+    const docker = {host: `127.0.0.1;port=${SIMPL_TEST_DB_PORT}`, user: 'root', pass: '', docker: true};
+    if (pdoUp(docker)) return docker;
+  }
+  return SIMPL_TEST_DB !== 'docker' && pdoUp(LOCAL_DB) ? LOCAL_DB : null;
+};
 
-function runInstall(addons) {
-  const proj = path.join(DEST, 'simpl-test');
+const run = (command, cwd, log) => {
+  const result = spawnSync(command, {cwd, shell: true, encoding: 'utf8', input: '', maxBuffer: 64 * 1024 * 1024});
+  fs.appendFileSync(log, `\n$ ${command}\n${result.stdout || ''}${result.stderr || ''}`);
+  return result.status === 0;
+};
+
+const runInstall = (addons) => {
+  const project = path.join(DEST, 'simpl-test');
   const log = path.join(DEST, 'install.log');
-  const dbname = addons.includes('db') ? 'simpl-test' : null;
+  const dbName = addons.includes('db') ? 'simpl-test' : null;
   fs.writeFileSync(log, '');
-  box(`Installing: ${C.cyan}${NAME}${C.reset} ${C.dim}(${SITE_URL})${C.reset}`);
+  installBox(NAME, version);
   line();
 
-  const step = (m) => {
-    task(m);
+  const step = (msg) => {
+    task(msg);
     line();
   };
   const bail = () => {
     error(`Failed, see the log: ${log}`);
-    stripAnsi(fs.readFileSync(log, 'utf8')).split('\n').slice(-18).forEach((l) => out(PAD + C.dim + '| ' + l + C.reset));
+    stripAnsi(fs.readFileSync(log, 'utf8')).split('\n').slice(-18).forEach(logLine => out(PAD + C.dim + '| ' + logLine + C.reset));
     return false;
   };
 
-  step(`📦 Scaffolding ${C.dim}(simpl new)${C.reset}...`);
+  step(`🏗️ Creating the project ${C.dim}(simpl new)${C.reset}...`);
   if (!run(`npx --yes @ijuantm/simpl new --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
 
-  if (CERT) {
-    const certDir = path.join(proj, 'docker/certs');
+  if (cert) {
+    const certDir = path.join(project, 'docker/certs');
     fs.mkdirSync(certDir, {recursive: true});
-    fs.copyFileSync(CERT.crt, path.join(certDir, 'simpl.crt'));
-    fs.copyFileSync(CERT.key, path.join(certDir, 'simpl.key'));
+    fs.copyFileSync(cert.crt, path.join(certDir, 'simpl.crt'));
+    fs.copyFileSync(cert.key, path.join(certDir, 'simpl.key'));
   }
 
-  const hasSeedable = addons.some((a) => a !== 'db');
-  for (const a of addons) {
-    step(`🔀 Adding the ${C.cyan}${a}${C.reset} add-on ${C.dim}(simpl add)${C.reset}...`);
-    if (!run(`npx --yes @ijuantm/simpl add ${a} --local`, proj, log)) return bail();
+  const hasSeedable = addons.some(addon => addon !== 'db');
+  for (const addon of addons) {
+    step(`🔀 Adding the ${C.cyan}${addon}${C.reset} add-on ${C.dim}(simpl add)${C.reset}...`);
+    if (!run(`npx --yes @ijuantm/simpl add ${addon} --local`, project, log)) return bail();
   }
 
   step('📦 Running composer install...');
-  if (!run('composer install --no-interaction --no-progress', proj, log)) return bail();
+  if (!run('composer install --no-interaction --no-progress', project, log)) return bail();
   step('🧪 Running composer test...');
-  if (!run('composer test', proj, log)) return bail();
+  if (!run('composer test', project, log)) return bail();
 
-  if (dbname) {
-    if (DB_UP) {
-      const envPath = path.join(proj, 'src/.env');
-      let env = fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbname}`);
-      // The db add-on's .env only has DB_SERVER, no DB_PORT, and DB.php interpolates DB_SERVER
-      // straight into the PDO DSN after "host=" - so the Docker fallback's port is tacked onto
-      // DB.host as a trailing ";port=..." DSN clause instead (see the Docker block above).
-      if (DB.host !== 'localhost') env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${DB.host}`);
+  if (dbName) {
+    if (db) {
+      const envPath = path.join(project, 'src/.env');
+      let env = fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbName}`);
+
+      // DB.php puts DB_SERVER straight after "host=" in the PDO DSN and there's no DB_PORT, so the Docker port rides along as a ";port=" clause.
+      if (db.docker) env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${db.host}`);
       fs.writeFileSync(envPath, env);
       step('🧪 Running composer test:integration...');
-      if (!run('composer test:integration', proj, log)) return bail();
-      step(`💾 Running composer migrate:fresh ${C.dim}(db: ${dbname})${C.reset}...`);
-      if (!run('composer migrate:fresh', proj, log)) return bail();
+      if (!run('composer test:integration', project, log)) return bail();
+      step(`💾 Running composer migrate:fresh ${C.dim}(db: ${dbName})${C.reset}...`);
+      if (!run('composer migrate:fresh', project, log)) return bail();
       if (hasSeedable) {
         step('🌱 Running composer seed:fresh...');
-        if (!run('composer seed:fresh', proj, log)) return bail();
+        if (!run('composer seed:fresh', project, log)) return bail();
       }
     } else {
       warn('MariaDB not reachable, skipped test:integration/migrate/seed');
@@ -366,19 +344,17 @@ function runInstall(addons) {
   }
 
   step(`🎨 Running npm install ${C.dim}(sass + vite build)${C.reset}...`);
-  if (!run('npm install --no-audit --no-fund', path.join(proj, 'src'), log)) return bail();
+  if (!run('npm install --no-audit --no-fund', path.join(project, 'src'), log)) return bail();
 
-  const m = /OK \((\d+) tests, (\d+) assertions\)/.exec(fs.readFileSync(log, 'utf8'));
-  success(m ? `OK (${m[1]} tests, ${m[2]} assertions)` : 'Tests ran', true);
-  if (dbname && DB_UP) item(`Database: ${C.cyan}${dbname}${C.reset}`);
-  item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${proj}${C.reset}`);
+  const tests = /OK \((\d+) tests, (\d+) assertions\)/.exec(fs.readFileSync(log, 'utf8'));
+  success(tests ? `OK (${tests[1]} tests, ${tests[2]} assertions)` : 'Tests ran', true);
+  if (dbName && db) item(`Database: ${C.cyan}${dbName}${C.reset}`);
+  item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${project}${C.reset}`);
   return true;
-}
+};
 
-// Appends a missing "127.0.0.1  simpl.test" line straight to the hosts file. Writing it needs
-// elevated/admin privileges (this script isn't run elevated by default), so a failed write falls
-// back to printing the line for the user to add by hand instead of silently doing nothing.
-function ensureHosts() {
+// Writing the hosts file needs admin rights, so a failed write falls back to printing the line for the user to add.
+const ensureHosts = () => {
   const hostsFile = process.platform === 'win32'
     ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'drivers', 'etc', 'hosts')
     : '/etc/hosts';
@@ -386,7 +362,7 @@ function ensureHosts() {
   try {
     content = fs.readFileSync(hostsFile, 'utf8');
   } catch {
-    return {hostsFile, written: false, failed: true}; // can't even read it - assume it's missing
+    return {hostsFile, written: false, failed: true};
   }
   const domain = DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   if (new RegExp(`^\\s*127\\.0\\.0\\.1\\s+${domain}\\s*$`, 'm').test(content)) return {hostsFile, written: false, failed: false};
@@ -396,17 +372,14 @@ function ensureHosts() {
   } catch {
     return {hostsFile, written: false, failed: true};
   }
-}
+};
 
-function mkcertAvailable() {
-  return spawnSync('mkcert', ['-version'], {shell: true, stdio: 'ignore'}).status === 0;
-}
+const mkcertAvailable = () => spawnSync('mkcert', ['-version'], {shell: true, stdio: 'ignore'}).status === 0;
 
-// One certificate covering simpl.test + localhost, generated once and copied into the install.
-function writeMkcert() {
+const writeMkcert = () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-cert-'));
-  // Registered here, not just after a successful copy in runInstall(), so a failed mkcert
-  // run or an early bail doesn't leak this dir.
+
+  // Registered before mkcert runs, so a failed run or an early bail doesn't leak the folder.
   process.on('exit', () => {
     try {
       fs.rmSync(dir, {recursive: true, force: true});
@@ -415,28 +388,28 @@ function writeMkcert() {
   });
   const crt = path.join(dir, 'simpl.crt');
   const key = path.join(dir, 'simpl.key');
-  const r = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, 'localhost', '127.0.0.1', DOMAIN], {shell: true, encoding: 'utf8'});
-  return r.status === 0 ? {crt, key} : null;
-}
+  const result = spawnSync('mkcert', ['-cert-file', crt, '-key-file', key, 'localhost', '127.0.0.1', DOMAIN], {shell: true, encoding: 'utf8'});
+  return result.status === 0 ? {crt, key} : null;
+};
 
-function writeVhostConf() {
-  const win = DEST.replace(/\\/g, '/');
+const writeVhostConf = () => {
+  const apacheDest = DEST.replace(/\\/g, '/');
   const conf = path.join(DEST, 'httpd-vhosts.conf');
   fs.writeFileSync(conf,
     `# Generated by scripts/fresh-install-test.mjs
 #
-# Vhost: ${DOMAIN}  ->  ${win}/simpl-test/src/public
+# Vhost: ${DOMAIN}  ->  ${apacheDest}/simpl-test/src/public
 #
 # One-time Apache setup (WAMP, XAMPP, MAMP, a native install, ...):
-#   1. httpd.conf: add        IncludeOptional "${win}/httpd-vhosts.conf"
+#   1. httpd.conf: add        IncludeOptional "${apacheDest}/httpd-vhosts.conf"
 #   2. hosts file: add a "127.0.0.1 ${DOMAIN}" line (see script output)
 #   3. restart Apache
 #
 <VirtualHost *:80>
     ServerName ${DOMAIN}
-    DocumentRoot "${win}/simpl-test/src/public"
+    DocumentRoot "${apacheDest}/simpl-test/src/public"
 
-    <Directory "${win}/simpl-test/src/public">
+    <Directory "${apacheDest}/simpl-test/src/public">
         Options -Indexes +FollowSymLinks
         AllowOverride All
         Require local
@@ -444,30 +417,25 @@ function writeVhostConf() {
 </VirtualHost>
 `);
   return conf;
-}
+};
 
 titleBox('Fresh install test');
 line();
-if (!mode) mode = process.stdin.isTTY ? 'pick' : 'all';
 
-const addons = mode === 'all' ? ADDONS : topo(DEPS, await pick());
+const addons = mode === 'all' ? allAddons : topo(addonDependencies, await pick());
 if (mode === 'pick') divider();
 
-let VERSION;
-try {
-  VERSION = await resolveLatest();
-} catch (e) {
-  die(`Could not reach ${CDN_VERSIONS}: ${e.message}`);
-}
-if (!VERSION) die(`Could not resolve 'latest' from ${CDN_VERSIONS}`);
+task('📦 Fetching available versions...');
+const version = await resolveLatest();
+line();
 
-const BUILD = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
-const RELEASES_ROOT = path.join(BUILD, 'releases');
-process.env.SIMPL_LOCAL_RELEASES = RELEASES_ROOT;
-const RELEASES = path.join(RELEASES_ROOT, VERSION);
+const build = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
+const releasesRoot = path.join(build, 'releases');
+process.env.SIMPL_LOCAL_RELEASES = releasesRoot;
+const releases = path.join(releasesRoot, version);
 process.on('exit', () => {
   try {
-    fs.rmSync(BUILD, {recursive: true, force: true});
+    fs.rmSync(build, {recursive: true, force: true});
   } catch {
   }
 });
@@ -475,25 +443,28 @@ process.on('exit', () => {
 fs.rmSync(DEST, {recursive: true, force: true});
 fs.mkdirSync(DEST, {recursive: true});
 
-const needZip = new Set(addons);
-task(`🧰 Building ${VERSION} release zips...`);
-line();
+task(`🧰 Building ${version} release zips...`);
 try {
-  buildZip('core', path.join(RELEASES, 'core.zip'));
-  for (const a of ADDONS) if (needZip.has(a)) buildZip(`add-ons/${a}`, path.join(RELEASES, 'add-ons', `${a}.zip`));
-} catch (e) {
-  die(`Failed to build release zip: ${e.message}`);
+  buildZip('core', path.join(releases, 'core.zip'));
+  for (const addon of addons) buildZip(`add-ons/${addon}`, path.join(releases, 'add-ons', `${addon}.zip`));
+} catch (err) {
+  die('Could not build the release zips', err.stderr?.trim() || err.message);
 }
-success(`Built ${plural(1 + needZip.size, 'zip')} ${C.dim}(${['core', ...needZip].join(', ')})${C.reset}`);
-(DB_UP ? info : warn)(DB_UP
-  ? `MariaDB reachable${dockerDbStarted ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`
-  : 'MariaDB not reachable (test:integration/migrate/seed will be skipped)');
+line();
+success(`Built ${plural(1 + addons.length, 'zip')} ${C.dim}(${['core', ...addons].join(', ')})${C.reset}`);
+line();
 
+task('💾 Looking for a database...');
+const db = connectDatabase();
+line();
+if (db) info(`MariaDB reachable${db.docker ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`);
+else warn('MariaDB not reachable (test:integration/migrate/seed will be skipped)');
+
+let cert = null;
 if (mkcertAvailable()) {
-  CERT = writeMkcert();
-  (CERT ? info : warn)(CERT
-    ? 'mkcert certificate generated (covers simpl.test + localhost)'
-    : 'mkcert failed to generate a certificate, Docker HTTPS will use the untrusted self-signed one');
+  cert = writeMkcert();
+  if (cert) info('mkcert certificate generated (covers simpl.test + localhost)');
+  else warn('mkcert failed to generate a certificate, Docker HTTPS will use the untrusted self-signed one');
 } else {
   warn('mkcert not found on PATH, Docker HTTPS will use the untrusted self-signed cert (see core/docker/README.md)');
 }
@@ -503,13 +474,13 @@ const ok = runInstall(addons);
 const conf = writeVhostConf();
 divider();
 heading('Summary:');
-(ok ? success : error)(`${DOMAIN.padEnd(16)} ${C.dim}${SITE_URL}${C.reset}`);
+(ok ? success : error)(`${DOMAIN} ${C.dim}${SITE_URL}${C.reset}`);
 line();
 heading('Details:');
 item(`Install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
 item(`Docker:  ${C.dim}run \`docker compose up -d --build\` inside the install to browse it that way instead${C.reset}`);
 item(`Vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
-item(`Cert:    ${C.dim}${CERT ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated, install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
+item(`Cert:    ${C.dim}${cert ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated, install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
 const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts();
 if (hostsWritten) {
   item(`Hosts:   ${C.dim}added 1 line to ${hostsFile}${C.reset}`);

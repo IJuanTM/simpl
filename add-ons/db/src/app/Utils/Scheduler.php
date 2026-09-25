@@ -85,7 +85,7 @@ class Scheduler
             $ran++;
         }
 
-        if ($ran === 0) Console::info("No tasks due");
+        if ($ran === 0) Console::info('No tasks due');
 
         Console::divider();
         if ($failed > 0) Console::error(Console::styled('Scheduler finished with ' . Console::plural($failed, 'failed task'), Ansi::BOLD, Ansi::RED), true);

@@ -14,5 +14,5 @@ require_once 'start.php';
 try {
     if (Scheduler::run(in_array('--test', $_SERVER['argv'] ?? [], true)) > 0) exit(1);
 } catch (Exception $e) {
-    Console::fail("Scheduler failed: " . $e->getMessage());
+    Console::fail('Scheduler failed: ' . $e->getMessage());
 }

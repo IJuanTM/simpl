@@ -20,7 +20,7 @@ enum Ansi: string
     case DIM = "\x1b[2m";
 
     /**
-     * Wraps $message in the given style sequences, followed by a reset code (no-op when $styles is empty).
+     * Wraps $message in the given style sequences, followed by a reset code (no-op when $styles is empty or colors are off).
      *
      * @param string $message
      * @param self   ...$styles
@@ -29,7 +29,18 @@ enum Ansi: string
      */
     public static function wrap(string $message, self ...$styles): string
     {
-        return empty($styles) ? $message : self::sequence(...$styles) . $message . self::RESET->value;
+        return empty($styles) || !self::enabled() ? $message : self::sequence(...$styles) . $message . self::RESET->value;
+    }
+
+    /**
+     * Whether output gets styled: FORCE_COLOR turns it on, NO_COLOR turns it off, otherwise only when stdout is a terminal.
+     *
+     * @return bool
+     */
+    private static function enabled(): bool
+    {
+        static $enabled = getenv('FORCE_COLOR') !== false || (getenv('NO_COLOR') === false && defined('STDOUT') && stream_isatty(STDOUT));
+        return $enabled;
     }
 
     /**
