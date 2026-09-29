@@ -22,8 +22,6 @@ trait EnsuresDirectory
      */
     private static function ensureDirectory(string $dir): void
     {
-        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
-        }
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
     }
 }

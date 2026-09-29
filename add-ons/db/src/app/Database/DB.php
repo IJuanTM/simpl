@@ -395,7 +395,7 @@ class DB
 
         try {
             self::$pdo = new PDO(
-                'mysql:host=' . DB_SERVER . ($withDatabase ? ';dbname=' . DB_NAME : ''),
+                'mysql:host=' . DB_SERVER . ';charset=' . DB_SCHEMA_DEFAULTS['charset'] . ($withDatabase ? ';dbname=' . DB_NAME : ''),
                 DB_USERNAME,
                 DB_PASSWORD,
                 [
@@ -512,9 +512,7 @@ class DB
         $table = self::sanitize($INTO);
         $columns = self::sanitizedColumnList(array_keys($VALUES), static fn($col) => self::sanitize($col));
         $placeholders = ':' . implode(', :', array_keys($VALUES));
-        $query = "INSERT INTO $table ($columns) VALUES ($placeholders)";
-
-        self::execute($query, $VALUES);
+        self::execute("INSERT INTO $table ($columns) VALUES ($placeholders)", $VALUES);
         return true;
     }
 
@@ -611,9 +609,7 @@ class DB
 
         $table = self::sanitize($FROM);
         [$whereClause, $params] = self::buildWhere($WHERE);
-        $query = "DELETE FROM $table WHERE $whereClause";
-
-        return self::execute($query, $params)->rowCount() > 0;
+        return self::execute("DELETE FROM $table WHERE $whereClause", $params)->rowCount() > 0;
     }
 
     /**

@@ -27,8 +27,7 @@ $selected ??= [];
 
         <?php foreach ($options as $option) : ?>
 
-          <?php $isSelected = in_array($option['value'], $selected, true) ?>
-          <option value="<?= AppController::sanitize($option['value']) ?>"<?= $isSelected ? ' selected hidden' : '' ?>><?= AppController::sanitize($option['label']) ?></option>
+          <option value="<?= AppController::sanitize($option['value']) ?>"<?= in_array($option['value'], $selected, true) ? ' selected hidden' : '' ?>><?= AppController::sanitize($option['label']) ?></option>
 
         <?php endforeach ?>
 

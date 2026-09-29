@@ -83,6 +83,38 @@ namespace tests\Feature\Routing {
             $this->assertTrue($called);
         }
 
+        public function testRootUrlWithAQueryStringFallsBackToTheRedirectRoute(): void
+        {
+            // Arrange
+            global $ROUTES;
+            $called = false;
+            $ROUTES = [REDIRECT => static function () use (&$called) {
+                $called = true;
+            }];
+            $_SERVER['REQUEST_URI'] = '/?utm_source=test';
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            // Act
+            new PageController();
+
+            // Assert
+            $this->assertTrue($called);
+        }
+
+        public function testAComponentTemplateIsNotRoutableAsAPage(): void
+        {
+            // Arrange
+            $_SERVER['REQUEST_URI'] = '/components/form/multi-select';
+            $_SERVER['REQUEST_METHOD'] = 'GET';
+
+            // Act
+            new PageController();
+
+            // Assert
+            $this->assertSame(302, http_response_code());
+            $this->assertTrue($this->headersContain('/error/404'));
+        }
+
         public function testApiDispatchCallsTheMatchingPageObjectsApiMethod(): void
         {
             // Arrange

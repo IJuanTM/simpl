@@ -113,10 +113,10 @@ final class ScheduledTaskTest extends TestCase
         $this->assertTrue($this->matchesCronField(37, '*'));
     }
 
-    private function matchesCronField(int $current, string $field): bool
+    private function matchesCronField(int $current, string $field, int $min = 0): bool
     {
         $method = new ReflectionMethod(ScheduledTask::class, 'matchesCronField');
-        return $method->invoke($this->task(), $current, $field);
+        return $method->invoke($this->task(), $current, $field, $min);
     }
 
     public function testMatchesCronFieldExactValue(): void
@@ -143,6 +143,14 @@ final class ScheduledTaskTest extends TestCase
         $this->assertTrue($this->matchesCronField(15, '*/15'));
         $this->assertTrue($this->matchesCronField(30, '*/15'));
         $this->assertFalse($this->matchesCronField(20, '*/15'));
+    }
+
+    public function testMatchesCronFieldStepStartsAtTheFieldMinimum(): void
+    {
+        // Act + Assert
+        $this->assertTrue($this->matchesCronField(1, '*/2', 1));
+        $this->assertTrue($this->matchesCronField(3, '*/2', 1));
+        $this->assertFalse($this->matchesCronField(2, '*/2', 1));
     }
 
     public function testMatchesCronFieldStepFromAnOffset(): void

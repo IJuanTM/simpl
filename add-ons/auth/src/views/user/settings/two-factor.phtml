@@ -429,7 +429,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                   <div class="col two-fa-panel f-col g-row-1">
                     <div class="row">
                       <div class="col">
-                        <p class="form-details">You have <strong><?= $s->recoveryCodesLeft ?></strong> of 10 recovery codes left. A recovery code lets you sign in if you lose access to your other methods. Generating a new set replaces the old one.</p>
+                        <p class="form-details">You have <strong><?= $s->recoveryCodesLeft ?></strong> of <?= TWO_FACTOR_CONFIG['recovery_code_count'] ?> recovery codes left. A recovery code lets you sign in if you lose access to your other methods. Generating a new set replaces the old one.</p>
                       </div>
                     </div>
 

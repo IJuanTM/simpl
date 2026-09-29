@@ -143,12 +143,10 @@ class UsersSeeder
         TwoFactorController::enable($userId);
         if (random_int(1, 100) > 50) return;
 
-        $secret = TOTP::generate(secretSize: 20)->getSecret();
-
         DB::update(
             UPDATE: 'user_two_factor',
             SET: [
-                'totp_secret' => Crypto::encrypt($secret),
+                'totp_secret' => Crypto::encrypt(TOTP::generate(secretSize: 20)->getSecret()),
                 'totp_enabled' => 1,
                 'totp_confirmed_at' => date('Y-m-d H:i:s'),
                 'primary_method' => TwoFactorMethod::TOTP->value

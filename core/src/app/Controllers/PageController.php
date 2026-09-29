@@ -34,9 +34,7 @@ class PageController extends Page
      */
     private function route(): void
     {
-        // strtok() runs first so a bare "?query" root URL also falls back to REDIRECT.
-        $requestPath = strtok(strtolower(trim($_SERVER['REQUEST_URI'], '/')), '?');
-        $urlArr = array_values(array_filter(explode('/', $requestPath ?: REDIRECT), static fn(string $segment) => $segment !== ''));
+        $urlArr = array_values(array_filter(explode('/', self::requestPath()), static fn(string $segment) => $segment !== ''));
 
         // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
         // A backslash-containing segment is rejected too, since splitting only on "/" would let one through untouched, and it's a path separator on Windows.
@@ -87,6 +85,17 @@ class PageController extends Page
     }
 
     /**
+     * The lowercased request path without its query string or surrounding slashes, or REDIRECT for the root.
+     *
+     * @return string
+     */
+    private static function requestPath(): string
+    {
+        // The query string is cut before trimming, so "/?query" still falls back to REDIRECT.
+        return strtolower(trim(explode('?', $_SERVER['REQUEST_URI'] ?? '', 2)[0], '/')) ?: REDIRECT;
+    }
+
+    /**
      * Handles errors: redirects to the matching error page for a normal request, or responds with a JSON error body for an API request.
      * A redirect would otherwise send an API client's fetch() into an HTML page instead of the error it expected.
      *
@@ -118,10 +127,7 @@ class PageController extends Page
      */
     private static function isApiRequest(): bool
     {
-        $requestPath = trim($_SERVER['REQUEST_URI'] ?? '', '/')
-                |> strtolower(...)
-                |> (static fn($x) => strtok($x, '?'));
-        return explode('/', $requestPath ?: REDIRECT, 2)[0] === 'api';
+        return explode('/', self::requestPath(), 2)[0] === 'api';
     }
 
     /**
@@ -158,6 +164,12 @@ class PageController extends Page
      */
     private function render(): void
     {
+        // Components and parts are fragments that need component()/part() to supply their data, so they're never pages themselves.
+        if (in_array($this->page, ['components', 'parts'], true)) {
+            self::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
         // Every page but the home page gets a breadcrumb trail.
         // A page that built its own trail in its constructor (admin, settings) keeps it.
         if ($this->page !== REDIRECT && BreadcrumbController::get() === []) {

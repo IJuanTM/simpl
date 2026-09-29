@@ -230,6 +230,12 @@ class TwoFactorSettings
             return false;
         }
 
+        // Checked before the password itself, or a correct guess would still get through while locked out.
+        if (RateLimiter::retryAfterMs($rateLimitKey) > 0) {
+            PageController::redirectWithAlert($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return false;
+        }
+
         if (AuthController::checkPassword(SessionController::get('user')['email'], $password)) return true;
 
         // Only a wrong password counts against the lockout, matching PasswordSettings::changePassword().
@@ -429,9 +435,7 @@ class TwoFactorSettings
      */
     private function passkeyOptions(): void
     {
-        $options = json_decode(TwoFactorController::passkeyRegistrationOptions($this->userId, SessionController::get('user')['email']), true, flags: JSON_THROW_ON_ERROR);
-
-        self::json(['publicKey' => $options]);
+        self::json(['publicKey' => json_decode(TwoFactorController::passkeyRegistrationOptions($this->userId, SessionController::get('user')['email']), true, flags: JSON_THROW_ON_ERROR)]);
     }
 
     /**

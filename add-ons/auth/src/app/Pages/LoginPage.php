@@ -87,28 +87,28 @@ class LoginPage
     {
         $userId ??= AuthController::getUserIdByIdentifier($identifier);
 
-        $userSeconds = $userId !== null
-            ? max(0, ($this->calculateLockout('user_id', $userId, LOCKOUT_CONFIG['user']) ?? 0) - time())
-            : 0;
+        // An unknown identifier is locked out on its own attempts too, so the lockout can't reveal which identifiers are real accounts.
+        $userLockout = $userId !== null
+            ? $this->calculateLockout('user_id', $userId, LOCKOUT_CONFIG['user'])
+            : $this->calculateLockout('identifier_hash', AuthController::identifierHash($identifier), LOCKOUT_CONFIG['user']);
 
-        $ipSeconds = max(0, ($this->calculateLockout('ip_address', $ip, LOCKOUT_CONFIG['ip']) ?? 0) - time());
-
-        return max($userSeconds, $ipSeconds);
+        return max(0, max($userLockout ?? 0, $this->calculateLockout('ip_address', $ip, LOCKOUT_CONFIG['ip']) ?? 0) - time());
     }
 
     /**
-     * Calculates lockout end timestamp based on failed attempts.
+     * Replays failed attempts oldest-first to find when the latest lockout ends.
+     * Each filled burst locks for min_duration_minutes, doubling per consecutive lockout up to max_duration_minutes.
+     * The doubling resets once no attempt has failed for longer than max_duration_minutes.
      *
-     * @param string                                                                                              $column Database column to query (user_id or ip_address)
+     * @param string                                                                                              $column Database column to query (user_id, identifier_hash or ip_address)
      * @param mixed                                                                                               $value  Value to match
      * @param array{max_attempts: int, min_duration_minutes: int, max_duration_minutes: int, window_minutes: int} $config
      *
-     * @return int|null Lockout end timestamp or null if not locked
+     * @return int|null Lockout end timestamp, or null if no lockout was ever triggered in the replayed history
      */
     private function calculateLockout(string $column, mixed $value, array $config): ?int
     {
-        // Rows are newest-first, and only those within one window of the newest are ever counted below.
-        // A generous multiple of max_attempts is more than enough to cover that window, regardless of total attempt history.
+        // Ten lockouts' worth of history is more than the doubling needs to reach max_duration_minutes.
         $rows = DB::select(
             SELECT: "UNIX_TIMESTAMP(CONVERT_TZ(attempt_time, @@session.time_zone, '+00:00')) AS ts",
             FROM: 'login_attempts',
@@ -120,23 +120,27 @@ class LoginPage
             LIMIT: $config['max_attempts'] * 10
         );
 
-        if (!$rows) return null;
+        $lockedUntil = null;
+        $tier = 0;
+        $burst = [];
+        $previous = null;
 
-        $timestamps = array_map(static fn($r) => (int)$r['ts'], $rows);
-        $newest = $timestamps[0];
+        // Attempts made during a lockout are rejected before being recorded, so a fresh burst after one can only start once it has ended.
+        foreach (array_reverse($rows) as $row) {
+            $ts = (int)$row['ts'];
 
-        // Rows are sorted newest-first, so the first attempt outside the window means every remaining one is too, so it's safe to stop counting there.
-        $count = 0;
-        foreach ($timestamps as $ts) {
-            if (($newest - $ts) <= $config['window_minutes'] * 60) $count++;
-            else break;
+            if ($previous !== null && $ts - $previous > $config['max_duration_minutes'] * 60) $tier = 0;
+            $previous = $ts;
+
+            $burst = [...array_filter($burst, static fn(int $b) => $ts - $b <= $config['window_minutes'] * 60), $ts];
+            if (count($burst) < $config['max_attempts']) continue;
+
+            $lockedUntil = $ts + min($config['min_duration_minutes'] * 2 ** $tier, $config['max_duration_minutes']) * 60;
+            $tier++;
+            $burst = [];
         }
 
-        $blocks = (int)floor($count / $config['max_attempts']);
-        if ($blocks === 0) return null;
-
-        // Exponential backoff: duration doubles per completed threshold, capped at max_duration_minutes.
-        return $newest + (min($config['min_duration_minutes'] * (2 ** ($blocks - 1)), $config['max_duration_minutes']) * 60);
+        return $lockedUntil;
     }
 
     /**

@@ -41,10 +41,10 @@ class ContactPage
         if (!$this->attemptRateLimit(RESEND_TIMEOUTS['contact'])) return;
 
         $this->contactMail(
-            RequestController::post('name'),
-            RequestController::post('email'),
-            RequestController::post('subject'),
-            RequestController::post('message')
+            RequestController::rawPost('name'),
+            RequestController::rawPost('email'),
+            RequestController::rawPost('subject'),
+            RequestController::rawPost('message')
         );
     }
 
@@ -74,9 +74,7 @@ class ContactPage
             return;
         }
 
-        $result = MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender);
-
-        if ($result) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
+        if (MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender)) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
         else PageController::redirectWithAlert(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }
 }

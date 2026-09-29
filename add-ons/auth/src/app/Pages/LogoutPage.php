@@ -43,7 +43,6 @@ class LogoutPage
 
         SessionController::remove('user');
 
-        // Clear the remember cookie using the same flags it was set with
         AuthController::clearRememberCookie();
 
         // Rotate the session id so the now-anonymous session cannot reuse the authenticated one

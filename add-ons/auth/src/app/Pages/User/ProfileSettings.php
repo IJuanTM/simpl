@@ -61,13 +61,20 @@ class ProfileSettings
         if ($emailChanged) {
             if (!FormController::validate('current-password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])) return;
 
-            if (!RateLimiter::attempt("change-email-{$id}", LOCKOUT_CONFIG['change_email']['max_attempts'], LOCKOUT_CONFIG['change_email']['window_seconds'])) {
+            // Checked before the password itself, or a correct guess would still get through while locked out.
+            if (RateLimiter::retryAfterMs("change-email-{$id}") > 0) {
                 FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
                 return;
             }
 
             if (!AuthController::checkPassword($currentEmail, $_POST['current-password'])) {
+                if (!RateLimiter::attempt("change-email-{$id}", LOCKOUT_CONFIG['change_email']['max_attempts'], LOCKOUT_CONFIG['change_email']['window_seconds'])) {
+                    FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+                    return;
+                }
+
                 $_POST['current-password'] = '';
+
                 FormController::addAlert('Your current password is incorrect!', AlertType::WARNING);
                 return;
             }
@@ -86,9 +93,9 @@ class ProfileSettings
         }
 
         $profileFields = [
-            'username' => $_POST['username'] ?: null,
-            'first_name' => $_POST['first_name'] ?: null,
-            'last_name' => $_POST['last_name'] ?: null,
+            'username' => $_POST['username'] !== '' ? $_POST['username'] : null,
+            'first_name' => $_POST['first_name'] !== '' ? $_POST['first_name'] : null,
+            'last_name' => $_POST['last_name'] !== '' ? $_POST['last_name'] : null,
             'email' => $_POST['email'],
         ];
 

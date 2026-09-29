@@ -12,6 +12,7 @@ use app\Controllers\TwoFactorController;
 use app\Enums\AlertType;
 use app\Enums\ErrorCode;
 use app\Enums\TwoFactorMethod;
+use app\Enums\UserStatus;
 use app\Models\Page;
 use app\Models\Url;
 use app\Pages\Traits\TwoTierThrottle;
@@ -158,7 +159,7 @@ class TwoFactorPage
      * Clears the pending marker and the account throttle, then finishes the login.
      *
      * @param array $pending
-     * @param bool  $isApi Whether the caller is a JSON API endpoint (passkeyVerify()) rather than the form-post handler (post()), so a vanished account is reported as a JSON error instead of a page redirect
+     * @param bool  $isApi Whether the caller is a JSON API endpoint (passkeyVerify()) rather than the form-post handler (post()), so a vanished or no longer usable account is reported as a JSON error instead of a page redirect
      *
      * @return string The route to send the user to
      *
@@ -171,7 +172,12 @@ class TwoFactorPage
 
         $user = AuthController::getUserWithRole($this->userId);
 
-        if (!$user) {
+        // The account may have been deactivated since the password step, which the pending marker outlives.
+        if (
+            !$user
+            || $user['status'] !== UserStatus::ACTIVE->value
+            || (VERIFICATION_CONFIG['required'] && !AuthController::isVerified($this->userId))
+        ) {
             if ($isApi) PageController::error(ErrorCode::BAD_REQUEST);
             else PageController::redirectWithAlert('login', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;

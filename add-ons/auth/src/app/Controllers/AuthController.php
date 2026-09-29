@@ -188,7 +188,6 @@ class AuthController
      */
     public static function isVerified(int $id): bool
     {
-        // Account considered verified when there is no verification token row.
         return !DB::exists(
             FROM: 'tokens',
             WHERE: [
@@ -345,13 +344,8 @@ class AuthController
         $user = SessionController::get('user');
         if (!$user) return null;
 
-        if (!empty($user['must_change_password'])) {
-            return 'user/settings/change-password';
-        }
-
-        if (TWO_FACTOR_CONFIG['enabled'] && self::twoFactorIsIncomplete($user)) {
-            return 'user/settings/two-factor';
-        }
+        if (!empty($user['must_change_password'])) return 'user/settings/change-password';
+        if (TWO_FACTOR_CONFIG['enabled'] && self::twoFactorIsIncomplete($user)) return 'user/settings/two-factor';
 
         return null;
     }
@@ -944,6 +938,7 @@ class AuthController
             INTO: 'login_attempts',
             VALUES: [
                 'user_id' => $userId ?? self::getUserIdByIdentifier($identifier),
+                'identifier_hash' => self::identifierHash($identifier),
                 'ip_address' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
                 'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown',
                 'success' => $success ? 1 : 0,
@@ -962,6 +957,19 @@ class AuthController
     public static function getUserIdByIdentifier(string $identifier): ?int
     {
         return self::getUserIdByEmail($identifier) ?? self::getUserIdByUsername($identifier);
+    }
+
+    /**
+     * Hashes a submitted login identifier, so attempts on unknown identifiers can be throttled without storing what was typed.
+     * Lowercased to match the case-insensitive username/email lookup.
+     *
+     * @param string $identifier
+     *
+     * @return string
+     */
+    public static function identifierHash(string $identifier): string
+    {
+        return hash('sha256', mb_strtolower($identifier));
     }
 
     /**

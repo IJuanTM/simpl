@@ -25,6 +25,7 @@ class CreateUserTwoFactorTable
             // Crypto::encrypt() output, never the raw base32 secret.
             $t->varchar('totp_secret', 255);
             $t->timestamp('totp_confirmed_at', default: null);
+            $t->intUnsigned('totp_last_step', notNull: true, default: 0);
             $t->timestamp('created_at', notNull: true, default: 'CURRENT_TIMESTAMP');
             $t->timestamp('last_update', notNull: true, default: 'CURRENT_TIMESTAMP')->onUpdateCurrentTimestamp();
             $t->primary('user_id');

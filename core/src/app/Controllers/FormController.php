@@ -78,13 +78,11 @@ class FormController
             }
         }
 
-        $typeFails = match ($rules['type'] ?? null) {
+        if (match ($rules['type'] ?? null) {
             'number' => !is_numeric($value),
             'email' => !filter_var($value, FILTER_VALIDATE_EMAIL),
             default => false,
-        };
-
-        if ($typeFails) {
+        }) {
             $_POST[$field] = '';
             static::addAlert("The input in the $fieldName field is not " . ($rules['type'] === 'number' ? 'a number' : 'a valid email address') . '!', AlertType::WARNING);
             return false;

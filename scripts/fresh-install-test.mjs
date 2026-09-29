@@ -257,8 +257,15 @@ const resolveLatest = async () => {
 
 const buildZip = (subdir, outZip) => {
   fs.mkdirSync(path.dirname(outZip), {recursive: true});
-  const tree = execFileSync('git', ['stash', 'create'], {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim() || 'HEAD';
-  execFileSync('git', ['archive', '--format=zip', '-o', outZip, `${tree}:${subdir}`], {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']});
+  const index = `${outZip}.index`;
+  // A throwaway index snapshots the working tree, untracked files included, without touching the real index.
+  const git = (...args) => execFileSync('git', args, {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
+  try {
+    git('add', '-A', '--', subdir);
+    git('archive', '--format=zip', '-o', outZip, `${git('write-tree')}:${subdir}`);
+  } finally {
+    fs.rmSync(index, {force: true});
+  }
 };
 
 const connectDatabase = () => {

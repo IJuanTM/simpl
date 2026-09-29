@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace tests\Feature\TwoFactorAuth;
 
 use app\Controllers\TwoFactorController;
+use app\Utils\Crypto;
+use OTPHP\TOTP;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -48,5 +50,23 @@ final class TwoFactorControllerTest extends TestCase
         // Assert
         $this->assertStringStartsWith('<svg', $svg);
         $this->assertStringEndsWith('</svg>', trim($svg));
+    }
+
+    public function testMatchedTotpStepReturnsTheCurrentStepForAValidCodeOnly(): void
+    {
+        // Arrange
+        $matchedTotpStep = new ReflectionMethod(TwoFactorController::class, 'matchedTotpStep');
+        $totp = TOTP::generate(secretSize: 20);
+        $encrypted = Crypto::encrypt($totp->getSecret());
+        $now = time();
+        $code = $totp->at($now);
+
+        // Act
+        $step = $matchedTotpStep->invoke(null, $encrypted, $code);
+        $wrongStep = $matchedTotpStep->invoke(null, $encrypted, $code === '000000' ? '111111' : '000000');
+
+        // Assert
+        $this->assertSame(intdiv($now, $totp->getPeriod()), $step);
+        $this->assertNull($wrongStep);
     }
 }

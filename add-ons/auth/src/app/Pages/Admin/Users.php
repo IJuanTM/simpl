@@ -112,8 +112,9 @@ class Users
             // Generated once per form round-trip and resubmitted via the readonly password field, so the value the admin sees on screen is always the one that actually gets applied.
             // Regenerating fresh on the POST request itself would silently create the account with a different password than what was displayed.
             // Only a value with the generator's own shape is trusted back; a tampered (e.g. weak) field value is discarded and a fresh password generated.
-            $resubmitted = $isSubmit && is_string($_POST['password'] ?? null) && AuthController::isGeneratedPasswordShape($_POST['password']);
-            $password = $resubmitted ? $_POST['password'] : AuthController::generatePassword();
+            $password = $isSubmit && is_string($_POST['password'] ?? null) && AuthController::isGeneratedPasswordShape($_POST['password'])
+                ? $_POST['password']
+                : AuthController::generatePassword();
 
             if ($password === null) {
                 FormController::addAlert('Could not generate a password. Please try again.', AlertType::ERROR);

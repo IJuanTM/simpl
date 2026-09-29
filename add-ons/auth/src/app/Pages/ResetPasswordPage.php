@@ -8,7 +8,6 @@ use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\PageController;
 use app\Controllers\SessionController;
-use app\Database\DB;
 use app\Enums\AlertType;
 use app\Enums\TokenType;
 use app\Models\Page;
@@ -42,7 +41,6 @@ class ResetPasswordPage
         $id = $page->subpage();
         $token = $page->subpage(1);
 
-        // A valid reset link must carry a numeric user id and a token
         if ($id === null || $token === null || !is_numeric($id)) {
             $this->disableForm = true;
             FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
@@ -51,20 +49,6 @@ class ResetPasswordPage
         }
 
         $id = (int)$id;
-
-        // A reset request must exist for this user
-        if (!DB::exists(
-            'tokens',
-            [
-                'user_id' => $id,
-                'type' => TokenType::RESET->value
-            ]
-        )) {
-            $this->disableForm = true;
-            FormController::addAlert('No valid password reset request found for this user! Please try again.', AlertType::ERROR);
-            PageController::redirect('forgot-password', 2);
-            return;
-        }
 
         // A token verified earlier in this session only skips re-throttling, not the token check.
         // Reloading or resubmitting the form then can't burn the guess budget on a token that was never re-guessed.
@@ -87,7 +71,6 @@ class ResetPasswordPage
 
         if (!$alreadyVerified) SessionController::set($sessionKey, $tokenHash);
 
-        // Reached only once the link's user id and token pass all the checks above.
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post($id);
     }
 

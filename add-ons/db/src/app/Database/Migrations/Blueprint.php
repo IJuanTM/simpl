@@ -230,9 +230,7 @@ class Blueprint
      */
     public function index(string $name, array $columns): static
     {
-        $name = self::identifier($name);
-        $cols = implode(', ', array_map(static fn($c) => '`' . self::identifier($c) . '`', $columns));
-        $this->indexes[] = "INDEX `$name` ($cols)";
+        $this->indexes[] = sprintf('INDEX `%s` (%s)', self::identifier($name), implode(', ', array_map(static fn($c) => '`' . self::identifier($c) . '`', $columns)));
         return $this;
     }
 }

@@ -60,8 +60,10 @@ async function register(button: HTMLButtonElement): Promise<void> {
   button.disabled = true;
 
   try {
-    const name = window.prompt('Name this passkey (e.g. "MacBook", "iPhone")', 'My device')?.trim() || 'Passkey';
+    const input = window.prompt('Name this passkey (e.g. "MacBook", "iPhone")', 'My device');
+    if (input === null) return;
 
+    const name = input.trim() || 'Passkey';
     const options = await (await fetch(button.dataset.optionsUrl ?? '')).json();
     const credential = await navigator.credentials.create({publicKey: reviveCreation(options.publicKey)}) as PublicKeyCredential;
 

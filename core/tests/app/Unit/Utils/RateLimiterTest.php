@@ -132,6 +132,21 @@ final class RateLimiterTest extends TestCase
         $this->assertGreaterThan($firstRetry, $secondRetry);
     }
 
+    public function testBackoffIgnoresAFullBurstOutsideTheWindow(): void
+    {
+        // Arrange
+        $key = $this->key('backoff-stale-burst');
+        $file = BASEDIR . '/cache/ratelimit/' . hash('sha256', $key) . '.json';
+        (void)RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+        file_put_contents($file, json_encode(['attempts' => [time() - 3601, time() - 3600], 'tier' => 0, 'retry' => 0]));
+
+        // Act
+        $allowed = RateLimiter::attemptWithBackoff($key, 2, 60, 10, 100);
+
+        // Assert
+        $this->assertTrue($allowed);
+    }
+
     public function testRetryAfterMsIsZeroWhenNotLimited(): void
     {
         // Arrange

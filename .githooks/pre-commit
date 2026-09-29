@@ -139,7 +139,7 @@ check_php_syntax() {
   local content="$2"
   local tmp lint_output
 
-  tmp=$(mktemp --suffix=.php)
+  tmp=$(mktemp)
   printf '%s' "$content" > "$tmp"
 
   if ! lint_output=$(php -l "$tmp" 2>&1); then
@@ -159,8 +159,8 @@ check_debug_statements() {
     return
   fi
 
-  # The lookbehind excludes $dd(...), ->dd(), and Foo::dd() - "dd" is short enough to collide with a real variable/method/static name, unlike var_dump/print_r.
-  if grep -qP '(?<![$:>])\b(var_dump|print_r|dd)\(' <<< "$added_lines"; then
+  # The preceding-character class excludes $dd(...), ->dd(), and Foo::dd() - "dd" is short enough to collide with a real variable/method/static name, unlike var_dump/print_r.
+  if grep -qE '(^|[^$:>[:alnum:]_])(var_dump|print_r|dd)\(' <<< "$added_lines"; then
     echo "pre-commit: $file adds a debug statement (var_dump/print_r/dd)" >&2
     fail=1
   fi
@@ -193,7 +193,7 @@ while IFS= read -r staged_file; do
     [ "$php_available" -eq 1 ] && [ "$fetched" -eq 1 ] && check_php_syntax "$staged_file" "$content"
     check_debug_statements "$staged_file"
   fi
-done < <(git diff --cached --name-only --diff-filter=ACM)
+done < <(git diff --cached --name-only --diff-filter=ACMR)
 
 if [ "$fail" -ne 0 ]; then
   exit 1

@@ -156,7 +156,7 @@ class Roles
     }
 
     /**
-     * Validates and updates an existing role's name.
+     * Validates and updates an existing role's name and required 2FA methods; a built-in role's name can't change.
      *
      * @param int $id Role ID to update
      *
@@ -164,9 +164,9 @@ class Roles
      */
     private function updateRole(int $id): void
     {
-        if ($this->blockBuiltInRole('renamed')) return;
-
         if (!$this->validateRoleName()) return;
+
+        if ($_POST['name'] !== $this->role['name'] && $this->blockBuiltInRole('renamed')) return;
 
         $existing = DB::single(
             SELECT: 'id',

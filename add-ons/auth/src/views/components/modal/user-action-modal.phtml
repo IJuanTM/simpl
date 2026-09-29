@@ -20,7 +20,7 @@ use app\Controllers\AppController;
 
 $confirmCheckbox ??= false;
 $confirmText ??= 'I understand this action cannot be undone';
-$id = substr($triggerAttr, 5); // strip the "data-" prefix from e.g. "data-user-delete-modal"
+$id = substr($triggerAttr, strlen('data-'));
 ?>
 
 <dialog class="modal-overlay" id="<?= AppController::sanitize($id) ?>" tabindex="-1" <?= AppController::sanitize($triggerAttr) ?> aria-label="<?= AppController::sanitize($ariaLabel) ?>">

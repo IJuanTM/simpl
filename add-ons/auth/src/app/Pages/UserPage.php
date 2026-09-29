@@ -94,7 +94,6 @@ class UserPage
             return;
         }
 
-        // Profile image actions change state and act on the logged-in user; require authentication.
         AuthController::requireAuth();
 
         // State-changing only: a GET would run these without passing PageController's CSRF check.

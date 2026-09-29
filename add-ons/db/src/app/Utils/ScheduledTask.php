@@ -130,36 +130,35 @@ class ScheduledTask
 
         $currentWeekday = (int)date('w');
 
-        $dayMatches = $this->matchesCronField((int)date('j'), $day);
+        $dayMatches = $this->matchesCronField((int)date('j'), $day, 1);
 
         // date('w') is 0-6; standard cron also accepts 7 for Sunday.
         $weekdayMatches = $this->matchesCronField($currentWeekday, $weekday)
             || ($currentWeekday === 0 && $this->matchesCronField(7, $weekday));
 
-        // Standard cron semantics: day-of-month and weekday OR together when both are restricted, AND otherwise.
-        $dayOrWeekday = $day === '*' || $weekday === '*' ? $dayMatches && $weekdayMatches : $dayMatches || $weekdayMatches;
-
         return $this->matchesCronField((int)date('i'), $minute)
             && $this->matchesCronField((int)date('H'), $hour)
-            && $dayOrWeekday
-            && $this->matchesCronField((int)date('n'), $month);
+            // Standard cron semantics: day-of-month and weekday OR together when both are restricted, AND otherwise.
+            && ($day === '*' || $weekday === '*' ? $dayMatches && $weekdayMatches : $dayMatches || $weekdayMatches)
+            && $this->matchesCronField((int)date('n'), $month, 1);
     }
 
     /**
      * Whether $current matches a single cron field - a wildcard, comma-list, step (/), range (-), or literal value.
+     * $min is the field's lowest value, where a wildcard step starts counting (1 for day-of-month and month, 0 otherwise).
      */
-    private function matchesCronField(int $current, string $field): bool
+    private function matchesCronField(int $current, string $field, int $min = 0): bool
     {
         if ($field === '*') return true;
 
         // Check comma-lists first, so "1,3,5-10" matches as three parts, not one "-" range.
-        if (str_contains($field, ',')) return array_any(explode(',', $field), fn($part) => $this->matchesCronField($current, $part));
+        if (str_contains($field, ',')) return array_any(explode(',', $field), fn($part) => $this->matchesCronField($current, $part, $min));
 
         if (str_contains($field, '/')) {
             [$range, $step] = explode('/', $field);
             $step = (int)$step;
 
-            if ($range === '*') [$start, $end] = [0, null];
+            if ($range === '*') [$start, $end] = [$min, null];
             else if (str_contains($range, '-')) [$start, $end] = array_map('intval', explode('-', $range));
             else [$start, $end] = [(int)$range, null];
 

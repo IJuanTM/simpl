@@ -56,8 +56,7 @@ class RateLimiter
 
             // Report the next-allowed time whenever the window is now at capacity, even on an allowed call.
             // That way the view can render an accurate data-timeout right away, not only after the following (rejected) attempt.
-            $retry = count($attempts) >= $max ? $attempts[count($attempts) - $max] + $windowSeconds : 0;
-            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => $retry]);
+            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => count($attempts) >= $max ? $attempts[count($attempts) - $max] + $windowSeconds : 0]);
 
             return $allowed;
         });
@@ -139,7 +138,7 @@ class RateLimiter
      *
      * @param string $key                Unique identifier for the action being limited
      * @param int    $maxAttempts        Attempts allowed in one burst before a lockout starts
-     * @param int    $windowSeconds      Burst window: attempts must land within this of the newest to count together
+     * @param int    $windowSeconds      Burst window: only attempts this recent count toward a lockout
      * @param int    $minDurationSeconds First lockout duration
      * @param int    $maxDurationSeconds Lockout duration ceiling
      *
@@ -165,15 +164,7 @@ class RateLimiter
             }
 
             // A served lockout resets the burst, so only attempts since $retry (the last lockout's end) count toward the next one.
-            $burst = array_filter($attempts, static fn(int $ts) => $ts >= $retry) |> array_values(...);
-            $newest = $burst ? max($burst) : $now;
-            $count = 0;
-            for ($i = count($burst) - 1; $i >= 0; $i--) {
-                if ($newest - $burst[$i] > $windowSeconds) break;
-                $count++;
-            }
-
-            if ($count >= $maxAttempts) {
+            if ((array_filter($attempts, static fn(int $ts) => $ts >= $retry && $now - $ts <= $windowSeconds) |> count(...)) >= $maxAttempts) {
                 // Next tier: the exponent is capped so the doubling can't overflow before min() clamps it to $maxDurationSeconds.
                 $retry = $now + min($minDurationSeconds * (2 ** min($tier, 30)), $maxDurationSeconds);
                 $tier++;

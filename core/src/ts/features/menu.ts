@@ -14,7 +14,8 @@ export const menuModule = {
       navMenu.toggleAttribute('inert', !open && !desktop.matches);
     };
 
-    const normalizePath = (url: string): string => new URL(url, location.origin).pathname.replace(/\/+$/, '') || '/home';
+    // The root URL serves the REDIRECT page, whose path only the server knows; the header logo links to it.
+    const normalizePath = (url: string): string => new URL(url, location.origin).pathname.replace(/\/+$/, '') || (document.querySelector('a.nav-logo')?.getAttribute('href') ?? '/');
 
     const current = normalizePath(location.href);
     navItems.forEach(item => {

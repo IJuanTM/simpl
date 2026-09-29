@@ -37,11 +37,18 @@ class PasswordSettings
         ) return;
 
         $user = SessionController::get('user');
+        $rateLimitKey = "change-password-{$user['id']}";
+
+        // Checked before the password itself, or a correct guess would still get through while locked out.
+        if (RateLimiter::retryAfterMs($rateLimitKey) > 0) {
+            FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            return;
+        }
 
         if (!AuthController::checkPassword($user['email'], $_POST['old-password'])) {
             // Only a wrong old password counts against the lockout.
             // A correct old password never burns a slot on some other field failing validation.
-            if (!RateLimiter::attempt("change-password-{$user['id']}", LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
+            if (!RateLimiter::attempt($rateLimitKey, LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
                 FormController::addAlert('Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
                 return;
             }

@@ -415,11 +415,11 @@ class TwoFactorController
         $row = self::settingsFor($userId);
         if ($row === null || empty($row['totp_secret']) || !empty($row['totp_enabled'])) return false;
 
-        $secret = Crypto::decrypt($row['totp_secret']);
-        if ($secret === null || !TOTP::createFromSecret($secret)->verify($code, null, self::totpLeeway())) return false;
+        $step = self::matchedTotpStep($row['totp_secret'], $code);
+        if ($step === null) return false;
 
         // email_enabled stays on so an emailed code is always available as a fallback.
-        $data = ['totp_enabled' => 1, 'totp_confirmed_at' => date('Y-m-d H:i:s'), 'enabled' => 1, 'email_enabled' => 1];
+        $data = ['totp_enabled' => 1, 'totp_confirmed_at' => date('Y-m-d H:i:s'), 'totp_last_step' => $step, 'enabled' => 1, 'email_enabled' => 1];
         $firstFactor = empty($row['enabled']);
         if ($firstFactor) $data['primary_method'] = TwoFactorMethod::TOTP->value;
 
@@ -431,13 +431,24 @@ class TwoFactorController
     }
 
     /**
-     * Clock-drift tolerance for a TOTP check, capped just under the 30s period as otphp requires.
+     * The time step a TOTP code is valid for, allowing TWO_FACTOR_CONFIG['totp_leeway'] seconds of clock drift either way.
+     * The leeway is capped just under the 30s period, as otphp requires.
      *
-     * @return int
+     * @param string $encryptedSecret Crypto::encrypt() output as stored in totp_secret
+     * @param string $code
+     *
+     * @return int|null The matched step, or null when the code doesn't match any step in the leeway
      */
-    private static function totpLeeway(): int
+    private static function matchedTotpStep(string $encryptedSecret, #[SensitiveParameter] string $code): ?int
     {
-        return min(29, TWO_FACTOR_CONFIG['totp_leeway']);
+        $secret = Crypto::decrypt($encryptedSecret);
+        if ($secret === null) return null;
+
+        $totp = TOTP::createFromSecret($secret);
+        $leeway = min(29, TWO_FACTOR_CONFIG['totp_leeway']);
+        $timestamp = array_find([time(), time() - $leeway, time() + $leeway], static fn(int $ts) => hash_equals($totp->at($ts), $code));
+
+        return $timestamp === null ? null : intdiv($timestamp, $totp->getPeriod());
     }
 
     /**
@@ -455,7 +466,7 @@ class TwoFactorController
     }
 
     /**
-     * Verify a TOTP code at the login challenge.
+     * Verify a TOTP code at the login challenge. Each time step is accepted once, so a captured code can't be replayed.
      *
      * @param int    $userId
      * @param string $code
@@ -468,8 +479,10 @@ class TwoFactorController
         $row = self::settingsFor($userId);
         if ($row === null || empty($row['totp_enabled']) || empty($row['totp_secret'])) return false;
 
-        $secret = Crypto::decrypt($row['totp_secret']);
-        return $secret !== null && TOTP::createFromSecret($secret)->verify($code, null, self::totpLeeway());
+        $step = self::matchedTotpStep($row['totp_secret'], $code);
+
+        // Burning the step in the same conditional UPDATE means a replayed or concurrently resubmitted code finds no row to update.
+        return $step !== null && DB::update(UPDATE: 'user_two_factor', SET: ['totp_last_step' => $step], WHERE: ['user_id' => $userId, 'totp_last_step' => ['<', $step]]);
     }
 
     /**
@@ -518,9 +531,19 @@ class TwoFactorController
      */
     public static function passkeyRegistrationOptions(int $userId, string $userLabel): string
     {
-        $existing = array_column(DB::select(SELECT: 'credential_id', FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]), 'credential_id');
+        return WebauthnController::registrationOptions($userId, $userLabel, self::credentialIds($userId));
+    }
 
-        return WebauthnController::registrationOptions($userId, $userLabel, $existing);
+    /**
+     * The ids of every passkey the user has registered.
+     *
+     * @param int $userId
+     *
+     * @return string[]
+     */
+    private static function credentialIds(int $userId): array
+    {
+        return array_column(DB::select(SELECT: 'credential_id', FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]), 'credential_id');
     }
 
     /**
@@ -568,9 +591,7 @@ class TwoFactorController
      */
     public static function passkeyLoginOptions(int $userId): string
     {
-        $ids = array_column(DB::select(SELECT: 'credential_id', FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId]), 'credential_id');
-
-        return WebauthnController::loginOptions($ids);
+        return WebauthnController::loginOptions(self::credentialIds($userId));
     }
 
     /**
