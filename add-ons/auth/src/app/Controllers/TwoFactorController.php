@@ -311,12 +311,10 @@ class TwoFactorController
     #[NoDiscard]
     public static function verifyEmailChallenge(int $userId, #[SensitiveParameter] string $code): bool
     {
-        $tokenHash = hash('sha256', strtoupper($code));
-
         $where = [
             'user_id' => $userId,
             'type' => TokenType::TWO_FACTOR_EMAIL->value,
-            'token' => $tokenHash,
+            'token' => hash('sha256', strtoupper($code)),
         ];
 
         $row = DB::single(SELECT: ['expires'], FROM: 'tokens', WHERE: $where);

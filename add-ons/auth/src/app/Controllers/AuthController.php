@@ -28,6 +28,7 @@ class AuthController
 
     // Unambiguous charset for generated passwords (no 0/O/1/l/I): they are meant to be typed by a human.
     private const string GENERATED_PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    private const string GENERATED_PASSWORD_SPECIAL_CHARS = '!#$%*+?@';
 
     public function __construct()
     {
@@ -571,7 +572,8 @@ class AuthController
         $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
         $lower = 'abcdefghijkmnpqrstuvwxyz';
         $digits = '23456789';
-        $all = $upper . $lower . $digits;
+        $special = PASSWORD_CONFIG['require_special_character'] ? self::GENERATED_PASSWORD_SPECIAL_CHARS : '';
+        $all = self::generatedPasswordChars();
 
         try {
             $password = [
@@ -579,6 +581,7 @@ class AuthController
                 $lower[random_int(0, strlen($lower) - 1)],
                 $digits[random_int(0, strlen($digits) - 1)],
             ];
+            if ($special !== '') $password[] = $special[random_int(0, strlen($special) - 1)];
 
             for ($i = count($password); $i < $length; $i++) $password[] = $all[random_int(0, strlen($all) - 1)];
 
@@ -596,6 +599,16 @@ class AuthController
     }
 
     /**
+     * The full charset generatePassword() draws from, including special characters only when PASSWORD_CONFIG requires one.
+     *
+     * @return string
+     */
+    private static function generatedPasswordChars(): string
+    {
+        return self::GENERATED_PASSWORD_CHARS . (PASSWORD_CONFIG['require_special_character'] ? self::GENERATED_PASSWORD_SPECIAL_CHARS : '');
+    }
+
+    /**
      * Whether $password has the exact length and charset generatePassword() produces.
      * A caller that pre-generated a password and round-tripped it through a form uses this to reject a tampered value.
      * The policy check is not enough on its own: a weak-but-in-charset string can pass it under a lax PASSWORD_CONFIG.
@@ -608,7 +621,7 @@ class AuthController
     public static function isGeneratedPasswordShape(#[SensitiveParameter] string $password): bool
     {
         return strlen($password) === PASSWORD_CONFIG['generated_length']
-            && strspn($password, self::GENERATED_PASSWORD_CHARS) === strlen($password);
+            && strspn($password, self::generatedPasswordChars()) === strlen($password);
     }
 
     /**

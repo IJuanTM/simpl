@@ -260,6 +260,8 @@ const buildZip = (subdir, outZip) => {
   const index = `${outZip}.index`;
   // A throwaway index snapshots the working tree, untracked files included, without touching the real index.
   const git = (...args) => execFileSync('git', args, {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
+  // Seeded from the real index, since `git add -A` into an empty one would drop tracked-but-gitignored files like src/.env and .gitkeep.
+  fs.copyFileSync(path.resolve(REPO, execFileSync('git', ['rev-parse', '--git-path', 'index'], {cwd: REPO, encoding: 'utf8'}).trim()), index);
   try {
     git('add', '-A', '--', subdir);
     git('archive', '--format=zip', '-o', outZip, `${git('write-tree')}:${subdir}`);

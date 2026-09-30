@@ -15,6 +15,7 @@ services:
       - "127.0.0.1:${APP_SSL_PORT:-443}:443"
     environment:
       DEV: ${DEV:-true}
+      APP_SSL_PORT: ${APP_SSL_PORT:-443}
       # @addon-placeholder:environment
     volumes:
       - .:/var/www/html
