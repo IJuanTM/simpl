@@ -3,71 +3,16 @@ import {execFileSync, spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
+import {buildZips, C, DEV_DIR, die, divider, error, git, heading, info, installBox, item, line, listZips, out, PAD, plural, RELEASES_DIR, REPO, row, stripAnsi, styled, success, task, titleBox, warn} from './shared.mjs';
 
-const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const CDN_VERSIONS = 'https://cdn.simpl.iwanvanderwal.nl/framework/versions.json';
+const SIMPL = 'npx --yes @ijuantm/simpl';
 const NAME = 'Simpl Test';
 const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
 const SITE_URL = `https://${DOMAIN}/`;
-const DEST = process.env.SIMPL_TEST_DEST || path.join(os.homedir(), 'Desktop', 'simpl-fresh-install-test');
+const PROJECT = path.join(DEV_DIR, 'simpl-test');
+const LOG = path.join(DEV_DIR, 'install.log');
 const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
-const SIMPL_TEST_DB_PORT = process.env.SIMPL_TEST_DB_PORT || '3307';
-const DOCKER_COMPOSE = path.join(REPO, 'scripts', 'compose.yaml');
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
-
-// Output helpers, copied from the Simpl CLI's lib/ui.js.
-const CODES = {
-  reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
-  cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m',
-};
-const C = Object.fromEntries(Object.entries(CODES).map(([name, code]) => [name, process.stdout.hasColors?.() ? code : '']));
-const BOX_WIDTH = 62;
-const PAD = '  ';
-const styled = (msg, ...styles) => styles.join('') + msg + C.reset;
-const line = (msg = '') => console.log(msg);
-const out = (msg, color = C.reset) => console.log(color + msg + C.reset);
-const prefixed = (symbol, color, msg, bold = false, dim = false) => out(PAD + color + symbol + C.reset + ' ' + (bold ? styled(msg, C.bold) : dim ? styled(msg, C.dim) : msg));
-const success = (msg, bold = false) => prefixed('✓', C.green, msg, bold);
-const error = (msg, bold = false) => prefixed('✕', C.red, msg, bold);
-const warn = (msg, bold = false) => prefixed('⚠', C.yellow, msg, bold);
-const info = (msg) => prefixed('◌', C.cyan, msg, false, true);
-const task = (msg) => out(PAD + msg);
-const item = (msg, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(msg, C.dim) : msg));
-const heading = (msg) => out(PAD + styled(msg, C.bold), C.blue);
-const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
-const row = (left, right = '') => out(PAD + styled(right ? left.padEnd(30) : left, C.dim) + right);
-const box = (title) => {
-  const parts = title.split(/(\x1b\[[0-9;]*m)/);
-  const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
-  let displayTitle = title, remaining = BOX_WIDTH - 5;
-  if (length > BOX_WIDTH - 2) displayTitle = parts.map((part, i) => {
-    if (i % 2) return part;
-    const kept = part.slice(0, remaining);
-    remaining -= kept.length;
-    return kept;
-  }).join('') + '...';
-  const spaces = ' '.repeat(Math.max(0, BOX_WIDTH - 2 - length));
-  line();
-  out(PAD + '╭' + '─'.repeat(BOX_WIDTH) + '╮');
-  out(PAD + '│ ' + styled(displayTitle, C.bold) + spaces + ' │');
-  out(PAD + '╰' + '─'.repeat(BOX_WIDTH) + '╯');
-};
-const installBox = (name, version) => box(`Installing: ${C.cyan}${name}${C.reset} ${C.dim}(v${version})${C.reset}`);
-const titleBox = (title, detail) => box(`Simpl ${C.dim}-${C.reset} ${C.blue}${title}${C.reset}` + (detail ? ` ${C.dim}(${detail})${C.reset}` : ''));
-const divider = () => {
-  line();
-  out(PAD + '─'.repeat(16), C.dim);
-  line();
-};
-const die = (msg, ...hints) => {
-  line();
-  error(msg);
-  hints.forEach(info);
-  line();
-  process.exit(1);
-};
-const stripAnsi = (text) => text.replace(/\x1b\[[0-9;]*m/g, '');
 
 const help = () => {
   titleBox('Fresh install test');
@@ -77,13 +22,13 @@ const help = () => {
   line();
   heading('Options:');
   row('--all', 'Install every add-on, without the picker');
+  row('--release[=<version>]', 'Install a release.mjs --local release instead of the working tree (default: core/.simpl)');
   row('--help, -h', 'Show this help message');
   line();
   heading('Environment:');
-  row('SIMPL_TEST_DEST', 'Install folder (default: ~/Desktop/simpl-fresh-install-test)');
+  row('SIMPL_DEV_DIR', 'Folder the install lands in (default: ~/Desktop/simpl-dev)');
   row('SIMPL_TEST_DOMAIN', 'Domain to install at (default: simpl.test)');
   row('SIMPL_TEST_DB', 'auto, docker or local (default: auto)');
-  row('SIMPL_TEST_DB_PORT', 'Host port for the Docker database (default: 3307)');
   line();
   heading('Note:');
   item('See scripts/README.md for how the database, browsing, hosts file and certificate work.');
@@ -91,8 +36,10 @@ const help = () => {
 };
 
 let mode = process.stdin.isTTY ? 'pick' : 'all';
+let release = null;
 for (const arg of process.argv.slice(2)) {
   if (arg === '--all') mode = 'all';
+  else if (arg === '--release' || arg.startsWith('--release=')) release = arg.split('=')[1] || true;
   else if (arg === '-h' || arg === '--help') {
     help();
     process.exit(0);
@@ -244,45 +191,30 @@ const pick = async () => {
   return chosen;
 };
 
-const resolveLatest = async () => {
-  let versions;
-  try {
-    ({versions} = await (await fetch(CDN_VERSIONS, {signal: AbortSignal.timeout(10_000)})).json());
-  } catch {
-    die('The CDN server is currently unreachable', 'Please try again later.');
-  }
-  if (!versions || !Object.keys(versions).length) die('The CDN returned no versions');
-  return Object.entries(versions).find(([, meta]) => meta['is-latest'] === true)?.[0] ?? Object.keys(versions)[0];
-};
-
-const buildZip = (subdir, outZip) => {
-  fs.mkdirSync(path.dirname(outZip), {recursive: true});
-  const index = `${outZip}.index`;
-  // A throwaway index snapshots the working tree, untracked files included, without touching the real index.
-  const git = (...args) => execFileSync('git', args, {cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
+const snapshotWorkingTree = (dir, addons) => {
+  const index = path.join(dir, 'index');
   // Seeded from the real index, since `git add -A` into an empty one would drop tracked-but-gitignored files like src/.env and .gitkeep.
-  fs.copyFileSync(path.resolve(REPO, execFileSync('git', ['rev-parse', '--git-path', 'index'], {cwd: REPO, encoding: 'utf8'}).trim()), index);
-  try {
-    git('add', '-A', '--', subdir);
-    git('archive', '--format=zip', '-o', outZip, `${git('write-tree')}:${subdir}`);
-  } finally {
-    fs.rmSync(index, {force: true});
-  }
+  fs.copyFileSync(path.resolve(REPO, git('rev-parse', '--git-path', 'index')), index);
+  const indexed = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
+  indexed('add', '-A', '--', 'core', ...addons.map(addon => `add-ons/${addon}`));
+  return indexed('write-tree');
 };
 
-const connectDatabase = () => {
-  if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['compose', 'version'], {stdio: 'ignore'}).status === 0
-    && spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'up', '-d', 'db', '--wait'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}}).status === 0) {
-    process.on('exit', () => {
-      try {
-        spawnSync('docker', ['compose', '-f', DOCKER_COMPOSE, 'down', '-v'], {stdio: 'ignore', env: {...process.env, SIMPL_TEST_DB_PORT}});
-      } catch {
-      }
-    });
-    const docker = {host: `127.0.0.1;port=${SIMPL_TEST_DB_PORT}`, user: 'root', pass: '', docker: true};
-    if (pdoUp(docker)) return docker;
-  }
-  return SIMPL_TEST_DB !== 'docker' && pdoUp(LOCAL_DB) ? LOCAL_DB : null;
+// Compose names a stack after its folder, so a simpl-test stack still running from any folder holds the ports and gets `simpl composer` run inside it.
+const stopRunningStack = () => {
+  const name = process.env.COMPOSE_PROJECT_NAME || path.basename(PROJECT);
+  const running = () => spawnSync('docker', ['compose', '-p', name, 'ps', '-q', '--status', 'running'], {encoding: 'utf8'}).stdout?.trim();
+  if (!running()) return;
+  task(`🛑 Stopping the running ${C.cyan}${name}${C.reset} Docker stack...`);
+  line();
+  spawnSync('docker', ['compose', '-p', name, 'down', '-v'], {stdio: 'ignore'});
+  if (running()) die(`The ${name} Docker stack is still running and could not be stopped`, 'Stop it with simpl down in its project folder, then run this again.');
+};
+
+// The install's own Docker stack serves the database it keeps using afterwards, so it is preferred over a local server.
+const findDatabase = () => {
+  if (SIMPL_TEST_DB !== 'local' && spawnSync('docker', ['info'], {stdio: 'ignore'}).status === 0) return 'docker';
+  return SIMPL_TEST_DB !== 'docker' && pdoUp(LOCAL_DB) ? 'local' : null;
 };
 
 const run = (command, cwd, log) => {
@@ -292,10 +224,8 @@ const run = (command, cwd, log) => {
 };
 
 const runInstall = (addons) => {
-  const project = path.join(DEST, 'simpl-test');
-  const log = path.join(DEST, 'install.log');
   const dbName = addons.includes('db') ? 'simpl-test' : null;
-  fs.writeFileSync(log, '');
+  fs.writeFileSync(LOG, '');
   installBox(NAME, version);
   line();
 
@@ -304,16 +234,16 @@ const runInstall = (addons) => {
     line();
   };
   const bail = () => {
-    error(`Failed, see the log: ${log}`);
-    stripAnsi(fs.readFileSync(log, 'utf8')).split('\n').slice(-18).forEach(logLine => out(PAD + C.dim + '| ' + logLine + C.reset));
+    error(`Failed, see the log: ${LOG}`);
+    stripAnsi(fs.readFileSync(LOG, 'utf8')).split('\n').slice(-18).forEach(logLine => out(PAD + C.dim + '| ' + logLine + C.reset));
     return false;
   };
 
   step(`🏗️ Creating the project ${C.dim}(simpl new)${C.reset}...`);
-  if (!run(`npx --yes @ijuantm/simpl new --local --version=latest --name="${NAME}" --url="${SITE_URL}"`, DEST, log)) return bail();
+  if (!run(`${SIMPL} new --local --version=${version} --name="${NAME}" --url="${SITE_URL}"`, DEV_DIR, LOG)) return bail();
 
   if (cert) {
-    const certDir = path.join(project, 'docker/certs');
+    const certDir = path.join(PROJECT, 'docker/certs');
     fs.mkdirSync(certDir, {recursive: true});
     fs.copyFileSync(cert.crt, path.join(certDir, 'simpl.crt'));
     fs.copyFileSync(cert.key, path.join(certDir, 'simpl.key'));
@@ -322,29 +252,28 @@ const runInstall = (addons) => {
   const hasSeedable = addons.some(addon => addon !== 'db');
   for (const addon of addons) {
     step(`🔀 Adding the ${C.cyan}${addon}${C.reset} add-on ${C.dim}(simpl add)${C.reset}...`);
-    if (!run(`npx --yes @ijuantm/simpl add ${addon} --local`, project, log)) return bail();
+    if (!run(`${SIMPL} add ${addon} --local`, PROJECT, LOG)) return bail();
   }
 
-  step('📦 Running composer install...');
-  if (!run('composer install --no-interaction --no-progress', project, log)) return bail();
-  step('🧪 Running composer test...');
-  if (!run('composer test', project, log)) return bail();
+  step(`📦 Installing dependencies ${C.dim}(simpl composer install)${C.reset}...`);
+  if (!run(`${SIMPL} composer install --no-interaction --no-progress`, PROJECT, LOG)) return bail();
+  step(`🧪 Running the tests ${C.dim}(simpl test)${C.reset}...`);
+  if (!run(`${SIMPL} test`, PROJECT, LOG)) return bail();
 
   if (dbName) {
     if (db) {
-      const envPath = path.join(project, 'src/.env');
-      let env = fs.readFileSync(envPath, 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbName}`);
-
-      // DB.php puts DB_SERVER straight after "host=" in the PDO DSN and there's no DB_PORT, so the Docker port rides along as a ";port=" clause.
-      if (db.docker) env = env.replace(/^DB_SERVER=.*/m, `DB_SERVER=${db.host}`);
-      fs.writeFileSync(envPath, env);
-      step('🧪 Running composer test:integration...');
-      if (!run('composer test:integration', project, log)) return bail();
-      step(`💾 Running composer migrate:fresh ${C.dim}(db: ${dbName})${C.reset}...`);
-      if (!run('composer migrate:fresh', project, log)) return bail();
+      fs.writeFileSync(path.join(PROJECT, 'src/.env'), fs.readFileSync(path.join(PROJECT, 'src/.env'), 'utf8').replace(/^DB_NAME=.*/m, `DB_NAME=${dbName}`));
+      if (db === 'docker') {
+        step(`🐳 Starting the Docker stack ${C.dim}(simpl up)${C.reset}...`);
+        if (!run(`${SIMPL} up`, PROJECT, LOG)) return bail();
+      }
+      step(`🧪 Running the integration tests ${C.dim}(simpl test:integration)${C.reset}...`);
+      if (!run(`${SIMPL} test:integration`, PROJECT, LOG)) return bail();
+      step(`💾 Migrating ${C.cyan}${dbName}${C.reset} ${C.dim}(simpl migrate:fresh)${C.reset}...`);
+      if (!run(`${SIMPL} migrate:fresh`, PROJECT, LOG)) return bail();
       if (hasSeedable) {
-        step('🌱 Running composer seed:fresh...');
-        if (!run('composer seed:fresh', project, log)) return bail();
+        step(`🌱 Seeding ${C.dim}(simpl seed:fresh)${C.reset}...`);
+        if (!run(`${SIMPL} seed:fresh`, PROJECT, LOG)) return bail();
       }
     } else {
       warn('MariaDB not reachable, skipped test:integration/migrate/seed');
@@ -353,12 +282,12 @@ const runInstall = (addons) => {
   }
 
   step(`🎨 Running npm install ${C.dim}(sass + vite build)${C.reset}...`);
-  if (!run('npm install --no-audit --no-fund', path.join(project, 'src'), log)) return bail();
+  if (!run('npm install --no-audit --no-fund', path.join(PROJECT, 'src'), LOG)) return bail();
 
-  const tests = /OK \((\d+) tests, (\d+) assertions\)/.exec(fs.readFileSync(log, 'utf8'));
+  const tests = /OK \((\d+) tests, (\d+) assertions\)/.exec(fs.readFileSync(LOG, 'utf8'));
   success(tests ? `OK (${tests[1]} tests, ${tests[2]} assertions)` : 'Tests ran', true);
-  if (dbName && db) item(`Database: ${C.cyan}${dbName}${C.reset}`);
-  item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${project}${C.reset}`);
+  if (dbName && db) item(`Database: ${C.cyan}${dbName}${C.reset} ${C.dim}(${db === 'docker' ? 'in the Docker stack' : 'on the local server'})${C.reset}`);
+  item(`${C.cyan}${SITE_URL}${C.reset}  →  ${C.dim}${PROJECT}${C.reset}`);
   return true;
 };
 
@@ -402,8 +331,8 @@ const writeMkcert = () => {
 };
 
 const writeVhostConf = () => {
-  const apacheDest = DEST.replace(/\\/g, '/');
-  const conf = path.join(DEST, 'httpd-vhosts.conf');
+  const apacheDest = DEV_DIR.replace(/\\/g, '/');
+  const conf = path.join(DEV_DIR, 'httpd-vhosts.conf');
   fs.writeFileSync(conf,
     `# Generated by scripts/fresh-install-test.mjs
 #
@@ -434,40 +363,53 @@ line();
 const addons = mode === 'all' ? allAddons : topo(addonDependencies, await pick());
 if (mode === 'pick') divider();
 
-task('📦 Fetching available versions...');
-const version = await resolveLatest();
-line();
+// `simpl add` looks its zips up under the version in the project's .simpl, which comes straight from this core/.simpl.
+const version = typeof release === 'string' ? release : JSON.parse(fs.readFileSync(path.join(REPO, 'core', '.simpl'), 'utf8')).version;
 
-const build = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
-const releasesRoot = path.join(build, 'releases');
-process.env.SIMPL_LOCAL_RELEASES = releasesRoot;
-const releases = path.join(releasesRoot, version);
-process.on('exit', () => {
-  try {
-    fs.rmSync(build, {recursive: true, force: true});
-  } catch {
-  }
-});
-
-fs.rmSync(DEST, {recursive: true, force: true});
-fs.mkdirSync(DEST, {recursive: true});
-
-task(`🧰 Building ${version} release zips...`);
+stopRunningStack();
 try {
-  buildZip('core', path.join(releases, 'core.zip'));
-  for (const addon of addons) buildZip(`add-ons/${addon}`, path.join(releases, 'add-ons', `${addon}.zip`));
+  fs.rmSync(PROJECT, {recursive: true, force: true});
+  fs.rmSync(LOG, {force: true});
 } catch (err) {
-  die('Could not build the release zips', err.stderr?.trim() || err.message);
+  die(`Could not delete the previous install (${err.code})`, `Something still has ${PROJECT} open: close any terminal, editor or file explorer window that is in it, then run this again.`);
 }
-line();
-success(`Built ${plural(1 + addons.length, 'zip')} ${C.dim}(${['core', ...addons].join(', ')})${C.reset}`);
-line();
+fs.mkdirSync(DEV_DIR, {recursive: true});
+
+if (release) {
+  const missing = ['core', ...addons].filter(name => !fs.existsSync(path.join(RELEASES_DIR, version, name === 'core' ? 'core.zip' : `add-ons/${name}.zip`)));
+  if (missing.length) die(`The local ${version} release has no ${missing.join(', ')} zip`, `Build it first: node scripts/release.mjs ${version} --local`);
+  process.env.SIMPL_LOCAL_RELEASES = RELEASES_DIR;
+  info(`Using the local ${version} release ${C.dim}(${path.join(RELEASES_DIR, version)})${C.reset}`);
+  line();
+} else {
+  // Kept out of RELEASES_DIR, since the working tree shares its version number with the tagged local release there.
+  const build = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
+  process.on('exit', () => {
+    try {
+      fs.rmSync(build, {recursive: true, force: true});
+    } catch {
+    }
+  });
+  process.env.SIMPL_LOCAL_RELEASES = path.join(build, 'releases');
+  const zips = path.join(build, 'releases', version);
+  task(`🧰 Building ${version} zips from the working tree...`);
+  try {
+    buildZips(snapshotWorkingTree(build, addons), zips, addons);
+  } catch (err) {
+    die('Could not build the release zips', err.stderr?.trim() || err.message);
+  }
+  line();
+  success(`Built ${plural(1 + addons.length, 'zip')}`);
+  listZips(zips, addons);
+  line();
+}
 
 task('💾 Looking for a database...');
-const db = connectDatabase();
+const db = findDatabase();
 line();
-if (db) info(`MariaDB reachable${db.docker ? '' : ` ${C.dim}(via local fallback)${C.reset}`}`);
-else warn('MariaDB not reachable (test:integration/migrate/seed will be skipped)');
+if (db === 'docker') info(`Docker is running, the install's own stack will serve the database`);
+else if (db === 'local') info(`Using the local MariaDB/MySQL server ${C.dim}(Docker not running)${C.reset}`);
+else warn('No database: Docker is not running and no local MariaDB/MySQL answers (test:integration/migrate/seed will be skipped)');
 
 let cert = null;
 if (mkcertAvailable()) {
@@ -486,8 +428,9 @@ heading('Summary:');
 (ok ? success : error)(`${DOMAIN} ${C.dim}${SITE_URL}${C.reset}`);
 line();
 heading('Details:');
-item(`Install: ${C.dim}${path.join(DEST, 'simpl-test')}${C.reset}`);
-item(`Docker:  ${C.dim}run \`docker compose up -d --build\` inside the install to browse it that way instead${C.reset}`);
+item(`Install: ${C.dim}${PROJECT}${C.reset} ${C.dim}(from ${release ? `the local ${version} release` : 'the working tree'})${C.reset}`);
+item(`Log:     ${C.dim}${LOG}${C.reset}`);
+item(`Docker:  ${C.dim}${db === 'docker' && addons.includes('db') ? 'running, stop it with `simpl down` inside the install' : 'run `simpl up` inside the install to browse it that way instead'}${C.reset}`);
 item(`Vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);
 item(`Cert:    ${C.dim}${cert ? "docker/certs/ in the install (Docker route only, trusted if you've run `mkcert -install`)" : 'not generated, install mkcert to remove the self-signed warning on the Docker route'}${C.reset}`);
 const {hostsFile, written: hostsWritten, failed: hostsFailed} = ensureHosts();

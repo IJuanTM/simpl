@@ -3,99 +3,14 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {createInterface} from 'node:readline/promises';
-import {fileURLToPath} from 'node:url';
+import {ask, box, buildZips, C, confirm, die, divider, error, git, heading, info, interactive, item, line, listZips, out, PAD, plural, printAnswer, RELEASES_DIR, row, styled, success, task, titleBox, warn} from './shared.mjs';
 
-const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SERVER = 'simpl-cdn';
 const CDN_DIR = '/var/www/cdn.simpl.iwanvanderwal.nl/framework';
 const CDN_URL = 'https://cdn.simpl.iwanvanderwal.nl/framework';
 const VERSION = /^(\d+)\.(\d+)\.(\d+)([ab]?)$/;
 const PRE_RELEASES = {a: 'alpha', b: 'beta'};
 const RANK = {a: 0, b: 1, '': 2};
-
-// Output helpers, copied from the Simpl CLI's lib/ui.js.
-const CODES = {
-  reset: '\x1b[0m', green: '\x1b[32m', yellow: '\x1b[33m', red: '\x1b[31m',
-  cyan: '\x1b[36m', blue: '\x1b[34m', gray: '\x1b[90m', bold: '\x1b[1m', dim: '\x1b[2m',
-};
-const C = Object.fromEntries(Object.entries(CODES).map(([name, code]) => [name, process.stdout.hasColors?.() ? code : '']));
-const BOX_WIDTH = 62;
-const PAD = '  ';
-const interactive = Boolean(process.stdin.isTTY);
-const styled = (msg, ...styles) => styles.join('') + msg + C.reset;
-const line = (msg = '') => console.log(msg);
-const out = (msg, color = C.reset) => console.log(color + msg + C.reset);
-const prefixed = (symbol, color, msg, bold = false, dim = false) => out(PAD + color + symbol + C.reset + ' ' + (bold ? styled(msg, C.bold) : dim ? styled(msg, C.dim) : msg));
-const success = (msg, bold = false) => prefixed('✓', C.green, msg, bold);
-const error = (msg, bold = false) => prefixed('✕', C.red, msg, bold);
-const warn = (msg, bold = false) => prefixed('⚠', C.yellow, msg, bold);
-const info = (msg) => prefixed('◌', C.cyan, msg, false, true);
-const task = (msg) => out(PAD + msg);
-const item = (msg, dim = false) => out(PAD + C.cyan + '•' + C.reset + ' ' + (dim ? styled(msg, C.dim) : msg));
-const heading = (msg) => out(PAD + styled(msg, C.bold), C.blue);
-const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
-const row = (left, right = '') => out(PAD + styled(right ? left.padEnd(30) : left, C.dim) + right);
-const box = (title) => {
-  const parts = title.split(/(\x1b\[[0-9;]*m)/);
-  const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
-  let displayTitle = title, remaining = BOX_WIDTH - 5;
-  if (length > BOX_WIDTH - 2) displayTitle = parts.map((part, i) => {
-    if (i % 2) return part;
-    const kept = part.slice(0, remaining);
-    remaining -= kept.length;
-    return kept;
-  }).join('') + '...';
-  const spaces = ' '.repeat(Math.max(0, BOX_WIDTH - 2 - length));
-  line();
-  out(PAD + '╭' + '─'.repeat(BOX_WIDTH) + '╮');
-  out(PAD + '│ ' + styled(displayTitle, C.bold) + spaces + ' │');
-  out(PAD + '╰' + '─'.repeat(BOX_WIDTH) + '╯');
-};
-const titleBox = (title, detail) => box(`Simpl ${C.dim}-${C.reset} ${C.blue}${title}${C.reset}` + (detail ? ` ${C.dim}(${detail})${C.reset}` : ''));
-const divider = () => {
-  line();
-  out(PAD + '─'.repeat(16), C.dim);
-  line();
-};
-const printAnswer = (question, value) => out(`${PAD}${question}: ${C.cyan}${value}${C.reset}`);
-const die = (msg, ...hints) => {
-  line();
-  error(msg);
-  hints.forEach(info);
-  line();
-  process.exit(1);
-};
-
-// Without a TTY there is nobody to answer, so the default is taken (and echoed) instead of waiting on stdin.
-const ask = async (question, defaultValue = '', hint = defaultValue) => {
-  if (!interactive) {
-    if (defaultValue) printAnswer(question, defaultValue);
-    return defaultValue;
-  }
-  const rl = createInterface({input: process.stdin, output: process.stdout});
-  try {
-    return (await rl.question(`${PAD}${question}${hint ? ` ${C.dim}(${hint})${C.reset}` : ''}: `)).trim() || defaultValue;
-  } catch (err) {
-    if (err.name !== 'AbortError') throw err;
-    line();
-    info('Cancelled');
-    line();
-    process.exit(130);
-  } finally {
-    rl.close();
-  }
-};
-const confirm = async (question, defaultYes = false) => {
-  line();
-  while (true) {
-    const answer = (await ask(question, defaultYes ? 'yes' : 'no', defaultYes ? 'Y/n' : 'y/N')).toLowerCase();
-    if (['y', 'yes'].includes(answer)) return true;
-    if (['n', 'no'].includes(answer)) return false;
-    warn('Please answer [Y] Yes or [N] No');
-    line();
-  }
-};
 
 const help = () => {
   titleBox('Release');
@@ -104,19 +19,23 @@ const help = () => {
   row('node scripts/release.mjs [version] [options]');
   line();
   heading('Options:');
+  row('--local', 'Release to the local releases folder instead of the CDN');
   row('--help, -h', 'Show this help message');
+  line();
+  heading('Environment:');
+  row('SIMPL_DEV_DIR', 'Local releases go in its releases/ (default: ~/Desktop/simpl-dev)');
   line();
   heading('Examples:');
   row('node scripts/release.mjs');
   row('node scripts/release.mjs 2.1.0');
   row('node scripts/release.mjs 2.1.0b');
+  row('node scripts/release.mjs 2.1.0 --local');
   line();
   heading('Note:');
   item('The v<version> tag must exist first, see scripts/README.md for everything that is checked.');
   line();
 };
 
-const git = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim();
 const ssh = (command) => execFileSync('ssh', ['-o', 'LogLevel=ERROR', SERVER, command], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit']});
 // Run from the build folder with relative paths, since scp reads a Windows drive letter like "C:" as a host name.
 const scp = (cwd, source, dest) => execFileSync('scp', ['-q', '-r', '-o', 'LogLevel=ERROR', source, `${SERVER}:${dest}`], {cwd, stdio: 'inherit'});
@@ -134,25 +53,34 @@ if (args.includes('--help') || args.includes('-h')) {
   help();
   process.exit(0);
 }
-const unknownOption = args.find(arg => arg.startsWith('-'));
+const local = args.includes('--local');
+const unknownOption = args.find(arg => arg.startsWith('-') && arg !== '--local');
 if (unknownOption) die(`Unknown option: ${unknownOption}`, 'Run with --help to see all available options.');
+const target = local ? RELEASES_DIR : 'the CDN';
 
-titleBox('Release');
+// The CLI's --local mode lists the version folders instead of reading a versions.json, so this does the same.
+const readLocalVersions = () => fs.existsSync(RELEASES_DIR)
+  ? Object.fromEntries(fs.readdirSync(RELEASES_DIR, {withFileTypes: true}).filter(e => e.isDirectory() && VERSION.test(e.name)).map(e => [e.name, {}]))
+  : {};
+
+const readCdnVersions = () => {
+  let current;
+  try {
+    current = ssh(`cat ${CDN_DIR}/versions.json`);
+  } catch {
+    die(`Could not read versions.json from the "${SERVER}" SSH host`, 'If the host is unknown, add it to ~/.ssh/config, see scripts/README.md.');
+  }
+  try {
+    return JSON.parse(current).versions;
+  } catch (err) {
+    die(`versions.json on ${SERVER} is not valid JSON`, err.message);
+  }
+};
+
+titleBox('Release', local ? 'local' : undefined);
 line();
-task(`📦 Fetching versions from ${SERVER}...`);
-
-let current;
-try {
-  current = ssh(`cat ${CDN_DIR}/versions.json`);
-} catch {
-  die(`Could not read versions.json from the "${SERVER}" SSH host`, 'If the host is unknown, add it to ~/.ssh/config, see scripts/README.md.');
-}
-let versions;
-try {
-  ({versions} = JSON.parse(current));
-} catch (err) {
-  die(`versions.json on ${SERVER} is not valid JSON`, err.message);
-}
+task(local ? `💻 Reading local releases from ${RELEASES_DIR}...` : `📦 Fetching versions from ${SERVER}...`);
+const versions = local ? readLocalVersions() : readCdnVersions();
 const latest = Object.keys(versions).filter(v => VERSION.test(v) && withoutSuffix(v) === v).sort(compareVersions).at(-1);
 const next = latest ? (([major, minor, patch]) => [`${major}.${minor}.${patch + 1}`, `${major}.${minor + 1}.0`, `${major + 1}.0.0`])(latest.split('.').map(Number)) : [];
 
@@ -165,7 +93,7 @@ const versionProblem = (v) => {
 };
 
 const resolveVersion = async () => {
-  const [preset] = args;
+  const [preset] = args.filter(arg => !arg.startsWith('-'));
   if (preset) {
     const problem = versionProblem(preset);
     if (problem) die(problem);
@@ -176,7 +104,7 @@ const resolveVersion = async () => {
   if (!interactive) die('No version given', 'Usage: node scripts/release.mjs [version], e.g. node scripts/release.mjs 2.1.0');
 
   line();
-  info(`Latest release on the CDN: ${latest ?? 'none'}`);
+  info(`Latest release in ${target}: ${latest ?? 'none'}`);
   line();
   heading('Next version:');
   ['patch', 'minor', 'major'].forEach((kind, i) => next[i] && out(`${PAD}${C.cyan}${i + 1}.${C.reset} ${next[i]} ${C.dim}(${kind})${C.reset}`));
@@ -232,32 +160,27 @@ line();
 task('🧰 Building release zips...');
 
 const build = fs.mkdtempSync(path.join(os.tmpdir(), `simpl-release-${version}-`));
-fs.mkdirSync(path.join(build, version, 'add-ons'), {recursive: true});
-
-// autocrlf is forced off so the zips hold LF files regardless of the local git config.
-const archive = (tree, file) => git('-c', 'core.autocrlf=false', 'archive', '--format=zip', '-o', path.join(build, version, file), `${tag}:${tree}`);
 let addons;
 try {
   addons = git('ls-tree', '-d', '--name-only', `${tag}:add-ons`).split('\n').filter(Boolean);
-  archive('core', 'core.zip');
-  for (const name of addons) archive(`add-ons/${name}`, `add-ons/${name}.zip`);
+  buildZips(tag, path.join(build, version), addons);
 } catch (err) {
   die('Could not build the release zips', err.stderr?.trim() || err.message);
 }
 
-// A pre-release never becomes latest, so `simpl new` keeps defaulting to the newest stable release.
-const withoutLatest = ({'is-latest': _, 'script-compatible': __, ...meta} = {}) => meta;
-const entry = {...withoutLatest(versions[version]), 'add-ons': addons, 'is-pre-release': preRelease || undefined, 'is-latest': !preRelease || undefined};
-const others = Object.entries(versions).filter(([v]) => v !== version).map(([v, meta]) => [v, preRelease ? meta : withoutLatest(meta)]);
-const updated = {versions: Object.fromEntries([[version, entry], ...others].sort(([a], [b]) => compareVersions(b, a)))};
-fs.writeFileSync(path.join(build, 'versions.json'), JSON.stringify(updated, null, 2) + '\n');
+if (!local) {
+  // A pre-release never becomes latest, so `simpl new` keeps defaulting to the newest stable release.
+  const withoutLatest = ({'is-latest': _, 'script-compatible': __, ...meta} = {}) => meta;
+  const entry = {...withoutLatest(versions[version]), 'add-ons': addons, 'is-pre-release': preRelease || undefined, 'is-latest': !preRelease || undefined};
+  const others = Object.entries(versions).filter(([v]) => v !== version).map(([v, meta]) => [v, preRelease ? meta : withoutLatest(meta)]);
+  const updated = {versions: Object.fromEntries([[version, entry], ...others].sort(([a], [b]) => compareVersions(b, a)))};
+  fs.writeFileSync(path.join(build, 'versions.json'), JSON.stringify(updated, null, 2) + '\n');
+}
 
-const kb = (file) => `${Math.ceil(fs.statSync(path.join(build, version, file)).size / 1024)} KB`;
 line();
 success(`Built ${plural(1 + addons.length, 'zip')}`);
-item(`core.zip ${C.dim}(${kb('core.zip')})${C.reset}`);
-for (const name of addons) item(`add-ons/${name}.zip ${C.dim}(${kb(`add-ons/${name}.zip`)})${C.reset}`);
-item('versions.json');
+listZips(path.join(build, version), addons);
+if (!local) item('versions.json');
 
 // sv-SE formats as YYYY-MM-DD in local time, unlike toISOString() which is UTC.
 const today = new Date().toLocaleDateString('sv-SE');
@@ -265,13 +188,34 @@ const warnings = [];
 if (!changelogDate) warnings.push(`${tag} has no "#### Version ${version} (<date>)" entry in README.md`);
 if (releaseDate !== today) warnings.push(`The release date is ${releaseDate}, not today (${today})`);
 try {
-  if (!git('ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) warnings.push(`${tag} is not pushed to GitHub yet: git push origin ${tag}`);
+  if (!local && !git('ls-remote', '--tags', 'origin', `refs/tags/${tag}`)) warnings.push(`${tag} is not pushed to GitHub yet: git push origin ${tag}`);
 } catch {
   warnings.push(`Could not check whether ${tag} is on GitHub (no origin remote or offline)`);
 }
-if (versions[version]) warnings.push(`${version} is already on the CDN and will be replaced`);
+if (versions[version]) warnings.push(`${version} is already in ${target} and will be replaced`);
 if (warnings.length) line();
 warnings.forEach(warn);
+
+if (local) {
+  divider();
+  task(`💻 Copying to ${RELEASES_DIR}...`);
+  const dest = path.join(RELEASES_DIR, version);
+  try {
+    fs.rmSync(dest, {recursive: true, force: true});
+    fs.cpSync(path.join(build, version), dest, {recursive: true});
+  } catch (err) {
+    die(`Copy to ${dest} failed`, err.message, `The files are still in ${build}.`);
+  }
+  fs.rmSync(build, {recursive: true});
+
+  line();
+  success(`Copied to ${C.cyan}${dest}${C.reset}`);
+  info(`Test it with: node scripts/fresh-install-test.mjs --release=${version}`);
+  line();
+  success(styled(`Released ${version} locally!`, C.bold, C.green), true);
+  line();
+  process.exit(0);
+}
 
 if (!await confirm(`Upload to ${SERVER}?`)) {
   line();
