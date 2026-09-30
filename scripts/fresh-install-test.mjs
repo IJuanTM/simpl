@@ -1,15 +1,10 @@
 #!/usr/bin/env node
-import {execFileSync, spawnSync} from 'node:child_process';
+import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {buildZips, C, DEV_DIR, die, divider, error, git, heading, info, installBox, item, line, listZips, out, PAD, plural, RELEASES_DIR, REPO, row, stripAnsi, styled, success, task, titleBox, warn} from './shared.mjs';
+import {buildZips, C, DEV_DIR, die, divider, DOMAIN, error, heading, info, installBox, item, line, listZips, out, PAD, plural, RELEASES_DIR, REPO, row, SIMPL, SITE_URL, snapshotWorkingTree, stripAnsi, styled, success, task, TEST_NAME, TEST_PROJECT as PROJECT, titleBox, warn} from './shared.mjs';
 
-const SIMPL = 'npx --yes @ijuantm/simpl';
-const NAME = 'Simpl Test';
-const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
-const SITE_URL = `https://${DOMAIN}/`;
-const PROJECT = path.join(DEV_DIR, 'simpl-test');
 const LOG = path.join(DEV_DIR, 'install.log');
 const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
 const LOCAL_DB = {host: 'localhost', user: 'root', pass: ''};
@@ -191,15 +186,6 @@ const pick = async () => {
   return chosen;
 };
 
-const snapshotWorkingTree = (dir, addons) => {
-  const index = path.join(dir, 'index');
-  // Seeded from the real index, since `git add -A` into an empty one would drop tracked-but-gitignored files like src/.env and .gitkeep.
-  fs.copyFileSync(path.resolve(REPO, git('rev-parse', '--git-path', 'index')), index);
-  const indexed = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
-  indexed('add', '-A', '--', 'core', ...addons.map(addon => `add-ons/${addon}`));
-  return indexed('write-tree');
-};
-
 // Compose names a stack after its folder, so a simpl-test stack still running from any folder holds the ports and gets `simpl composer` run inside it.
 const stopRunningStack = () => {
   const name = process.env.COMPOSE_PROJECT_NAME || path.basename(PROJECT);
@@ -226,7 +212,7 @@ const run = (command, cwd, log) => {
 const runInstall = (addons) => {
   const dbName = addons.includes('db') ? 'simpl-test' : null;
   fs.writeFileSync(LOG, '');
-  installBox(NAME, version);
+  installBox(TEST_NAME, version);
   line();
 
   const step = (msg) => {
@@ -240,7 +226,7 @@ const runInstall = (addons) => {
   };
 
   step(`🏗️ Creating the project ${C.dim}(simpl new)${C.reset}...`);
-  if (!run(`${SIMPL} new --local --version=${version} --name="${NAME}" --url="${SITE_URL}"`, DEV_DIR, LOG)) return bail();
+  if (!run(`${SIMPL} new --local --version=${version} --name="${TEST_NAME}" --url="${SITE_URL}"`, DEV_DIR, LOG)) return bail();
 
   if (cert) {
     const certDir = path.join(PROJECT, 'docker/certs');

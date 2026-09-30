@@ -15,11 +15,9 @@ div.alert {
     position: fixed;
     z-index: layer("overlay", 20);
     top: $header-height;
-    left: 50%;
+    right: 0;
+    max-width: min(32rem, 100% - 2rem);
     margin: 1rem;
-    transform: translateX(-50%);
-
-    @include floating-box-width;
   }
 
   &.collapsing {

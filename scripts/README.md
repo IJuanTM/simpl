@@ -2,12 +2,12 @@
 
 Maintainer tooling for this repo. Not shipped to installed projects.
 
-Both scripts share one working folder, `SIMPL_DEV_DIR` (default `~/Desktop/simpl-dev`):
+The scripts share one working folder, `SIMPL_DEV_DIR` (default `~/Desktop/simpl-dev`):
 
 ```
 simpl-dev/
 ├── releases/<version>/   local releases from release.mjs --local
-├── simpl-test/           the fresh install from fresh-install-test.mjs
+├── simpl-test/           the fresh install from fresh-install-test.mjs (updated by update-test.mjs)
 ├── install.log
 └── httpd-vhosts.conf
 ```
@@ -115,3 +115,13 @@ For reference, the generated vhost looks like this:
     </Directory>
 </VirtualHost>
 ```
+
+## `update-test.mjs`
+
+Updates the existing `<SIMPL_DEV_DIR>/simpl-test/` install with the working tree's styling, scripts and views, without reinstalling it. Nothing else is touched (no PHP classes, config, `.env`, database or Docker stack), so a running install keeps its data and serves the new files right away.
+
+```bash
+node scripts/update-test.mjs
+```
+
+It builds zips from the working tree (like `fresh-install-test.mjs`) and runs `simpl new` + `simpl add` for the install's add-ons (read from its `.simpl`) into a temp folder, so add-on patches to core files like `main.scss`, `main.ts` or `header.phtml` are merged exactly as in a real install. It then makes the install's `src/scss/`, `src/ts/` and `src/views/` match that result (adding, updating and removing files), lists what changed, and runs `npm run build` in the install.

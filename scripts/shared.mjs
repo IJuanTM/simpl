@@ -9,6 +9,11 @@ export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 
 export const DEV_DIR = process.env.SIMPL_DEV_DIR || path.join(os.homedir(), 'Desktop', 'simpl-dev');
 export const RELEASES_DIR = path.join(DEV_DIR, 'releases');
+export const TEST_PROJECT = path.join(DEV_DIR, 'simpl-test');
+export const TEST_NAME = 'Simpl Test';
+export const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
+export const SITE_URL = `https://${DOMAIN}/`;
+export const SIMPL = 'npx --yes @ijuantm/simpl';
 
 // Output helpers, copied from the Simpl CLI's lib/ui.js.
 const CODES = {
@@ -108,4 +113,13 @@ export const buildZips = (tree, dir, addons) => {
 export const listZips = (dir, addons) => {
   const files = ['core.zip', ...addons.map(name => `add-ons/${name}.zip`)];
   for (const file of files) item(`${file} ${C.dim}(${Math.ceil(fs.statSync(path.join(dir, file)).size / 1024)} KB)${C.reset}`);
+};
+
+export const snapshotWorkingTree = (dir, addons) => {
+  const index = path.join(dir, 'index');
+  // Seeded from the real index, since `git add -A` into an empty one would drop tracked-but-gitignored files like src/.env and .gitkeep.
+  fs.copyFileSync(path.resolve(REPO, git('rev-parse', '--git-path', 'index')), index);
+  const indexed = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: {...process.env, GIT_INDEX_FILE: index}}).trim();
+  indexed('add', '-A', '--', 'core', ...addons.map(addon => `add-ons/${addon}`));
+  return indexed('write-tree');
 };
