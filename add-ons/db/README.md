@@ -28,7 +28,10 @@ Schema defaults (engine, charset, collation, foreign key behavior, primary key c
 
 ## Tests
 
-Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `DB`'s private SQL-builders, `Blueprint`'s column/index/foreign-key builders, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration/fluent-chaining, and `DatabaseMigrator`/`DatabaseSeeder`'s `register()` accumulation - all via reflection against pure logic, no live database needed. Once installed, run `simpl test` from your project's root the same way you would for the framework itself. `DatabaseMigrator::run()`/`rollback()`, `DatabaseSeeder::run()`/`truncate()`, `Scheduler::run()` with due tasks, `Schema`, and any real migration class aren't covered here - they call `DB::useDatabase()`/`DB::raw()` as their first line and need a real connection.
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) in two parts:
+
+- **Unit and feature tests** (`simpl test`, no database needed) cover `DB`'s SQL builders, `Blueprint`'s column/index/foreign-key builders, `Schema`'s database-name validation, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration and fluent chaining, and `DatabaseMigrator`/`DatabaseSeeder`'s `register()`.
+- **Integration tests** (`simpl test:integration`, against the database in `src/.env`) cover `DatabaseMigrator::run()`/`rollback()`, `DatabaseSeeder::run()`/`truncate()` and `Scheduler::run()` with due and failing tasks. They migrate the database first, run each test in a rolled-back transaction, and refuse to run against a database named `simpl`.
 
 ## Requirements
 

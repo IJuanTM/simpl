@@ -8,6 +8,11 @@ parameters:
     tmpDir: ../.phpstan.cache
     # Needed for core alone to analyze cleanly - some entries below only match once add-ons merge in.
     reportUnmatchedIgnoredErrors: false
+    # The auth add-on's deployment-editable configs, analysed by their types so projects can change the shipped values.
+    dynamicConstantNames:
+        PASSWORD_CONFIG: 'array{min_length: int, require_uppercase: bool, require_lowercase: bool, require_number: bool, require_special_character: bool, hash_algo: string, hash_options: array<string, int>, generated_length: int}'
+        PROFILE_IMAGE_CONFIG: 'array{max_size_mb: int, max_dimension: int, allowed_types: list<string>, path: string}'
+        SMTP_CONFIG: 'array<string, array{host: string, port: int|string, smtp_auth: bool, encryption: string|null, username?: string, password?: string}>'
     ignoreErrors:
         # This codebase never uses generic array shapes, so nothing to retrofit here.
         - identifier: missingType.iterableValue

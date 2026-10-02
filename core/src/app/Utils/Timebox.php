@@ -25,7 +25,6 @@ class Timebox
      */
     final public function call(callable $callback, int $microseconds): mixed
     {
-        $this->returnEarly = false;
         $start = hrtime(true);
 
         try {
@@ -35,6 +34,8 @@ class Timebox
                 $remaining = $microseconds - (int)((hrtime(true) - $start) / 1000);
                 if ($remaining > 0) usleep($remaining);
             }
+
+            $this->returnEarly = false;
         }
     }
 

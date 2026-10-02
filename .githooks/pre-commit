@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# --all checks every tracked file, which is how CI runs it.
+all=0
+[ "${1:-}" = "--all" ] && all=1
+
 fail=0
 
 # PHPStorm's "Optimize imports on commit" treats this use-import as unused, since these placeholder files look standalone to it.
@@ -153,9 +157,12 @@ check_php_syntax() {
 
 check_debug_statements() {
   local file="$1"
+  local content="$2"
   local added_lines
 
-  if ! added_lines=$(git diff --cached -U0 -- "$file" | grep -E '^\+[^+]'); then
+  if [ "$all" -eq 1 ]; then
+    added_lines="$content"
+  elif ! added_lines=$(git diff --cached -U0 -- "$file" | grep -E '^\+[^+]'); then
     return
   fi
 
@@ -191,9 +198,9 @@ while IFS= read -r staged_file; do
 
   if [[ "$staged_file" == *.php ]]; then
     [ "$php_available" -eq 1 ] && [ "$fetched" -eq 1 ] && check_php_syntax "$staged_file" "$content"
-    check_debug_statements "$staged_file"
+    check_debug_statements "$staged_file" "$content"
   fi
-done < <(git diff --cached --name-only --diff-filter=ACMR)
+done < <(if [ "$all" -eq 1 ]; then git ls-files; else git diff --cached --name-only --diff-filter=ACMR; fi)
 
 if [ "$fail" -ne 0 ]; then
   exit 1

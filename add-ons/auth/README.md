@@ -127,7 +127,10 @@ simpl add auth
 
 ## Tests
 
-Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) covering `AuthController`'s config-driven password-policy/token surface, `FormController::validatePasswords()`, `AdminTableTrait`'s pagination/sort/filter logic, `RateLimitedForm`, `MailController::template`'s not-found branch, and the `PruneRateLimitCache` cron task. Once installed, run `simpl test` from your project's root the same way you would for the framework itself. Anything that touches the database directly (auth's own migrations/seeders, the DB-backed cron tasks, most `Pages/*` classes) isn't covered here - that requires a real database connection.
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) in two parts:
+
+- **Unit and feature tests** (`simpl test`, no database needed) cover `AuthController`'s password policy and tokens, `FormController::validatePasswords()`, `AdminTableTrait`'s pagination/sort/filter logic, form and two-tier rate limiting, `TwoFactorController`'s role requirements, login codes and TOTP matching, `WebauthnController`'s encoding helpers, `UserAgentParser`, the `TwoFactorMethod` enum, the cron report output, and the `PruneRateLimitCache` cron task.
+- **Integration tests** (`simpl test:integration`, against the database in `src/.env`, using the `db` add-on's test base) cover the database-backed cron tasks: `DeactivateUnverifiedUsers`, `DeleteDeactivatedUsers` and `PruneTwoFactorData`.
 
 ## Requirements
 

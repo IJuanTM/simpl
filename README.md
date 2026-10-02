@@ -14,9 +14,9 @@
 [![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
 [![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
 [![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.103.1-CC6699?logo=sass)](https://sass-lang.com/)
+[![Sass logo](https://img.shields.io/badge/sass-1.105.0-CC6699?logo=sass)](https://sass-lang.com/)
 [![TypeScript logo](https://img.shields.io/badge/typescript-7.0.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-8.2.2-646CFF?logo=vite)](https://vite.dev/)
+[![Vite logo](https://img.shields.io/badge/vite-8.3.1-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -182,7 +182,7 @@ The `src/public` folder contains the static files like images and fonts, as well
 
 #### Tests
 
-Simpl ships with its own PHPUnit test suite in the `tests` folder, mirroring `src/app`'s structure. Run `simpl test` (inside the Docker `app` container when the stack is up, otherwise with the Composer on your machine after a `composer install`) to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+Simpl ships with its own PHPUnit test suite in the `tests` folder: `Unit` tests mirror `src/app`'s structure, and `Feature` tests are grouped by what they test (alerts, routing, security, ...). Run `simpl test` (inside the Docker `app` container when the stack is up, otherwise with the Composer on your machine after a `composer install`) to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
 
 #### Static Analysis
 
@@ -339,6 +339,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Added password requirements that are checked while typing and again when submitting
 * Added login lockouts and rate limiting to the login, contact, forgot password and verification forms, with longer lockouts after repeated failed attempts
 * Changing a password now logs the account out on every device
+* "Remember me" now works on several devices at once
 * Added breadcrumb navigation
 * Added a multi-select form component
 * Pages no longer need their own code to load subpages

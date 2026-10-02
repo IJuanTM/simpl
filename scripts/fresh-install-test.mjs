@@ -3,7 +3,7 @@ import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {buildZips, C, DEV_DIR, die, divider, DOMAIN, error, heading, info, installBox, item, line, listZips, out, PAD, plural, RELEASES_DIR, REPO, row, SIMPL, SITE_URL, snapshotWorkingTree, stripAnsi, styled, success, task, TEST_NAME, TEST_PROJECT as PROJECT, titleBox, warn} from './shared.mjs';
+import {buildZips, C, DEV_DIR, die, divider, DOMAIN, error, heading, info, installBox, item, line, listZips, out, PAD, plural, REPO, row, SIMPL, SITE_URL, snapshotWorkingTree, stripAnsi, styled, success, task, TEST_NAME, TEST_PROJECT as PROJECT, titleBox, warn} from './shared.mjs';
 
 const LOG = path.join(DEV_DIR, 'install.log');
 const SIMPL_TEST_DB = process.env.SIMPL_TEST_DB || 'auto'; // 'auto' | 'local' | 'docker'
@@ -17,7 +17,6 @@ const help = () => {
   line();
   heading('Options:');
   row('--all', 'Install every add-on, without the picker');
-  row('--release[=<version>]', 'Install a release.mjs --local release instead of the working tree (default: core/.simpl)');
   row('--help, -h', 'Show this help message');
   line();
   heading('Environment:');
@@ -31,10 +30,8 @@ const help = () => {
 };
 
 let mode = process.stdin.isTTY ? 'pick' : 'all';
-let release = null;
 for (const arg of process.argv.slice(2)) {
   if (arg === '--all') mode = 'all';
-  else if (arg === '--release' || arg.startsWith('--release=')) release = arg.split('=')[1] || true;
   else if (arg === '-h' || arg === '--help') {
     help();
     process.exit(0);
@@ -350,7 +347,7 @@ const addons = mode === 'all' ? allAddons : topo(addonDependencies, await pick()
 if (mode === 'pick') divider();
 
 // `simpl add` looks its zips up under the version in the project's .simpl, which comes straight from this core/.simpl.
-const version = typeof release === 'string' ? release : JSON.parse(fs.readFileSync(path.join(REPO, 'core', '.simpl'), 'utf8')).version;
+const version = JSON.parse(fs.readFileSync(path.join(REPO, 'core', '.simpl'), 'utf8')).version;
 
 stopRunningStack();
 try {
@@ -361,34 +358,25 @@ try {
 }
 fs.mkdirSync(DEV_DIR, {recursive: true});
 
-if (release) {
-  const missing = ['core', ...addons].filter(name => !fs.existsSync(path.join(RELEASES_DIR, version, name === 'core' ? 'core.zip' : `add-ons/${name}.zip`)));
-  if (missing.length) die(`The local ${version} release has no ${missing.join(', ')} zip`, `Build it first: node scripts/release.mjs ${version} --local`);
-  process.env.SIMPL_LOCAL_RELEASES = RELEASES_DIR;
-  info(`Using the local ${version} release ${C.dim}(${path.join(RELEASES_DIR, version)})${C.reset}`);
-  line();
-} else {
-  // Kept out of RELEASES_DIR, since the working tree shares its version number with the tagged local release there.
-  const build = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
-  process.on('exit', () => {
-    try {
-      fs.rmSync(build, {recursive: true, force: true});
-    } catch {
-    }
-  });
-  process.env.SIMPL_LOCAL_RELEASES = path.join(build, 'releases');
-  const zips = path.join(build, 'releases', version);
-  task(`🧰 Building ${version} zips from the working tree...`);
+const build = fs.mkdtempSync(path.join(os.tmpdir(), 'simpl-fit-'));
+process.on('exit', () => {
   try {
-    buildZips(snapshotWorkingTree(build, addons), zips, addons);
-  } catch (err) {
-    die('Could not build the release zips', err.stderr?.trim() || err.message);
+    fs.rmSync(build, {recursive: true, force: true});
+  } catch {
   }
-  line();
-  success(`Built ${plural(1 + addons.length, 'zip')}`);
-  listZips(zips, addons);
-  line();
+});
+process.env.SIMPL_LOCAL_RELEASES = path.join(build, 'releases');
+const zips = path.join(build, 'releases', version);
+task(`🧰 Building ${version} zips from the working tree...`);
+try {
+  buildZips(snapshotWorkingTree(build, addons), zips, addons);
+} catch (err) {
+  die('Could not build the release zips', err.stderr?.trim() || err.message);
 }
+line();
+success(`Built ${plural(1 + addons.length, 'zip')}`);
+listZips(zips, addons);
+line();
 
 task('💾 Looking for a database...');
 const db = findDatabase();
@@ -414,7 +402,7 @@ heading('Summary:');
 (ok ? success : error)(`${DOMAIN} ${C.dim}${SITE_URL}${C.reset}`);
 line();
 heading('Details:');
-item(`Install: ${C.dim}${PROJECT}${C.reset} ${C.dim}(from ${release ? `the local ${version} release` : 'the working tree'})${C.reset}`);
+item(`Install: ${C.dim}${PROJECT}${C.reset} ${C.dim}(from the working tree)${C.reset}`);
 item(`Log:     ${C.dim}${LOG}${C.reset}`);
 item(`Docker:  ${C.dim}${db === 'docker' && addons.includes('db') ? 'running, stop it with `simpl down` inside the install' : 'run `simpl up` inside the install to browse it that way instead'}${C.reset}`);
 item(`Vhost:   ${C.dim}${conf}${C.reset} ${C.dim}(local Apache setup only)${C.reset}`);

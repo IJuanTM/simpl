@@ -2,13 +2,11 @@ import {execFileSync} from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {createInterface} from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
 
 export const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 export const DEV_DIR = process.env.SIMPL_DEV_DIR || path.join(os.homedir(), 'Desktop', 'simpl-dev');
-export const RELEASES_DIR = path.join(DEV_DIR, 'releases');
 export const TEST_PROJECT = path.join(DEV_DIR, 'simpl-test');
 export const TEST_NAME = 'Simpl Test';
 export const DOMAIN = process.env.SIMPL_TEST_DOMAIN || 'simpl.test';
@@ -23,7 +21,6 @@ const CODES = {
 export const C = Object.fromEntries(Object.entries(CODES).map(([name, code]) => [name, process.stdout.hasColors?.() ? code : '']));
 const BOX_WIDTH = 62;
 export const PAD = '  ';
-export const interactive = Boolean(process.stdin.isTTY);
 export const styled = (msg, ...styles) => styles.join('') + msg + C.reset;
 export const line = (msg = '') => console.log(msg);
 export const out = (msg, color = C.reset) => console.log(color + msg + C.reset);
@@ -37,7 +34,7 @@ export const item = (msg, dim = false) => out(PAD + C.cyan + '•' + C.reset + '
 export const heading = (msg) => out(PAD + styled(msg, C.bold), C.blue);
 export const plural = (count, word) => `${styled(String(count), C.bold)} ${word}${count !== 1 ? 's' : ''}`;
 export const row = (left, right = '') => out(PAD + styled(right ? left.padEnd(30) : left, C.dim) + right);
-export const box = (title) => {
+const box = (title) => {
   const parts = title.split(/(\x1b\[[0-9;]*m)/);
   const length = parts.reduce((sum, part, i) => i % 2 ? sum : sum + part.length, 0);
   let displayTitle = title, remaining = BOX_WIDTH - 5;
@@ -60,7 +57,6 @@ export const divider = () => {
   out(PAD + '─'.repeat(16), C.dim);
   line();
 };
-export const printAnswer = (question, value) => out(`${PAD}${question}: ${C.cyan}${value}${C.reset}`);
 export const die = (msg, ...hints) => {
   line();
   error(msg);
@@ -69,36 +65,6 @@ export const die = (msg, ...hints) => {
   process.exit(1);
 };
 export const stripAnsi = (text) => text.replace(/\x1b\[[0-9;]*m/g, '');
-
-// Without a TTY there is nobody to answer, so the default is taken (and echoed) instead of waiting on stdin.
-export const ask = async (question, defaultValue = '', hint = defaultValue) => {
-  if (!interactive) {
-    if (defaultValue) printAnswer(question, defaultValue);
-    return defaultValue;
-  }
-  const rl = createInterface({input: process.stdin, output: process.stdout});
-  try {
-    return (await rl.question(`${PAD}${question}${hint ? ` ${C.dim}(${hint})${C.reset}` : ''}: `)).trim() || defaultValue;
-  } catch (err) {
-    if (err.name !== 'AbortError') throw err;
-    line();
-    info('Cancelled');
-    line();
-    process.exit(130);
-  } finally {
-    rl.close();
-  }
-};
-export const confirm = async (question, defaultYes = false) => {
-  line();
-  while (true) {
-    const answer = (await ask(question, defaultYes ? 'yes' : 'no', defaultYes ? 'Y/n' : 'y/N')).toLowerCase();
-    if (['y', 'yes'].includes(answer)) return true;
-    if (['n', 'no'].includes(answer)) return false;
-    warn('Please answer [Y] Yes or [N] No');
-    line();
-  }
-};
 
 export const git = (...args) => execFileSync('git', ['-C', REPO, ...args], {encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe']}).trim();
 

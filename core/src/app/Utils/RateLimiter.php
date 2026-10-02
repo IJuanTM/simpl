@@ -42,6 +42,8 @@ class RateLimiter
      *
      * @throws RuntimeException When the storage file can't be opened.
      * @throws JsonException When the stored record isn't valid JSON.
+     *
+     * @phpstan-impure
      */
     #[NoDiscard]
     public static function attempt(string $key, int $max, int $windowSeconds): bool
@@ -146,6 +148,8 @@ class RateLimiter
      *
      * @throws RuntimeException When the storage file can't be opened.
      * @throws JsonException When the stored record isn't valid JSON.
+     *
+     * @phpstan-impure
      */
     #[NoDiscard]
     public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool
