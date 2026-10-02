@@ -18,56 +18,6 @@ i.table-search-clear {
   }
 }
 
-div.col-toggle-wrapper {
-  button.col-toggle-btn {
-    anchor-name: --col-toggle;
-  }
-
-  div.col-toggle-panel {
-    position: fixed;
-    top: anchor(bottom, 4rem);
-    right: anchor(right, 1rem);
-    overflow-y: auto;
-    min-width: 16rem;
-    max-height: 20rem;
-    margin-top: .5rem;
-    padding: .5rem;
-    border: var(--border-width) solid var(--border-muted);
-    border-radius: var(--radius-sm);
-    background-color: var(--bg-section);
-    position-anchor: --col-toggle;
-
-    &:popover-open {
-      display: flex;
-      flex-direction: column;
-      row-gap: .5rem;
-    }
-
-    label {
-      font-size: .875rem;
-      cursor: pointer;
-      white-space: nowrap;
-      border-radius: var(--radius-sm);
-
-      > span {
-        display: flex;
-      }
-
-      &:not(:has(input:checked)) {
-        color: var(--text-50);
-
-        @include hover-focus {
-          color: var(--text-75);
-        }
-      }
-
-      @include hover-focus {
-        color: var(--text-75);
-      }
-    }
-  }
-}
-
 div.table-pagination > a {
   > i {
     font-size: .875rem;
@@ -133,7 +83,13 @@ div.table-container {
             width: 100%;
             padding: .625rem 1.5rem .625rem .5rem;
             white-space: nowrap;
+            text-decoration: none;
             text-overflow: ellipsis;
+            color: inherit;
+
+            @include hover-focus {
+              color: var(--text-75);
+            }
           }
 
           &:not(:last-child) {

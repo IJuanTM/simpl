@@ -8,16 +8,16 @@ $s = $this->pageObj->settings;
 
 <section class="row user-settings center-x">
   <div class="col f-col g-row-1">
-    <div class="row">
-      <div class="col center-x">
-        <h1 data-typo="h2">Edit profile</h1>
-      </div>
-    </div>
-
-    <?= FormController::formAlerts() ?>
-
-    <div class="row">
+    <div class="row center-x">
       <form class="col profile-image g-row-1" method="POST" action="" enctype="multipart/form-data">
+        <div class="row">
+          <div class="col center-x">
+            <h1 data-typo="h2">Edit profile</h1>
+          </div>
+        </div>
+
+        <?= FormController::formAlerts() ?>
+
         <div class="row center-x">
           <div class="col avatar center f-0">
             <?php if ($s->profileImage) : ?>
@@ -40,7 +40,7 @@ $s = $this->pageObj->settings;
       </form>
     </div>
 
-    <div class="row">
+    <div class="row center-x">
       <form class="col g-row-1" method="POST" action="" data-track-form>
         <div class="row form-row">
           <?php $this->component('form/form-input', [
@@ -113,6 +113,5 @@ $s = $this->pageObj->settings;
         </div>
       </form>
     </div>
-
   </div>
 </section>

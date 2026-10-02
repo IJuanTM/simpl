@@ -1,5 +1,3 @@
-@use "sass:map";
-@use "sass:color";
 @use "../../../config" as *;
 
 header {
@@ -86,33 +84,9 @@ header {
         &.link {
           font-weight: 700;
 
-          &:not(.profile) > i {
+          > i {
             @include breakpoint-up(lg) {
               display: none;
-            }
-          }
-
-          &.profile {
-            @include breakpoint-up(lg) {
-              padding: 0 .5rem;
-            }
-
-            > img {
-              width: 2.5rem;
-              border-radius: 50%;
-
-              @include breakpoint-down(lg) {
-                width: 2rem;
-              }
-            }
-
-            > i {
-              font-size: 2.5rem;
-              width: auto;
-
-              @include breakpoint-down(lg) {
-                font-size: 2rem;
-              }
             }
           }
         }
@@ -123,33 +97,6 @@ header {
           @include breakpoint-down(lg) {
             border: 0;
             border-radius: unset;
-          }
-
-          &.login, &.logout, &.admin {
-            @include shimmer(true, rgba(#FFF, .25));
-
-            &.active::after {
-              background-color: rgba(#FFF, .5);
-            }
-
-            @include hover-focus {
-              &::after {
-                background-color: rgba(#FFF, .25);
-              }
-            }
-          }
-
-          @each $class, $state in (login: success, logout: error, admin: info) {
-            $surface: map.get($accent-colors, map.get($status, $state));
-
-            &.#{$class} {
-              color: map.get($status-ink, $state);
-              background-color: $surface;
-
-              @include hover-focus {
-                background-color: color.scale($surface, $lightness: -12%, $space: oklch);
-              }
-            }
           }
 
           @include hover-focus {

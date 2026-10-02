@@ -1,0 +1,64 @@
+@use "../config" as *;
+
+div.two-fa-card {
+  overflow: hidden;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-accent);
+
+  div.two-fa-tabs {
+    height: 3rem;
+
+    button.two-fa-tab {
+      font-size: .875rem;
+      padding: 0 1rem;
+      cursor: pointer;
+      color: var(--text-50);
+      border-bottom: var(--border-width) solid var(--border-muted);
+
+      @include hover-focus {
+        color: var(--text-75);
+      }
+
+      &.active {
+        color: var(--text);
+        border-bottom-color: $simpl;
+      }
+    }
+
+    &::after {
+      flex: 1 1 auto;
+      content: "";
+      border-bottom: var(--border-width) solid var(--border-muted);
+    }
+  }
+
+  div.two-fa-body {
+    padding: 1.5rem;
+
+    > .row[hidden] {
+      display: none;
+    }
+  }
+}
+
+p.two-fa-note {
+  font-size: .875rem;
+  color: var(--text-50);
+}
+
+span.two-fa-dot {
+  display: block;
+  width: .5rem;
+  height: .5rem;
+  border-radius: 50%;
+  background-color: var(--border-muted);
+
+  &.required {
+    background-color: $orange;
+  }
+
+  &.on {
+    background-color: $green;
+  }
+}

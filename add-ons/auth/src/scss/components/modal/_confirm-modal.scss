@@ -1,0 +1,5 @@
+@use "../../config" as *;
+
+dialog.modal-overlay.confirm-modal {
+  width: min($width-sm, 100% - 2rem);
+}

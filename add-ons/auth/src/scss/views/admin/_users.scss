@@ -14,15 +14,6 @@ section.users {
       color: var(--red);
     }
 
-    th a.table-sort-link {
-      text-decoration: none;
-      color: inherit;
-
-      @include hover-focus {
-        color: var(--text-75);
-      }
-    }
-
     tr.deleted > td:not(.table-actions) {
       color: var(--text-25);
     }
@@ -45,4 +36,23 @@ section.users {
       }
     }
   }
+
+  div.two-fa-method-row {
+    height: 2rem;
+  }
+
+  label.two-fa-required {
+    font-size: .875rem;
+    cursor: pointer;
+    color: var(--text-50);
+    gap: .375rem;
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+  }
+}
+
+dialog.modal-overlay button.purge-user {
+  @include action-button($magenta);
 }

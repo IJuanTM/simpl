@@ -13,10 +13,6 @@ dialog.modal-overlay {
   border: none;
   background-color: transparent;
 
-  &.confirm-modal {
-    width: min($width-sm, 100% - 2rem);
-  }
-
   &, &::backdrop {
     transition: opacity .15s ease-in-out, overlay .15s ease-in-out allow-discrete, display .15s ease-in-out allow-discrete;
     opacity: 0;
@@ -58,10 +54,6 @@ dialog.modal-overlay {
           min-width: 6rem;
         }
       }
-    }
-
-    button.purge-user {
-      @include action-button($magenta);
     }
   }
 }

@@ -1,0 +1,6 @@
+@use "../../config" as *;
+
+div.form-group div.password-warning {
+  font-size: .875rem;
+  color: var(--red);
+}

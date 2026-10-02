@@ -1,0 +1,13 @@
+@use "../../config" as *;
+
+div.code-list {
+  padding: 1rem 3rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-content);
+
+  > div.row > div.col {
+    font-family: $mono;
+    letter-spacing: .125rem;
+  }
+}
