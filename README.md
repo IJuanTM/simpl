@@ -1,6 +1,6 @@
 <div align="center">
 
-[<img src="src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
+[<img src="core/src/public/img/svg/simpl.svg" alt="Simpl logo" width="256">](https://simpl.iwanvanderwal.nl/)
 
 # Simpl
 
@@ -14,9 +14,9 @@
 [![PHP logo](https://img.shields.io/badge/php-8.5.1-777BB3?logo=php)](https://www.php.net/)
 [![Composer logo](https://img.shields.io/badge/composer-2.9.2-89552C?logo=composer)](https://getcomposer.org/)
 [![Node.js logo](https://img.shields.io/badge/node.js-25.2.1-5FA04E?logo=node.js)](https://nodejs.org/)
-[![Sass logo](https://img.shields.io/badge/sass-1.97.1-CC6699?logo=sass)](https://sass-lang.com/)
-[![TypeScript logo](https://img.shields.io/badge/typescript-5.9.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
-[![Vite logo](https://img.shields.io/badge/vite-7.3.0-646CFF?logo=vite)](https://vite.dev/)
+[![Sass logo](https://img.shields.io/badge/sass-1.105.0-CC6699?logo=sass)](https://sass-lang.com/)
+[![TypeScript logo](https://img.shields.io/badge/typescript-7.0.2-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite logo](https://img.shields.io/badge/vite-8.3.1-646CFF?logo=vite)](https://vite.dev/)
 
 <br>
 
@@ -32,11 +32,13 @@
 * Quick setup
 * Composer PSR-4 autoloading
 * Makes use of an MVC system using PHP
-* Works with both Windows and Linux
+* Works on Windows, macOS and Linux
 * Made to work with the latest versions of PHP, Composer, Node.js, npm and Sass
 * Makes use of Vite for bundling TypeScript files and compiling Sass files, as well as live reloading
 * Comes with example pages and a default landing page
 * A collection of handy TypeScript functions
+* Ships with its own PHPUnit test suite
+* PHPStan static analysis configured out of the box
 
 _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
@@ -48,66 +50,79 @@ _Read more about Simpl [here](https://simpl.iwanvanderwal.nl/about/)._
 
 Before you can start using Simpl, you will need to make sure you have the following installed:
 
-* [PHP](https://www.php.net/) >= 8.4.x
-* [Composer](https://getcomposer.org/) >= 2.9.x
 * [Node.js](https://nodejs.org/) >= 24.x.x
 * [npm](https://www.npmjs.com/) >= 11.x.x
 
+You'll also need a way to run PHP locally - see [Step 4](#step-4-set-up-your-localhost) for the two options:
+
+* **Docker** (recommended): [Docker Desktop](https://www.docker.com/products/docker-desktop/) - PHP, Composer and (optionally) MariaDB all run inside the container, nothing else to install.
+* **A local server of your own** (e.g. [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/)): [PHP](https://www.php.net/) >= 8.5.x and [Composer](https://getcomposer.org/) >= 2.9.x installed on your host.
+
 ### Step 1: Download Simpl
 
-You can set up a new Simpl project by running the following commands in your terminal:
+You can set up a new Simpl project with the `simpl` CLI by running the following commands in your terminal:
 
 ```bash
-npx @ijuantm/simpl-install <project-name>
+npm i -g @ijuantm/simpl
+simpl new <project-name>
 ```
 
-Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl, with all dependencies installed and ready to use.
+Replace `<project-name>` with the desired name of your project. This will create a new folder with the specified project name containing a fresh installation of Simpl. You can also run the CLI without installing it, e.g. `npx @ijuantm/simpl new <project-name>`.
 
 Available commands:
 
-- `npx @ijuantm/simpl-install` - You will be prompted to enter a project name
-- `npx @ijuantm/simpl-install <project-name>` - Create a new Simpl project with the specified name
-- `npx @ijuantm/simpl-install --help` - Show help
+- `simpl new` - You will be prompted to enter a project name
+- `simpl new <project-name>` - Create a new Simpl project with the specified name
+- `simpl new --help` - Show all options, like the app URL and framework version
+- `simpl help` - Show every `simpl` command
 
 Alternatively, you can also set up a new Simpl project manually by following these steps:
 
-- Download the latest version of Simpl from [here](#download) and extract the folder. Next, copy the `src` folder to your localhost folder. For localhost management I **recommend** using [WAMP](https://www.wampserver.com/) or [XAMPP](https://www.apachefriends.org/) if you're on Windows, or plain [Apache](https://httpd.apache.org/) if you're on Linux.
+- Download the latest version of Simpl from [here](#download) and extract the folder to your project folder. See [Step 4](#step-4-set-up-your-localhost) for how to serve it - Docker is the recommended option.
 
-- Next, rename the `src` folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/).
+- Next, rename the extracted folder to the name of your project and open this folder in an IDE to your liking, I **recommend** using [PhpStorm](https://www.jetbrains.com/phpstorm/) or [Microsoft Visual Studio Code](https://code.visualstudio.com/). Inside it you'll find a `src` folder (the application code) and a `tests` folder (its PHPUnit test suite).
 
 ### Step 2: Run composer install
 
 Simpl makes use of PSR-4 autoloading; for this to work, you will have to run `composer install` in the root folder of your project. This will install the required packages and create the `vendor` folder. It will also install the `phpdotenv` package, which is used for loading environment variables from the `.env` file.
 
+_If you're going to use Docker (see [Step 4](#step-4-set-up-your-localhost)), you can skip this step - `composer install` runs automatically the first time you build the image._
+
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `public` folder using Vite and the `sass` package.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `src/public` folder using Vite and the `sass` package.
 
 ### Step 4: Set up your localhost
 
-Set up a localhost for your project. If you're using WAMP or XAMPP, you can do this by creating a new virtual host. If you're using plain Apache, you will have to create a new configuration file in the `sites-available` folder and enable it using `a2ensite`. _Make sure the document root is set to the `public` folder of your project._
+You have two options for running Simpl locally:
+
+**Option A: Docker (recommended).** A ready-to-use PHP + Apache (and, once the `db` add-on is installed, MariaDB) setup ships with every project - see [`core/docker/README.md`](core/docker/README.md) for the full guide. This is fully isolated from your host machine (no WAMP/XAMPP/local PHP/MySQL required) and is driven with the `simpl` CLI: `simpl up` builds and starts it, `simpl down` stops it, `simpl sh` opens a shell in the `app` container and `simpl composer <cmd>` runs Composer inside it.
+
+**Option B: a local server of your own (e.g. WAMP or XAMPP).** Point a virtual host for your app URL at the `src/public` folder of your project. Run `simpl help manual` for the full steps.
 
 Now if you open your browser and go to your localhost url of this project, you should see the default landing page. If the page doesn't have any styling, there is a chance there was an issue compiling the Sass files; you can try to fix this by running the `build` script again manually using `npm run build`.
 
 ### Step 5: Install add-ons (optional)
 
-Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use the `simpl-addon` package. This package allows you to easily install add-ons using npx.
+Simpl comes with a few add-ons, these are optional and can be added to a clean installation of Simpl. To install an add-on, you can use `simpl add`.
 
 Navigate to your project directory and run:
 
 ```bash
 # List available add-ons
-npx @ijuantm/simpl-addon --list
+simpl add --list
 
 # Install an add-on (e.g. auth)
-npx @ijuantm/simpl-addon auth
+simpl add auth
 ```
 
 Available commands:
 
-- `npx @ijuantm/simpl-addon <addon-name>` - Install an add-on
-- `npx @ijuantm/simpl-addon --list` - List all available add-ons
-- `npx @ijuantm/simpl-addon --help` - Show help
+- `simpl add <addon-name>` - Install an add-on
+- `simpl add --list` - List all available add-ons
+- `simpl add --help` - Show help
+
+Some add-ons depend on others (for example, `auth` depends on `db` for its query builder and migration/seeder runners) - `simpl add` installs dependencies first automatically. If part of an add-on can't be merged into one of your files (because the line it targets is missing), `simpl add` lists what it skipped so you can add it by hand. See the [add-ons overview](add-ons/README.md) for what's available and how each one fits together.
 
 ### Step 6: Start coding!
 
@@ -115,53 +130,63 @@ Now you're all set up and ready to start coding! This is the framework in a nuts
 
 #### Npm scripts
 
-The following scrips are included in the `package.json` file:
+The following scripts are included in the `package.json` file:
 
 * `dev` - Runs the `watch` and `live` scripts in parallel
-* `build` - Runs the `build:scss` and `build:ts` scripts after one another
 * `watch` - Runs the `watch:scss` and `watch:ts` scripts in parallel
-* `build:scss` - Compiles the Sass files to the `public/css` folder using the `sass` package
-* `build:ts` - Bundles the TypeScript files to the `public/js` folder using Vite
-* `watch:scss` - Watches the Sass files for changes and compiles them to the `public/css` folder using the `sass` package
-* `watch:ts` - Watches the TypeScript files for changes and bundles them to the `public/js` folder using Vite
-* `live` - Runs a local server using `browser-sync` and watches the `public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
+* `watch:scss` - Watches the Sass files for changes and compiles them to the `src/public/css` folder using the `sass` package
+* `watch:ts` - Watches the TypeScript files for changes and bundles them to the `src/public/js` folder using Vite
+* `live` - Runs a local server using `browser-sync` and watches the `src/public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
+* `build` - Runs the `build:scss` and `build:ts` scripts after one another
+* `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
+* `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
 
-After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
+After changing the styling or TypeScript of your website you will have to run the `build` script to compile the files. This will run Vite to compile the Sass and TypeScript files and output them to the `src/public` folder. This can also be done automatically by running the `dev` script, which will watch the files for changes and recompile them automatically with live reloading.
 
-_The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver. _
+_The reason Vite is not used as a server, but instead only to bundle the TypeScript files and files from packages like Font Awesome, is because Vite's server does not support CSS source maps for Sass files, which makes debugging the styling a lot harder. Also hosting the website using Vite's server makes it so that the scripts and styling are not loaded properly when run through a PHP webserver._
 
 #### Config
 
-Config files for the PHP framework are located in the `app/Config` folder. Here you can find the `app.php` file, which contains the configuration for the framework.
+Config files for the PHP framework are located in the `src/app/Config` folder. Here you can find the `app.php` file, which contains the configuration for the framework.
 
 Feel free to add your own config files here, as each `.php` file in this folder will be loaded automatically on page load.
 
 #### Controllers, Models and Pages
 
-In the `app` folder you can find the `Controllers`, `Models` and `Pages` folders.
+In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
-    - Besides these there are also the `AlertController`, `AliasController` and `SessionController`, these are used for handling alerts, aliases and sessions respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+    - Besides these there are also the `AlertController`, `AliasController`, `SessionController`, `BreadcrumbController`, `RequestController` and `FormController`, used for handling alerts, aliases, sessions, breadcrumbs, sanitized request input and form validation respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
 Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
 
-There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class, which is used for logging errors and other information to log files.
+There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class for writing errors and other information to log files, and the `RateLimiter`.
+
+Generated runtime data lives outside `app`: log files in `src/logs`, the rate limiter's cache in `src/cache`. Both directories are created automatically and are safe to delete.
 
 #### Views
 
-You can find the HTML code in the `views` folder, here you can find the `home.phtml` file, as well as a `parts` folder containing the `header.phtml` and `footer.phtml` files.
+The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at the root (`home.phtml`, `error.phtml`, ...). The `parts` folder holds the pieces the framework assembles around every page and loads with `$this->part()` - `parts/layout` for the header, footer and cookie bar, `parts/index` for the `<head>` includes. The `components` folder holds reusable fragments a template drops in itself with `$this->component()`, like the breadcrumbs.
 
 #### Styling and TypeScript
 
-The styling is located in the `scss` folder. Here each view has its own stylesheet, as well as stylesheets for the parts like the header and footer. In the `config` folder you can find stylesheets for things like variables, mixins and breakpoints. All of these stylesheets are imported in the `main.scss` file, which is the main stylesheet.
+The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, cards, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
 
-The TypeScript code is located in the `ts` folder. Simpl makes use of Rollup to bundle the TypeScript files, because of this you are able to create multiple TypeScript files and import them in the `main.ts` file.
+The TypeScript is in the `src/ts` folder - feature modules in `features/` (each exposing an `init()` that `main.ts` calls), shared helpers in `helpers/`. Vite bundles it all starting from `main.ts`.
 
 #### Public
 
-The `public` folder contains the static files like images and fonts, as well as other static files for the website. Here you can also find the `index.php` file, which is the entry point for the framework. This file loads the autoloader, environment variables and runs the main `AppController`. After running the `build` script, the compiled Sass and TypeScript files will be located in this folder under their respective `css` and `js` folders.
+The `src/public` folder contains the static files like images and fonts, as well as other static files for the website. Here you can also find the `index.php` file, which is the entry point for the framework. This file loads the autoloader, environment variables and runs the main `AppController`. After running the `build` script, the compiled Sass and TypeScript files will be located in this folder under their respective `css` and `js` folders.
+
+#### Tests
+
+Simpl ships with its own PHPUnit test suite in the `tests` folder: `Unit` tests mirror `src/app`'s structure, and `Feature` tests are grouped by what they test (alerts, routing, security, ...). Run `simpl test` (inside the Docker `app` container when the stack is up, otherwise with the Composer on your machine after a `composer install`) to check that everything still works as expected - handy after upgrading dependencies or making changes of your own.
+
+#### Static Analysis
+
+Simpl also ships with [PHPStan](https://phpstan.org/) configured at level 6 (`config/phpstan.neon`). Run `simpl stan` to catch type errors and other issues before they become bugs. Worth running again after installing an add-on, since its code gets analyzed too once merged into your project.
 
 <br>
 
@@ -174,7 +199,7 @@ _If you need more information about the framework and its features, you can find
 Run the following command to download the latest version of Simpl:
 
 ```bash
-npx @ijuantm/simpl-install
+npx @ijuantm/simpl new
 ```
 
 Alternatively, download the latest version of Simpl from [here](https://simpl.iwanvanderwal.nl/download/latest/).
@@ -260,7 +285,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Added options for aliases to pages (multiple urls for one page, or custom urls)
 * Improved error handling and logging
 * Moved error page logic to its own Page class
-* Added a timestamp to <head> files to prevent caching issues (dynamically added in the url() method)
+* Added a timestamp to <head> files to prevent caching issues (dynamically added in the url () method)
 * Improved tsconfig.json file
 * Added enums to the php code for better type safety and readability
 * The auth add-on now has config options for password requirements and to enable/disable user email verification
@@ -292,13 +317,67 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Small formatting changes and improvements
 * Added a code block to the landing page with the command to install add-ons using the npx tool
 
+### Version 2.0
+
+#### Version 2.0.0 (2026-09-25)
+
+* Now requires PHP 8.5
+* Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
+* Moved the database classes and the scheduler out of the auth add-on into a new `db` add-on, which the auth add-on now depends on
+* Add-ons can now depend on other add-ons, which get installed automatically
+* Replaced the npx tools with the `simpl` CLI, used to create projects, install add-ons and run the Docker setup
+* Added a Docker setup as the recommended way to run a project locally, served over HTTPS, with MariaDB when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
+* Added support for a locally trusted certificate (e.g. from mkcert) in the Docker setup
+* The `live` npm script now uses the project's `APP_URL` and matches its HTTP or HTTPS scheme, configured in a new `bs-config.cjs` file
+* Added migration and seeder classes, replacing the example `.sql` file
+* Added a scheduler for running cron jobs
+* Added `IN` and `NOT IN` support to the query builder
+* Added an admin panel to the auth add-on for managing users and roles and viewing login attempts, with sortable, searchable and paginated tables
+* Added a profile page and account settings pages for users
+* Added two-factor authentication to the auth add-on, using email codes, authenticator apps or passkeys, with recovery codes, trusted devices and the option to require specific methods per role or user
+* Added an `APP_KEY` to the `.env` file, generated on `composer install` and used to encrypt two-factor secrets
+* Added password requirements that are checked while typing and again when submitting
+* Added login lockouts and rate limiting to the login, contact, forgot password and verification forms, with longer lockouts after repeated failed attempts
+* Changing a password now logs the account out on every device
+* "Remember me" now works on several devices at once
+* Added breadcrumb navigation
+* Added a multi-select form component
+* Pages no longer need their own code to load subpages
+* Improved error page handling
+* Added `ErrorCode` and `TokenType` enums
+* Added PHPUnit tests for the framework and add-ons, split into unit, feature and integration tests
+* Added PHPStan static analysis
+* Security fixes and improvements all around, including CSRF validation, session cookies, rate limiting and page routing
+* Added extra security headers to the .htaccess file and a stricter Content Security Policy for styles
+* Fixed the namespace in the sitemap.xml file
+* Updated the PHP code to use new PHP 8.5 features
+* Improved the styling with CSS cascade layers, `light-dark()` theming, native `<dialog>` modals and popovers
+* The theme now follows the system's light or dark mode until another one is picked
+* Improved the Sass and TypeScript folder structure
+* Moved the log and cache files out of `src/app` into `src/logs` and `src/cache`
+* Accessibility improvements across all pages
+* Improved the console output and email templates
+* Updated npm and composer packages
+
 <br>
 
 ## Credits
 
 ### Composer packages
 
+#### Development
+
+* [PHPUnit](https://phpunit.de/)
+* [PHPStan](https://phpstan.org/)
+* [Roave security advisories](https://github.com/Roave/SecurityAdvisories/)
+
+#### Production
+
 * [PHP dotenv](https://github.com/vlucas/phpdotenv/)
+* [PHPMailer](https://github.com/PHPMailer/PHPMailer/)
+* [OTPHP](https://github.com/Spomky-Labs/otphp/) (auth add-on)
+* [BaconQrCode](https://github.com/Bacon/BaconQrCode/) (auth add-on)
+* [WebAuthn Framework](https://github.com/web-auth/webauthn-framework/) (auth add-on)
 
 ### Node packages
 

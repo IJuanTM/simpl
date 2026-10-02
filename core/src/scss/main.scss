@@ -1,0 +1,43 @@
+@use "sass:meta";
+
+@layer reset, vendor, base, layout, components, utilities;
+
+@include meta.load-css("base/keyframes");
+
+@layer base {
+  @include meta.load-css("base/style");
+  @include meta.load-css("base/typography");
+  @include meta.load-css("base/scrollbar");
+}
+
+@layer layout {
+  @include meta.load-css("utilities/flex");
+}
+
+@layer utilities {
+  @include meta.load-css("utilities/dimensions");
+  @include meta.load-css("utilities/spacing");
+  @include meta.load-css("utilities/text");
+  @include meta.load-css("utilities/visibility");
+}
+
+@layer components {
+  // VIEWS
+  @include meta.load-css("views/error");
+
+  // COMPONENTS
+  @include meta.load-css("components/alert");
+  @include meta.load-css("components/breadcrumbs");
+  @include meta.load-css("components/button");
+  @include meta.load-css("components/card");
+  @include meta.load-css("components/code-block");
+  @include meta.load-css("components/input");
+  @include meta.load-css("components/multi-select");
+  @include meta.load-css("components/quote");
+
+  // PARTS
+  @include meta.load-css("views/parts/layout/content");
+  @include meta.load-css("views/parts/layout/cookie");
+  @include meta.load-css("views/parts/layout/footer");
+  @include meta.load-css("views/parts/layout/header");
+}

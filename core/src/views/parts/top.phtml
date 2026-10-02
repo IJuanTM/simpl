@@ -1,0 +1,46 @@
+<?php
+use app\Controllers\AppController;
+use app\Models\Url;
+
+$title = AppController::sanitize($this->title) . ' - ' . AppController::sanitize($this->subtitle);
+?>
+
+<!-- This website is made using the Simpl framework. You can read more about Simpl here: https://www.github.com/IJuanTM/simpl/ -->
+<!DOCTYPE html>
+<html lang="en" class="h-100">
+<head>
+  <!-- Title -->
+  <title><?= $title ?></title>
+
+  <!-- Base -->
+  <base href="<?= APP_URL ?>">
+
+  <!-- Meta, Styles, and Favicon -->
+  <?php
+  $this->part('index/meta');
+  $this->part('index/css');
+  $this->part('index/favicon');
+  ?>
+
+  <!-- Manifest -->
+  <link rel="manifest" href="<?= Url::file('site.webmanifest') ?>">
+</head>
+
+<body class="h-100">
+<!-- Noscript -->
+<noscript class="center h-100 w-100">
+  <p class="text-center">This website requires JavaScript to work properly. Please enable JavaScript!</p>
+</noscript>
+
+<!-- Theme -->
+<script>
+  document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'));
+</script>
+
+<!-- Header -->
+<?php $this->part('layout/header') ?>
+
+<!-- Content -->
+<main class="content">
+
+  <?php $this->component('nav/breadcrumbs') ?>

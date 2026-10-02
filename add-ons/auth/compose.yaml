@@ -1,0 +1,11 @@
+@addon-insert:before('# @addon-placeholder:environment')
+      SMTP_DEV_HOST: mailpit
+      SMTP_DEV_PORT: 1025
+@addon-end
+
+@addon-insert:before('# @addon-placeholder:services')
+  mailpit:
+    image: axllent/mailpit:${MAILPIT_VERSION:-v1.31}
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+@addon-end

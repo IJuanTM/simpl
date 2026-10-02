@@ -1,0 +1,280 @@
+@use "sass:map";
+@use "sass:color";
+@use "../../../config" as *;
+
+header {
+  position: relative;
+  z-index: layer("layout");
+
+  > div.navbar {
+    position: relative;
+    z-index: layer("layout");
+    height: $header-height;
+    padding: 2rem 3rem 1rem;
+    border-bottom: var(--border-width) solid var(--border-muted);
+    background-color: var(--bg-section);
+
+    @include breakpoint-down(md) {
+      height: calc($header-height - 1rem);
+      padding: 1rem;
+    }
+
+    @include breakpoint-down(lg) {
+      &::after {
+        position: absolute;
+        z-index: 1;
+        content: "";
+        background-color: var(--bg-section);
+        inset: 0;
+      }
+    }
+
+    > div.nav-brand {
+      z-index: layer("layout", 10);
+      padding: 0 1rem;
+
+      a.nav-logo {
+        text-decoration: none;
+
+        > svg {
+          width: 3.5rem;
+          max-height: 100%;
+        }
+      }
+    }
+
+    > nav.menu {
+      @include breakpoint-down(lg) {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        visibility: hidden;
+        overflow-y: auto;
+        flex-direction: column;
+        width: 100%;
+        max-height: calc(100dvh - $header-height);
+        padding: 0;
+        transition: transform .15s ease-in-out, visibility .15s ease-in-out;
+        transform: translateY(-100%);
+        background-color: var(--bg-section);
+
+        &.extended {
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        > div.nav-list {
+          flex-direction: column;
+        }
+      }
+
+      > div.nav-list > .nav-item {
+        padding: 0 1rem;
+        white-space: pre-wrap;
+        border-radius: var(--radius-md);
+
+        @include breakpoint-down(lg) {
+          justify-content: flex-start;
+          height: 4rem;
+          padding: 0 4rem;
+        }
+
+        @include breakpoint-down(md) {
+          padding: 0 2rem;
+        }
+
+        &.link {
+          font-weight: 700;
+
+          &:not(.profile) > i {
+            @include breakpoint-up(lg) {
+              display: none;
+            }
+          }
+
+          &.profile {
+            @include breakpoint-up(lg) {
+              padding: 0 .5rem;
+            }
+
+            > img {
+              width: 2.5rem;
+              border-radius: 50%;
+
+              @include breakpoint-down(lg) {
+                width: 2rem;
+              }
+            }
+
+            > i {
+              font-size: 2.5rem;
+              width: auto;
+
+              @include breakpoint-down(lg) {
+                font-size: 2rem;
+              }
+            }
+          }
+        }
+
+        &.button {
+          background-color: var(--nav-button);
+
+          @include breakpoint-down(lg) {
+            border: 0;
+            border-radius: unset;
+          }
+
+          &.login, &.logout, &.admin {
+            @include shimmer(true, rgba(#FFF, .25));
+
+            &.active::after {
+              background-color: rgba(#FFF, .5);
+            }
+
+            @include hover-focus {
+              &::after {
+                background-color: rgba(#FFF, .25);
+              }
+            }
+          }
+
+          @each $class, $state in (login: success, logout: error, admin: info) {
+            $surface: map.get($accent-colors, map.get($status, $state));
+
+            &.#{$class} {
+              color: map.get($status-ink, $state);
+              background-color: $surface;
+
+              @include hover-focus {
+                background-color: color.scale($surface, $lightness: -12%, $space: oklch);
+              }
+            }
+          }
+
+          @include hover-focus {
+            background-color: var(--button-hover);
+          }
+        }
+
+        &.icon {
+          > i {
+            font-size: 2rem;
+          }
+
+          @include hover-focus {
+            > i {
+              color: var(--text-75);
+            }
+          }
+        }
+
+        &.active {
+          @include breakpoint-down(lg) {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              left: 3rem;
+              width: .375rem;
+              height: calc(100% - 2rem);
+              content: "";
+              transition: height .15s ease-in-out;
+              border-radius: var(--radius-sm);
+              background-color: var(--text-50);
+
+              @include breakpoint-down(md) {
+                left: 1rem;
+              }
+            }
+
+            @include hover-focus {
+              &::after {
+                height: calc(100% - 2.25rem);
+                background-color: var(--text-25);
+              }
+            }
+
+            > span::after {
+              display: none;
+            }
+          }
+
+          > span {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              bottom: .625rem;
+              width: calc(100% - .5rem);
+              height: .25rem;
+              content: "";
+              transition: width .15s ease-in-out;
+              border-radius: .125rem;
+              background-color: var(--text-50);
+            }
+          }
+
+          @include hover-focus {
+            > span::after {
+              width: calc(100% - .75rem);
+              background-color: var(--text-25);
+            }
+          }
+        }
+      }
+    }
+
+    > div.nav-options {
+      z-index: layer("content", 10);
+
+      @include breakpoint-up(lg) {
+        flex: 0 0 auto;
+      }
+
+      div.theme-switch {
+        width: 4rem;
+        cursor: pointer;
+
+        > i {
+          font-size: 1.5rem;
+        }
+
+        @include hover-focus {
+          > i {
+            color: var(--text-75);
+          }
+        }
+      }
+
+      button.hamburger {
+        display: none;
+        padding: 0;
+
+        @include breakpoint-down(lg) {
+          display: flex;
+        }
+
+        > span {
+          width: 4rem;
+          height: 4rem;
+
+          > span, > span::before, > span::after {
+            width: 2rem;
+            background-color: var(--text);
+          }
+        }
+
+        @include hover-focus {
+          opacity: 1;
+
+          > span {
+            > span, > span::before, > span::after {
+              background-color: var(--text-75);
+            }
+          }
+        }
+      }
+    }
+  }
+}

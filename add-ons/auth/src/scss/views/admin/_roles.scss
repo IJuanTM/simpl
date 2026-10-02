@@ -1,0 +1,9 @@
+@use "../../config" as *;
+
+section.roles {
+  div.roles-table {
+    @include breakpoint-up(sm) {
+      max-width: $width-md;
+    }
+  }
+}

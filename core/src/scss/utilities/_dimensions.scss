@@ -1,0 +1,33 @@
+@use "../config" as *;
+
+@each $abbr, $prop in (h: height, w: width) {
+  .#{$abbr}-100 {
+    #{$prop}: 100%;
+  }
+
+  .min-#{$abbr}-100 {
+    min-#{$prop}: 100%;
+  }
+
+  .max-#{$abbr}-100 {
+    max-#{$prop}: 100%;
+  }
+
+  .#{$abbr}-auto {
+    #{$prop}: auto;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+.h-content {
+  height: $section-height;
+}
+
+.min-h-content {
+  min-height: $section-height;
+}
+
+.max-h-content {
+  max-height: $section-height;
+}

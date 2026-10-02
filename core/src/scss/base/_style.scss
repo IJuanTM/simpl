@@ -1,0 +1,84 @@
+@use "sass:map";
+
+@use "../config" as *;
+
+@include set-themes();
+@include set-accent-inks();
+
+:root {
+  --border-width: .125rem;
+  --border-width-thin: .0625rem;
+  --radius-sm: .25rem;
+  --radius-md: .5rem;
+  --radius-lg: 1rem;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+html {
+  font-size: clamp(.75rem, .25vw + .75rem, 1rem);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+  accent-color: $simpl;
+
+  @media (max-height: map.get($breakpoints, lg)) {
+    font-size: clamp(.675rem, .25vw + .75rem, .875rem);
+  }
+}
+
+body {
+  font-family: $body;
+  font-size: 100%;
+  color: var(--text);
+  background-color: var(--bg-main);
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+noscript {
+  font-size: 1.25rem;
+  position: fixed;
+  z-index: layer("top", 500);
+  left: 0;
+  padding: 2rem;
+  color: var(--red);
+  background-color: var(--bg-main);
+
+  @include breakpoint-up(lg) {
+    font-size: 1.5rem;
+  }
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+hr {
+  height: var(--border-width);
+  background-color: var(--border);
+
+  &.vertical {
+    width: var(--border-width);
+    height: 100%;
+  }
+
+  &.muted {
+    background-color: var(--border-muted);
+  }
+}
+
+// -------------------------------------------------------------------------------------------------------------------------------- //
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

@@ -1,0 +1,87 @@
+@use "../config" as *;
+
+section.user {
+  padding-top: 4rem;
+
+  div.user-profile-card {
+    position: relative;
+    padding: 7rem 2rem 1rem 2rem;
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-accent);
+
+    @include breakpoint-up(sm) {
+      max-width: $width-md;
+      padding: 9rem 4rem 3rem 4rem;
+    }
+
+    div.profile-image-row {
+      position: absolute;
+      top: -4rem;
+      left: 50%;
+      overflow: hidden;
+      transform: translateX(-50%);
+      border: var(--border-width) solid var(--border-muted);
+      border-radius: 50%;
+      background-color: var(--bg-accent);
+
+      .profile-image {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 12rem;
+        height: 12rem;
+
+        > img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        > i {
+          font-size: 12rem;
+          width: auto;
+        }
+      }
+    }
+
+    h1 {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    div.user-details {
+      > * {
+        line-height: 1.8;
+      }
+
+      div.user-details-label {
+        width: 6rem;
+        color: var(--text-muted);
+      }
+
+      div.user-details-value {
+        overflow: auto;
+        white-space: nowrap;
+
+        i.verified {
+          color: var(--green);
+        }
+
+        i.unverified {
+          color: var(--red);
+        }
+      }
+
+      div.user-details-admin {
+        font-size: .75rem;
+        color: var(--text-muted);
+      }
+    }
+
+    a.button.change-password {
+      @include action-button($orange);
+    }
+  }
+}

@@ -1,0 +1,120 @@
+<?php
+use app\Controllers\AppController;
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Models\Url;
+
+$mode = $this->pageObj->mode;
+$methods = $this->pageObj->enrolledMethods;
+?>
+
+<section class="row two-factor center-x">
+  <form class="col g-row-1" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Two-step verification</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <?php if ($mode === 'recovery'): ?>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">Enter one of the recovery codes you saved when you set up two-factor authentication. Each code works once.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group g-row-0.25">
+          <div class="row">
+            <label class="col" for="code">Recovery code: <span class="required">*</span></label>
+          </div>
+          <div class="row input-group">
+            <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
+            <input class="col" id="code" type="text" name="code" maxlength="32" autocomplete="one-time-code" autocapitalize="characters" placeholder="Enter a recovery code" value="<?= RequestController::post('code') ?? '' ?>">
+          </div>
+        </div>
+      </div>
+
+    <?php elseif ($mode === 'passkey'): ?>
+
+      <div class="row">
+        <div class="col center-x g-row-1">
+          <p class="form-details">Use the passkey on this device or a nearby phone or security key to finish signing in.</p>
+          <button type="button" class="button center-y f-0"
+                  data-passkey-login data-passkey-auto
+                  data-options-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/options')) ?>"
+                  data-verify-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/verify')) ?>"
+                  aria-label="Sign in with your passkey"><i class="fas fa-fingerprint"></i>Use your passkey
+          </button>
+          <p class="form-details" data-passkey-unsupported hidden>This browser can't use passkeys. Choose another method below.</p>
+        </div>
+      </div>
+
+    <?php else: ?>
+
+      <div class="row">
+        <div class="col">
+          <p class="form-details">
+            <?= $mode === 'totp'
+                ? 'Open your authenticator app and enter the code it shows for this account.'
+                : 'A verification code has been sent to your email address. Enter it below to finish signing in.' ?>
+          </p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col form-group g-row-0.25">
+          <div class="row">
+            <label class="col" for="code">Code: <span class="required">*</span></label>
+          </div>
+          <input class="col hidden" id="code" type="text" name="code" inputmode="numeric" maxlength="<?= TWO_FACTOR_CONFIG['code_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
+          <div class="col center-x g-col-1">
+            <?php for ($i = 0; $i < TWO_FACTOR_CONFIG['code_length']; $i++): ?>
+              <input type="text" class="digit" maxlength="1" inputmode="numeric" autocomplete="one-time-code" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
+            <?php endfor ?>
+          </div>
+        </div>
+      </div>
+
+      <?php if ($mode === 'email'): ?>
+        <?php $resendCooldown = $this->pageObj->resendCooldown; ?>
+        <div class="row">
+          <div class="col">
+            <p class="form-details">Didn't receive it?
+              <button class="link underline" data-typo="a" type="submit" formmethod="post" formaction="<?= AppController::sanitize(Url::to('api/two-factor/resend')) ?>"<?= $resendCooldown > 0 ? ' data-timeout="' . $resendCooldown . '" inert' : '' ?> aria-label="Button to resend the verification code email">Send a new code</button>
+              .<?php if ($resendCooldown > 0): ?> <span data-countdown-wrap>You can request another in <span data-countdown="<?= $resendCooldown ?>"><?= (int)ceil($resendCooldown / 1000) ?></span>s.</span><?php endif ?></p>
+          </div>
+        </div>
+      <?php endif ?>
+
+    <?php endif ?>
+
+    <div class="row">
+      <div class="col try-other f-col center-y g-row-0.25">
+        <p class="form-details">Try another way:</p>
+        <?php if ($mode !== 'passkey' && in_array('passkey', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/passkey')) ?>" aria-label="Use a passkey">Use a passkey</a>
+        <?php endif ?>
+        <?php if ($mode !== 'totp' && in_array('totp', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/totp')) ?>" aria-label="Use your authenticator app">Use your authenticator app</a>
+        <?php endif ?>
+        <?php if ($mode !== 'email' && in_array('email', $methods, true)): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/email')) ?>" aria-label="Email me a code">Email me a code</a>
+        <?php endif ?>
+        <?php if ($mode !== 'recovery'): ?>
+          <a class="link underline" href="<?= AppController::sanitize(Url::to('two-factor/recovery')) ?>" aria-label="Use a recovery code">Use a recovery code</a>
+        <?php endif ?>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= AppController::sanitize(Url::to('login')) ?>"><i class="fas fa-arrow-left"></i>Cancel</a>
+      <?php if ($mode !== 'passkey'): ?>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the verification code"><i class="fas fa-right-to-bracket"></i>Verify</button>
+      <?php endif ?>
+    </div>
+  </form>
+</section>

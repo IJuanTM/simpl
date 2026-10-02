@@ -1,0 +1,48 @@
+@use "../../config" as *;
+
+section.users {
+  div.users-table {
+    @include breakpoint-up(sm) {
+      max-width: $width-xxl;
+    }
+
+    i.fa-check {
+      color: var(--green);
+    }
+
+    i.fa-times {
+      color: var(--red);
+    }
+
+    th a.table-sort-link {
+      text-decoration: none;
+      color: inherit;
+
+      @include hover-focus {
+        color: var(--text-75);
+      }
+    }
+
+    tr.deleted > td:not(.table-actions) {
+      color: var(--text-25);
+    }
+
+    td.table-actions .table-action {
+      &.restore {
+        color: var(--green);
+
+        @include hover-focus {
+          color: var(--green-hover);
+        }
+      }
+
+      &.purge {
+        color: var(--magenta);
+
+        @include hover-focus {
+          color: var(--magenta-hover);
+        }
+      }
+    }
+  }
+}

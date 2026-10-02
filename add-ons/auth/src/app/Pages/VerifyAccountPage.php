@@ -1,0 +1,153 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Pages;
+
+use app\Controllers\AppController;
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\PageController;
+use app\Controllers\RequestController;
+use app\Enums\AlertType;
+use app\Enums\TokenType;
+use app\Models\Page;
+use app\Pages\Traits\TwoTierThrottle;
+use app\Utils\RateLimiter;
+
+/**
+ * Handles account verification using a token supplied in the URL or via a manual form.
+ * Validates input and provides user-facing feedback via alerts.
+ */
+class VerifyAccountPage
+{
+    use TwoTierThrottle;
+
+    public int $resendCooldown = 0;
+
+    public function __construct(Page $page)
+    {
+        $this->checkUrlCode($page);
+    }
+
+    /**
+     * Validates the target user id, checks whether verification is still needed, and either
+     * checks a code supplied in the URL or processes the manual form if submitted.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function checkUrlCode(Page $page): void
+    {
+        $id = AppController::sanitize($page->subpage() ?? '');
+
+        if (empty($id) || !is_numeric($id)) {
+            FormController::addAlert('Undefined user id! Please check your mail.', AlertType::ERROR);
+            PageController::redirect(REDIRECT, 2);
+            return;
+        }
+
+        $id = (int)$id;
+
+        if (!AuthController::needsVerification($id)) {
+            FormController::addAlert('This verification link is no longer valid.', AlertType::INFO);
+            PageController::redirect('login', 2);
+            return;
+        }
+
+        $this->resendCooldown = RateLimiter::retryAfterMs('resend-verification-' . $id);
+
+        // Handled before the URL-code path so a wrong/truncated code in the link doesn't block the manual entry form.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
+            $this->post($id);
+            return;
+        }
+
+        $code = AppController::sanitize($page->subpage(1) ?? '');
+
+        if (!empty($code)) {
+            if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
+                FormController::addAlert('The verification code given in the url is too long!', AlertType::WARNING);
+                return;
+            }
+
+            if ($this->throttle($id)) return;
+
+            if (!AuthController::checkToken($id, $code, TokenType::VERIFICATION)) {
+                FormController::addAlert('The verification code given in the url is incorrect! Please check your mail.', AlertType::ERROR);
+                return;
+            }
+
+            $this->complete($id);
+        }
+    }
+
+    /**
+     * Handles manual verification code submission from a form.
+     *
+     * @param int $userId User ID
+     *
+     * @return void
+     */
+    private function post(int $userId): void
+    {
+        $code = RequestController::rawPost('code');
+
+        if (empty($code)) {
+            FormController::addAlert('Please enter the verification code received in your mail!', AlertType::WARNING);
+            return;
+        }
+
+        if (strlen($code) > VERIFICATION_CONFIG['token_length']) {
+            FormController::addAlert('The verification code is too long!', AlertType::WARNING);
+            return;
+        }
+
+        if ($this->throttle($userId)) return;
+
+        if (!AuthController::checkToken($userId, $code, TokenType::VERIFICATION)) {
+            FormController::addAlert('The verification code is incorrect!', AlertType::ERROR);
+            return;
+        }
+
+        $this->complete($userId);
+    }
+
+    /**
+     * Records a verification attempt, checking per-account then per-IP limits.
+     *
+     * @param int $id User ID being verified
+     *
+     * @return bool True when either attempt limit has been exceeded
+     */
+    private function throttle(int $id): bool
+    {
+        return $this->twoTierThrottle(
+            "verify-attempt-account-$id",
+            VERIFICATION_CONFIG['account_max_attempts'],
+            VERIFICATION_CONFIG['account_attempt_window'],
+            VERIFICATION_CONFIG['account_min_lockout'],
+            VERIFICATION_CONFIG['account_max_lockout'],
+            'Too many verification attempts for this account. Please wait a while before trying again.',
+            'verify-attempt-ip',
+            VERIFICATION_CONFIG['ip_max_attempts'],
+            VERIFICATION_CONFIG['ip_attempt_window'],
+            'Too many verification attempts. Please wait a while before trying again.'
+        );
+    }
+
+    /**
+     * Completes account verification by deleting verification token.
+     *
+     * @param int $id User ID
+     *
+     * @return void
+     */
+    private function complete(int $id): void
+    {
+        AuthController::deleteToken($id, TokenType::VERIFICATION);
+
+        PageController::redirectWithAlert('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
+    }
+}

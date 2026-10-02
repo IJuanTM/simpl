@@ -1,0 +1,72 @@
+<?php
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Enums\TwoFactorMethod;
+
+$selectedMethods = is_array($_POST['required_2fa_methods'] ?? null)
+    ? $_POST['required_2fa_methods']
+    : array_filter(explode(',', (string)($this->pageObj->role['required_2fa_methods'] ?? '')));
+?>
+
+<?php if ($this->pageObj->role !== []) : ?>
+
+  <section class="row roles center-x">
+    <form class="col g-row-1" method="POST" action="" data-track-form>
+      <div class="row">
+        <div class="col center-x">
+          <h1 data-typo="h2">Edit role</h1>
+        </div>
+      </div>
+
+      <?= FormController::formAlerts() ?>
+
+      <div class="row">
+        <?php $this->component('form/form-input', [
+            'id' => 'id',
+            'label' => 'Id',
+            'icon' => 'hashtag',
+            'type' => 'number',
+            'value' => $this->pageObj->role['id'],
+            'readonly' => true,
+            'inert' => true,
+        ]) ?>
+      </div>
+
+      <div class="row">
+        <?php $this->component('form/form-input', [
+            'id' => 'name',
+            'label' => 'Name',
+            'required' => true,
+            'icon' => 'user-group',
+            'maxlength' => MAX_ROLE_NAME_LENGTH,
+            'placeholder' => 'Enter role name:',
+            'value' => RequestController::post('name') ?? $this->pageObj->role['name'] ?? '',
+            'error' => isset($_POST['submit']) && empty($_POST['name']),
+        ]) ?>
+      </div>
+
+      <div class="row">
+        <?php $this->component('form/multi-select', [
+            'name' => 'required_2fa_methods',
+            'label' => 'Required two-factor methods',
+            'options' => array_map(static fn(TwoFactorMethod $m) => ['value' => $m->value, 'label' => $m->label()], TwoFactorMethod::cases()),
+            'selected' => $selectedMethods,
+        ]) ?>
+      </div>
+
+      <div class="row g-2 center-x">
+        <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" inert><i class="fas fa-pen"></i>Save changes</button>
+      </div>
+    </form>
+  </section>
+
+<?php else : ?>
+
+  <section class="row roles min-h-content center-y">
+    <div class="col center-x">
+      <h1 data-typo="h5">Could not find role.</h1>
+    </div>
+  </section>
+
+<?php endif ?>

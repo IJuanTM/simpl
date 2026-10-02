@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Plan the installs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      full: ${{ steps.matrix.outputs.full }}
+      partial: ${{ steps.matrix.outputs.partial }}
+      php: ${{ steps.matrix.outputs.php }}
+      mariadb: ${{ steps.matrix.outputs.mariadb }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - id: matrix
+        run: node .github/scripts/install-matrix.mjs
+
+  repo-checks:
+    name: Repository checks
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: ${{ needs.plan.outputs.php }}
+          coverage: none
+
+      - run: bash .githooks/pre-commit --all
+
+  # Every add-on on every OS first, where path, line-ending and timing problems show up.
+  full-install:
+    name: All add-ons (${{ matrix.os }})
+    needs: plan
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+    # Service containers need Linux; an empty image skips the service on the other runners.
+    services:
+      mariadb:
+        image: ${{ matrix.os == 'ubuntu-latest' && fromJSON(needs.plan.outputs.full).db && needs.plan.outputs.mariadb || '' }}
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/install-and-test
+        with:
+          add: ${{ fromJSON(needs.plan.outputs.full).add }}
+          db: ${{ fromJSON(needs.plan.outputs.full).db }}
+          php: ${{ needs.plan.outputs.php }}
+
+  combinations:
+    name: ${{ matrix.combination.name }}
+    needs: [ plan, full-install ]
+    if: needs.plan.outputs.partial != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        combination: ${{ fromJSON(needs.plan.outputs.partial) }}
+    services:
+      mariadb:
+        image: ${{ matrix.combination.db && needs.plan.outputs.mariadb || '' }}
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: $/.github/actions/install-and-test
+        with:
+          add: ${{ matrix.combination.add }}
+          db: ${{ matrix.combination.db }}
+          php: ${{ needs.plan.outputs.php }}
+
+  # The single required check; always() because GitHub counts a skipped job as passed.
+  passed:
+    name: CI passed
+    if: always()
+    needs: [ plan, repo-checks, full-install, combinations ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

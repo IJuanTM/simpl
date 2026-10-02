@@ -1,0 +1,36 @@
+<?php
+use app\Controllers\AppController;
+use app\Models\Url;
+?>
+
+<header>
+  <div class="row navbar g-col-1">
+    <div class="col nav-brand h-100 f-0">
+      <div class="row h-100">
+        <a class="col nav-logo h-100 g-col-1 center f-0" href="<?= Url::to(REDIRECT) ?>" tabindex="-1" aria-hidden="true">
+          <?= AppController::svg('simpl') ?><h1 data-typo="h4"><?= APP_NAME ?></h1>
+        </a>
+      </div>
+    </div>
+
+    <nav id="navigation" class="col menu between-x">
+      <div class="row nav-list w-auto f-0">
+        <a class="col nav-item link center f-0 g-col-0.5" href="<?= Url::to(REDIRECT) ?>" aria-label="Link to <?= REDIRECT ?> page">
+          <i class="fas fa-house" aria-hidden="true"></i><span class="center h-100"><?= ucfirst(REDIRECT) ?></span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="col nav-options">
+      <div class="row end-x h-100">
+        <div class="col theme-switch center f-0"></div>
+
+        <button class="col hamburger hamburger--squeeze f-0" type="button" aria-label="Toggle navigation menu" aria-controls="navigation" aria-expanded="false">
+          <span class="hamburger-box center">
+            <span class="hamburger-inner"></span>
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

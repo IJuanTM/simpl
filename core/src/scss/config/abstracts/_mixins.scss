@@ -1,0 +1,177 @@
+@use "sass:list";
+@use "sass:map";
+@use "sass:color";
+
+@use "../vars/breakpoints" as *;
+@use "../vars/themes" as *;
+@use "../vars/colors" as *;
+@use "../vars/status" as *;
+
+@mixin set-themes {
+  :root {
+    color-scheme: dark;
+
+    @each $key, $pair in $themes {
+      --#{$key}: light-dark(#{list.nth($pair, 1)}, #{list.nth($pair, 2)});
+    }
+
+    --text-5: rgb(from var(--text) r g b / .05);
+    --text-25: rgb(from var(--text) r g b / .25);
+    --text-50: rgb(from var(--text) r g b / .5);
+    --text-75: rgb(from var(--text) r g b / .75);
+    --border-50: rgb(from var(--border) r g b / .5);
+  }
+
+  html[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  html[data-theme="dark"] {
+    color-scheme: dark;
+  }
+}
+
+// Per-theme light-dark() ink shade of each accent for text/icon/border use; surface fills stay the raw hex.
+@mixin set-accent-inks {
+  :root {
+    @each $name, $c in $accent-colors {
+      --#{$name}: light-dark(#{color.scale($c, $lightness: -15%, $space: oklch)}, #{color.scale($c, $lightness: 15%, $space: oklch)});
+      --#{$name}-hover: light-dark(#{color.scale($c, $lightness: -30%, $space: oklch)}, #{color.scale($c, $lightness: 30%, $space: oklch)});
+    }
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin breakpoint-up($size) {
+  @media (min-width: map.get($breakpoints, $size)) {
+    @content;
+  }
+}
+
+@mixin breakpoint-only($size) {
+  $keys: map.keys($breakpoints);
+  $next-index: list.index($keys, $size) + 1;
+
+  @if $next-index <= list.length($keys) {
+    $next-size: list.nth($keys, $next-index);
+
+    @media (min-width: map.get($breakpoints, $size)) and (max-width: (map.get($breakpoints, $next-size) - .015625rem)) {
+      @content;
+    }
+  } @else {
+    @include breakpoint-up($size) {
+      @content;
+    }
+  }
+}
+
+@mixin breakpoint-down($size) {
+  @media (max-width: (map.get($breakpoints, $size) - .015625rem)) {
+    @content;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin hover-focus {
+  &:hover,
+  &:focus,
+  &:focus-visible {
+    @content;
+  }
+}
+
+@mixin touch-device {
+  @media (hover: none) and (pointer: coarse) {
+    @content;
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin shimmer($hover, $color: var(--shimmer-color)) {
+  & {
+    position: relative;
+    overflow: hidden;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 0%,
+      $color 50%,
+      transparent 100%
+    );
+    transform: skewX(-15deg);
+    transition: left .5s ease-in-out;
+  }
+
+  @if ($hover == true) {
+    @include hover-focus {
+      & {
+        transition: background-color .15s ease-in-out;
+      }
+
+      &::before {
+        left: 110%;
+        transition: left .5s ease-in-out;
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+// $color defaults to an auto-picked black/white via contrast-color($bg) when omitted.
+@mixin action-button($bg, $color: null, $hover-color: null) {
+  @if $color {
+    color: $color;
+  } @else {
+    color: contrast-color($bg);
+  }
+
+  background-color: $bg;
+
+  @include shimmer(true, rgba(#FFF, .25));
+
+  @include hover-focus {
+    @if $hover-color {
+      color: $hover-color;
+    }
+
+    background-color: color.scale($bg, $lightness: -12%, $space: oklch);
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin status-modifiers($as: fill) {
+  @each $name, $accent in $status {
+    $surface: map.get($accent-colors, $accent);
+
+    &.#{$name} {
+      @if $as == outline {
+        color: var(--#{$accent});
+        border-color: var(--#{$accent});
+      } @else {
+        color: map.get($status-ink, $name);
+        background-color: $surface;
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------- //
+
+@mixin fa-icon {
+  font-family: "Font Awesome 7 Free", sans-serif;
+  font-weight: 900;
+}

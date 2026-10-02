@@ -2,6 +2,8 @@
 
 Complete authentication system for Simpl projects with user management, email verification, password reset, and admin controls.
 
+**Depends on the [`db`](../db/README.md) add-on** for its query builder, migration/seeder runners, and scheduler - `simpl add` resolves this automatically, installing `db` first if it isn't already present.
+
 ## Features
 
 ### User Authentication
@@ -15,97 +17,68 @@ Complete authentication system for Simpl projects with user management, email ve
 
 ### Admin System
 
-- **User Management** - View, edit, and soft-delete user accounts
+- **User Management** - View, edit, and soft-delete (with restore) user accounts, with admin-created accounts required to set a new password on first login
 - **Role Management** - Assign and manage user roles
 - **Login Tracking** - Monitor failed attempts with automatic lockout protection
+- **Sortable, Searchable, Paginated Tables** - With breadcrumb navigation and hideable columns
+
+### Two-Factor Authentication
+
+- **Email OTP** - 6-digit one-time code sent by email, the default method when 2FA is first enabled
+- **TOTP** - Authenticator app support via QR code enrolment
+- **Passkeys** - WebAuthn-based passwordless second factor
+- **Recovery Codes & Trusted Devices** - Single-use recovery codes and per-device "remember this device" trust
+- **Admin Controls** - Per-role/user required-methods enforcement and admin-initiated 2FA reset
 
 ### Security Features
 
-- **Lockout Protection** - Automatic account/IP lockouts after failed login attempts
+- **Lockout Protection** - Automatic account/IP lockouts after failed login attempts, with exponential backoff
+- **Verification & Reset Throttling** - Per-account and per-IP rate limits on verification codes and password resets
+- **Password Policy Enforcement** - Configurable length/complexity requirements, validated live as you type and again server-side
 - **Password Hashing** - Secure bcrypt/Argon2id hashing with configurable cost
 - **CSRF Protection** - Form validation and sanitization
-- **Session Security** - Secure session handling with timezone support
+- **Session Security** - Secure session handling with timezone support; changing a password invalidates every session for that account, on any device
 - **SQL Injection Prevention** - Parameterized queries with operator support
 
-## Database Class
+## Database
 
-The included `DB` class provides a clean, modern interface for database operations:
-
-```php
-// Basic SELECT (fetches multiple rows)
-DB::select(
-    SELECT: '*',
-    FROM: 'users',
-    WHERE: ['id' => 5] // Default operator is '='
-);
-
-// Single value SELECT
-DB::single(
-    SELECT: 'email',
-    FROM: 'users',
-    WHERE: ['username' => 'john']
-);
-
-// Insert a row
-DB::insert(
-    INTO: 'users',
-    VALUES: [
-        'username' => 'jane',
-        'email' => 'jane@example.com'
-    ]
-);
-
-// Update rows
-DB::update(
-    UPDATE: 'users',
-    SET: [
-        'status' => 'active'
-    ],
-    WHERE: [
-        'id' => 5
-    ]
-);
-
-// Delete rows
-DB::delete(
-    FROM: 'tokens', 
-    WHERE: [
-        'expires' => ['<', date('Y-m-d H:i:s')] // Using a custom operator
-    ]
-);
-
-// Operators supported: =, !=, <>, >, >=, <, <=, LIKE, NOT LIKE, IS, IS NOT
-```
+Auth's migrations and seeders are *data* registered with the [`db`](../db/README.md) add-on's generic `DatabaseMigrator`/`DatabaseSeeder` runners - the runners themselves, the `DB` query builder, and the `Blueprint`/`Schema` DDL builder all live in `db`. Auth ships its own `Config/migrations.php` and `Config/seeders.php`, which patch into `db`'s base files of the same name via `@addon-insert`/`@addon-end` markers on install - `db` owns the base file (a placeholder extension point), `auth`'s patch inserts its own `DatabaseMigrator::register(...)`/`DatabaseSeeder::register(...)` calls in place of it. Auth's own `Database/` folder only holds its table/seeder *definitions* (`users`, `roles`, `tokens`, `login_attempts`, ...), in dependency order. Auth's scheduled cleanup tasks
+(`Config/scheduler.php`) work the same way, patched into `db`'s base `Config/scheduler.php`.
 
 ## Structure
 
 ```
 auth/
-├── app/
-│   ├── Config/           # Configuration files (auth, mail, database)
-│   ├── Controllers/      # Core logic (Auth, Mail, Form)
-│   ├── Database/         # DB class and example SQL schema
-│   ├── Mails/           # Email templates (verification, reset, contact)
-│   ├── Pages/           # Page controllers (Login, Register, Profile, Users, etc.)
-│   └── Scripts/         # Helper scripts (CRON jobs)
-├── scss/                # Styling for forms, tables, and pages
-├── ts/                  # TypeScript for form interactions
-├── views/               # Templates for all auth pages
-└── README.md
+├── README.md
+├── src/                 # Merges into a project's src/
+│   ├── app/
+│   │   ├── Config/       # auth.php, mail.php, lockout.php, two-factor.php, upload.php, validation.php, migrations.php/seeders.php/scheduler.php (patches into db's base files)
+│   │   ├── Controllers/  # AuthController, MailController, TwoFactorController, WebauthnController, plus patches into App/Alias/Form
+│   │   ├── Cron/         # Scheduled task implementations
+│   │   ├── Database/     # Table/seeder definitions only - run by the db add-on's runners
+│   │   ├── Enums/        # Role, TokenType, TwoFactorMethod, UserStatus
+│   │   ├── Mails/        # Email templates (verification, reset, account-created, contact)
+│   │   ├── Pages/        # Page controllers (Login, Register, Profile, Users, etc.)
+│   │   └── Utils/        # UserAgentParser
+│   ├── scss/             # Styling for forms, tables, and pages
+│   ├── ts/               # TypeScript for form interactions
+│   └── views/            # Templates for all auth pages
+└── tests/                # Merges into a project's tests/ - PHPUnit test classes
+    └── app/
 ```
 
 ## Configuration
 
-### Auth Settings (`config/auth.php`)
+### Auth Settings (`src/app/Config/auth.php`)
 
 - Email verification requirement
 - Password requirements (length, complexity)
 - Remember me duration
 - Login attempt limits and lockout durations
 
-### Database (`config/database.php`)
+### Database
 
-Set your database credentials in `.env`:
+Provided by the [`db`](../db/README.md) add-on's `src/app/Config/database.php`. Set your database credentials in `.env`:
 
 ```env
 DB_SERVER=localhost
@@ -114,10 +87,12 @@ DB_USERNAME=your_user
 DB_PASSWORD=your_password
 ```
 
-### Mail Settings (`config/mail.php`)
+### Mail Settings (`src/app/Config/mail.php`)
 
-- SMTP server configuration
-- Email templates (verification, password reset, contact)
+- Site/no-reply sender addresses and the mail logo URL
+- SMTP server configuration (dev/production), sent via [PHPMailer](https://github.com/PHPMailer/PHPMailer)
+- Development SMTP server via `.env`'s `SMTP_DEV_HOST`/`SMTP_DEV_PORT` (default `localhost:25`) - with Docker, this points at a bundled [Mailpit](https://mailpit.axllent.org/) container that catches every email at `http://127.0.0.1:8025/`
+- Email templates (verification, password reset, admin-created account, contact)
 
 ## Installation
 
@@ -126,35 +101,43 @@ DB_PASSWORD=your_password
 From your Simpl project's root directory, run:
 
 ```bash
-npm run install-addon auth
+simpl add auth
 ```
 
-The installer will:
+`simpl add` will:
 
-- Copy all new files from the add-on
-- Automatically merge files that need integration (PHP, TypeScript, SCSS, .env)
+- Install the [`db`](../db/README.md) add-on first automatically if it isn't already present - it's `db`'s composer.json patch that adds the `migrate`/`seed`/`cron:test` commands
+- Copy all new files from the add-on into your project's `src/` and `tests/`
+- Automatically merge files that need integration (PHP, TypeScript, SCSS, `.env`)
 - Skip files that already exist and don't need merging
 - Show you which files (if any) need manual review
 
 **Post-Installation Steps:**
 
-1. Import the database schema from `app/Database/simpl.sql`
-2. Update `.env` with your database and mail credentials
-3. Manually merge `views/parts/header.phtml` for navigation links (if needed)
-4. Run `composer install` (if needed)
-5. Run `npm run build` to compile assets
+1. Update `.env` with your database and mail credentials
+2. Run `simpl composer install` (if needed)
+3. Run `simpl migrate` to create the database tables, then `simpl seed` to populate default roles/data - this picks up auth's registered migrations/seeders automatically
+4. Run `npm run build` to compile assets
 
 **Manual Method (If needed):**
 
-1. Copy all add-on folders to your `src/` directory
-2. Manually merge conflicting files by following the inline `@addon-*` markers in the add-on files
+1. Copy the add-on's `src/` contents into your project's `src/`, and its `tests/` contents into your project's `tests/`
+2. Manually merge any conflicting files by following their inline `@addon-insert`/`@addon-end` markers
 3. Follow the post-installation steps above
+
+## Tests
+
+Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) in two parts:
+
+- **Unit and feature tests** (`simpl test`, no database needed) cover `AuthController`'s password policy and tokens, `FormController::validatePasswords()`, `AdminTableTrait`'s pagination/sort/filter logic, form and two-tier rate limiting, `TwoFactorController`'s role requirements, login codes and TOTP matching, `WebauthnController`'s encoding helpers, `UserAgentParser`, the `TwoFactorMethod` enum, the cron report output, and the `PruneRateLimitCache` cron task.
+- **Integration tests** (`simpl test:integration`, against the database in `src/.env`, using the `db` add-on's test base) cover the database-backed cron tasks: `DeactivateUnverifiedUsers`, `DeleteDeactivatedUsers` and `PruneTwoFactorData`.
 
 ## Requirements
 
-- **PHP**: >= 8.4
+- **PHP**: >= 8.5
 - **Database**: MySQL >= 9.5.0 or MariaDB >= 12.1.2
-- **Extensions**: PDO
+- **Extensions**: PDO, pdo_mysql (via the [`db`](../db/README.md) add-on)
+- **2FA packages**: `spomky-labs/otphp` (TOTP), `bacon/bacon-qr-code` (QR codes), `web-auth/webauthn-lib` (passkeys)
 
 ## Email Templates
 
@@ -162,6 +145,7 @@ Includes responsive, email-client-compatible templates:
 
 - Account verification
 - Password reset
+- Admin-created account (temporary password + login link)
 - Contact form notifications
 
 All templates use tables and inline styles for maximum compatibility.
@@ -169,10 +153,13 @@ All templates use tables and inline styles for maximum compatibility.
 ## TypeScript Features
 
 - Password visibility toggle
+- Live password policy validation as you type
 - Caps Lock warning
 - Textarea character counter
 - Form validation with submit button disabling
 - Auto-save prevention when no changes detected
+- Sortable, filterable, paginated admin tables
+- Shared confirmation modal for admin user actions
 
 ## Security Notes
 

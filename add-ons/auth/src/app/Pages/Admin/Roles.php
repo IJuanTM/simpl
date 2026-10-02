@@ -1,0 +1,283 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Pages\Admin;
+
+use app\Controllers\AppController;
+use app\Controllers\FormController;
+use app\Controllers\PageController;
+use app\Controllers\TwoFactorController;
+use app\Database\DB;
+use app\Enums\AlertType;
+use app\Enums\Role;
+use app\Models\Page;
+use app\Models\Url;
+use app\Pages\Admin\Traits\AdminTableTrait;
+
+/**
+ * Admin page: handles role listing, creation, editing, and deletion.
+ * Delete is POST-only via a modal confirmation dialog. Uses AdminTableTrait
+ * for column rendering only, with no search, filters, sort or pagination.
+ */
+class Roles
+{
+    use AdminTableTrait;
+
+    // Required by AdminTableTrait; this page never enables pagination, so the values are nominal.
+    public int $perPage = 25;
+    public array $perPageOptions = [25];
+
+    public ?string $subAction;
+    public array $roles = [];
+    public array $role = [];
+
+    public function __construct(Page $page)
+    {
+        $this->route($page);
+    }
+
+    /**
+     * Loads the role list, then runs the edit/delete sub-action for a specific role if requested.
+     *
+     * @param Page $page
+     *
+     * @return void
+     */
+    private function route(Page $page): void
+    {
+        $this->subAction = $page->subpage(1);
+        $this->tableColumns = self::getTableColumns();
+        $this->itemLabel = 'roles';
+        $this->loadRoles();
+
+        if (in_array($this->subAction, ['edit', 'delete'])) {
+            $role = $this->requireRecord($page, 'admin/roles', static fn(int $id): ?array => DB::single(
+                SELECT: '*',
+                FROM: 'roles',
+                WHERE: compact('id')
+            ));
+            if ($role === null) return;
+
+            $role['name'] = AppController::sanitize($role['name']);
+            $this->role = $role;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) $this->post();
+    }
+
+    /**
+     * Returns the table column definitions for the roles table.
+     *
+     * @return array<int, array{key: string, label: string, sortable: bool, width: int|null, visible: bool}>
+     */
+    private static function getTableColumns(): array
+    {
+        return self::buildColumns([
+            ['id', 'Id', false, 64, true],
+            ['name', 'Name', false, 256, true],
+            ['user_count', 'Users', false, 96, true],
+            ['actions', 'Actions', false, null, true],
+        ]);
+    }
+
+    /**
+     * Loads all roles with their assigned user counts.
+     * Names are kept raw here, sanitized only at render time, so links built from them round-trip correctly against the raw DB values Users::loadUsers() compares against.
+     *
+     * @return void
+     */
+    private function loadRoles(): void
+    {
+        $this->roles = DB::select(
+            SELECT: ['roles.id', 'roles.name', 'COUNT(user_roles.user_id) AS user_count'],
+            FROM: 'roles',
+            JOIN: [
+                'id', ['user_roles', 'role_id']
+            ],
+            GROUP_BY: 'roles.id',
+            ORDER_BY: 'roles.name ASC'
+        );
+    }
+
+    /**
+     * Dispatches the POST request to the appropriate action handler.
+     *
+     * @return void
+     */
+    private function post(): void
+    {
+        match ($this->subAction) {
+            'create' => $this->createRole(),
+            'edit' => $this->updateRole($this->role['id']),
+            'delete' => $this->deleteRole($this->role['id']),
+            default => null,
+        };
+    }
+
+    /**
+     * Validates and inserts a new role.
+     *
+     * @return void
+     */
+    private function createRole(): void
+    {
+        if (!$this->validateRoleName()) return;
+
+        if (DB::exists(
+            FROM: 'roles',
+            WHERE: [
+                'name' => $_POST['name']
+            ]
+        )) {
+            FormController::addAlert('A role with this name already exists!', AlertType::WARNING);
+            return;
+        }
+
+        DB::insert(
+            INTO: 'roles',
+            VALUES: [
+                'name' => $_POST['name'],
+                'required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null),
+            ]
+        );
+
+        PageController::redirectWithAlert('admin/roles', 'Role created successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Trims $_POST['name'] before validating, so a whitespace-only submission fails the required
+     * check instead of passing it and then being stored as an empty name.
+     */
+    private function validateRoleName(): bool
+    {
+        $_POST['name'] = trim((string)($_POST['name'] ?? ''));
+        return FormController::validate('name', ['required', 'maxLength' => MAX_ROLE_NAME_LENGTH]);
+    }
+
+    /**
+     * Validates and updates an existing role's name and required 2FA methods; a built-in role's name can't change.
+     *
+     * @param int $id Role ID to update
+     *
+     * @return void
+     */
+    private function updateRole(int $id): void
+    {
+        if (!$this->validateRoleName()) return;
+
+        if ($_POST['name'] !== $this->role['name'] && $this->blockBuiltInRole('renamed')) return;
+
+        $existing = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: [
+                'name' => $_POST['name']
+            ]
+        );
+
+        if ($existing && (int)$existing['id'] !== $id) {
+            FormController::addAlert('A role with this name already exists!', AlertType::WARNING);
+            return;
+        }
+
+        DB::update(
+            UPDATE: 'roles',
+            SET: [
+                'name' => $_POST['name'],
+                'required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null),
+            ],
+            WHERE: compact('id')
+        );
+
+        PageController::redirectWithAlert('admin/roles', 'Role updated successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Blocks renaming/deleting a built-in role, alerting with the given past-tense verb.
+     *
+     * @param string $action e.g. 'renamed', 'deleted'
+     *
+     * @return bool True when the role is built-in and the action was blocked
+     */
+    private function blockBuiltInRole(string $action): bool
+    {
+        return $this->blockIf(
+            in_array($this->role['name'], array_column(Role::cases(), 'value'), true),
+            static fn() => FormController::addAlert("This role is required by the framework and cannot be $action.", AlertType::WARNING)
+        );
+    }
+
+    /**
+     * Deletes a role, rejecting the request if any users are still assigned to it.
+     *
+     * @param int $id Role ID to delete
+     *
+     * @return void
+     */
+    private function deleteRole(int $id): void
+    {
+        if ($this->blockBuiltInRole('deleted')) return;
+
+        $userCount = DB::count(
+            FROM: 'user_roles',
+            WHERE: [
+                'role_id' => $id
+            ]
+        );
+
+        if ($userCount > 0) {
+            FormController::addAlert("Cannot delete this role - $userCount user" . ($userCount !== 1 ? 's are' : ' is') . " assigned to it. Reassign them first.", AlertType::WARNING);
+            return;
+        }
+
+        DB::delete(
+            FROM: 'roles',
+            WHERE: compact('id')
+        );
+
+        PageController::redirectWithAlert('admin/roles', 'Role deleted successfully!', AlertType::SUCCESS, 4);
+    }
+
+    /**
+     * Renders a role row's cell for the given column.
+     */
+    final public function renderCell(array $column, array $row): string
+    {
+        return match ($column['key']) {
+            'id' => (string)$row['id'],
+            'name' => AppController::sanitize($row['name']),
+            'user_count' => '<a class="link" href="' . Url::to('admin/users?' . http_build_query(['role' => $row['name']])) . '">' . $row['user_count'] . '</a>',
+            default => '',
+        };
+    }
+
+    /**
+     * Row data for the current page.
+     */
+    private function pageRows(): array
+    {
+        return $this->roles;
+    }
+
+    /**
+     * Overrides the trait default to add the edit/delete actions.
+     */
+    private function renderActionsCell(array $row): string
+    {
+        $name = AppController::sanitize($row['name']);
+
+        return $this->actionsCell(
+            '<a class="col table-action f-0" href="/admin/roles/edit?id=' . $row['id'] . '" aria-label="Edit role ' . $name . '"><i class="fas fa-pen"></i></a>'
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-role-delete data-role-id="' . $row['id'] . '" data-role-name="' . $name . '" data-role-user-count="' . $row['user_count'] . '" aria-label="Delete role ' . $name . '"><i class="fas fa-trash"></i></button>'
+        );
+    }
+
+    /**
+     * Base route for pagination/sort-link hrefs.
+     */
+    private function routePath(): string
+    {
+        return '/admin/roles';
+    }
+}

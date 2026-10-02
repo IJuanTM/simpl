@@ -1,0 +1,175 @@
+<?php
+use app\Models\Url;
+?>
+
+<section class="row users">
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Registered users</h1>
+      </div>
+    </div>
+
+    <div class="row center-x">
+      <div class="col users-table f-col g-row-1 w-100">
+
+        <search class="row table-tools">
+          <form class="col table-tools-form" novalidate>
+            <div class="row">
+              <div class="col form-group g-row-0.25">
+                <div class="row">
+                  <label class="col" for="users-search">Search:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
+                  <input class="col table-search" id="users-search" type="search" enterkeyhint="search" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: Id, Username, Email or First/Last name" autocomplete="off">
+                  <div class="col input-append center f-0"><i class="fas fa-xmark table-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </search>
+
+        <div class="row table-tools">
+          <form class="col center-y table-tools-form" novalidate>
+            <div class="row g-col-1 w-100">
+              <div class="col form-group g-row-0.25">
+                <div class="row">
+                  <label class="col" for="filter-role">Role:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-user-group"></i></div>
+                  <select class="col table-filter" id="filter-role" data-filter="role">
+                    <option value="">All roles</option>
+                    <?php foreach ($this->pageObj->availableRoles as $r) : ?>
+                      <option value="<?= $r['name'] ?>" <?= $this->pageObj->filters['role'] === $r['name'] ? 'selected' : '' ?>><?= $r['name'] ?></option>
+                    <?php endforeach ?>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col form-group g-row-0.25">
+                <div class="row">
+                  <label class="col" for="filter-status">Status:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
+                  <select class="col table-filter" id="filter-status" data-filter="status">
+                    <option value="">All statuses</option>
+                    <option value="active" <?= $this->pageObj->filters['status'] === 'active' ? 'selected' : '' ?>>Active</option>
+                    <option value="deactivated" <?= $this->pageObj->filters['status'] === 'deactivated' ? 'selected' : '' ?>>Deactivated</option>
+                    <option value="deleted" <?= $this->pageObj->filters['status'] === 'deleted' ? 'selected' : '' ?>>Deleted</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="col form-group g-row-0.25">
+                <div class="row">
+                  <label class="col" for="filter-verified">Verified:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-user-check"></i></div>
+                  <select class="col table-filter" id="filter-verified" data-filter="verified">
+                    <option value="">All</option>
+                    <option value="yes" <?= $this->pageObj->filters['verified'] === 'yes' ? 'selected' : '' ?>>Verified</option>
+                    <option value="no" <?= $this->pageObj->filters['verified'] === 'no' ? 'selected' : '' ?>>Unverified</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="row g-1">
+          <div class="col center-y">
+            <div class="row">
+              <button class="col link lh-1 filters-reset-btn g-col-0.5 center f-0" type="button" inert><i class="fas fa-xmark"></i>Clear filters</button>
+            </div>
+          </div>
+          <div class="col end-x">
+            <?php $this->component('table/column-toggle') ?>
+          </div>
+        </div>
+
+        <div class="row table-container">
+          <div class="col">
+            <table class="data-table" data-table-id="users" data-api="/api/admin/users" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
+              <thead>
+              <?= $this->pageObj->renderThead() ?>
+              </thead>
+              <tbody>
+              <?= $this->pageObj->renderTbody() ?>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="row pagination-row g-1">
+          <div class="col f-0">
+            <div class="row g-col-4">
+              <div class="col center-y g-col-1">
+                <p class="no-wrap"><?= $this->pageObj->renderPaginationInfo() ?></p>
+              </div>
+              <?php $this->component('table/per-page-select', ['id' => 'users-per-page']) ?>
+            </div>
+          </div>
+          <div class="col center-y end-x">
+            <div class="row table-pagination f-nowrap g-col-1">
+              <?= $this->pageObj->renderPagination() ?>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="row g-col-1 center-x">
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/create') ?>"><i class="fas fa-user-plus"></i>Create new user</a>
+    </div>
+  </div>
+</section>
+
+<?php $this->component('modal/user-action-modal', [
+    'triggerAttr' => 'data-user-delete-modal',
+    'ariaLabel' => 'Delete user',
+    'title' => 'Delete user',
+    'question' => 'Are you sure you want to delete this user?',
+    'quotes' => [
+        ['type' => 'warning', 'text' => 'Deleting a user deactivates their account so they can no longer log in. The account is kept and can be restored at any time.'],
+        ['type' => 'info', 'text' => 'To permanently remove the account from the database, use the purge action on a deleted user.'],
+    ],
+    'formClass' => 'modal-soft-delete-form',
+    'buttonClass' => 'error',
+    'icon' => 'fa-user-slash',
+    'buttonText' => 'Delete user',
+]) ?>
+
+<?php $this->component('modal/user-action-modal', [
+    'triggerAttr' => 'data-user-purge-modal',
+    'ariaLabel' => 'Purge user',
+    'title' => 'Purge user',
+    'question' => 'Are you sure you want to permanently purge this user?',
+    'quotes' => [
+        ['type' => 'warning', 'text' => 'Purging a user will permanently remove them from the database, with no way of recovery! Make sure this is really what you want!'],
+    ],
+    'formClass' => 'modal-purge-form',
+    'buttonClass' => 'purge-user',
+    'icon' => 'fa-skull',
+    'buttonText' => 'Purge user',
+    'confirmCheckbox' => true,
+    'confirmText' => 'I understand this permanently removes the account with no way to recover it',
+]) ?>
+
+<?php $this->component('modal/user-action-modal', [
+    'triggerAttr' => 'data-user-restore-modal',
+    'ariaLabel' => 'Restore user',
+    'title' => 'Restore user',
+    'question' => 'Are you sure you want to restore this user?',
+    'quotes' => [
+        ['type' => 'info', 'text' => 'Restoring a user will reinstate their account and will allow the user to log in again.'],
+    ],
+    'formClass' => 'modal-restore-form',
+    'buttonClass' => 'success',
+    'icon' => 'fa-wrench',
+    'buttonText' => 'Restore user',
+]) ?>
