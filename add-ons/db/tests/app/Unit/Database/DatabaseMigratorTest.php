@@ -18,6 +18,8 @@ final class DatabaseMigratorTest extends TestCase
 {
     private array $migrationsBeforeTest;
 
+    // register() accumulates into a static property shared by every test in the process (including Integration tests, which run DatabaseMigrator::run() for real), so a fake entry left behind here would poison them.
+
     public function testRegisterAppendsToTheMigrationList(): void
     {
         // Arrange
@@ -31,13 +33,6 @@ final class DatabaseMigratorTest extends TestCase
         $after = $this->migrations();
         $this->assertCount($before + 1, $after);
         $this->assertSame($marker, end($after));
-    }
-
-    // register() accumulates into a static property shared by every test in the process (including Integration tests, which run DatabaseMigrator::run() for real), so a fake entry left behind here would poison them.
-
-    private function migrations(): array
-    {
-        return new ReflectionProperty(DatabaseMigrator::class, 'migrations')->getValue();
     }
 
     public function testNameKeepsTheFullyQualifiedNameToAvoidBasenameCollisionsAcrossAddOns(): void
@@ -70,6 +65,11 @@ final class DatabaseMigratorTest extends TestCase
     protected function setUp(): void
     {
         $this->migrationsBeforeTest = $this->migrations();
+    }
+
+    private function migrations(): array
+    {
+        return new ReflectionProperty(DatabaseMigrator::class, 'migrations')->getValue();
     }
 
     protected function tearDown(): void

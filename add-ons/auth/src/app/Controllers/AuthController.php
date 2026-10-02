@@ -920,8 +920,27 @@ class AuthController
                 $timestamp = self::rememberCookieExpiry();
                 self::setRememberCookie($token, $timestamp);
 
+                // Not createToken(): replacing the user's remember tokens would log out their other remembered devices.
+                // Their expired ones are pruned here instead, since nothing else bounds how many a user accumulates.
+                DB::delete(
+                    FROM: 'tokens',
+                    WHERE: [
+                        'user_id' => (int)$user['id'],
+                        'type' => TokenType::REMEMBER->value,
+                        'expires' => ['<', date('Y-m-d H:i:s')]
+                    ]
+                );
+
                 // Only the SHA-256 hash is stored; the raw token stays in the cookie.
-                self::createToken((int)$user['id'], hash('sha256', $token), TokenType::REMEMBER, date('Y-m-d H:i:s', $timestamp));
+                DB::insert(
+                    INTO: 'tokens',
+                    VALUES: [
+                        'user_id' => (int)$user['id'],
+                        'token' => hash('sha256', $token),
+                        'type' => TokenType::REMEMBER->value,
+                        'expires' => date('Y-m-d H:i:s', $timestamp)
+                    ]
+                );
             }
 
             if (TwoFactorController::shouldRememberDevice((int)$user['id'], $user)) TwoFactorController::trustDevice((int)$user['id']);
@@ -1004,40 +1023,6 @@ class AuthController
     }
 
     /**
-     * Create or replace a token of the given type for a user.
-     * Any existing token of the same type for that user is removed before insertion.
-     *
-     * @param int         $userId
-     * @param string      $token
-     * @param TokenType   $type
-     * @param string|null $expires Optional expiry timestamp value
-     *
-     * @return void
-     */
-    public static function createToken(int $userId, string $token, TokenType $type, ?string $expires = null): void
-    {
-        DB::delete(
-            FROM: 'tokens',
-            WHERE: [
-                'user_id' => $userId,
-                'type' => $type->value
-            ]
-        );
-
-        $data = [
-            'user_id' => $userId,
-            'token' => $token,
-            'type' => $type->value
-        ];
-        if ($expires) $data['expires'] = $expires;
-
-        DB::insert(
-            INTO: 'tokens',
-            VALUES: $data
-        );
-    }
-
-    /**
      * Redirect to the originally requested URL saved by requireAuth(), or to $fallback when none was stored.
      * Clears the stored URL after use so a second call can't replay it.
      * Queues a flash alert shown after the redirect when $message is given.
@@ -1080,6 +1065,40 @@ class AuthController
         self::createToken($id, hash('sha256', $token), TokenType::VERIFICATION, date('Y-m-d H:i:s', time() + VERIFICATION_CONFIG['token_expiry']));
 
         return self::sendVerificationMail($id, $email, $token);
+    }
+
+    /**
+     * Create or replace a token of the given type for a user.
+     * Any existing token of the same type for that user is removed before insertion.
+     *
+     * @param int         $userId
+     * @param string      $token
+     * @param TokenType   $type
+     * @param string|null $expires Optional expiry timestamp value
+     *
+     * @return void
+     */
+    public static function createToken(int $userId, string $token, TokenType $type, ?string $expires = null): void
+    {
+        DB::delete(
+            FROM: 'tokens',
+            WHERE: [
+                'user_id' => $userId,
+                'type' => $type->value
+            ]
+        );
+
+        $data = [
+            'user_id' => $userId,
+            'token' => $token,
+            'type' => $type->value
+        ];
+        if ($expires) $data['expires'] = $expires;
+
+        DB::insert(
+            INTO: 'tokens',
+            VALUES: $data
+        );
     }
 
     /**
