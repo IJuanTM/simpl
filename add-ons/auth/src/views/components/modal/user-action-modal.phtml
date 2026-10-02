@@ -27,7 +27,7 @@ $id = substr($triggerAttr, strlen('data-'));
   <div class="col modal f-col g-row-2">
     <div class="row center-y g-col-1">
       <h3 class="col"><?= AppController::sanitize($title) ?></h3>
-      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="<?= AppController::sanitize($id) ?>" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+      <button class="col link close-modal lh-1 g-col-0.5 center f-0" type="button" command="close" commandfor="<?= AppController::sanitize($id) ?>" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
     </div>
 
     <div class="row modal-body">

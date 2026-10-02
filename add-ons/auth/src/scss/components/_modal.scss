@@ -37,6 +37,11 @@ dialog.modal-overlay {
     border-radius: var(--radius-md);
     background-color: var(--bg-section);
 
+    button.close-modal {
+      width: 2rem;
+      height: 2rem;
+    }
+
     div.modal-body {
       p:not(.quote) {
         font-size: .875rem;

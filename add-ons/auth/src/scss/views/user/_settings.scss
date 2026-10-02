@@ -1,7 +1,7 @@
 @use "../../config" as *;
 
 section.user-settings {
-  > .col {
+  &.center-x > .col {
     max-width: $width-ml;
   }
 
