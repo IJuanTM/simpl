@@ -21,3 +21,14 @@ $width-lg: 64rem;
 $width-lx: 72rem;
 $width-xl: 80rem;
 $width-xxl: 96rem;
+
+$widths: (
+  xs: $width-xs,
+  sm: $width-sm,
+  md: $width-md,
+  ml: $width-ml,
+  lg: $width-lg,
+  lx: $width-lx,
+  xl: $width-xl,
+  xxl: $width-xxl
+);

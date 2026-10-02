@@ -2,8 +2,6 @@
 @include meta.load-css("views/user");
 @include meta.load-css("views/user/settings");
 @include meta.load-css("views/admin/users");
-@include meta.load-css("views/admin/roles");
-@include meta.load-css("views/admin/login-attempts");
 @include meta.load-css("views/two-factor");
 // @addon-end
 

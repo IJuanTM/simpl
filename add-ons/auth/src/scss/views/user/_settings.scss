@@ -1,10 +1,6 @@
 @use "../../config" as *;
 
 section.user-settings {
-  &.center-x > .col {
-    max-width: $width-ml;
-  }
-
   form.profile-image {
     div.avatar {
       position: relative;

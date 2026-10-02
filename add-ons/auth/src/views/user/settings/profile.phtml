@@ -7,9 +7,9 @@ $s = $this->pageObj->settings;
 ?>
 
 <section class="row user-settings center-x">
-  <div class="col f-col g-row-1">
+  <div class="col max-w-ml f-col g-row-1">
     <div class="row center-x">
-      <form class="col profile-image g-row-1" method="POST" action="" enctype="multipart/form-data">
+      <form class="col profile-image max-w-md g-row-1" method="POST" action="" enctype="multipart/form-data">
         <div class="row">
           <div class="col center-x">
             <h1 data-typo="h2">Edit profile</h1>
@@ -41,7 +41,7 @@ $s = $this->pageObj->settings;
     </div>
 
     <div class="row center-x">
-      <form class="col g-row-1" method="POST" action="" data-track-form>
+      <form class="col max-w-md g-row-1" method="POST" action="" data-track-form>
         <div class="row form-row">
           <?php $this->component('form/form-input', [
               'id' => 'username',

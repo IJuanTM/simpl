@@ -1,9 +1,0 @@
-@use "../../config" as *;
-
-section.login-attempts {
-  div.login-attempts-table {
-    @include breakpoint-up(sm) {
-      max-width: $width-xxl;
-    }
-  }
-}

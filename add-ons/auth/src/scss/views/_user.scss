@@ -11,7 +11,6 @@ section.user {
     background-color: var(--bg-accent);
 
     @include breakpoint-up(sm) {
-      max-width: $width-md;
       padding: 9rem 4rem 3rem 4rem;
     }
 

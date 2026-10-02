@@ -8,10 +8,6 @@ form {
   display: flex;
   flex-direction: column;
 
-  @include breakpoint-up(sm) {
-    max-width: $width-md;
-  }
-
   div.form-group {
     display: flex;
     flex-direction: column;

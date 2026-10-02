@@ -31,3 +31,11 @@
 .max-h-content {
   max-height: $section-height;
 }
+
+// ---------------------------------------------------------------- //
+
+@each $size, $width in $widths {
+  .max-w-#{$size} {
+    max-width: $width;
+  }
+}
