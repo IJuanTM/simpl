@@ -30,11 +30,14 @@ textarea {
 
   &::after {
     @include fa-icon;
+
     position: absolute;
     top: 50%;
     right: .625rem;
+    width: 1.25em;
     content: "\f0d7";
     transform: translateY(-50%);
+    text-align: center;
     pointer-events: none;
   }
 
@@ -55,6 +58,7 @@ input[type="checkbox"] {
 
     &::after {
       @include fa-icon;
+
       font-size: .75rem;
       position: absolute;
       top: 50%;

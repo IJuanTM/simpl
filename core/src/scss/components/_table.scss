@@ -75,6 +75,7 @@ div.table-container {
 
             &::after {
               @include fa-icon;
+
               font-size: .625rem;
               position: absolute;
               top: 0;

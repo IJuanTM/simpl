@@ -26,6 +26,8 @@ section.user-settings {
       pointer-events: none;
 
       &::after {
+        @include fa-icon;
+
         font-size: 2rem;
         position: absolute;
         display: flex;
@@ -37,8 +39,6 @@ section.user-settings {
         animation: spin 1s linear infinite;
         color: #FFF;
         background-color: rgba(#000, .5);
-
-        @include fa-icon;
       }
     }
   }
