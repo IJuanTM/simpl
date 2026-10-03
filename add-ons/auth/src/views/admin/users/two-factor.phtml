@@ -25,15 +25,20 @@ $dotClass = static function (bool $on, bool $required): string {
   <section class="row users center-x">
     <div class="col max-w-ml f-col g-row-1">
       <div class="row">
-        <div class="col center-x">
+        <div class="col f-col g-row-0.25 text-center">
           <h1 data-typo="h2">Two-factor authentication</h1>
         </div>
       </div>
 
       <div class="row">
-        <div class="col f-col g-row-0.25">
-          <h2 data-typo="h5"><?= $user['username'] ?? $user['email'] ?></h2>
-          <p class="form-details">The two-factor methods this user has set up. Mark a method as required to make them set it up, or reset a method they can no longer access.</p>
+        <div class="col">
+          <p class="two-fa-note">The two-factor methods this user has set up. Mark a method as required to make them set it up, or reset a method they can no longer access.</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col center-x">
+          <h2 data-typo="h5"><i class="fas fa-user"></i> <?= $user['username'] ?? $user['email'] ?></h2>
         </div>
       </div>
 
