@@ -36,16 +36,22 @@ $primaryFooter = function (string $method) use ($isDefault, $methodEnabled): voi
     <?php if ($isDefault($method)) : ?>
       <div class="row">
         <div class="col center-x">
-          <p class="two-fa-note">Default method. This is the first thing you're asked for when you sign in.</p>
+          <p class="two-fa-note">This method is selected as your default two-factor method.</p>
         </div>
       </div>
     <?php else : ?>
       <div class="row">
-        <form class="col" method="POST" action="">
+        <form class="col" method="POST" action="" data-submit-on-change>
           <input type="hidden" name="action" value="set-primary">
           <input type="hidden" name="primary_method" value="<?= $method ?>">
-          <div class="row g-2 center-x">
-            <button class="col button button-sm g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-star"></i>Make default</button>
+          <input type="hidden" name="submit" value="1">
+          <div class="row g-col-1 center-y">
+            <label class="col f-0" for="primary-<?= $method ?>">
+              <input id="primary-<?= $method ?>" type="checkbox" autocomplete="off">
+            </label>
+            <div class="col">
+              <p>Use this method as my default two-factor method.</p>
+            </div>
           </div>
         </form>
       </div>
@@ -324,54 +330,6 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                     </div>
                   </div>
 
-                  <?php if ($s->passkeys) : ?>
-
-                    <div class="row">
-                      <ul class="col device-list f-col g-row-0.5">
-
-                        <?php foreach ($s->passkeys as $passkey) : ?>
-
-                          <li class="row">
-                            <div class="col f-col g-row-0.5">
-                              <div class="row">
-                                <div class="col">
-                                  <?= AppController::sanitize((string)$passkey['name']) ?>
-                                  <span class="text-muted">- <?= $passkey['last_used_at'] ? 'last used ' . AppController::sanitize((string)$passkey['last_used_at']) : 'not used yet' ?></span>
-                                </div>
-                              </div>
-
-                              <?php if (count($s->passkeys) <= 1 && in_array('passkey', $s->requiredMethods, true)) : ?>
-
-                                <div class="row">
-                                  <div class="col center-x">
-                                    <p class="two-fa-note">Required by your account policy. You must keep at least one passkey.</p>
-                                  </div>
-                                </div>
-
-                              <?php else : ?>
-
-                                <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" method="POST" action="" hidden>
-                                  <input type="hidden" name="action" value="passkey-remove">
-                                  <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
-                                </form>
-
-                                <?php $areYouSureModal('confirm-passkey-remove-' . (int)$passkey['id'], 'passkey-remove-form-' . (int)$passkey['id'], 'This removes "' . $passkey['name'] . '" as a sign-in method. Email codes will still work.', 'Remove passkey') ?>
-
-                                <div class="row g-2 center-x">
-                                  <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="confirm-passkey-remove-<?= (int)$passkey['id'] ?>" aria-label="Remove this passkey"><i class="fas fa-trash"></i>Remove passkey</button>
-                                </div>
-
-                              <?php endif ?>
-                            </div>
-                          </li>
-
-                        <?php endforeach ?>
-
-                      </ul>
-                    </div>
-
-                  <?php endif ?>
-
                   <?php if (!$s->twoFactorEnabled) : ?>
 
                     <div class="row">
@@ -382,19 +340,101 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
 
                   <?php else : ?>
 
-                    <div class="row g-2 center-x">
-                      <button class="col button g-col-0.5 center-y f-0" type="button"
-                              data-passkey-register
-                              data-options-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/options')) ?>"
-                              data-register-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/register')) ?>"><i class="fas fa-fingerprint"></i>Add a passkey
-                      </button>
-                    </div>
+                    <?php $lastPasskeyLocked = count($s->passkeys) <= 1 && in_array('passkey', $s->requiredMethods, true) ?>
 
-                    <div class="row">
+                    <div class="row table-container">
                       <div class="col">
-                        <p class="form-details" data-passkey-unsupported hidden></p>
+                        <table>
+                          <thead>
+                          <tr>
+                            <th><span class="table-header-label">Name</span></th>
+                            <th><span class="table-header-label">Added</span></th>
+                            <th><span class="table-header-label">Last used</span></th>
+                            <th><span class="table-header-label">Actions</span></th>
+                          </tr>
+                          </thead>
+                          <tbody>
+
+                          <?php if (!$s->passkeys) : ?>
+
+                            <tr class="table-empty-row text-center">
+                              <td colspan="4">No passkeys yet.</td>
+                            </tr>
+
+                          <?php else : ?>
+
+                            <?php foreach ($s->passkeys as $passkey) : ?>
+
+                              <tr>
+                                <td><i class="fas fa-key" aria-hidden="true"></i> <?= AppController::sanitize((string)$passkey['name']) ?></td>
+                                <td><?= AppController::sanitize((string)$passkey['created_at']) ?></td>
+                                <td><?= $passkey['last_used_at'] ? AppController::sanitize((string)$passkey['last_used_at']) : 'Never' ?></td>
+                                <td class="table-actions">
+
+                                  <?php if (!$lastPasskeyLocked) : ?>
+
+                                    <div class="row g-col-0.5 center-y">
+                                      <form id="passkey-remove-form-<?= (int)$passkey['id'] ?>" method="POST" action="" hidden>
+                                        <input type="hidden" name="action" value="passkey-remove">
+                                        <input type="hidden" name="passkey_id" value="<?= (int)$passkey['id'] ?>">
+                                      </form>
+
+                                      <?php $areYouSureModal('confirm-passkey-remove-' . (int)$passkey['id'], 'passkey-remove-form-' . (int)$passkey['id'], 'This removes "' . $passkey['name'] . '" as a sign-in method. Email codes will still work.', 'Remove passkey') ?>
+
+                                      <button class="col table-action delete f-0" type="button" command="show-modal" commandfor="confirm-passkey-remove-<?= (int)$passkey['id'] ?>" aria-label="Remove this passkey"><i class="fas fa-trash"></i></button>
+                                    </div>
+
+                                  <?php endif ?>
+
+                                </td>
+                              </tr>
+
+                            <?php endforeach ?>
+
+                          <?php endif ?>
+
+                          </tbody>
+                        </table>
                       </div>
                     </div>
+
+                    <?php if ($lastPasskeyLocked && $s->passkeys) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">Required by your account policy. You must keep at least one passkey.</p>
+                        </div>
+                      </div>
+
+                    <?php endif ?>
+
+                    <?php if (count($s->passkeys) >= TWO_FACTOR_CONFIG['webauthn']['max_passkeys']) : ?>
+
+                      <div class="row">
+                        <div class="col center-x">
+                          <p class="two-fa-note">You have the maximum of <?= TWO_FACTOR_CONFIG['webauthn']['max_passkeys'] ?> passkeys. Remove one to add another.</p>
+                        </div>
+                      </div>
+
+                    <?php else : ?>
+
+                      <div class="row g-2 center-x">
+                        <button class="col button g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="passkey-name-modal"
+                                data-passkey-register
+                                data-options-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/options')) ?>"
+                                data-register-url="<?= AppController::sanitize(Url::to('api/user/settings/two-factor/passkey/register')) ?>"><i class="fas fa-fingerprint"></i>Add a passkey
+                        </button>
+                      </div>
+
+                      <?php $this->component('modal/passkey-name-modal') ?>
+
+                      <div class="row">
+                        <div class="col">
+                          <p class="form-details" data-passkey-unsupported hidden></p>
+                        </div>
+                      </div>
+
+                    <?php endif ?>
 
                   <?php endif ?>
 

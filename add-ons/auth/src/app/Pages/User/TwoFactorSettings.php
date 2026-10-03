@@ -419,6 +419,11 @@ class TwoFactorSettings
             return;
         }
 
+        if (count($this->passkeys) >= TWO_FACTOR_CONFIG['webauthn']['max_passkeys']) {
+            PageController::error(ErrorCode::CONFLICT);
+            return;
+        }
+
         match ($page->subpage(3)) {
             'options' => $this->passkeyOptions(),
             'register' => $this->passkeyRegister(),

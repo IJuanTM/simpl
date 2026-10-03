@@ -50,6 +50,10 @@ export const twoFactorModule = {
         fetch(form.getAttribute('action') || window.location.href, {method: 'POST', body: new FormData(form)});
       }));
 
+    // requestSubmit() rather than submit(), since the form's hidden "submit" field shadows form.submit.
+    document.querySelectorAll<HTMLFormElement>('form[data-submit-on-change]').forEach(form =>
+      form.addEventListener('change', () => form.requestSubmit()));
+
     // An unconfirmed authenticator secret is discarded by any navigation away from the page.
     // This warns before that happens; confirming or cancelling the setup removes the guard again.
     if (document.querySelector('[data-totp-setup]')) {

@@ -1,4 +1,6 @@
+import {showAlert} from '../helpers/alert.ts';
 import {csrfToken} from '../helpers/csrf.ts';
+import {bindBackdropClose} from './modal.ts';
 
 function toBuffer(base64Url: string): ArrayBuffer {
   return Uint8Array.fromBase64(base64Url, {alphabet: 'base64url'}).buffer;
@@ -56,26 +58,42 @@ async function postJson(url: string, body: unknown): Promise<Response> {
   });
 }
 
-async function register(button: HTMLButtonElement): Promise<void> {
+async function register(button: HTMLButtonElement, name: string): Promise<void> {
   button.disabled = true;
 
   try {
-    const input = window.prompt('Name this passkey (e.g. "MacBook", "iPhone")', 'My device');
-    if (input === null) return;
-
-    const name = input.trim() || 'Passkey';
     const options = await (await fetch(button.dataset.optionsUrl ?? '')).json();
     const credential = await navigator.credentials.create({publicKey: reviveCreation(options.publicKey)}) as PublicKeyCredential;
 
     const result = await postJson(button.dataset.registerUrl ?? '', {credential: credentialToJson(credential), name});
 
     if (result.ok) window.location.reload();
-    else window.alert('That passkey could not be registered. Please try again.');
+    else showAlert('That passkey could not be registered. Please try again.', 'error');
   } catch (error) {
-    if (!(error instanceof DOMException && error.name === 'NotAllowedError')) window.alert('Passkey setup was cancelled or failed.');
+    // InvalidStateError means the authenticator already holds one of the user's passkeys, since the options list them in excludeCredentials.
+    if (error instanceof DOMException && error.name === 'InvalidStateError') showAlert('This passkey provider already has a passkey for your account.', 'warning');
+    else if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showAlert('Passkey setup was cancelled or failed.', 'error');
   } finally {
     button.disabled = false;
   }
+}
+
+function initRegister(): void {
+  const button = document.querySelector<HTMLButtonElement>('[data-passkey-register]');
+  const modal = document.querySelector<HTMLDialogElement>('[data-passkey-name-modal]');
+  const form = modal?.querySelector<HTMLFormElement>('#passkey-name-form');
+  const nameInput = modal?.querySelector<HTMLInputElement>('#passkey-name');
+  if (!button || !modal || !form || !nameInput) return;
+
+  bindBackdropClose(modal);
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = nameInput.value.trim();
+    modal.close();
+    nameInput.value = '';
+    register(button, name);
+  });
 }
 
 async function authenticate(button: HTMLButtonElement): Promise<void> {
@@ -89,9 +107,9 @@ async function authenticate(button: HTMLButtonElement): Promise<void> {
     const data = result.ok ? await result.json() : null;
 
     if (data?.ok && typeof data.redirect === 'string') window.location.assign(data.redirect);
-    else window.alert('That passkey was not accepted. Try another sign-in method.');
+    else showAlert('That passkey was not accepted. Try another sign-in method.', 'error');
   } catch (error) {
-    if (!(error instanceof DOMException && error.name === 'NotAllowedError')) window.alert('Passkey sign-in was cancelled or failed.');
+    if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showAlert('Passkey sign-in was cancelled or failed.', 'error');
   } finally {
     button.disabled = false;
   }
@@ -114,7 +132,7 @@ export const passkeyModule = {
       return;
     }
 
-    document.querySelector<HTMLButtonElement>('[data-passkey-register]')?.addEventListener('click', event => register(event.currentTarget as HTMLButtonElement));
+    initRegister();
 
     const loginButton = document.querySelector<HTMLButtonElement>('[data-passkey-login]');
     if (loginButton) {

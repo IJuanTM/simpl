@@ -30,8 +30,9 @@ const TWO_FACTOR_CONFIG = [
         'force_off_for_roles' => [],
     ],
 
-    // Passkeys are bound to the APP_URL host and shown under APP_NAME; only the browser timeout is tunable.
+    // Passkeys are bound to the APP_URL host and shown under APP_NAME.
     'webauthn' => [
         'timeout' => 60000,              // milliseconds
+        'max_passkeys' => 3,             // per account
     ],
 ];
