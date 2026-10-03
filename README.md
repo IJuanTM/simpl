@@ -327,7 +327,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 ### Version 2.0
 
-#### Version 2.0.0 (2026-09-25)
+#### Version 2.0.0 (2026-10-03)
 
 * Now requires PHP 8.5
 * Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
