@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace tests\Feature\Rendering;
 
 use app\Controllers\BreadcrumbController;
+use app\Controllers\PageController;
 use app\Models\Page;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use ReflectionProperty;
+use tests\Support\OutputCaptureTrait;
 
 final class BreadcrumbsTest extends TestCase
 {
+    use OutputCaptureTrait;
+
     public function testGenerateBuildsATrailFromThePageAndSubpages(): void
     {
         // Arrange
@@ -81,31 +86,32 @@ final class BreadcrumbsTest extends TestCase
         $this->assertSame([], BreadcrumbController::get());
     }
 
-    public function testIsSuppressedIsFalseByDefault(): void
+    public function testIsLockedIsFalseByDefault(): void
     {
         // Act + Assert
-        $this->assertFalse(BreadcrumbController::isSuppressed());
+        $this->assertFalse(BreadcrumbController::isLocked());
     }
 
-    public function testSuppressBlocksFurtherSetAndGenerateCalls(): void
+    public function testLockKeepsTheTrailButRendersItInert(): void
     {
         // Arrange
-        BreadcrumbController::set([['label' => 'Home', 'url' => '/home']]);
+        BreadcrumbController::set([['label' => 'Two factor', 'url' => null]]);
+        $page = new ReflectionClass(PageController::class)->newInstanceWithoutConstructor();
 
         // Act
-        BreadcrumbController::suppress();
-        BreadcrumbController::set([['label' => 'Changed', 'url' => '/changed']]);
-        BreadcrumbController::generate(new Page('changed', []));
+        BreadcrumbController::lock();
+        $html = $this->captured(static fn() => $page->component('nav/breadcrumbs'));
 
         // Assert
-        $this->assertTrue(BreadcrumbController::isSuppressed());
-        $this->assertSame('Home', BreadcrumbController::get()[0]['label']);
+        $this->assertTrue(BreadcrumbController::isLocked());
+        $this->assertStringContainsString(' inert', $html);
+        $this->assertStringContainsString('Two factor', $html);
     }
 
     protected function setUp(): void
     {
         $_SESSION = [];
-        new ReflectionProperty(BreadcrumbController::class, 'suppressed')->setValue(null, false);
+        new ReflectionProperty(BreadcrumbController::class, 'locked')->setValue(null, false);
         BreadcrumbController::set([]);
     }
 }

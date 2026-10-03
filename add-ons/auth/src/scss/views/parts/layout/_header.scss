@@ -20,7 +20,6 @@
 
   > i {
     font-size: 2.5rem;
-    width: auto;
 
     // Undoes core hiding nav-link icons on desktop, the avatar icon must stay visible.
     @include breakpoint-up(lg) {

@@ -48,7 +48,7 @@ use app\Models\Url;
               'capsLockWarning' => true,
               'inputClass' => 'input-password',
               'appendIcon' => 'eye password-toggle input-icon-clickable',
-              'extraAttrs' => 'data-password-pattern="' . AuthController::getPasswordPatternSource() . '" data-password-message="' . AuthController::getPasswordRequirements() . '"',
+              'extraAttrs' => 'data-pattern="' . AuthController::getPasswordPatternSource() . '" data-pattern-message="' . AuthController::getPasswordRequirements() . '"',
           ]) ?>
 
           <?php $this->component('form/form-input', [
@@ -62,7 +62,7 @@ use app\Models\Url;
               'autocomplete' => 'new-password',
               'ariaLabel' => 'Repeat password input field',
               'error' => isset($_POST['submit']) && empty($_POST['password-check']),
-              'extraAttrs' => 'data-match="password"',
+              'extraAttrs' => 'data-match="password" data-match-message="The entered passwords do not match!"',
           ]) ?>
         </div>
 

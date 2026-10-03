@@ -18,7 +18,7 @@ use app\Pages\User\Settings;
 use JsonException;
 
 /**
- * Read-only profile view for a user identified by /user/{id}, or the settings area under /user/settings.
+ * Read-only profile view for a user identified by /user/{public_id}, or the settings area under /user/settings.
  * Visitors see the username, profile image, name, role and status; the owner and admins additionally see email, verification, join date and last login.
  */
 class UserPage
@@ -48,14 +48,7 @@ class UserPage
      */
     private function loadUser(Page $page): void
     {
-        $id = (int)AppController::sanitize($page->subpage() ?? '');
-
-        if (empty($id)) {
-            PageController::error(ErrorCode::NOT_FOUND);
-            exit;
-        }
-
-        $user = AuthController::getUserWithRole($id);
+        $user = AuthController::getUserWithRoleByPublicId($page->subpage() ?? '');
 
         if (!$user) {
             PageController::error(ErrorCode::NOT_FOUND);
@@ -70,10 +63,10 @@ class UserPage
         }
         if ($user['status'] !== null) $user['status'] = AppController::sanitize((string)$user['status']);
         $this->user = $user;
-        $this->profileImage = AuthController::getProfileImage($id);
+        $this->profileImage = AuthController::getProfileImage((int)$user['id']);
 
         $currentUser = SessionController::get('user');
-        $this->isOwner = $currentUser !== null && (int)$currentUser['id'] === $id;
+        $this->isOwner = $currentUser !== null && (int)$currentUser['id'] === (int)$user['id'];
         $this->isAdmin = $currentUser !== null && $currentUser['role'] === Role::ADMIN->value;
 
         BreadcrumbController::set([['label' => $this->isOwner ? 'Profile' : 'User', 'url' => null]]);
@@ -166,7 +159,7 @@ class UserPage
 
         $id = SessionController::get('user')['id'];
         $path = $_SERVER['DOCUMENT_ROOT'] . '/' . PROFILE_IMAGE_CONFIG['path'];
-        $name = "{$id}_" . time() . ".$extension";
+        $name = SessionController::get('user')['public_id'] . '_' . time() . ".$extension";
 
         if (!move_uploaded_file($file['tmp_name'], $path . $name)) {
             self::uploadFailed('Image upload failed. Please try again.');
@@ -184,11 +177,11 @@ class UserPage
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('profile', 'Profile image updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/profile', 'Profile image updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
-     * Redirects to the profile page with a generic upload-failure alert.
+     * Redirects back to the profile edit page with an upload-failure alert.
      *
      * @param string $message
      *
@@ -196,7 +189,7 @@ class UserPage
      */
     private static function uploadFailed(string $message): void
     {
-        PageController::redirectWithAlert('profile', $message, AlertType::ERROR, 4);
+        PageController::redirectWithAlert('user/settings/profile', $message, AlertType::ERROR, 4);
     }
 
     /**
@@ -233,6 +226,6 @@ class UserPage
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('profile', 'Profile image deleted successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('user/settings/profile', 'Profile image deleted successfully!', AlertType::SUCCESS, 4);
     }
 }

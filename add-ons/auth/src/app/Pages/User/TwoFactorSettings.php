@@ -440,7 +440,7 @@ class TwoFactorSettings
      */
     private function passkeyOptions(): void
     {
-        self::json(['publicKey' => json_decode(TwoFactorController::passkeyRegistrationOptions($this->userId, SessionController::get('user')['email']), true, flags: JSON_THROW_ON_ERROR)]);
+        self::json(['publicKey' => json_decode(TwoFactorController::passkeyRegistrationOptions($this->userId, SessionController::get('user')['public_id'], SessionController::get('user')['email']), true, flags: JSON_THROW_ON_ERROR)]);
     }
 
     /**

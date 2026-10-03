@@ -8,7 +8,7 @@
  * @var string                                          $icon     Font Awesome icon suffix for the prepend icon, e.g. "user-group"
  * @var array<int, array{value: string, label: string}> $options  Values/labels already sanitized by the caller
  * @var string                                          $selected Value to pre-select, already sanitized by the caller
- * @var bool                                            $required Adds the red "*" marker after the label
+ * @var bool                                            $required Adds the red "*" marker after the label and the native required attribute
  */
 
 $name ??= $id;
@@ -21,7 +21,7 @@ $required ??= false;
   </div>
   <div class="row input-group">
     <div class="col input-prepend center f-0"><i class="fas fa-<?= $icon ?>"></i></div>
-    <select class="col" id="<?= $id ?>" name="<?= $name ?>">
+    <select class="col" id="<?= $id ?>" name="<?= $name ?>"<?= $required ? ' required' : '' ?>>
 
       <?php foreach ($options as $option) : ?>
 

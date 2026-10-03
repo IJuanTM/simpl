@@ -52,10 +52,10 @@ class Roles
         $this->loadRoles();
 
         if (in_array($this->subAction, ['edit', 'delete'])) {
-            $role = $this->requireRecord($page, 'admin/roles', static fn(int $id): ?array => DB::single(
+            $role = $this->requireRecord($page, 'admin/roles', static fn(string $id): ?array => DB::single(
                 SELECT: '*',
                 FROM: 'roles',
-                WHERE: compact('id')
+                WHERE: ['id' => (int)$id]
             ));
             if ($role === null) return;
 

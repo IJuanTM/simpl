@@ -4,11 +4,12 @@ FROM php:${PHP_VERSION}-apache
 ARG UID=1000
 ARG GID=1000
 
-# PDO, mbstring, sodium and fileinfo ship compiled into this base image; only pdo_mysql needs building.
+# mbstring, the only extension core needs, ships compiled into this base image.
 RUN apt-get update && apt-get install -y --no-install-recommends git unzip openssl \
-    && docker-php-ext-install pdo_mysql \
     && a2enmod rewrite headers deflate expires ssl \
     && rm -rf /var/lib/apt/lists/*
+
+# @addon-placeholder:extensions
 
 # Matching the host user's UID/GID keeps bind-mounted files writable by Apache and owned by the host user on Linux; -o tolerates IDs already taken in the image (e.g. macOS's GID 20).
 RUN groupmod -o -g ${GID} www-data && usermod -o -u ${UID} -g www-data www-data

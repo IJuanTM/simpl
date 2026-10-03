@@ -90,7 +90,7 @@ _If you're going to use Docker (see [Step 4](#step-4-set-up-your-localhost)), yo
 
 ### Step 3: Install packages
 
-Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build` script, which will compile the default Sass and TypeScript files to the `src/public` folder using Vite and the `sass` package.
+Next, a few npm packages will need to be installed. You can do this by running `npm install` in the root folder of your project, this will also run the `build:scss` and `build:ts` scripts, which compile the default Sass and TypeScript files to the `src/public` folder using Vite and the `sass` package. It skips the `typecheck` step that `npm run build` runs, so an install never fails on a type error.
 
 ### Step 4: Set up your localhost
 
@@ -137,7 +137,8 @@ The following scripts are included in the `package.json` file:
 * `watch:scss` - Watches the Sass files for changes and compiles them to the `src/public/css` folder using the `sass` package
 * `watch:ts` - Watches the TypeScript files for changes and bundles them to the `src/public/js` folder using Vite
 * `live` - Runs a local server using `browser-sync` and watches the `src/public` folder for changes, as well as the `views` folder for changes, reloading the browser automatically when a change is detected
-* `build` - Runs the `build:scss` and `build:ts` scripts after one another
+* `typecheck` - Type-checks the TypeScript files with `tsc` without emitting anything, since Vite only transpiles and doesn't report type errors
+* `build` - Runs the `typecheck`, `build:scss` and `build:ts` scripts after one another, stopping at the first failure
 * `build:scss` - Compiles the Sass files to the `src/public/css` folder using the `sass` package
 * `build:ts` - Bundles the TypeScript files to the `src/public/js` folder using Vite
 
@@ -162,19 +163,26 @@ In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` fol
 
 Besides these there are also a couple of supporting folders like the `Enums` and `Scripts` folders. The `Enums` folder contains enums that are used in the framework. The `Scripts` folder contains scripts that are used in the framework, for example the `start.php` script, which is used to start the framework.
 
-There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class for writing errors and other information to log files, and the `RateLimiter`.
+There is also a `Utils` folder, which contains utility classes that are used in the framework, for example the `Log` class for writing errors and other information to log files.
 
-Generated runtime data lives outside `app`: log files in `src/logs`, the rate limiter's cache in `src/cache`. Both directories are created automatically and are safe to delete.
+Generated runtime data lives outside `app`: log files in `src/logs`, which is created automatically and is safe to delete.
 
 #### Views
 
-The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at the root (`home.phtml`, `error.phtml`, ...). The `parts` folder holds the pieces the framework assembles around every page and loads with `$this->part()` - `parts/layout` for the header, footer and cookie bar, `parts/index` for the `<head>` includes. The `components` folder holds reusable fragments a template drops in itself with `$this->component()`, like the breadcrumbs.
+The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at the root (`home.phtml`, `error.phtml`, ...). The `parts` folder holds the pieces the framework assembles around every page and loads with `$this->part()` - `parts/layout` for the header, footer and cookie bar, `parts/index` for the `<head>` includes. The `components` folder holds reusable fragments a template drops in itself with `$this->component()`:
+
+* `nav/breadcrumbs` - the breadcrumb trail
+* `form/form-input`, `form/select` and `form/multi-select` - labelled form fields with an icon, error state and optional caps-lock warning or password toggle
+* `form/checkbox` - a checkbox whose text is part of its label, so clicking the text toggles it
+* `modal/confirm-modal` - an "are you sure?" `<dialog>` that submits a form elsewhere on the page
+* `table/table` and `table/column-toggle` - a data table with resizable columns that can be shown and hidden, remembered per browser; a row given an `href` links as a whole
 
 #### Styling and TypeScript
 
 The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, cards, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
 
-The TypeScript is in the `src/ts` folder - feature modules in `features/` (each exposing an `init()` that `main.ts` calls), shared helpers in `helpers/`. Vite bundles it all starting from `main.ts`.
+The TypeScript is in the `src/ts` folder - feature modules in `features/` (each exposing an `init()` that `main.ts` calls), shared helpers in `helpers/`. Vite bundles it all starting from `main.ts`. Every form gets live validation mirroring the server-side rules (required fields, email format, maximum length, plus `data-pattern`, `data-match` and `data-required-with` attributes), shown under each field on submit, or on blur once a field has a value or had one that was cleared; a field inside a closed `<dialog>` opens that dialog instead of showing an error, and a field with `data-initial-value` (the form-input component's `initialValue`) is compared against that saved value rather than what the page rendered; an add-on can register extra rules with `formValidationModule.addRule()`. A form
+with `data-track-form` only enables its submit button once something changed.
 
 #### Public
 
@@ -374,7 +382,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 #### Production
 
 * [PHP dotenv](https://github.com/vlucas/phpdotenv/)
-* [PHPMailer](https://github.com/PHPMailer/PHPMailer/)
+* [PHPMailer](https://github.com/PHPMailer/PHPMailer/) (auth add-on)
 * [OTPHP](https://github.com/Spomky-Labs/otphp/) (auth add-on)
 * [BaconQrCode](https://github.com/Bacon/BaconQrCode/) (auth add-on)
 * [WebAuthn Framework](https://github.com/web-auth/webauthn-framework/) (auth add-on)

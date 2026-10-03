@@ -87,22 +87,17 @@ use app\Models\Url;
             </div>
           </div>
           <div class="col end-x">
-            <?php $this->component('table/column-toggle') ?>
+            <?php $this->component('table/column-toggle', ['tableId' => 'users', 'columns' => $this->pageObj->tableColumns]) ?>
           </div>
         </div>
 
-        <div class="row table-container">
-          <div class="col">
-            <table class="data-table" data-table-id="users" data-api="/api/admin/users" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
-              <thead>
-              <?= $this->pageObj->renderThead() ?>
-              </thead>
-              <tbody>
-              <?= $this->pageObj->renderTbody() ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <?php $this->component('table/table', [
+            'tableId' => 'users',
+            'columns' => $this->pageObj->tableColumns,
+            'thead' => $this->pageObj->renderThead(),
+            'tbody' => $this->pageObj->renderTbody(),
+            'attrs' => 'data-api="/api/admin/users"',
+        ]) ?>
 
         <div class="row pagination-row g-1">
           <div class="col f-0">

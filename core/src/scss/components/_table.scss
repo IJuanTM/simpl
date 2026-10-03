@@ -1,29 +1,5 @@
 @use "../config" as *;
 
-input.table-search::-webkit-search-decoration,
-input.table-search::-webkit-search-cancel-button {
-  display: none;
-}
-
-i.table-search-clear {
-  cursor: pointer;
-  user-select: none;
-
-  @include hover-focus {
-    color: var(--text-75);
-  }
-}
-
-div.table-pagination > a {
-  > i {
-    font-size: .875rem;
-  }
-
-  @include hover-focus {
-    color: var(--text-75);
-  }
-}
-
 div.table-container {
   overflow: hidden;
   border: var(--border-width) solid var(--border-muted);
@@ -158,6 +134,14 @@ div.table-container {
 
           &:nth-child(even) {
             background-color: var(--table-row-even);
+          }
+
+          &[data-href] {
+            cursor: pointer;
+
+            @include hover-focus {
+              background-color: var(--table-header);
+            }
           }
 
           &.table-empty-row td {

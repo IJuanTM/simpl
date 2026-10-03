@@ -41,16 +41,19 @@ $methods = $this->pageObj->enrolledMethods;
     <?php elseif ($mode === 'passkey'): ?>
 
       <div class="row">
-        <div class="col center-x g-row-1">
+        <div class="col f-col g-row-0.5">
           <p class="form-details">Use the passkey on this device or a nearby phone or security key to finish signing in.</p>
-          <button type="button" class="button center-y f-0"
-                  data-passkey-login data-passkey-auto
-                  data-options-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/options')) ?>"
-                  data-verify-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/verify')) ?>"
-                  aria-label="Sign in with your passkey"><i class="fas fa-fingerprint"></i>Use your passkey
-          </button>
           <p class="form-details" data-passkey-unsupported hidden>This browser can't use passkeys. Choose another method below.</p>
         </div>
+      </div>
+
+      <div class="row center-x">
+        <button class="col button g-col-0.5 center-y f-0" type="button"
+                data-passkey-login data-passkey-auto
+                data-options-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/options')) ?>"
+                data-verify-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/verify')) ?>"
+                aria-label="Sign in with your passkey"><i class="fas fa-fingerprint"></i>Use your passkey
+        </button>
       </div>
 
     <?php else: ?>

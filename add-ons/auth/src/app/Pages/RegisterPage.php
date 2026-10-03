@@ -80,9 +80,12 @@ class RegisterPage
             return;
         }
 
+        $publicId = AuthController::generatePublicId();
+
         DB::insert(
             'users',
             [
+                'public_id' => $publicId,
                 'email' => $email,
                 'password' => password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options'])
             ]
@@ -100,8 +103,8 @@ class RegisterPage
 
         if (VERIFICATION_CONFIG['required']) {
             $result = AuthController::issueVerificationToken((int)$id, $email);
-            if ($result) PageController::redirectWithAlert("verify-account/$id", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
-            else PageController::redirectWithAlert("verify-account/$id", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
+            if ($result) PageController::redirectWithAlert("verify-account/$publicId", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
+            else PageController::redirectWithAlert("verify-account/$publicId", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
         } else {
             PageController::redirectWithAlert('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
         }

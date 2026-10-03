@@ -1,4 +1,4 @@
-import {bindBackdropClose, openModal} from './modal.ts';
+import {openModal} from './modal.ts';
 
 export const twoFactorModule = {
   init(): void {
@@ -22,10 +22,7 @@ export const twoFactorModule = {
     });
 
     const recoveryModal = document.querySelector<HTMLDialogElement>('[data-recovery-modal]');
-    if (recoveryModal) {
-      openModal(recoveryModal);
-      bindBackdropClose(recoveryModal);
-    }
+    if (recoveryModal) openModal(recoveryModal);
 
     const downloadButton = document.querySelector<HTMLButtonElement>('[data-download-codes]');
     if (downloadButton) {

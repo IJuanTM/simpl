@@ -1,0 +1,122 @@
+@use "../config" as *;
+
+form[hidden] {
+  display: none;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+
+  div.form-row {
+    @include breakpoint-down(md) {
+      flex-direction: column;
+    }
+
+    &.connected-row > :is(.row, .col) {
+      &:not(:first-child) .input-group {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+
+        :is(input, textarea, select) {
+          border-top-left-radius: 0;
+          border-bottom-left-radius: 0;
+        }
+      }
+
+      &:not(:last-child) .input-group {
+        border-right: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+
+        :is(input, textarea, select) {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+      }
+    }
+  }
+
+  p.form-details {
+    font-size: .875rem;
+    color: var(--text-50);
+
+    &.warning {
+      color: var(--orange);
+    }
+
+    &.error {
+      color: var(--red);
+    }
+  }
+
+  p.form-link {
+    font-size: .875rem;
+    cursor: pointer;
+    color: var(--text-50);
+
+    @include hover-focus {
+      color: var(--text-25);
+    }
+  }
+}
+
+div.form-group {
+  display: flex;
+  flex-direction: column;
+
+  label {
+    white-space: nowrap;
+  }
+
+  span.required {
+    color: var(--red);
+  }
+
+  div.input-group {
+    border: var(--border-width) solid var(--border-muted);
+    border-radius: var(--radius-sm);
+
+    > :is(div.input-prepend, div.input-append) {
+      width: 2.5rem;
+      background-color: var(--input-prepend-append);
+
+      > i.input-icon-clickable {
+        cursor: pointer;
+        user-select: none;
+
+        @include hover-focus {
+          color: var(--text-75);
+        }
+      }
+    }
+
+    > div.input-prepend {
+      border-right: var(--border-width) solid var(--border-muted);
+      border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+
+      + :is(input, textarea, select) {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+
+        &:has(+ div.input-append) {
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+        }
+      }
+    }
+
+    > div.input-append {
+      border-left: var(--border-width) solid var(--border-muted);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+
+    &.error > :is(div.input-prepend, input, textarea) {
+      color: var(--red);
+
+      &::placeholder {
+        color: rgb(from var(--red) r g b / .5);
+      }
+    }
+  }
+}

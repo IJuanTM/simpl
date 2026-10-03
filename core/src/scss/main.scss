@@ -27,13 +27,21 @@
 
   // COMPONENTS
   @include meta.load-css("components/alert");
+  @include meta.load-css("components/badge");
   @include meta.load-css("components/nav/breadcrumbs");
   @include meta.load-css("components/button");
   @include meta.load-css("components/card");
   @include meta.load-css("components/code-block");
   @include meta.load-css("components/input");
+  @include meta.load-css("components/form");
+  @include meta.load-css("components/form/checkbox");
+  @include meta.load-css("components/form/form-input");
   @include meta.load-css("components/form/multi-select");
+  @include meta.load-css("components/modal");
+  @include meta.load-css("components/modal/confirm-modal");
   @include meta.load-css("components/quote");
+  @include meta.load-css("components/table");
+  @include meta.load-css("components/table/column-toggle");
 
   // PARTS
   @include meta.load-css("views/parts/layout/content");

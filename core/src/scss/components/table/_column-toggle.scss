@@ -1,6 +1,8 @@
 @use "../../config" as *;
 
 div.col-toggle-wrapper {
+  anchor-scope: --col-toggle;
+
   button.col-toggle-btn {
     anchor-name: --col-toggle;
   }

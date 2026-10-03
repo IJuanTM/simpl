@@ -6,14 +6,9 @@
 // @addon-end
 
 // @addon-insert:after('// COMPONENTS')
-@include meta.load-css("components/form");
-@include meta.load-css("components/form/form-input");
+@include meta.load-css("components/admin-table");
 @include meta.load-css("components/code-input");
-@include meta.load-css("components/table");
-@include meta.load-css("components/table/column-toggle");
-@include meta.load-css("components/modal");
-@include meta.load-css("components/modal/confirm-modal");
 @include meta.load-css("components/modal/recovery-codes-modal");
-@include meta.load-css("components/badge");
+@include meta.load-css("components/modal/user-action-modal");
 @include meta.load-css("components/two-fa-card");
 // @addon-end

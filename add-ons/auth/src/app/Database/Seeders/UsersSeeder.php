@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace app\Database\Seeders;
 
+use app\Controllers\AuthController;
 use app\Controllers\TwoFactorController;
 use app\Database\DB;
 use app\Enums\TwoFactorMethod;
@@ -63,6 +64,7 @@ class UsersSeeder
         DB::insert(
             'users',
             [
+                'public_id' => AuthController::generatePublicId(),
                 'username' => 'Admin',
                 'email' => 'admin@example.com',
                 'password' => password_hash('admin', PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options']),
@@ -75,6 +77,7 @@ class UsersSeeder
         DB::insert(
             'users',
             [
+                'public_id' => AuthController::generatePublicId(),
                 'username' => 'User',
                 'email' => 'user@example.com',
                 'password' => $userPass,
@@ -90,6 +93,7 @@ class UsersSeeder
             DB::insert(
                 'users',
                 [
+                    'public_id' => AuthController::generatePublicId(),
                     'username' => $username,
                     'first_name' => $first,
                     'last_name' => $last,

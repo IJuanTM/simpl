@@ -75,7 +75,7 @@ use app\Controllers\RequestController;
         </div>
         <div class="row input-group <?= (isset($_POST['submit']) && empty($_POST['message'])) ? 'error' : '' ?>">
           <div class="col input-prepend center f-0"><i class="fas fa-message"></i></div>
-          <textarea class="col message-field" id="message" name="message" maxlength="<?= MAX_CONTACT_MESSAGE_LENGTH ?>" rows="5" placeholder="Enter message:" autocomplete="off" aria-label="Message input field"><?= RequestController::post('message') ?? '' ?></textarea>
+          <textarea class="col message-field" id="message" name="message" maxlength="<?= MAX_CONTACT_MESSAGE_LENGTH ?>" placeholder="Enter message:" autocomplete="off" aria-label="Message input field" required><?= RequestController::post('message') ?? '' ?></textarea>
         </div>
         <div class="row">
           <div class="col end-x">

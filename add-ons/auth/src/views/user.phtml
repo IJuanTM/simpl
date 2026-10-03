@@ -15,7 +15,7 @@ $adminView = $this->pageObj->isAdmin && !$this->pageObj->isOwner;
           <?php if ($this->pageObj->profileImage) : ?>
             <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
           <?php else : ?>
-            <i class="fas fa-circle-user"></i>
+            <i class="fas fa-circle-user fa-width-auto"></i>
           <?php endif ?>
         </div>
       </div>
@@ -101,7 +101,7 @@ $adminView = $this->pageObj->isAdmin && !$this->pageObj->isOwner;
     <?php elseif ($this->pageObj->isAdmin) : ?>
 
       <div class="row g-2 center-x">
-        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/edit?id=' . $u['id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
+        <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/users/edit?id=' . $u['public_id']) ?>"><i class="fas fa-user-pen"></i>Edit user</a>
       </div>
 
     <?php endif ?>

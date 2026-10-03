@@ -27,10 +27,10 @@ p.quote {
 
   &::before {
     @include fa-icon;
+    line-height: inherit;
     position: absolute;
     top: .5rem;
     left: 0;
     width: 2rem;
-    text-align: center;
   }
 }

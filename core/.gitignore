@@ -23,9 +23,6 @@ src/public/js/
 # Logs
 src/logs/
 
-# Cache (rate limiter, etc.)
-src/cache/
-
 # PHPUnit
 .phpunit.cache/
 

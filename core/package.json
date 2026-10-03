@@ -17,13 +17,14 @@
     "vite": "^8.3.1"
   },
   "scripts": {
-    "postinstall": "npm run build",
+    "postinstall": "run-s build:*",
     "dev": "run-p watch live",
     "watch": "run-p watch:*",
     "watch:scss": "sass -w src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "watch:ts": "vite build --watch",
     "live": "browser-sync start --config bs-config.cjs",
-    "build": "run-s build:*",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "run-s typecheck build:*",
     "build:scss": "sass src/scss/main.scss:src/public/css/main.min.css -s compressed",
     "build:ts": "vite build"
   },

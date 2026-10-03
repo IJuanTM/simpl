@@ -1,0 +1,21 @@
+<?php
+use app\Controllers\AppController;
+
+/**
+ * A checkbox with its text inside the same <label>, so clicking the text toggles it too.
+ *
+ * @var string      $label
+ * @var string|null $id
+ * @var string|null $fieldName HTML "name" attribute; not called "name", since that collides with component()'s own parameter
+ * @var bool        $checked
+ * @var string      $attrs     Raw extra attributes for the input, e.g. data-track-checkbox
+ */
+
+$checked ??= false;
+$attrs ??= '';
+?>
+
+<label class="col checkbox g-col-1 center-y f-0">
+  <input type="checkbox"<?= isset($id) ? ' id="' . AppController::sanitize($id) . '"' : '' ?><?= isset($fieldName) ? ' name="' . AppController::sanitize($fieldName) . '"' : '' ?> autocomplete="off"<?= $checked ? ' checked' : '' ?><?= $attrs ? " $attrs" : '' ?>>
+  <span><?= AppController::sanitize($label) ?></span>
+</label>

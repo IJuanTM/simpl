@@ -5,12 +5,7 @@
   "type": "project",
   "require": {
     "php": "^8.5",
-    "ext-pdo": "*",
-    "ext-pdo_mysql": "*",
-    "ext-fileinfo": "*",
     "ext-mbstring": "*",
-    "ext-sodium": "*",
-    "phpmailer/phpmailer": "^7.1.1",
     "vlucas/phpdotenv": "^v5.7.0"
   },
   "require-dev": {
@@ -33,10 +28,8 @@
     "vendor-dir": "src/vendor"
   },
   "scripts": {
-    "post-autoload-dump": "@php src/app/Scripts/app-key.php",
     "test": "phpunit --configuration=config/phpunit.xml --testsuite=Unit,Feature",
     "stan": "phpstan analyse --configuration=config/phpstan.neon --memory-limit=512M",
-    "key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
     "@addon-placeholder": "db"
   },
   "keywords": [

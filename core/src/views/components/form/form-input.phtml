@@ -5,12 +5,14 @@ use app\Controllers\AppController;
  * @var string      $id
  * @var string|null $fieldName       HTML "name" attribute, defaults to $id.
  * @var string      $label
- * @var bool        $required        Adds the red "*" marker after the label.
+ * @var bool        $required        Adds the red "*" marker after the label and the native required attribute.
+ * @var bool        $requiredMark    Whether a required field shows the "*" marker, default true. Off for a prefilled field that only has to stay filled.
  * @var string      $icon            Font Awesome icon suffix for the prepend icon, e.g. "user".
  * @var string      $type            Input type, default "text".
  * @var int|null    $maxlength
  * @var string|null $placeholder
  * @var string      $value
+ * @var string|null $initialValue    The saved value, when $value may be a rejected submission instead; live validation and change tracking compare against it.
  * @var string|null $autocomplete
  * @var string|null $ariaLabel
  * @var bool        $readonly
@@ -25,7 +27,7 @@ use app\Controllers\AppController;
  *
  * $fieldName is not called "name": that would collide with component()'s own $name parameter, since require() shares its scope.
  *
- * $value is echoed as-is; every caller passes it already escaped (RequestController::post() output, or a field sanitized on the page).
+ * $value and $initialValue are echoed as-is; every caller passes them already escaped (RequestController::post() output, or a field sanitized on the page).
  * $label, $placeholder and $ariaLabel are escaped below so a future caller passing a dynamic one can't inject markup.
  */
 
@@ -44,7 +46,7 @@ if (isset($ariaLabel)) $ariaLabel = AppController::sanitize((string)$ariaLabel);
 
 <div class="col form-group g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>
   <div class="row">
-    <label class="col" for="<?= $id ?>"><?= $label ?>:<?= !empty($required) ? ' <span class="required">*</span>' : '' ?></label>
+    <label class="col" for="<?= $id ?>"><?= $label ?>:<?= !empty($required) && ($requiredMark ?? true) ? ' <span class="required">*</span>' : '' ?></label>
 
     <?php if (!empty($capsLockWarning)) : ?>
 
@@ -55,7 +57,7 @@ if (isset($ariaLabel)) $ariaLabel = AppController::sanitize((string)$ariaLabel);
   </div>
   <div class="row input-group<?= !empty($error) ? ' error' : '' ?>">
     <div class="col input-prepend center f-0"><i class="fas fa-<?= $icon ?>"></i></div>
-    <input class="col<?= $inputClass ? " $inputClass" : '' ?>" id="<?= $id ?>" type="<?= $type ?>" name="<?= $fieldName ?>"<?= isset($maxlength) ? ' maxlength="' . $maxlength . '"' : '' ?><?= isset($placeholder) ? ' placeholder="' . $placeholder . '"' : '' ?> value="<?= $value ?>"<?= isset($autocomplete) ? ' autocomplete="' . $autocomplete . '"' : '' ?><?= isset($ariaLabel) ? ' aria-label="' . $ariaLabel . '"' : '' ?><?= !empty($readonly) ? ' readonly' : '' ?><?= $extraAttrs ? " $extraAttrs" : '' ?>>
+    <input class="col<?= $inputClass ? " $inputClass" : '' ?>" id="<?= $id ?>" type="<?= $type ?>" name="<?= $fieldName ?>"<?= isset($maxlength) ? ' maxlength="' . $maxlength . '"' : '' ?><?= isset($placeholder) ? ' placeholder="' . $placeholder . '"' : '' ?> value="<?= $value ?>"<?= isset($initialValue) ? ' data-initial-value="' . $initialValue . '"' : '' ?><?= isset($autocomplete) ? ' autocomplete="' . $autocomplete . '"' : '' ?><?= isset($ariaLabel) ? ' aria-label="' . $ariaLabel . '"' : '' ?><?= !empty($required) ? ' required' : '' ?><?= !empty($readonly) ? ' readonly' : '' ?><?= $extraAttrs ? " $extraAttrs" : '' ?>>
 
     <?php if (!empty($appendIcon)) : ?>
 

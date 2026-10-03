@@ -7,7 +7,7 @@ $items = BreadcrumbController::get();
 
 <?php if ($items) : ?>
 
-  <nav class="row breadcrumbs g-col-0.5" aria-label="Breadcrumbs">
+  <nav class="row breadcrumbs g-col-0.5" aria-label="Breadcrumbs"<?= BreadcrumbController::isLocked() ? ' inert' : '' ?>>
     <a class="col breadcrumb-item breadcrumb-home link f-0" href="<?= Url::to(REDIRECT) ?>" aria-label="Home"><i class="fas fa-house" aria-hidden="true"></i></a>
 
     <?php foreach ($items as $item) : ?>

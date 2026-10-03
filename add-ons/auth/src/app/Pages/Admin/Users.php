@@ -16,6 +16,7 @@ use app\Enums\Role;
 use app\Enums\TokenType;
 use app\Enums\UserStatus;
 use app\Models\Page;
+use app\Models\Url;
 use app\Pages\Admin\Traits\AdminTableTrait;
 use PDOException;
 
@@ -35,6 +36,7 @@ class Users
     // Either a real column or a SELECT-list alias, since MySQL allows ordering by either.
     private const array SORT_COLUMNS = [
         'id' => 'users.id',
+        'public_id' => 'users.public_id',
         'username' => 'users.username',
         'email' => 'users.email',
         'first_name' => 'users.first_name',
@@ -128,14 +130,14 @@ class Users
         }
 
         if (in_array($subAction, ['edit', 'delete', 'restore', 'purge', 'reset-2fa', 'two-factor'])) {
-            $user = $this->requireRecord($page, 'admin/users', static fn(int $id): ?array => DB::single(
+            $user = $this->requireRecord($page, 'admin/users', static fn(string $publicId): ?array => DB::single(
                 SELECT: ['users.*', 'roles.name AS role_name'],
                 FROM: 'users',
                 JOIN: [
                     ['id', ['user_roles', 'user_id']],
                     [['user_roles', 'role_id'], ['roles', 'id']],
                 ],
-                WHERE: ['users.id' => $id]
+                WHERE: ['users.public_id' => $publicId]
             ));
             if ($user === null) return;
 
@@ -170,6 +172,7 @@ class Users
     {
         return self::buildColumns([
             ['id', 'Id', true, null, true],
+            ['public_id', 'Public id', true, 160, true],
             ['username', 'Username', true, 128, true],
             ['email', 'Email', true, 192, true],
             ['first_name', 'First name', true, 128, true],
@@ -220,6 +223,7 @@ class Users
             $like = ['LIKE', '%' . $this->escapeLike($this->search) . '%'];
             $orWhere = [
                 'users.id' => $like,
+                'users.public_id' => $like,
                 'users.username' => $like,
                 'users.email' => $like,
                 'users.first_name' => $like,
@@ -278,7 +282,7 @@ class Users
      */
     private function createUser(): void
     {
-        if (!$this->validateUserFields()) return;
+        if (!$this->validateUserFields(null)) return;
 
         if ($_POST['username'] !== '' && AuthController::getUserIdByUsername($_POST['username']) !== null) {
             $_POST['username'] = '';
@@ -299,6 +303,7 @@ class Users
             DB::insert(
                 INTO: 'users',
                 VALUES: [
+                    'public_id' => AuthController::generatePublicId(),
                     'username' => $_POST['username'] !== '' ? $_POST['username'] : null,
                     'first_name' => $_POST['first_name'] !== '' ? $_POST['first_name'] : null,
                     'last_name' => $_POST['last_name'] !== '' ? $_POST['last_name'] : null,
@@ -327,11 +332,13 @@ class Users
     /**
      * Validates the fields shared by create and edit forms.
      *
+     * @param int|null $userId Id of the user being edited, null when creating one
+     *
      * @return bool True when all fields pass validation
      */
-    private function validateUserFields(): bool
+    private function validateUserFields(?int $userId): bool
     {
-        return FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) &&
+        return AuthController::validateUsername($userId, allowReserved: true) &&
             FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) &&
             FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) &&
             FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) &&
@@ -417,9 +424,9 @@ class Users
      */
     private function updateUser(): void
     {
-        if (!$this->validateUserFields()) return;
-
         $id = (int)$this->user['id'];
+
+        if (!$this->validateUserFields($id)) return;
 
         if ($_POST['username'] !== '' && AuthController::usernameTakenByOtherUser($_POST['username'], $id)) {
             $_POST['username'] = $this->user['username'] ?? '';
@@ -560,7 +567,7 @@ class Users
     private function resetTwoFactor(): void
     {
         TwoFactorController::disableAll((int)$this->user['id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -586,7 +593,7 @@ class Users
     private function resetTwoFactorTotp(): void
     {
         TwoFactorController::disableTotp((int)$this->user['id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'The authenticator app has been reset for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'The authenticator app has been reset for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -597,7 +604,7 @@ class Users
     private function resetTwoFactorPasskey(): void
     {
         TwoFactorController::deletePasskey((int)$this->user['id'], (int)$_POST['passkey_id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'The passkey has been removed for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'The passkey has been removed for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -612,7 +619,7 @@ class Users
             SET: ['required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null)],
             WHERE: ['id' => (int)$this->user['id']]
         );
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -627,6 +634,7 @@ class Users
 
         return match ($column['key']) {
             'id' => (string)$row['id'],
+            'public_id' => $row['public_id'],
             'username' => $muted($row['username'] ?? ''),
             'email' => $row['email'],
             'first_name' => $muted($row['first_name'] ?? ''),
@@ -668,22 +676,30 @@ class Users
     }
 
     /**
+     * Overrides the trait default: every row opens that user's profile.
+     */
+    private function rowHref(array $row): string
+    {
+        return Url::to('user/' . $row['public_id']);
+    }
+
+    /**
      * Edit/delete for active users, restore/purge otherwise; no actions on the current user.
      */
     private function renderActionsCell(array $row): string
     {
         if ($row['id'] === $this->currentUserId) return '<td><span class="text-muted">-</span></td>';
 
-        $uid = $row['id'];
-        $uname = $row['username'] ?? '-';
+        $uid = $row['public_id'];
         $uemail = $row['email'];
+        $userAttrs = 'data-user-id="' . $row['id'] . '" data-user-public-id="' . $uid . '" data-user-username="' . ($row['username'] ?? '-') . '" data-user-email="' . $uemail . '"';
 
         return $this->actionsCell($row['status'] === UserStatus::ACTIVE->value
             ? '<a class="col table-action f-0" href="/admin/users/edit?id=' . $uid . '" aria-label="Edit user ' . $uemail . '"><i class="fas fa-pen"></i></a>'
             . '<a class="col table-action f-0" href="/admin/users/two-factor?id=' . $uid . '" aria-label="Manage two-factor authentication for user ' . $uemail . '"><i class="fas fa-shield-halved"></i></a>'
-            . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-delete data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>'
-            : '<button class="col table-action restore f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-restore data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>'
-            . '<button class="col table-action purge f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-purge data-user-id="' . $uid . '" data-user-username="' . $uname . '" data-user-email="' . $uemail . '" aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>');
+            . '<button class="col table-action delete f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-delete ' . $userAttrs . ' aria-label="Delete user ' . $uemail . '"><i class="fas fa-trash"></i></button>'
+            : '<button class="col table-action restore f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-restore ' . $userAttrs . ' aria-label="Restore user ' . $uemail . '"><i class="fas fa-wrench"></i></button>'
+            . '<button class="col table-action purge f-0" type="button" data-cooldown="' . UI_BUTTON_COOLDOWN . '" data-modal-purge ' . $userAttrs . ' aria-label="Permanently delete user ' . $uemail . '"><i class="fas fa-skull"></i></button>');
     }
 
     /**

@@ -1,4 +1,7 @@
 # @addon-insert:append
 # Profile images
 src/public/img/profile/
+
+# Rate limiter cache
+src/cache/
 # @addon-end

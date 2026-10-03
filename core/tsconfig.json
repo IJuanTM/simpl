@@ -7,7 +7,10 @@
       "dom.iterable"
     ],
     "module": "esnext",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "bundler",
+    "types": [
+      "vite/client"
+    ],
     "sourceMap": true,
     "allowJs": true,
     "removeComments": true,

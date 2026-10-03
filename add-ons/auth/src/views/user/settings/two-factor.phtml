@@ -45,13 +45,11 @@ $primaryFooter = function (string $method) use ($isDefault, $methodEnabled): voi
           <input type="hidden" name="action" value="set-primary">
           <input type="hidden" name="primary_method" value="<?= $method ?>">
           <input type="hidden" name="submit" value="1">
-          <div class="row g-col-1 center-y">
-            <label class="col f-0" for="primary-<?= $method ?>">
-              <input id="primary-<?= $method ?>" type="checkbox" autocomplete="off">
-            </label>
-            <div class="col">
-              <p>Use this method as my default two-factor method.</p>
-            </div>
+          <div class="row">
+            <?php $this->component('form/checkbox', [
+                'id' => "primary-$method",
+                'label' => 'Use this method as my default two-factor method.',
+            ]) ?>
           </div>
         </form>
       </div>
@@ -499,7 +497,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                   <div class="col two-fa-panel f-col g-row-1">
                     <div class="row">
                       <div class="col">
-                        <p class="form-details">Devices remembered from signing in with "remember me" checked.</p>
+                        <p class="form-details">Devices remembered from signing in with "Stay logged in" checked.</p>
                       </div>
                     </div>
 
@@ -582,13 +580,13 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                       <form class="col" method="POST" action="" data-autosave>
                         <input type="hidden" name="action" value="remember-device">
                         <input type="hidden" name="submit" value="1">
-                        <div class="row g-col-1 center-y">
-                          <label class="col f-0" for="remember_device">
-                            <input class="remember-checkbox" id="remember_device" type="checkbox" name="remember_device" autocomplete="off"<?= $s->rememberDevice ? ' checked' : '' ?>>
-                          </label>
-                          <div class="col">
-                            <p>Skip two-factor on devices where I tick "remember me" at login.</p>
-                          </div>
+                        <div class="row">
+                          <?php $this->component('form/checkbox', [
+                              'id' => 'remember_device',
+                              'fieldName' => 'remember_device',
+                              'label' => 'Skip two-factor on devices where I tick "Stay logged in" at login.',
+                              'checked' => $s->rememberDevice,
+                          ]) ?>
                         </div>
                       </form>
                     </div>

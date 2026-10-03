@@ -132,7 +132,7 @@ class RateLimiter
 
     /**
      * Record an attempt using capped exponential backoff instead of attempt()'s flat window.
-     * A flat window can be kept permanently full by a party with no proof of identity, e.g. a guessable public id.
+     * A flat window can be kept permanently full by a party with no proof of identity, e.g. anyone holding the user id from a verification or reset link.
      * Each filled burst doubles the lockout (capped at $maxDurationSeconds); a lockout lifts on its own once its duration elapses.
      * The escalation tier carries across bursts on purpose: serving a lockout doesn't reset it, so a fresh over-limit burst hours later still escalates.
      * It only clears when the whole record ages out of RATE_LIMIT_CACHE_RETENTION.

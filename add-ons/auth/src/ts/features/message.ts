@@ -1,4 +1,13 @@
-import {inputModule} from './input.ts';
+function checkMessageLength(target: HTMLTextAreaElement): void {
+  const messageWarning = document.querySelector<HTMLElement>('p.message-warning');
+  if (!messageWarning) return;
+
+  const lengthSpan = document.querySelector('span.message-length');
+  if (lengthSpan) lengthSpan.textContent = String(target.value.length);
+
+  messageWarning.classList.toggle('warning', target.value.length >= target.maxLength - 50);
+  messageWarning.classList.toggle('error', target.value.length === target.maxLength);
+}
 
 export const messageModule = {
   init(): void {
@@ -12,13 +21,13 @@ export const messageModule = {
 
     // 'input' catches paste/drag-drop/IME changes that 'keyup' misses.
     messageTextarea.addEventListener('input', () => {
-      inputModule.checkMessageLength(messageTextarea);
+      checkMessageLength(messageTextarea);
       syncClearButton();
     });
 
     clearButton.addEventListener('click', () => {
       messageTextarea.value = '';
-      inputModule.checkMessageLength(messageTextarea);
+      checkMessageLength(messageTextarea);
       syncClearButton();
     });
   }

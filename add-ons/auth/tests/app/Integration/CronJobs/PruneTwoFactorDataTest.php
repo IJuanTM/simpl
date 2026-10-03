@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace tests\Integration\CronJobs;
 
+use app\Controllers\AuthController;
 use app\Cron\PruneTwoFactorData;
 use app\Database\DB;
 use app\Enums\TokenType;
@@ -37,6 +38,7 @@ final class PruneTwoFactorDataTest extends IntegrationTestCase
     private function insertUser(): int
     {
         DB::insert(INTO: 'users', VALUES: [
+            'public_id' => AuthController::generatePublicId(),
             'email' => uniqid('user_', true) . '@example.test',
             'password' => 'hashed-password',
         ]);

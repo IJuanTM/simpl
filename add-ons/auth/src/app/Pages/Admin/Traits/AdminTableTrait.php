@@ -55,18 +55,6 @@ trait AdminTableTrait
     }
 
     /**
-     * JSON-encoded list of column indexes hidden by default, for data-hidden-cols.
-     *
-     * @throws JsonException
-     */
-    final public function hiddenColumnsJson(): string
-    {
-        return array_filter($this->tableColumns, static fn(array $c): bool => empty($c['visible']))
-                |> array_keys(...)
-                |> (static fn($x) => json_encode($x, JSON_THROW_ON_ERROR));
-    }
-
-    /**
      * JSON endpoint for the front-end AJAX table (thead/tbody/pagination/info/total).
      *
      * @throws JsonException
@@ -154,7 +142,8 @@ trait AdminTableTrait
 
         foreach ($rows as $row) {
             $class = $this->rowClass($row);
-            $html .= '<tr' . ($class ? ' class="' . $class . '"' : '') . '>';
+            $href = $this->rowHref($row);
+            $html .= '<tr' . ($class ? ' class="' . $class . '"' : '') . ($href !== null ? ' data-href="' . $href . '" tabindex="0"' : '') . '>';
 
             foreach ($this->tableColumns as $column) {
                 $html .= $column['key'] === 'actions' ? $this->renderActionsCell($row) : '<td>' . $this->renderCell($column, $row) . '</td>';
@@ -193,6 +182,16 @@ trait AdminTableTrait
     private function rowClass(array $row): string
     {
         return '';
+    }
+
+    /**
+     * URL the whole row links to (table.ts handles the click), or null for a plain row. Override to make rows clickable.
+     *
+     * @param array<string, mixed> $row
+     */
+    private function rowHref(array $row): ?string
+    {
+        return null;
     }
 
     /**
@@ -350,18 +349,20 @@ trait AdminTableTrait
      *
      * @param Page     $page
      * @param string   $routeBase Route to redirect back to, e.g. 'admin/users'
-     * @param callable $lookup    (int $id): ?array
+     * @param callable $lookup    (string $id): ?array, receiving the raw ?id value
      *
      * @return array<string, mixed>|null Null means a redirect was issued; the caller should return immediately.
      */
     private function requireRecord(Page $page, string $routeBase, callable $lookup): ?array
     {
-        if (!$page->param('id')) {
+        $id = $page->param('id');
+
+        if (!is_string($id) || $id === '') {
             PageController::redirect($routeBase, 2);
             return null;
         }
 
-        $record = $lookup((int)$page->param('id'));
+        $record = $lookup($id);
 
         if (!$record) {
             PageController::redirect($routeBase, 2);

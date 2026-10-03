@@ -10,12 +10,13 @@ use app\Database\Migrations\Schema;
 class CreateUsersTable
 {
     /**
-     * Creates the users table: identity/auth fields, profile image, password-change tracking, and soft-delete status/timestamp.
+     * Creates the users table: identity/auth fields, the random public_id used in URLs instead of the sequential id, profile image, password-change tracking, and soft-delete status/timestamp.
      */
     public static function up(): void
     {
         Schema::create('users', static function (Blueprint $t) {
             $t->bigintUnsigned('id', notNull: true)->autoIncrement();
+            $t->varchar('public_id', PUBLIC_ID_LENGTH, notNull: true)->unique();
             $t->varchar('username', MAX_USERNAME_LENGTH)->unique();
             $t->varchar('first_name', MAX_NAME_LENGTH);
             $t->varchar('last_name', MAX_NAME_LENGTH);

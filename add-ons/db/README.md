@@ -12,6 +12,7 @@ The dividing line: this add-on owns the *generic engine*, never domain-specific 
 - **`DatabaseSeeder`** - same pattern for seeders, via `DatabaseSeeder::register(SomeSeeder::class)`.
 - **`Scheduler`** / **`ScheduledTask`** - register a named, callable task with a cron expression or interval (`Scheduler::task('name', fn() => ...)->daily()`), then `Scheduler::run()` executes whatever's due, persisting run history in its own `scheduler_runs` table (registered as this add-on's own migration - it's scheduler bookkeeping, not domain data).
 - **CLI scripts** (wired up as composer commands on install): `composer migrate` / `migrate:fresh` / `migrate:rollback`, `composer seed` / `seed:fresh`, `composer cron:test`, `composer test:integration` (run them with `simpl migrate`, `simpl seed:fresh`, `simpl test:integration`, ... and `simpl composer cron:test`, inside the Docker `app` container when the stack is up).
+- **`Console`** / **`Ansi`** - the terminal output helpers those scripts use (title boxes, task/success/error lines, colors), available to any add-on's own CLI scripts and cron tasks.
 
 ## Configuration
 
@@ -30,7 +31,7 @@ Schema defaults (engine, charset, collation, foreign key behavior, primary key c
 
 Ships a PHPUnit suite (`tests/`, merges into a project's `tests/`) in two parts:
 
-- **Unit and feature tests** (`simpl test`, no database needed) cover `DB`'s SQL builders, `Blueprint`'s column/index/foreign-key builders, `Schema`'s database-name validation, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration and fluent chaining, and `DatabaseMigrator`/`DatabaseSeeder`'s `register()`.
+- **Unit and feature tests** (`simpl test`, no database needed) cover `DB`'s SQL builders, `Blueprint`'s column/index/foreign-key builders, `Schema`'s database-name validation, `ScheduledTask`'s cron-field matching, `Scheduler`'s task registration and fluent chaining, `DatabaseMigrator`/`DatabaseSeeder`'s `register()`, and the `Console`/`Ansi` output helpers.
 - **Integration tests** (`simpl test:integration`, against the database in `src/.env`) cover `DatabaseMigrator::run()`/`rollback()`, `DatabaseSeeder::run()`/`truncate()` and `Scheduler::run()` with due and failing tasks. They migrate the database first, run each test in a rolled-back transaction, and refuse to run against a database named `simpl`.
 
 ## Requirements

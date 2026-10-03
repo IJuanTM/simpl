@@ -16,7 +16,7 @@ class BreadcrumbController
      */
     private static array $trail = [];
 
-    private static bool $suppressed = false;
+    private static bool $locked = false;
 
     /**
      * Builds and sets the breadcrumb trail from the page's URL segments.
@@ -50,8 +50,6 @@ class BreadcrumbController
      */
     public static function set(array $trail): void
     {
-        if (self::$suppressed) return;
-
         self::$trail = array_map(static fn(array $crumb): array => [
             'label' => AppController::sanitize($crumb['label']),
             'url' => $crumb['url'] !== null ? AppController::sanitize($crumb['url']) : null,
@@ -59,23 +57,23 @@ class BreadcrumbController
     }
 
     /**
-     * Blocks all further set()/generate() calls, so a page with no way out (a pinned mandatory action) renders no trail.
+     * Renders the trail as non-clickable, for a page with no way out (a pinned mandatory action) that should still show where the user is.
      *
      * @return void
      */
-    public static function suppress(): void
+    public static function lock(): void
     {
-        self::$suppressed = true;
+        self::$locked = true;
     }
 
     /**
-     * Whether suppress() was called; the layout also strips its navigation links when it was.
+     * Whether lock() was called; pages also hide their own Back links when it was.
      *
      * @return bool
      */
-    public static function isSuppressed(): bool
+    public static function isLocked(): bool
     {
-        return self::$suppressed;
+        return self::$locked;
     }
 
     /**

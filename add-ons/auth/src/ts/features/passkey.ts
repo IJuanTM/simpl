@@ -1,6 +1,5 @@
 import {showAlert} from '../helpers/alert.ts';
 import {csrfToken} from '../helpers/csrf.ts';
-import {bindBackdropClose} from './modal.ts';
 
 function toBuffer(base64Url: string): ArrayBuffer {
   return Uint8Array.fromBase64(base64Url, {alphabet: 'base64url'}).buffer;
@@ -12,12 +11,14 @@ function toBase64Url(buffer: ArrayBuffer): string {
 
 // The server sends ids and challenges as base64url strings; the WebAuthn API needs ArrayBuffers.
 function reviveCreation(options: Record<string, unknown>): PublicKeyCredentialCreationOptions {
-  const opts = options as Record<string, any>;
+  const {rp, pubKeyCredParams, challenge, user, excludeCredentials, ...rest} = options as Record<string, any>;
   return {
-    ...opts,
-    challenge: toBuffer(opts.challenge),
-    user: {...opts.user, id: toBuffer(opts.user.id)},
-    excludeCredentials: (opts.excludeCredentials ?? []).map((c: any) => ({...c, id: toBuffer(c.id)}))
+    ...rest,
+    rp,
+    pubKeyCredParams,
+    challenge: toBuffer(challenge),
+    user: {...user, id: toBuffer(user.id)},
+    excludeCredentials: (excludeCredentials ?? []).map((c: any) => ({...c, id: toBuffer(c.id)}))
   };
 }
 
@@ -84,8 +85,6 @@ function initRegister(): void {
   const form = modal?.querySelector<HTMLFormElement>('#passkey-name-form');
   const nameInput = modal?.querySelector<HTMLInputElement>('#passkey-name');
   if (!button || !modal || !form || !nameInput) return;
-
-  bindBackdropClose(modal);
 
   form.addEventListener('submit', event => {
     event.preventDefault();

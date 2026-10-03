@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// Encryption key for data at rest (e.g. authenticator app secrets), generated into .env by src/app/Scripts/app-key.php
+define('APP_KEY', $_ENV['APP_KEY'] ?? null);
+
 const PASSWORD_CONFIG = [
     'min_length' => 8,
     'require_uppercase' => true,

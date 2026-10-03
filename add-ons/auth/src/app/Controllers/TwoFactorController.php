@@ -523,13 +523,14 @@ class TwoFactorController
      * Options JSON for registering a new passkey, excluding the ones the user already has.
      *
      * @param int    $userId
+     * @param string $publicId The user's public id, used as the passkey's user handle
      * @param string $userLabel
      *
      * @return string
      */
-    public static function passkeyRegistrationOptions(int $userId, string $userLabel): string
+    public static function passkeyRegistrationOptions(int $userId, string $publicId, string $userLabel): string
     {
-        return WebauthnController::registrationOptions($userId, $userLabel, self::credentialIds($userId));
+        return WebauthnController::registrationOptions($publicId, $userLabel, self::credentialIds($userId));
     }
 
     /**
@@ -596,12 +597,13 @@ class TwoFactorController
      * Verify a passkey assertion at the login challenge, bumping the stored signature counter.
      *
      * @param int    $userId
+     * @param string $publicId The user's public id, which the passkey stored as its user handle
      * @param string $clientJson
      *
      * @return bool
      */
     #[NoDiscard]
-    public static function verifyPasskey(int $userId, string $clientJson): bool
+    public static function verifyPasskey(int $userId, string $publicId, string $clientJson): bool
     {
         $credentialId = WebauthnController::credentialIdFromResponse($clientJson);
         if ($credentialId === null) return false;
@@ -609,7 +611,7 @@ class TwoFactorController
         $row = DB::single(SELECT: ['id', 'public_key'], FROM: 'webauthn_credentials', WHERE: ['user_id' => $userId, 'credential_id' => $credentialId]);
         if ($row === null) return false;
 
-        $updated = WebauthnController::verifyLogin($clientJson, $row['public_key'], (string)$userId);
+        $updated = WebauthnController::verifyLogin($clientJson, $row['public_key'], $publicId);
         if ($updated === null) return false;
 
         DB::update(UPDATE: 'webauthn_credentials', SET: [

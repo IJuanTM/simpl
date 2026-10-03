@@ -1,0 +1,10 @@
+@use "../../config" as *;
+
+label.checkbox {
+  cursor: pointer;
+
+  > input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: auto;
+  }
+}

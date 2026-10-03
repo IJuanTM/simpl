@@ -42,17 +42,17 @@ class WebauthnController
     /**
      * Build and stash the options for registering a new passkey.
      *
-     * @param int      $userId
+     * @param string   $userHandle           The user's public id, never the sequential id, since the browser and authenticator both see it
      * @param string   $userLabel            Shown by the authenticator / OS prompt (the user's email)
      * @param string[] $excludeCredentialIds base64url ids of the user's existing passkeys, so the same authenticator isn't enrolled twice
      *
      * @return string JSON for navigator.credentials.create()
      */
-    public static function registrationOptions(int $userId, string $userLabel, array $excludeCredentialIds): string
+    public static function registrationOptions(string $userHandle, string $userLabel, array $excludeCredentialIds): string
     {
         $options = new PublicKeyCredentialCreationOptions(
             rp: new PublicKeyCredentialRpEntity(self::rpName(), self::rpId()),
-            user: new PublicKeyCredentialUserEntity($userLabel, (string)$userId, $userLabel),
+            user: new PublicKeyCredentialUserEntity($userLabel, $userHandle, $userLabel),
             challenge: random_bytes(self::CHALLENGE_BYTES),
             pubKeyCredParams: array_map(
                 static fn(int $alg) => PublicKeyCredentialParameters::create('public-key', $alg),
@@ -246,7 +246,7 @@ class WebauthnController
      *
      * @param string $clientResponseJson
      * @param string $storedRecordJson The serialized CredentialRecord for the matched passkey
-     * @param string $userHandle
+     * @param string $userHandle       The user's public id, matching the handle registered in registrationOptions()
      *
      * @return array{record: string, sign_count: int}|null The re-serialized record and its bumped counter, or null on failure
      */

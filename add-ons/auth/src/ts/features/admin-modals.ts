@@ -1,18 +1,6 @@
-import {raiseGlobalAlert} from '../helpers/alert.ts';
+import {openModal} from './modal.ts';
 
 const base = window.location.pathname.split('/').slice(0, 3).join('/');
-
-export function openModal(modal: HTMLDialogElement): void {
-  modal.showModal();
-  raiseGlobalAlert();
-}
-
-// Close buttons use command="close" declaratively; this only covers the backdrop-click case.
-export function bindBackdropClose(modal: HTMLDialogElement): void {
-  modal.addEventListener('click', e => {
-    if (e.target === modal) modal.close();
-  });
-}
 
 interface UserActionModalConfig {
   modalSelector: string;
@@ -28,6 +16,7 @@ function initUserActionModal(config: UserActionModalConfig): void {
 
   const form = modal.querySelector<HTMLFormElement>(config.formSelector);
   const userIdEl = modal.querySelector<HTMLElement>('.modal-user-id');
+  const publicIdEl = modal.querySelector<HTMLElement>('.modal-user-public-id');
   const usernameEl = modal.querySelector<HTMLElement>('.modal-user-username');
   const emailEl = modal.querySelector<HTMLElement>('.modal-user-email');
 
@@ -36,9 +25,10 @@ function initUserActionModal(config: UserActionModalConfig): void {
     if (!btn) return;
 
     if (userIdEl) userIdEl.textContent = btn.dataset.userId ?? '';
+    if (publicIdEl) publicIdEl.textContent = btn.dataset.userPublicId ?? '';
     if (usernameEl) usernameEl.textContent = btn.dataset.userUsername ?? '';
     if (emailEl) emailEl.textContent = btn.dataset.userEmail ?? '';
-    if (form) form.action = `${base}/${config.urlSegment}?id=${btn.dataset.userId}`;
+    if (form) form.action = `${base}/${config.urlSegment}?id=${btn.dataset.userPublicId}`;
 
     // Start each open from an unconfirmed state; the 'change' re-inerts the gated submit button.
     modal.querySelectorAll<HTMLInputElement>('[data-track-checkbox]').forEach(cb => {
@@ -48,13 +38,6 @@ function initUserActionModal(config: UserActionModalConfig): void {
 
     openModal(modal);
   });
-
-  bindBackdropClose(modal);
-}
-
-// Plain confirm dialogs with no per-instance data to populate; open/close is fully declarative, only backdrop-click needs JS.
-function initGenericModals(): void {
-  document.querySelectorAll<HTMLDialogElement>('.confirm-modal').forEach(bindBackdropClose);
 }
 
 function initRoleDeleteModal(): void {
@@ -84,17 +67,14 @@ function initRoleDeleteModal(): void {
       openModal(modal);
     });
   });
-
-  bindBackdropClose(modal);
 }
 
-export const modalModule = {
+export const adminModalsModule = {
   init(): void {
     initUserActionModal({modalSelector: '[data-user-delete-modal]', triggerAttr: 'data-modal-delete', formSelector: '.modal-soft-delete-form', urlSegment: 'delete'});
     initUserActionModal({modalSelector: '[data-user-purge-modal]', triggerAttr: 'data-modal-purge', formSelector: '.modal-purge-form', urlSegment: 'purge'});
     initUserActionModal({modalSelector: '[data-user-restore-modal]', triggerAttr: 'data-modal-restore', formSelector: '.modal-restore-form', urlSegment: 'restore'});
     initUserActionModal({modalSelector: '[data-user-reset-2fa-modal]', triggerAttr: 'data-modal-reset-2fa', formSelector: '.modal-reset-2fa-form', urlSegment: 'reset-2fa'});
     initRoleDeleteModal();
-    initGenericModals();
   }
 };

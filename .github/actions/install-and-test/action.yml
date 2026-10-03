@@ -1,5 +1,5 @@
 name: Install and test
-description: Builds the release zips from this checkout, installs them with the published simpl CLI the way a user would, then tests, analyses and builds the result.
+description: Builds the release zips from this checkout, installs them with the published simpl CLI the way a user would, then tests, analyses, builds and type-checks the result.
 
 inputs:
   add:
@@ -103,3 +103,9 @@ runs:
       shell: bash
       working-directory: ${{ runner.temp }}/simpl-check
       run: npm install --no-audit --no-fund
+
+    # npm install's build skips the type check, so a type error in shipped TypeScript would otherwise reach a release.
+    - name: Type check (npm run typecheck)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: npm run typecheck

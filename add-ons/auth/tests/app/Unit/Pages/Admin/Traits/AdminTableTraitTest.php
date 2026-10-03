@@ -59,20 +59,6 @@ final class AdminTableTraitTest extends TestCase
         return new ReflectionMethod(AdminTableTraitHost::class, $method)->invoke($host, ...$args);
     }
 
-    public function testHiddenColumnsJsonListsThePositionalIndexesOfHiddenColumns(): void
-    {
-        // Arrange
-        // Returns array positions (for data-hidden-cols), not the columns' 'key' values.
-        $host = new AdminTableTraitHost();
-        $host->tableColumns = [
-            ['key' => 'id', 'visible' => true],
-            ['key' => 'internal_note', 'visible' => false],
-        ];
-
-        // Act + Assert
-        $this->assertSame('[1]', $host->hiddenColumnsJson());
-    }
-
     public function testRenderTheadLinksSortableColumnsAndPlainLabelsOtherwise(): void
     {
         // Arrange

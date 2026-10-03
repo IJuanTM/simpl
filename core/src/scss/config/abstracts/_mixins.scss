@@ -174,4 +174,8 @@
 @mixin fa-icon {
   font-family: "Font Awesome 7 Free", sans-serif;
   font-weight: 900;
+  font-style: normal;
+  line-height: 1;
+  width: 1.25em;
+  text-align: center;
 }

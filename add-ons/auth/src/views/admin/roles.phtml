@@ -15,22 +15,16 @@ use app\Models\Url;
 
         <div class="row g-1">
           <div class="col end-x">
-            <?php $this->component('table/column-toggle') ?>
+            <?php $this->component('table/column-toggle', ['tableId' => 'roles', 'columns' => $this->pageObj->tableColumns]) ?>
           </div>
         </div>
 
-        <div class="row table-container">
-          <div class="col">
-            <table class="data-table" data-table-id="roles" data-hidden-cols="<?= $this->pageObj->hiddenColumnsJson() ?>">
-              <thead>
-              <?= $this->pageObj->renderThead() ?>
-              </thead>
-              <tbody>
-              <?= $this->pageObj->renderTbody() ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <?php $this->component('table/table', [
+            'tableId' => 'roles',
+            'columns' => $this->pageObj->tableColumns,
+            'thead' => $this->pageObj->renderThead(),
+            'tbody' => $this->pageObj->renderTbody(),
+        ]) ?>
 
       </div>
     </div>

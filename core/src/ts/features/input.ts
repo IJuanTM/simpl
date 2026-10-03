@@ -10,18 +10,6 @@ function capsLockWarning(event: KeyboardEvent): void {
 }
 
 export const inputModule = {
-  // Called from message.ts, so it stays on the public surface.
-  checkMessageLength(target: HTMLTextAreaElement): void {
-    const messageWarning = document.querySelector<HTMLElement>('p.message-warning');
-    if (!messageWarning) return;
-
-    const lengthSpan = document.querySelector('span.message-length');
-    if (lengthSpan) lengthSpan.textContent = String(target.value.length);
-
-    messageWarning.classList.toggle('warning', target.value.length >= target.maxLength - 50);
-    messageWarning.classList.toggle('error', target.value.length === target.maxLength);
-  },
-
   init(): void {
     document.querySelectorAll('input, textarea, select').forEach(field =>
       field.addEventListener('keydown', () => field.closest('div.input-group')?.classList.remove('error'))

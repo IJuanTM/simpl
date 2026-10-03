@@ -46,7 +46,7 @@ class ProfileSettings
     private function updateProfile(): void
     {
         if (
-            !FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH]) ||
+            !AuthController::validateUsername($this->userId) ||
             !FormController::validate('first_name', ['maxLength' => MAX_NAME_LENGTH]) ||
             !FormController::validate('last_name', ['maxLength' => MAX_NAME_LENGTH]) ||
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email'])
@@ -111,11 +111,11 @@ class ProfileSettings
 
         if (VERIFICATION_CONFIG['required'] && $emailChanged) {
             AuthController::issueVerificationToken($id, $_POST['email']);
-            PageController::redirectWithAlert('user/' . $id, 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
+            PageController::redirectWithAlert('profile', 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
             return;
         }
 
-        PageController::redirectWithAlert('user/' . $id, 'Profile updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithAlert('profile', 'Profile updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**

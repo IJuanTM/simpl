@@ -228,6 +228,7 @@ class LoginPage
 
         SessionController::set('2fa_pending', [
             'user_id' => $userId,
+            'public_id' => $user['public_id'],
             'remember' => isset($_POST['remember']),
             'at' => time(),
         ]);

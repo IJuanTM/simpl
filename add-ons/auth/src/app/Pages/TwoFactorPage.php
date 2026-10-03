@@ -277,7 +277,7 @@ class TwoFactorPage
 
         $body = json_decode((string)file_get_contents('php://input'), true);
 
-        if (!is_array($body) || !TwoFactorController::verifyPasskey($this->userId, json_encode($body, JSON_THROW_ON_ERROR))) {
+        if (!is_array($body) || !TwoFactorController::verifyPasskey($this->userId, (string)$pending['public_id'], json_encode($body, JSON_THROW_ON_ERROR))) {
             PageController::error(ErrorCode::BAD_REQUEST);
             return;
         }

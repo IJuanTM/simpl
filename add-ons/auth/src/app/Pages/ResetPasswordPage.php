@@ -38,17 +38,15 @@ class ResetPasswordPage
      */
     private function verifyLink(Page $page): void
     {
-        $id = $page->subpage();
+        $id = AuthController::getUserIdByPublicId($page->subpage() ?? '');
         $token = $page->subpage(1);
 
-        if ($id === null || $token === null || !is_numeric($id)) {
+        if ($id === null || $token === null) {
             $this->disableForm = true;
             FormController::addAlert('The link is invalid! Please follow the link in the email you received.', AlertType::ERROR);
             PageController::redirect('forgot-password', 2);
             return;
         }
-
-        $id = (int)$id;
 
         // A token verified earlier in this session only skips re-throttling, not the token check.
         // Reloading or resubmitting the form then can't burn the guess budget on a token that was never re-guessed.

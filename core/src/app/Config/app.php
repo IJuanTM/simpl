@@ -6,7 +6,6 @@ declare(strict_types=1);
 define('DEV', filter_var($_ENV['DEV'] ?? false, FILTER_VALIDATE_BOOLEAN));
 define('APP_NAME', $_ENV['APP_NAME']);
 define('APP_URL', $_ENV['APP_URL']);
-define('APP_KEY', $_ENV['APP_KEY'] ?? null);
 define('LOG_DIR', $_ENV['LOG_DIR'] ?? BASEDIR . '/logs');
 
 // See https://www.php.net/manual/en/timezones.php
@@ -16,7 +15,6 @@ const SESSION_LIFETIME = 3;      // days
 const REDIRECT = 'home';         // page name
 const ERROR_AUTO_REDIRECT = true;
 
-const RATE_LIMIT_CACHE_RETENTION = 86400; // seconds; how long stale rate-limit files are kept before pruning
 const HISTORY_DEPTH = 5; // how many prior pages back()/prev() can navigate
 const UI_BUTTON_COOLDOWN = 300; // milliseconds; shared data-cooldown value for repeat-click-guarded buttons
 

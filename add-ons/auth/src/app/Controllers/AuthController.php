@@ -16,6 +16,7 @@ use app\Utils\Timebox;
 use Exception;
 use JsonException;
 use NoDiscard;
+use Random\RandomException;
 use SensitiveParameter;
 
 /**
@@ -29,6 +30,11 @@ class AuthController
     // Unambiguous charset for generated passwords (no 0/O/1/l/I): they are meant to be typed by a human.
     private const string GENERATED_PASSWORD_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
     private const string GENERATED_PASSWORD_SPECIAL_CHARS = '!#$%*+?@';
+
+    // No delimiters, so the same source works in preg_match() and in form-validation.ts's RegExp.
+    private const string USERNAME_PATTERN = '^[A-Za-z0-9_.-]+$';
+    private const string USERNAME_PATTERN_MESSAGE = 'A username may only contain letters, numbers, dots, dashes and underscores!';
+    private const string USERNAME_RESERVED_MESSAGE = 'That username is not available!';
 
     public function __construct()
     {
@@ -92,7 +98,7 @@ class AuthController
         ) {
             if (SessionController::has('2fa_pending')) return;
 
-            SessionController::set('2fa_pending', ['user_id' => (int)$user['id'], 'remember' => true, 'at' => time()]);
+            SessionController::set('2fa_pending', ['user_id' => (int)$user['id'], 'public_id' => $user['public_id'], 'remember' => true, 'at' => time()]);
             PageController::redirect('two-factor');
             exit;
         }
@@ -169,6 +175,18 @@ class AuthController
      */
     public static function getUserWithRole(int $id): ?array
     {
+        return self::userWithRole(['users.id' => $id]);
+    }
+
+    /**
+     * The users row matching $where, joined with its role name as 'role'.
+     *
+     * @param array<string, int|string> $where
+     *
+     * @return array|null
+     */
+    private static function userWithRole(array $where): ?array
+    {
         return DB::single(
             SELECT: ['users.*', 'roles.name AS role'],
             FROM: 'users',
@@ -176,7 +194,7 @@ class AuthController
                 ['id', ['user_roles', 'user_id']],
                 [['user_roles', 'role_id'], ['roles', 'id']],
             ],
-            WHERE: ['users.id' => $id]
+            WHERE: $where
         );
     }
 
@@ -195,21 +213,6 @@ class AuthController
                 'user_id' => $id,
                 'type' => TokenType::VERIFICATION->value
             ]
-        );
-    }
-
-    /**
-     * Determine whether a user exists by id.
-     *
-     * @param int $id
-     *
-     * @return bool
-     */
-    public static function exists(int $id): bool
-    {
-        return DB::exists(
-            FROM: 'users',
-            WHERE: compact('id')
         );
     }
 
@@ -302,7 +305,7 @@ class AuthController
      * The single enforcement point for forced actions: pins a user with one pending to that page,
      * before the request is even dispatched. Every other route (bar logout and the /api/ calls the
      * page needs) redirects there, stashing the attempted URL to return to afterwards. On the pinned
-     * page the breadcrumb trail is suppressed and the layout drops its nav links.
+     * page the breadcrumb trail is locked (shown but not clickable).
      *
      * @return void
      */
@@ -316,7 +319,7 @@ class AuthController
         if (preg_match('#^/(api/)?logout(/|$)#i', $uri)) return;
 
         if (preg_match('#^/(api/)?' . preg_quote($route, '#') . '(/|$)#i', $uri)) {
-            if (!str_starts_with($uri, '/api/')) BreadcrumbController::suppress();
+            if (!str_starts_with($uri, '/api/')) BreadcrumbController::lock();
             return;
         }
 
@@ -395,6 +398,18 @@ class AuthController
     private static function isSafeRedirectPath(string $uri): bool
     {
         return (bool)preg_match('#^/(?![/\\\\])#', $uri);
+    }
+
+    /**
+     * Same as getUserWithRole(), looked up by the public id from a URL.
+     *
+     * @param string $publicId
+     *
+     * @return array|null
+     */
+    public static function getUserWithRoleByPublicId(string $publicId): ?array
+    {
+        return self::userWithRole(['users.public_id' => $publicId]);
     }
 
     /**
@@ -641,20 +656,6 @@ class AuthController
     }
 
     /**
-     * Whether an account exists and still has a pending verification.
-     * Shared by every page that must respond identically to a missing account and an already-verified one, so neither can be used to enumerate account existence or verification status.
-     *
-     * @param int $id
-     *
-     * @return bool
-     */
-    #[NoDiscard]
-    public static function needsVerification(int $id): bool
-    {
-        return self::exists($id) && !self::isVerified($id);
-    }
-
-    /**
      * Whether $email belongs to a user other than $excludeId: the check a profile/edit form needs before saving a changed email address.
      *
      * @param string $email
@@ -716,6 +717,121 @@ class AuthController
         );
 
         return $user ? (int)$user['id'] : null;
+    }
+
+    /**
+     * Generate a random public id for a new user, used in every URL and page attribute that names the user so users can't be enumerated the way the sequential id can.
+     *
+     * @return string
+     *
+     * @throws RandomException
+     */
+    public static function generatePublicId(): string
+    {
+        return bin2hex(random_bytes(PUBLIC_ID_LENGTH / 2));
+    }
+
+    /**
+     * Resolve a user's id by their public id.
+     *
+     * @param string $publicId
+     *
+     * @return int|null Id or null when not found
+     */
+    public static function getUserIdByPublicId(string $publicId): ?int
+    {
+        $user = DB::single(
+            SELECT: 'id',
+            FROM: 'users',
+            WHERE: ['public_id' => $publicId]
+        );
+
+        return $user ? (int)$user['id'] : null;
+    }
+
+    /**
+     * Validate the submitted username: length, an ASCII-only charset and, unless $allowReserved, no impersonation of a role, the site or a RESERVED_USERNAMES entry.
+     * The charset and reserved checks only apply to a changed username, so a reserved name an admin assigned stays saveable on the user's own profile form.
+     *
+     * @param int|null $userId        Id of the user being edited, null when creating one
+     * @param bool     $allowReserved Whether reserved names are accepted, for admin-managed accounts
+     *
+     * @return bool True when validation passes; otherwise an alert is queued and $_POST['username'] cleared
+     */
+    #[NoDiscard]
+    public static function validateUsername(?int $userId, bool $allowReserved = false): bool
+    {
+        if (!FormController::validate('username', ['maxLength' => MAX_USERNAME_LENGTH])) return false;
+
+        $username = RequestController::rawPost('username') ?? '';
+
+        if ($username === '') return true;
+        if ($userId !== null && $username === (DB::single(SELECT: 'username', FROM: 'users', WHERE: ['id' => $userId])['username'] ?? null)) return true;
+
+        if (!preg_match('/' . self::USERNAME_PATTERN . '/', $username)) {
+            $_POST['username'] = '';
+            FormController::addAlert(self::USERNAME_PATTERN_MESSAGE, AlertType::WARNING);
+            return false;
+        }
+
+        if (!$allowReserved && self::isReservedUsername($username, self::reservedUsernames())) {
+            $_POST['username'] = '';
+            FormController::addAlert(self::USERNAME_RESERVED_MESSAGE, AlertType::WARNING);
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether $username matches any of $reservedNames once both are normalized, so case, separators and digit look-alikes ("4dm1n", "ad_min") don't get around it.
+     *
+     * @param string   $username
+     * @param string[] $reservedNames
+     *
+     * @return bool
+     */
+    public static function isReservedUsername(string $username, array $reservedNames): bool
+    {
+        $normalized = self::normalizeUsername($username);
+        return array_any($reservedNames, static fn(string $name): bool => self::normalizeUsername($name) === $normalized);
+    }
+
+    /**
+     * Lowercase, strip everything but letters and digits, and fold look-alike characters onto one letter.
+     *
+     * @param string $username
+     *
+     * @return string
+     */
+    private static function normalizeUsername(string $username): string
+    {
+        return strtr(preg_replace('/[^a-z0-9]/', '', strtolower($username)), '013457l', 'oieasti');
+    }
+
+    /**
+     * Every name a regular user can't take: RESERVED_USERNAMES, the site name and each role name.
+     *
+     * @return string[]
+     */
+    private static function reservedUsernames(): array
+    {
+        return [...RESERVED_USERNAMES, APP_NAME, ...array_column(DB::select(SELECT: 'name', FROM: 'roles'), 'name')];
+    }
+
+    /**
+     * The username input's data attributes for the live form validation, mirroring validateUsername()'s charset and reserved-name checks.
+     *
+     * @param bool $allowReserved Whether reserved names are accepted, for admin-managed accounts
+     *
+     * @return string
+     */
+    public static function usernameInputAttrs(bool $allowReserved = false): string
+    {
+        $attrs = 'data-pattern="' . self::USERNAME_PATTERN . '" data-pattern-message="' . self::USERNAME_PATTERN_MESSAGE . '"';
+        if ($allowReserved) return $attrs;
+
+        return $attrs . ' data-reserved="' . AppController::sanitize(json_encode(self::reservedUsernames(), JSON_THROW_ON_ERROR)) . '" data-reserved-message="' . self::USERNAME_RESERVED_MESSAGE . '"';
     }
 
     /**
@@ -1115,7 +1231,7 @@ class AuthController
     {
         return self::renderAndSendMail('verification', [
             'title' => 'Account Verification - ' . APP_NAME,
-            'link' => Url::absolute("verify-account/$id/$code"),
+            'link' => Url::absolute('verify-account/' . self::getPublicId($id) . "/$code"),
             'code' => $code
         ], $to, 'Verify account', "user id \"$id\"");
     }
@@ -1145,6 +1261,22 @@ class AuthController
     }
 
     /**
+     * Resolve a user's public id by their id, for building a URL that names the user.
+     *
+     * @param int $id
+     *
+     * @return string|null Public id or null when not found
+     */
+    public static function getPublicId(int $id): ?string
+    {
+        return DB::single(
+            SELECT: 'public_id',
+            FROM: 'users',
+            WHERE: compact('id')
+        )['public_id'] ?? null;
+    }
+
+    /**
      * Send a password reset email with a tokenized link to the reset form.
      * Failures are logged, not shown to the user: ForgotPasswordPage always shows the same generic response regardless of outcome, so this endpoint can't be used to check which emails are registered.
      *
@@ -1158,7 +1290,7 @@ class AuthController
     {
         self::renderAndSendMail('reset-password', [
             'title' => 'Password Reset Request - ' . APP_NAME,
-            'link' => Url::absolute("reset-password/$id/$token")
+            'link' => Url::absolute('reset-password/' . self::getPublicId($id) . "/$token")
         ], $to, 'Reset password', "user id \"$id\"");
     }
 

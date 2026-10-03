@@ -1,4 +1,5 @@
 <?php
+use app\Controllers\AuthController;
 use app\Controllers\FormController;
 use app\Controllers\RequestController;
 use app\Models\Url;
@@ -23,25 +24,25 @@ $s = $this->pageObj->settings;
             <?php if ($s->profileImage) : ?>
               <img src="<?= $s->profileImage ?>" alt="Profile image">
             <?php else : ?>
-              <i class="fas fa-circle-user"></i>
+              <i class="fas fa-circle-user fa-width-auto"></i>
             <?php endif ?>
           </div>
         </div>
 
-        <input type="hidden" name="id" value="<?= $s->user['id'] ?>">
+        <input type="hidden" name="id" value="<?= $s->user['public_id'] ?>">
         <input id="image" type="file" name="image" accept="image/*" data-max-size-mb="<?= PROFILE_IMAGE_CONFIG['max_size_mb'] ?>" hidden>
 
         <div class="row g-2 center-x">
           <button class="col profile-action edit button button-sm g-col-0.5 center-y f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>"><i class="fas fa-<?= $s->profileImage ? 'pen' : 'plus' ?>"></i><?= $s->profileImage ? 'Change photo' : 'Add photo' ?></button>
           <?php if ($s->profileImage) : ?>
-            <button class="col profile-action button button-sm error g-col-0.5 center-y f-0" type="submit" formaction="<?= Url::to('api/user/' . $s->user['id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i>Remove photo</button>
+            <button class="col profile-action button button-sm error g-col-0.5 center-y f-0" type="submit" formaction="<?= Url::to('api/user/' . $s->user['public_id'] . '/delete-profile-image') ?>"><i class="fas fa-trash"></i>Remove photo</button>
           <?php endif ?>
         </div>
       </form>
     </div>
 
     <div class="row center-x">
-      <form class="col max-w-md g-row-1" method="POST" action="" data-track-form>
+      <form class="col max-w-md g-row-1" id="profile-form" method="POST" action="" data-track-form>
         <div class="row form-row">
           <?php $this->component('form/form-input', [
               'id' => 'username',
@@ -50,6 +51,8 @@ $s = $this->pageObj->settings;
               'maxlength' => MAX_USERNAME_LENGTH,
               'placeholder' => 'Enter username:',
               'value' => RequestController::post('username') ?? $s->user['username'] ?? '',
+              'initialValue' => $s->user['username'] ?? '',
+              'extraAttrs' => AuthController::usernameInputAttrs(),
           ]) ?>
         </div>
 
@@ -61,6 +64,7 @@ $s = $this->pageObj->settings;
               'maxlength' => MAX_NAME_LENGTH,
               'placeholder' => 'Enter first name:',
               'value' => RequestController::post('first_name') ?? $s->user['first_name'] ?? '',
+              'initialValue' => $s->user['first_name'] ?? '',
           ]) ?>
 
           <?php $this->component('form/form-input', [
@@ -70,6 +74,7 @@ $s = $this->pageObj->settings;
               'maxlength' => MAX_NAME_LENGTH,
               'placeholder' => 'Enter last name:',
               'value' => RequestController::post('last_name') ?? $s->user['last_name'] ?? '',
+              'initialValue' => $s->user['last_name'] ?? '',
               'groupClass' => 'f-g-2',
           ]) ?>
         </div>
@@ -78,31 +83,21 @@ $s = $this->pageObj->settings;
           <?php $this->component('form/form-input', [
               'id' => 'email',
               'label' => 'Email',
+              'required' => true,
+              'requiredMark' => false,
               'icon' => 'at',
               'type' => 'email',
               'maxlength' => MAX_EMAIL_LENGTH,
               'placeholder' => 'Enter email:',
               'value' => RequestController::post('email') ?? $s->user['email'] ?? '',
+              'initialValue' => $s->user['email'] ?? '',
               'error' => isset($_POST['submit']) && empty($_POST['email']),
           ]) ?>
         </div>
 
         <div class="row">
-          <?php $this->component('form/form-input', [
-              'id' => 'current-password',
-              'label' => 'Current password',
-              'icon' => 'lock',
-              'type' => 'password',
-              'maxlength' => MAX_PASSWORD_LENGTH,
-              'placeholder' => 'Enter current password:',
-              'autocomplete' => 'current-password',
-              'ariaLabel' => 'Current password, required only to change your email address',
-          ]) ?>
-        </div>
-
-        <div class="row">
           <div class="col">
-            <p class="form-details">Required only to change your email address.</p>
+            <p class="form-details">Changing your email address asks for your current password when you save.</p>
           </div>
         </div>
 
@@ -115,3 +110,12 @@ $s = $this->pageObj->settings;
     </div>
   </div>
 </section>
+
+<?php $this->component('modal/password-confirm-modal', [
+    'id' => 'email-password-modal',
+    'formId' => 'profile-form',
+    'requiredWith' => 'email',
+    'text' => 'Enter your current password to change your email address.',
+    'buttonText' => 'Save changes',
+    'icon' => 'floppy-disk',
+]) ?>

@@ -1,0 +1,30 @@
+<?php
+use app\Controllers\AppController;
+
+/**
+ * Reset and "Columns" controls for a table/table component, linked to it by $tableId.
+ *
+ * @var string                                           $tableId Same id as the table's own, unique per page
+ * @var array<int, array{label: string, visible?: bool}> $columns Same columns, in the same order, as the table
+ */
+
+$tableId = AppController::sanitize($tableId);
+?>
+
+<div class="row col-toggle-wrapper f-nowrap g-col-1" data-table-controls="<?= $tableId ?>">
+  <button class="col link lh-1 table-reset-btn g-col-0.5 center f-0" type="button" data-typo="small" inert><i class="fas fa-rotate-left"></i>Reset</button>
+  <button class="col button button-sm col-toggle-btn g-col-0.5 center f-0" type="button" popovertarget="col-toggle-panel-<?= $tableId ?>" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" aria-haspopup="true" aria-expanded="false" aria-controls="col-toggle-panel-<?= $tableId ?>"><i class="fas fa-columns"></i>Columns</button>
+  <div class="col col-toggle-panel" id="col-toggle-panel-<?= $tableId ?>" popover>
+
+    <?php foreach ($columns as $index => $column) : ?>
+
+      <div class="row">
+        <label class="col center-y g-col-0.5 f-0">
+          <input type="checkbox" data-col="<?= $index ?>" <?= ($column['visible'] ?? true) ? 'checked' : '' ?>><?= AppController::sanitize($column['label']) ?>
+        </label>
+      </div>
+
+    <?php endforeach ?>
+
+  </div>
+</div>

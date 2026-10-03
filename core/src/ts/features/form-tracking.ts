@@ -1,9 +1,17 @@
+import {initialValue} from './form-validation.ts';
+
 type FormField = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
+function isToggle(field: FormField): field is HTMLInputElement {
+  return field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio');
+}
+
 function fieldState(field: FormField): string {
-  return field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')
-    ? String(field.checked)
-    : field.value;
+  return isToggle(field) ? String(field.checked) : field.value;
+}
+
+function baseline(field: FormField): string {
+  return isToggle(field) || field instanceof HTMLSelectElement ? fieldState(field) : initialValue(field);
 }
 
 // A field or submit button can live outside the form and target it via the `form` attribute (e.g. to sit in a shared button row, or a form with no visible fields of its own), so it won't turn up as a descendant; look it up by owner form too.
@@ -23,7 +31,7 @@ function trackChanges(): void {
       .filter(button => !button.hasAttribute('data-track-ignore'));
     if (!trackedButtons.length) return;
 
-    const initialState = inputFields.map(fieldState);
+    const initialState = inputFields.map(baseline);
 
     const checkChanges = (): void => {
       const changed = inputFields.some((field, index) => fieldState(field) !== initialState[index]);
@@ -35,6 +43,8 @@ function trackChanges(): void {
 
     // A native reset button reverts the fields without firing input/change, so re-check once it has.
     form.addEventListener('reset', () => setTimeout(checkChanges));
+
+    checkChanges();
   });
 }
 

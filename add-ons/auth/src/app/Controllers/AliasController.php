@@ -13,7 +13,7 @@ class AliasController
     {
         // @addon-insert:after("self::register('welcome', new Alias('home'));")
 
-        self::register('profile', new Alias('user', [SessionController::get('user')['id'] ?? null]));
+        self::register('profile', new Alias('user', [SessionController::get('user')['public_id'] ?? null]));
         // @addon-end
     }
 }

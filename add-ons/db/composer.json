@@ -1,3 +1,8 @@
+@addon-insert:after('"require": {')
+"ext-pdo": "*",
+"ext-pdo_mysql": "*",
+@addon-end
+
 @addon-insert:replace('"@addon-placeholder": "db"')
 "test:integration": "phpunit --configuration=config/phpunit.xml --testsuite=Integration",
 "migrate": "php src/app/Scripts/migrate.php",

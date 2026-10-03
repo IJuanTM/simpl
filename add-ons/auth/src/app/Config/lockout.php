@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+const RATE_LIMIT_CACHE_RETENTION = 86400; // seconds; how long stale rate-limit files are kept before pruning
+
 // Uses exponential backoff: duration doubles after each threshold of failed attempts.
 const LOCKOUT_CONFIG = [
     'user' => [

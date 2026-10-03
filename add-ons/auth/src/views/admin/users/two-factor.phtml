@@ -31,8 +31,9 @@ $dotClass = static function (bool $on, bool $required): string {
       </div>
 
       <div class="row">
-        <div class="col center-x">
-          <p class="form-details">Status for <strong><?= $user['username'] ?? $user['email'] ?></strong>.</p>
+        <div class="col f-col g-row-0.25">
+          <h2 data-typo="h5"><?= $user['username'] ?? $user['email'] ?></h2>
+          <p class="form-details">The two-factor methods this user has set up. Mark a method as required to make them set it up, or reset a method they can no longer access.</p>
         </div>
       </div>
 
@@ -130,10 +131,11 @@ $dotClass = static function (bool $on, bool $required): string {
 
       <div class="row g-2 center-x">
         <a class="col link lh-1 g-col-0.5 center-y f-0" href="<?= $this::prev() ?>"><i class="fas fa-arrow-left"></i>Back</a>
-        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" form="required-methods-form" inert><i class="fas fa-check"></i>Save required methods</button>
+        <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" form="required-methods-form" inert><i class="fas fa-floppy-disk"></i>Save changes</button>
+        <button class="col link lh-1 g-col-0.5 center-y f-0" type="reset" form="required-methods-form" inert><i class="fas fa-rotate-left"></i>Clear changes</button>
 
         <?php if ($anyOn) : ?>
-          <button class="col button warning g-col-0.5 center-y f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" data-modal-reset-2fa data-user-id="<?= $user['id'] ?>" data-user-username="<?= $user['username'] ?? '' ?>" data-user-email="<?= $user['email'] ?>" aria-label="Reset all two-factor authentication for this user"><i class="fas fa-shield-halved"></i>Reset everything</button>
+          <button class="col button warning g-col-0.5 center-y f-0" type="button" data-cooldown="<?= UI_BUTTON_COOLDOWN ?>" data-modal-reset-2fa data-user-id="<?= $user['id'] ?>" data-user-public-id="<?= $user['public_id'] ?>" data-user-username="<?= $user['username'] ?? '' ?>" data-user-email="<?= $user['email'] ?>" aria-label="Reset all two-factor authentication for this user"><i class="fas fa-shield-halved"></i>Reset everything</button>
         <?php endif ?>
       </div>
     </div>

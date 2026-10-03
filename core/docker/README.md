@@ -87,7 +87,7 @@ services:
 
 ### Linux file ownership
 
-On Linux, the container's `www-data` user writes straight into your bind-mounted project (`src/logs/`, `src/cache/`, `composer.lock`, ...), so its user ID has to match yours. The image defaults to `1000`, the first regular user on most distros - if `id -u`/`id -g` print something else, set `UID`/`GID` in the project-root `.env` and run `simpl up`. Docker Desktop (Windows/macOS) maps ownership for you, so there this setting doesn't matter.
+On Linux, the container's `www-data` user writes straight into your bind-mounted project (`src/logs/`, `composer.lock`, ...), so its user ID has to match yours. The image defaults to `1000`, the first regular user on most distros - if `id -u`/`id -g` print something else, set `UID`/`GID` in the project-root `.env` and run `simpl up`. Docker Desktop (Windows/macOS) maps ownership for you, so there this setting doesn't matter.
 
 ### Windows performance
 

@@ -4,7 +4,9 @@ export const verificationModule = {
     if (!codeInput) return;
 
     const submitButton = codeInput.form?.querySelector<HTMLButtonElement>('button[type="submit"][name="submit"]');
-    const gateSubmit = (): void => submitButton?.toggleAttribute('inert', !codeInput.value.trim());
+    const gateSubmit = (): void => {
+      submitButton?.toggleAttribute('inert', !codeInput.value.trim());
+    };
 
     const digitInputs = document.querySelectorAll<HTMLInputElement>('input.digit');
 

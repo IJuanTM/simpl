@@ -67,13 +67,12 @@ $lockoutTimeoutMs = $lockoutTimeout !== null ? ($lockoutTimeout - time()) * 1000
       </div>
     </div>
 
-    <div class="row g-col-1 center" data-timeout="<?= $lockoutTimeoutMs ?>" inert>
-      <div class="col f-0">
-        <p>Stay logged in?</p>
-      </div>
-      <label class="col f-0" for="remember">
-        <input class="remember-checkbox" id="remember" type="checkbox" name="remember" autocomplete="off" aria-label="Checkbox to remember login">
-      </label>
+    <div class="row center-x" data-timeout="<?= $lockoutTimeoutMs ?>" inert>
+      <?php $this->component('form/checkbox', [
+          'id' => 'remember',
+          'fieldName' => 'remember',
+          'label' => 'Stay logged in',
+      ]) ?>
     </div>
 
     <div class="row g-2 center-x">

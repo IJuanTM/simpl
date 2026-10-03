@@ -45,6 +45,10 @@ $id = substr($triggerAttr, strlen('data-'));
               <span class="col modal-user-id">-</span>
             </div>
             <div class="row g-col-0.5 center-y">
+              <span class="col text-muted f-0">Public id:</span>
+              <span class="col modal-user-public-id">-</span>
+            </div>
+            <div class="row g-col-0.5 center-y">
               <span class="col text-muted f-0">Username:</span>
               <span class="col modal-user-username">-</span>
             </div>
@@ -67,13 +71,11 @@ $id = substr($triggerAttr, strlen('data-'));
 
         <?php if ($confirmCheckbox) : ?>
 
-          <div class="row g-col-1 center-y">
-            <label class="col f-0">
-              <input type="checkbox" data-track-checkbox autocomplete="off">
-            </label>
-            <div class="col">
-              <p><?= AppController::sanitize($confirmText) ?></p>
-            </div>
+          <div class="row">
+            <?php $this->component('form/checkbox', [
+                'label' => $confirmText,
+                'attrs' => 'data-track-checkbox',
+            ]) ?>
           </div>
 
         <?php endif ?>

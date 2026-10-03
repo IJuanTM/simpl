@@ -40,17 +40,9 @@ class VerifyAccountPage
      */
     private function checkUrlCode(Page $page): void
     {
-        $id = AppController::sanitize($page->subpage() ?? '');
+        $id = AuthController::getUserIdByPublicId($page->subpage() ?? '');
 
-        if (empty($id) || !is_numeric($id)) {
-            FormController::addAlert('Undefined user id! Please check your mail.', AlertType::ERROR);
-            PageController::redirect(REDIRECT, 2);
-            return;
-        }
-
-        $id = (int)$id;
-
-        if (!AuthController::needsVerification($id)) {
+        if ($id === null || AuthController::isVerified($id)) {
             FormController::addAlert('This verification link is no longer valid.', AlertType::INFO);
             PageController::redirect('login', 2);
             return;

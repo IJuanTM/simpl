@@ -40,16 +40,16 @@ check_gitkeep() {
   fi
 }
 
-check_gitkeep "core/src/cache/ratelimit/.gitkeep"
+check_gitkeep "add-ons/auth/src/cache/ratelimit/.gitkeep"
 check_gitkeep "core/src/logs/.gitkeep"
 check_gitkeep "add-ons/auth/src/public/img/profile/.gitkeep"
 check_gitkeep "core/docker/certs/.gitkeep"
 
-# core/src/.env is the shipped template - src/app/Scripts/app-key.php replaces @app-key on the project's first composer install.
+# add-ons/auth/src/.env is the shipped template - src/app/Scripts/app-key.php replaces @app-key on the project's first composer install.
 # A real generated key has leaked into this file and gotten committed before; this must never happen again.
 
 check_app_key_placeholder() {
-  local file="core/src/.env"
+  local file="add-ons/auth/src/.env"
   local content
 
   if ! content=$(git show ":$file" 2>/dev/null); then
@@ -185,7 +185,7 @@ while IFS= read -r staged_file; do
   content=""
   fetched=0
   case "$staged_file" in
-    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore | *.yml | *.yaml)
+    *.php | *.env | *.phtml | *.xml | *.ts | *.scss | *.json | *.gitignore | *.yml | *.yaml | *Dockerfile | *.dockerignore)
       if content=$(git show ":$staged_file" 2>/dev/null); then fetched=1; fi
       ;;
   esac
