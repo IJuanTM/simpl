@@ -74,7 +74,7 @@ class ContactPage
             return;
         }
 
-        if (MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender)) PageController::redirectWithAlert(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
-        else PageController::redirectWithAlert(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
+        if (MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender)) PageController::redirectWithToast(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
+        else PageController::redirectWithToast(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
     }
 }

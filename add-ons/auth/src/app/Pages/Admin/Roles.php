@@ -142,7 +142,7 @@ class Roles
             ]
         );
 
-        PageController::redirectWithAlert('admin/roles', 'Role created successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/roles', 'Role created successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -190,7 +190,7 @@ class Roles
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('admin/roles', 'Role updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/roles', 'Role updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -236,7 +236,7 @@ class Roles
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('admin/roles', 'Role deleted successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/roles', 'Role deleted successfully!', AlertType::SUCCESS, 4);
     }
 
     /**

@@ -140,6 +140,6 @@ class VerifyAccountPage
     {
         AuthController::deleteToken($id, TokenType::VERIFICATION);
 
-        PageController::redirectWithAlert('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('login', 'Success! Your account has been verified!', AlertType::SUCCESS, 4);
     }
 }

@@ -18,7 +18,6 @@ class AppController
         ob_start(self::injectCsrf(...));
 
         new SessionController();
-        new AlertController();
         new AliasController();
         new PageController();
     }

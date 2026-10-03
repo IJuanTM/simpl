@@ -1,6 +1,7 @@
 @use "sass:list";
 @use "sass:map";
 @use "sass:color";
+@use "sass:math";
 
 @use "../vars/breakpoints" as *;
 @use "../vars/themes" as *;
@@ -8,30 +9,42 @@
 @use "../vars/status" as *;
 
 @mixin set-themes {
-  :root {
-    color-scheme: dark;
+  $default-colors: map.get($themes, $default-theme, colors);
 
-    @each $key, $pair in $themes {
-      --#{$key}: light-dark(#{list.nth($pair, 1)}, #{list.nth($pair, 2)});
+  @each $name, $theme in $themes {
+    $colors: map.get($theme, colors);
+
+    @each $key in list.join(map.keys($default-colors), map.keys($colors)) {
+      @if not map.has-key($colors, $key) or not map.has-key($default-colors, $key) {
+        @error "Theme '#{$name}' and the default theme '#{$default-theme}' must set the same colors, but only one of them sets '#{$key}'.";
+      }
     }
 
-    --text-5: rgb(from var(--text) r g b / .05);
-    --text-25: rgb(from var(--text) r g b / .25);
-    --text-50: rgb(from var(--text) r g b / .5);
-    --text-75: rgb(from var(--text) r g b / .75);
-    --border-50: rgb(from var(--border) r g b / .5);
+    $selector: 'html[data-theme="#{$name}"]';
+
+    @if $name == $default-theme {
+      $selector: ":root, #{$selector}";
+    }
+
+    #{$selector} {
+      color-scheme: map.get($theme, color-scheme);
+
+      @each $key, $value in $colors {
+        --#{$key}: #{$value};
+      }
+    }
   }
 
-  html[data-theme="light"] {
-    color-scheme: light;
-  }
-
-  html[data-theme="dark"] {
-    color-scheme: dark;
+  :root {
+    @each $key in (text, text-inverse, shadow, border) {
+      @each $pct in (5, 10, 25, 50, 75) {
+        --#{$key}-#{$pct}: rgb(from var(--#{$key}) r g b / #{math.div($pct, 100)});
+      }
+    }
   }
 }
 
-// Per-theme light-dark() ink shade of each accent for text/icon/border use; surface fills stay the raw hex.
+// Per-color-scheme light-dark() ink shade of each accent for text/icon/border use; surface fills stay the raw hex.
 @mixin set-accent-inks {
   :root {
     @each $name, $c in $accent-colors {

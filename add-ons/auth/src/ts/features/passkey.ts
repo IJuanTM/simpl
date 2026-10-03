@@ -1,4 +1,4 @@
-import {showAlert} from '../helpers/alert.ts';
+import {showToast} from '../helpers/toast.ts';
 import {csrfToken} from '../helpers/csrf.ts';
 
 function toBuffer(base64Url: string): ArrayBuffer {
@@ -69,11 +69,11 @@ async function register(button: HTMLButtonElement, name: string): Promise<void> 
     const result = await postJson(button.dataset.registerUrl ?? '', {credential: credentialToJson(credential), name});
 
     if (result.ok) window.location.reload();
-    else showAlert('That passkey could not be registered. Please try again.', 'error');
+    else showToast('That passkey could not be registered. Please try again.', 'error');
   } catch (error) {
     // InvalidStateError means the authenticator already holds one of the user's passkeys, since the options list them in excludeCredentials.
-    if (error instanceof DOMException && error.name === 'InvalidStateError') showAlert('This passkey provider already has a passkey for your account.', 'warning');
-    else if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showAlert('Passkey setup was cancelled or failed.', 'error');
+    if (error instanceof DOMException && error.name === 'InvalidStateError') showToast('This passkey provider already has a passkey for your account.', 'warning');
+    else if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showToast('Passkey setup was cancelled or failed.', 'error');
   } finally {
     button.disabled = false;
   }
@@ -106,9 +106,9 @@ async function authenticate(button: HTMLButtonElement): Promise<void> {
     const data = result.ok ? await result.json() : null;
 
     if (data?.ok && typeof data.redirect === 'string') window.location.assign(data.redirect);
-    else showAlert('That passkey was not accepted. Try another sign-in method.', 'error');
+    else showToast('That passkey was not accepted. Try another sign-in method.', 'error');
   } catch (error) {
-    if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showAlert('Passkey sign-in was cancelled or failed.', 'error');
+    if (!(error instanceof DOMException && error.name === 'NotAllowedError')) showToast('Passkey sign-in was cancelled or failed.', 'error');
   } finally {
     button.disabled = false;
   }

@@ -1,15 +1,26 @@
 <?php
-use app\Controllers\AlertController;
+use app\Controllers\AppController;
+use app\Controllers\ToastController;
 ?>
 
 </main>
 
-<!-- Alert -->
-<?php if (($alert = AlertController::pull()) !== null) : ?>
-  <div class="alert <?= $alert['type'] ?? '' ?> global" role="alert" popover="manual"<?= $alert['timeout'] > 0 ? ' data-timeout="' . ($alert['timeout'] - time()) * 1000 . '"' : '' ?>>
-    <?= $alert['message'] ?>
+<!-- Toasts -->
+<section class="toasts" popover="manual" aria-label="Notifications" data-toasts="<?= AppController::sanitize(json_encode(ToastController::pull(), JSON_THROW_ON_ERROR)) ?>"></section>
+
+<template id="toast-template">
+  <div class="row toast g-col-1" role="alert">
+    <div class="col toast-message center-y"></div>
+    <div class="col center-y f-0">
+      <button class="toast-close center" type="button" aria-label="Close notification">
+        <svg class="toast-timer" viewBox="0 0 36 36" aria-hidden="true">
+          <circle cx="18" cy="18" r="16" pathLength="1"></circle>
+        </svg>
+        <i class="fas fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
   </div>
-<?php endif ?>
+</template>
 
 <!-- Footer -->
 <?php $this->part('layout/footer') ?>

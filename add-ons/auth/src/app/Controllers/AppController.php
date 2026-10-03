@@ -11,7 +11,7 @@ class AppController
 {
     public function __construct()
     {
-        // @addon-insert:after('new AlertController();')
+        // @addon-insert:after('new SessionController();')
         new AuthController();
         // @addon-end
     }

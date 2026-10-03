@@ -1,4 +1,3 @@
-import {dismissGlobalAlert} from '../helpers/alert.ts';
 import {prefersReducedMotion} from '../helpers/motion.ts';
 
 function collapseAlert(item: HTMLElement): void {
@@ -14,7 +13,6 @@ function collapseAlert(item: HTMLElement): void {
 
 function unlock(item: HTMLElement): void {
   if (!item.classList.contains('alert')) item.removeAttribute('inert');
-  else if (item.classList.contains('global')) dismissGlobalAlert(item);
   else collapseAlert(item);
 }
 
@@ -39,14 +37,6 @@ function runCountdown(el: HTMLElement): void {
 
 export const timeoutModule = {
   init(): void {
-    document.querySelectorAll<HTMLElement>('.alert.global[popover]').forEach(alert => {
-      try {
-        alert.showPopover();
-      } catch {
-        // Already open, or the browser has no popover support; the CSS fallback still shows it.
-      }
-    });
-
     document.querySelectorAll<HTMLElement>('[data-timeout]').forEach(item =>
       setTimeout(() => unlock(item), parseInt(item.getAttribute('data-timeout') ?? '0'))
     );

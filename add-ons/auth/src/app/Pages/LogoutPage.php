@@ -48,6 +48,6 @@ class LogoutPage
         // Rotate the session id so the now-anonymous session cannot reuse the authenticated one
         session_regenerate_id(true);
 
-        PageController::redirectWithAlert(REDIRECT, 'You have been logged out.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast(REDIRECT, 'You have been logged out.', AlertType::INFO, 4);
     }
 }

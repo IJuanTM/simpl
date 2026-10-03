@@ -143,7 +143,7 @@ class PageController extends Page
         $url = Url::to($location);
 
         // Immediate redirects use a real 302 so crawlers and API clients follow correctly.
-        // Delayed redirects keep a meta-style refresh so the current page (and its flash alert) is shown first.
+        // Delayed redirects keep a meta-style refresh so the current page (and its toasts) is shown first.
         if ($refresh) {
             header("refresh: $refresh; url=$url");
             return;
@@ -232,20 +232,20 @@ class PageController extends Page
     }
 
     /**
-     * Redirects the user while queuing a session-persisted flash alert to show after navigation.
+     * Redirects the user while queuing a session-persisted toast to show after navigation.
      * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
      *
      * @param string    $location The target location URL for the redirect.
-     * @param string    $message  The alert message to show after redirecting.
-     * @param AlertType $type     Visual type/style for the alert.
-     * @param int       $timeout  Seconds until the alert expires. 0 means it persists until the next page load.
+     * @param string    $message  The toast message to show after redirecting.
+     * @param AlertType $type     Visual type/style for the toast.
+     * @param int       $timeout  Seconds the toast stays on screen. 0 keeps it open until the user closes it.
      * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
      *
      * @return void
      */
-    public static function redirectWithAlert(string $location, string $message, AlertType $type, int $timeout = 0, ?int $refresh = 0): void
+    public static function redirectWithToast(string $location, string $message, AlertType $type, int $timeout = 0, ?int $refresh = 0): void
     {
-        AlertController::globalAlert($message, $type, $timeout);
+        ToastController::add($message, $type, $timeout);
         self::redirect($location, $refresh);
     }
 

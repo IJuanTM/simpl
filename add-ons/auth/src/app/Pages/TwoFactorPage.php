@@ -43,7 +43,7 @@ class TwoFactorPage
 
         if (!is_array($pending) || time() - ($pending['at'] ?? 0) > self::PENDING_TTL) {
             SessionController::remove('2fa_pending');
-            PageController::redirectWithAlert('login', 'Your login session expired. Please sign in again.', AlertType::INFO, 4);
+            PageController::redirectWithToast('login', 'Your login session expired. Please sign in again.', AlertType::INFO, 4);
             exit;
         }
 
@@ -179,7 +179,7 @@ class TwoFactorPage
             || (VERIFICATION_CONFIG['required'] && !AuthController::isVerified($this->userId))
         ) {
             if ($isApi) PageController::error(ErrorCode::BAD_REQUEST);
-            else PageController::redirectWithAlert('login', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            else PageController::redirectWithToast('login', AuthController::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;
         }
 
@@ -229,19 +229,19 @@ class TwoFactorPage
         }
 
         if (!RateLimiter::attempt('2fa-resend-' . $this->userId, 1, TWO_FACTOR_CONFIG['resend_cooldown'])) {
-            PageController::redirectWithAlert('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
+            PageController::redirectWithToast('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
             return;
         }
 
         if (!RateLimiter::attempt(RateLimiter::ipKey('2fa-resend-ip'), TWO_FACTOR_CONFIG['resend_ip_max_attempts'], TWO_FACTOR_CONFIG['resend_ip_attempt_window'])) {
-            PageController::redirectWithAlert('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
+            PageController::redirectWithToast('two-factor', 'Please wait a moment before requesting another code.', AlertType::WARNING, 4);
             return;
         }
 
         $user = AuthController::getUserById($this->userId);
         if ($user !== null) TwoFactorController::issueEmailChallenge($this->userId, $user['email']);
 
-        PageController::redirectWithAlert('two-factor', 'A new code has been sent to your email address.', AlertType::INFO, 4);
+        PageController::redirectWithToast('two-factor', 'A new code has been sent to your email address.', AlertType::INFO, 4);
     }
 
     /**

@@ -1,4 +1,4 @@
-import {showAlert} from '../helpers/alert.ts';
+import {showToast} from '../helpers/toast.ts';
 
 async function cropToSquarePng(file: File): Promise<Blob | null> {
   try {
@@ -29,7 +29,7 @@ export const profileImageModule = {
 
     const fail = (message: string): void => {
       form.classList.remove('loading');
-      showAlert(message, 'error');
+      showToast(message, 'error');
     };
 
     const upload = async (): Promise<void> => {
@@ -59,8 +59,9 @@ export const profileImageModule = {
       formData.append('new_img', blob, `${formData.get('id')}-${Date.now()}.png`);
 
       try {
-        // The endpoint always answers with a redirect; success and failure feedback both arrive as a flash alert on reload.
-        await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {method: 'POST', body: formData});
+        // The endpoint always answers with a redirect; success and failure feedback both arrive as a toast on reload.
+        // Not following it keeps the target page from rendering unseen and using up that toast.
+        await fetch(`/api/user/${formData.get('id')}/update-profile-image`, {method: 'POST', body: formData, redirect: 'manual'});
         window.location.reload();
       } catch {
         fail('An error occurred while uploading the image. Please try again.');

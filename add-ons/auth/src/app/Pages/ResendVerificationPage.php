@@ -41,19 +41,19 @@ class ResendVerificationPage
         $id = AuthController::getUserIdByPublicId($publicId);
 
         if ($id === null) {
-            PageController::redirectWithAlert(REDIRECT, 'Undefined user id! Please contact an administrator.', AlertType::ERROR, 0, 2);
+            PageController::redirectWithToast(REDIRECT, 'Undefined user id! Please contact an administrator.', AlertType::ERROR, 0, 2);
             return;
         }
 
         if (!RateLimiter::attempt(RateLimiter::ipKey('resend-verification-ip'), VERIFICATION_CONFIG['resend_ip_max_attempts'], VERIFICATION_CONFIG['resend_ip_attempt_window'])) {
-            PageController::redirectWithAlert(REDIRECT, 'Please wait a moment before requesting another verification email!', AlertType::WARNING, 0, 2);
+            PageController::redirectWithToast(REDIRECT, 'Please wait a moment before requesting another verification email!', AlertType::WARNING, 0, 2);
             return;
         }
 
         // The account-scoped limit fails silently behind the same generic response as a genuine resend, unlike the IP limit above.
         // A party who only knows this account's id can't use a distinct "too many attempts" response to confirm they're suppressing its real resends.
         if (RateLimiter::attempt('resend-verification-' . $id, 1, RESEND_TIMEOUTS['verification']) && !AuthController::isVerified($id)) $this->resendVerification($id, $publicId);
-        else PageController::redirectWithAlert("verify-account/$publicId", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
+        else PageController::redirectWithToast("verify-account/$publicId", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
     }
 
     /**
@@ -66,7 +66,7 @@ class ResendVerificationPage
      */
     private function resendVerification(int $id, string $publicId): void
     {
-        if (AuthController::issueVerificationToken($id, AuthController::getUserById($id)['email'])) PageController::redirectWithAlert("verify-account/$publicId", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
-        else PageController::redirectWithAlert("verify-account/$publicId", 'An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
+        if (AuthController::issueVerificationToken($id, AuthController::getUserById($id)['email'])) PageController::redirectWithToast("verify-account/$publicId", 'If your account needs verification, a new email has been sent.', AlertType::INFO, 4);
+        else PageController::redirectWithToast("verify-account/$publicId", 'An error occurred while sending your verification email! Please contact support.', AlertType::ERROR, 8);
     }
 }

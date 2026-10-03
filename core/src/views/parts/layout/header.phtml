@@ -23,7 +23,24 @@ use app\Models\Url;
 
     <div class="col nav-options">
       <div class="row end-x h-100">
-        <div class="col theme-switch center f-0"></div>
+        <div class="col theme-switch f-0">
+          <div class="row h-100">
+            <button class="col theme-switch-btn g-col-0.5 center" type="button" popovertarget="theme-menu" aria-label="Choose a theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-menu">
+              <i class="fas fa-circle-half-stroke" aria-hidden="true"></i><i class="fas fa-chevron-down theme-switch-chevron" aria-hidden="true"></i>
+            </button>
+            <div class="col theme-menu" id="theme-menu" popover>
+
+              <?php foreach (['system' => 'circle-half-stroke'] + THEMES as $theme => $icon) : ?>
+
+                <div class="row">
+                  <button class="col theme-option g-col-0.5 center-y" type="button" data-theme-option="<?= $theme ?>" aria-pressed="false"><i class="fas fa-<?= $icon ?>" aria-hidden="true"></i><?= ucfirst($theme) ?></button>
+                </div>
+
+              <?php endforeach ?>
+
+            </div>
+          </div>
+        </div>
 
         <button class="col hamburger hamburger--squeeze f-0" type="button" aria-label="Toggle navigation menu" aria-controls="navigation" aria-expanded="false">
           <span class="hamburger-box center">

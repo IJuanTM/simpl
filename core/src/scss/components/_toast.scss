@@ -1,0 +1,79 @@
+@use "../config" as *;
+
+section.toasts {
+  overflow: visible;
+  width: min(32rem, 100% - 2rem);
+  margin: 1rem;
+  padding: 0;
+  transition: box-shadow .3s ease-in-out, overlay .3s ease-in-out allow-discrete, display .3s ease-in-out allow-discrete;
+  pointer-events: none;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  box-shadow: 0 0 4rem 0 transparent;
+  inset: $header-height 0 auto auto;
+
+  &:popover-open {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 4rem 0 var(--shadow-50);
+    row-gap: .5rem;
+
+    &:not(.carried) {
+      @starting-style {
+        box-shadow: 0 0 4rem 0 transparent;
+      }
+    }
+  }
+}
+
+div.toast {
+  padding: 1rem;
+  transition: opacity .3s ease-in-out, translate .3s ease-in-out;
+  pointer-events: auto;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+
+  @include shimmer(false, rgba(#FFF, .25));
+
+  &:not(.carried) {
+    @starting-style {
+      opacity: 0;
+      translate: 100% 0;
+    }
+  }
+
+  &.leaving {
+    transition-duration: .15s;
+    opacity: 0;
+    translate: 100% 0;
+  }
+
+  button.toast-close {
+    position: relative;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    transition: opacity .15s ease-in-out;
+    color: inherit;
+
+    > svg.toast-timer {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      inset: 0;
+      rotate: -90deg;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 1;
+    }
+
+    @include hover-focus {
+      opacity: .75;
+    }
+  }
+
+  @include status-modifiers(fill);
+}

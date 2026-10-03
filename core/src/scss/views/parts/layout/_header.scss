@@ -180,16 +180,67 @@ header {
       }
 
       div.theme-switch {
-        width: 4rem;
-        cursor: pointer;
+        anchor-scope: --theme-switch;
 
-        > i {
-          font-size: 1.5rem;
+        button.theme-switch-btn {
+          padding: 0 1rem;
+          cursor: pointer;
+          anchor-name: --theme-switch;
+
+          > i {
+            font-size: 1.5rem;
+
+            &.theme-switch-chevron {
+              font-size: .75rem;
+              transition: rotate .15s ease-in-out;
+            }
+          }
+
+          &[aria-expanded="true"] > i.theme-switch-chevron {
+            rotate: 180deg;
+          }
+
+          @include hover-focus {
+            > i {
+              color: var(--text-75);
+            }
+          }
         }
 
-        @include hover-focus {
-          > i {
+        div.theme-menu {
+          min-width: 10rem;
+          margin: .5rem 0 0;
+          padding: .5rem;
+          border: var(--border-width) solid var(--border-muted);
+          border-radius: var(--radius-sm);
+          background-color: var(--bg-section);
+          inset: anchor(bottom) anchor(right) auto auto;
+          position-anchor: --theme-switch;
+
+          &:popover-open {
+            display: flex;
+            flex-direction: column;
+            row-gap: .25rem;
+          }
+
+          button.theme-option {
+            padding: .5rem;
+            cursor: pointer;
+            transition: background-color .15s ease-in-out;
+            white-space: nowrap;
             color: var(--text-75);
+            border-radius: var(--radius-sm);
+
+            &[aria-pressed="true"] {
+              font-weight: 700;
+              color: var(--text);
+              background-color: var(--button);
+            }
+
+            @include hover-focus {
+              color: var(--text);
+              background-color: var(--button-hover);
+            }
           }
         }
       }

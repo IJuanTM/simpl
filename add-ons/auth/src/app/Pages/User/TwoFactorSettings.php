@@ -172,7 +172,7 @@ class TwoFactorSettings
         }
 
         SessionController::set('2fa_new_recovery_codes', TwoFactorController::enable($this->userId));
-        PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'Two-factor authentication is on. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
+        PageController::redirectWithToast('user/settings/two-factor?manageTab=recovery', 'Two-factor authentication is on. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
     }
 
     /**
@@ -185,14 +185,14 @@ class TwoFactorSettings
         if (!$this->requireEnabled()) return;
 
         if ($this->twoFactorRequired) {
-            PageController::redirectWithAlert('user/settings/two-factor', 'Your role requires two-factor authentication; it cannot be turned off.', AlertType::WARNING, 5);
+            PageController::redirectWithToast('user/settings/two-factor', 'Your role requires two-factor authentication; it cannot be turned off.', AlertType::WARNING, 5);
             return;
         }
 
         if (!$this->confirmCurrentPassword("2fa-disable-{$this->userId}", 'user/settings/two-factor?tab=email')) return;
 
         TwoFactorController::disableAll($this->userId);
-        PageController::redirectWithAlert('user/settings/two-factor', 'Two-factor authentication has been turned off.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor', 'Two-factor authentication has been turned off.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -213,7 +213,7 @@ class TwoFactorSettings
      * Re-confirms the account password before a change that weakens the account outright.
      * Turning 2FA off entirely and replacing recovery codes gate on this; removing a single
      * factor (authenticator, one passkey) does not, since email always remains enrolled.
-     * Redirects with a global alert and returns false on a missing, rate-limited or wrong password,
+     * Redirects with a toast and returns false on a missing, rate-limited or wrong password,
      * since the caller's action never completes on this request either way.
      *
      * @param string $rateLimitKey   Per-action lockout key
@@ -226,13 +226,13 @@ class TwoFactorSettings
         $password = RequestController::rawPost('current-password');
 
         if ($password === null || $password === '' || mb_strlen($password) > MAX_PASSWORD_LENGTH) {
-            PageController::redirectWithAlert($redirectTarget, 'Please enter your current password!', AlertType::WARNING);
+            PageController::redirectWithToast($redirectTarget, 'Please enter your current password!', AlertType::WARNING);
             return false;
         }
 
         // Checked before the password itself, or a correct guess would still get through while locked out.
         if (RateLimiter::retryAfterMs($rateLimitKey) > 0) {
-            PageController::redirectWithAlert($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            PageController::redirectWithToast($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
             return false;
         }
 
@@ -240,11 +240,11 @@ class TwoFactorSettings
 
         // Only a wrong password counts against the lockout, matching PasswordSettings::changePassword().
         if (!RateLimiter::attempt($rateLimitKey, LOCKOUT_CONFIG['change_password']['max_attempts'], LOCKOUT_CONFIG['change_password']['window_seconds'])) {
-            PageController::redirectWithAlert($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
+            PageController::redirectWithToast($redirectTarget, 'Too many incorrect attempts. Please wait a while before trying again.', AlertType::ERROR);
             return false;
         }
 
-        PageController::redirectWithAlert($redirectTarget, 'Your current password is incorrect!', AlertType::WARNING);
+        PageController::redirectWithToast($redirectTarget, 'Your current password is incorrect!', AlertType::WARNING);
         return false;
     }
 
@@ -260,7 +260,7 @@ class TwoFactorSettings
         if (!$this->confirmCurrentPassword("2fa-recovery-{$this->userId}", 'user/settings/two-factor?manageTab=recovery')) return;
 
         SessionController::set('2fa_new_recovery_codes', TwoFactorController::regenerateRecoveryCodes($this->userId));
-        PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'New recovery codes generated. Your old codes no longer work.', AlertType::SUCCESS, 8);
+        PageController::redirectWithToast('user/settings/two-factor?manageTab=recovery', 'New recovery codes generated. Your old codes no longer work.', AlertType::SUCCESS, 8);
     }
 
     /**
@@ -272,7 +272,7 @@ class TwoFactorSettings
     {
         TwoFactorController::forgetAllDevices($this->userId);
         TwoFactorController::forgetThisDevice();
-        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'All remembered devices will be asked for two-factor again.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor?manageTab=devices', 'All remembered devices will be asked for two-factor again.', AlertType::INFO, 4);
     }
 
     /**
@@ -285,7 +285,7 @@ class TwoFactorSettings
         $id = (int)($_POST['device_id'] ?? 0);
         if ($id > 0) TwoFactorController::forgetDevice($this->userId, $id);
 
-        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'Device forgotten. It will be asked for two-factor again.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor?manageTab=devices', 'Device forgotten. It will be asked for two-factor again.', AlertType::INFO, 4);
     }
 
     /**
@@ -297,7 +297,7 @@ class TwoFactorSettings
     {
         if ($this->twoFactorEnabled) TwoFactorController::setRememberDevice($this->userId, isset($_POST['remember_device']));
 
-        PageController::redirectWithAlert('user/settings/two-factor?manageTab=devices', 'Preference saved.', AlertType::SUCCESS, 3);
+        PageController::redirect('user/settings/two-factor?manageTab=devices');
     }
 
     /**
@@ -337,11 +337,11 @@ class TwoFactorSettings
 
         if (!$wasEnabled) {
             // confirmTotp() has already issued and stashed the recovery codes for the one-time display.
-            PageController::redirectWithAlert('user/settings/two-factor?manageTab=recovery', 'Authenticator app enabled. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
+            PageController::redirectWithToast('user/settings/two-factor?manageTab=recovery', 'Authenticator app enabled. Save your recovery codes now - they are shown only once.', AlertType::SUCCESS, 8);
             return;
         }
 
-        PageController::redirectWithAlert('user/settings/two-factor?tab=totp', 'Authenticator app enabled.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor?tab=totp', 'Authenticator app enabled.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -352,13 +352,13 @@ class TwoFactorSettings
     private function removeTotp(): void
     {
         if ($this->totpEnabled && in_array(TwoFactorMethod::TOTP->value, $this->requiredMethods, true)) {
-            PageController::redirectWithAlert('user/settings/two-factor?tab=totp', 'Your account requires the authenticator app; it cannot be removed.', AlertType::WARNING, 5);
+            PageController::redirectWithToast('user/settings/two-factor?tab=totp', 'Your account requires the authenticator app; it cannot be removed.', AlertType::WARNING, 5);
             return;
         }
 
         $message = $this->totpEnabled ? 'Authenticator app removed.' : 'Authenticator setup cancelled.';
         TwoFactorController::disableTotp($this->userId);
-        PageController::redirectWithAlert('user/settings/two-factor?tab=totp', $message, AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor?tab=totp', $message, AlertType::SUCCESS, 4);
     }
 
     /**
@@ -369,14 +369,14 @@ class TwoFactorSettings
     private function removePasskey(): void
     {
         if (count($this->passkeys) <= 1 && in_array(TwoFactorMethod::PASSKEY->value, $this->requiredMethods, true)) {
-            PageController::redirectWithAlert('user/settings/two-factor?tab=passkey', 'Your account requires a passkey; you must keep at least one.', AlertType::WARNING, 5);
+            PageController::redirectWithToast('user/settings/two-factor?tab=passkey', 'Your account requires a passkey; you must keep at least one.', AlertType::WARNING, 5);
             return;
         }
 
         $id = (int)($_POST['passkey_id'] ?? 0);
         if ($id > 0) TwoFactorController::deletePasskey($this->userId, $id);
 
-        PageController::redirectWithAlert('user/settings/two-factor?tab=passkey', 'Passkey removed.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/two-factor?tab=passkey', 'Passkey removed.', AlertType::SUCCESS, 4);
     }
 
     /**

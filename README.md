@@ -157,7 +157,8 @@ Feel free to add your own config files here, as each `.php` file in this folder 
 In the `src/app` folder you can find the `Controllers`, `Models` and `Pages` folders.
 
 * The `Controllers` folder contains an `AppController` and a `PageController`, these contain the main functions for the framework.
-    - Besides these there are also the `AlertController`, `AliasController`, `SessionController`, `BreadcrumbController`, `RequestController` and `FormController`, used for handling alerts, aliases, sessions, breadcrumbs, sanitized request input and form validation respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+    - Besides these there are also the `ToastController`, `AliasController`, `SessionController`, `BreadcrumbController`, `RequestController` and `FormController`, used for handling toasts, aliases, sessions, breadcrumbs, sanitized request input and form validation respectively. These are used by the main controllers. In the `AliasController` you can register aliases for urls, these can be used to create custom urls for pages, for example by default there is a `welcome` alias for the home page.
+    - `ToastController::add()` (or `PageController::redirectWithToast()` when redirecting) queues a toast notification in the session, so it shows on the next page that renders, even after a redirect. Toasts stack in the top-right corner and each has a close button; given a timeout, a ring around that button counts down until the toast closes itself, pausing while the toast is hovered or focused. Toasts still on screen when the user moves to another page continue there with the time they had left. On the client, `showToast()` from `helpers/toast.ts` adds one directly. Inline form messages use `FormController::addAlert()` instead.
 * The `Models` folder contains different models that are used in the framework, like the `Page` and `Url` models. These are used to store data about pages and urls.
 * The `Pages` folder contains a `Page` class for each view that requires PHP code. See these as specific controllers for each view. A `Page` is not required for each view, if a view doesn't require PHP code, you don't need to create a `Page` for it. By default, there is a `HomePage` class for the `home.phtml` view, as well as an `ErrorPage` class for handling errors.
 
@@ -180,6 +181,8 @@ The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at
 #### Styling and TypeScript
 
 The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, cards, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
+
+Each theme is a file in `src/scss/config/themes/` that sets its `color-scheme` (light or dark) and a value for every theme color; Sass stops with an error when a theme is missing a color the default theme sets. To add a theme, copy one of these files, add it to the `$themes` map in `config/vars/_themes.scss`, and add its name and Font Awesome icon to `THEMES` in `src/app/Config/app.php`, which fills the theme menu in the header. The menu's System option follows the device's setting by picking the `light` or `dark` theme, and the choice is remembered per browser.
 
 The TypeScript is in the `src/ts` folder - feature modules in `features/` (each exposing an `init()` that `main.ts` calls), shared helpers in `helpers/`. Vite bundles it all starting from `main.ts`. Every form gets live validation mirroring the server-side rules (required fields, email format, maximum length, plus `data-pattern`, `data-match` and `data-required-with` attributes), shown under each field on submit, or on blur once a field has a value or had one that was cleared; a field inside a closed `<dialog>` opens that dialog instead of showing an error, and a field with `data-initial-value` (the form-input component's `initialValue`) is compared against that saved value rather than what the page rendered; an add-on can register extra rules with `formValidationModule.addRule()`. A form
 with `data-track-form` only enables its submit button once something changed.
@@ -329,39 +332,28 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 
 #### Version 2.0.0 (2026-10-03)
 
-* Now requires PHP 8.5
+* Now requires PHP 8.5, and the PHP code uses its new features
 * Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
-* Moved the database classes and the scheduler out of the auth add-on into a new `db` add-on, which the auth add-on now depends on
-* Add-ons can now depend on other add-ons, which get installed automatically
+* Moved the database classes and the scheduler out of the auth add-on into a new `db` add-on; add-ons can now depend on other add-ons, which get installed automatically
 * Replaced the npx tools with the `simpl` CLI, used to create projects, install add-ons and run the Docker setup
-* Added a Docker setup as the recommended way to run a project locally, served over HTTPS, with MariaDB when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
-* Added support for a locally trusted certificate (e.g. from mkcert) in the Docker setup
+* Added a Docker setup as the recommended way to run a project locally, served over HTTPS (optionally with a locally trusted certificate, e.g. from mkcert), with MariaDB when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
 * The `live` npm script now uses the project's `APP_URL` and matches its HTTP or HTTPS scheme, configured in a new `bs-config.cjs` file
-* Added migration and seeder classes, replacing the example `.sql` file
-* Added a scheduler for running cron jobs
-* Added `IN` and `NOT IN` support to the query builder
+* Added migration and seeder classes replacing the example `.sql` file, a scheduler for running cron jobs, and `IN` and `NOT IN` support in the query builder
 * Added an admin panel to the auth add-on for managing users and roles and viewing login attempts, with sortable, searchable and paginated tables
-* Added a profile page and account settings pages for users
-* Added two-factor authentication to the auth add-on, using email codes, authenticator apps or passkeys, with recovery codes, trusted devices and the option to require specific methods per role or user
-* Added an `APP_KEY` to the `.env` file, generated on `composer install` and used to encrypt two-factor secrets
-* Added password requirements that are checked while typing and again when submitting
+* Added a profile page and account settings pages, with profile URLs using a public user id instead of the database id
+* Added two-factor authentication to the auth add-on, using email codes, authenticator apps or passkeys, with recovery codes, trusted devices and the option to require specific methods per role or user; its secrets are encrypted with a new `APP_KEY`, generated on `composer install`
+* Added live form validation that mirrors the server-side rules, including new username rules and password requirements
 * Added login lockouts and rate limiting to the login, contact, forgot password and verification forms, with longer lockouts after repeated failed attempts
-* Changing a password now logs the account out on every device
-* "Remember me" now works on several devices at once
-* Added breadcrumb navigation
-* Added a multi-select form component
+* Changing a password now logs the account out on every device, and "Remember me" now works on several devices at once
+* Replaced the global alert with stacking toast notifications that can be closed and show a countdown until they close themselves
+* Added a theme menu with a "System" option that follows the device's light or dark mode, and made each theme its own Sass file so more can be added
+* Added breadcrumb navigation and shared form, select, checkbox, multi-select, modal and table components
 * Pages no longer need their own code to load subpages
-* Improved error page handling
-* Added `ErrorCode` and `TokenType` enums
-* Added PHPUnit tests for the framework and add-ons, split into unit, feature and integration tests
-* Added PHPStan static analysis
-* Security fixes and improvements all around, including CSRF validation, session cookies, rate limiting and page routing
-* Added extra security headers to the .htaccess file and a stricter Content Security Policy for styles
+* Improved error page handling and added `ErrorCode` and `TokenType` enums
+* Added PHPUnit tests (unit, feature and integration) and PHPStan static analysis
+* Security fixes and improvements all around, including CSRF validation, session cookies and page routing, plus extra security headers and a stricter Content Security Policy in the .htaccess file
 * Fixed the namespace in the sitemap.xml file
-* Updated the PHP code to use new PHP 8.5 features
-* Improved the styling with CSS cascade layers, `light-dark()` theming, native `<dialog>` modals and popovers
-* The theme now follows the system's light or dark mode until another one is picked
-* Improved the Sass and TypeScript folder structure
+* Improved the styling with CSS cascade layers, native `<dialog>` modals and popovers, and a cleaner Sass and TypeScript folder structure
 * Moved the log and cache files out of `src/app` into `src/logs` and `src/cache`
 * Accessibility improvements across all pages
 * Improved the console output and email templates

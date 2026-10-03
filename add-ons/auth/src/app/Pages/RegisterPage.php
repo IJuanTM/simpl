@@ -50,7 +50,7 @@ class RegisterPage
         new Timebox()->call(function () {
             if (AuthController::checkEmail($_POST['email'])) {
                 // Mirrors the genuine no-verification-required success response verbatim, so the alert text carries no enumeration tell either; the Location can still differ when verification is required, a separate, harder gap to close.
-                PageController::redirectWithAlert('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
+                PageController::redirectWithToast('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
                 return;
             }
 
@@ -103,10 +103,10 @@ class RegisterPage
 
         if (VERIFICATION_CONFIG['required']) {
             $result = AuthController::issueVerificationToken((int)$id, $email);
-            if ($result) PageController::redirectWithAlert("verify-account/$publicId", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
-            else PageController::redirectWithAlert("verify-account/$publicId", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
+            if ($result) PageController::redirectWithToast("verify-account/$publicId", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
+            else PageController::redirectWithToast("verify-account/$publicId", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
         } else {
-            PageController::redirectWithAlert('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
+            PageController::redirectWithToast('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
         }
     }
 }

@@ -111,11 +111,11 @@ class ProfileSettings
 
         if (VERIFICATION_CONFIG['required'] && $emailChanged) {
             AuthController::issueVerificationToken($id, $_POST['email']);
-            PageController::redirectWithAlert('profile', 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
+            PageController::redirectWithToast('profile', 'Profile updated! Please check your new email address to verify it.', AlertType::SUCCESS, 6);
             return;
         }
 
-        PageController::redirectWithAlert('profile', 'Profile updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('profile', 'Profile updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**

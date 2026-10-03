@@ -1,8 +1,8 @@
-import {raiseGlobalAlert} from '../helpers/alert.ts';
+import {raiseToasts} from '../helpers/toast.ts';
 
 export function openModal(modal: HTMLDialogElement): void {
   modal.showModal();
-  raiseGlobalAlert();
+  raiseToasts();
 }
 
 // Close buttons use command="close" declaratively; this only covers the backdrop-click case.

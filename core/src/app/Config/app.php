@@ -18,6 +18,10 @@ const ERROR_AUTO_REDIRECT = true;
 const HISTORY_DEPTH = 5; // how many prior pages back()/prev() can navigate
 const UI_BUTTON_COOLDOWN = 300; // milliseconds; shared data-cooldown value for repeat-click-guarded buttons
 
+// Theme name => Font Awesome icon for the header's theme menu; each name needs a matching theme in scss/config/vars/_themes.scss.
+// The "System" option follows the device's light/dark setting by picking the themes named light and dark.
+const THEMES = ['light' => 'sun', 'dark' => 'moon'];
+
 // ---------------------------------------------------------------- //
 
 define('SIMPL_VERSION', $_ENV['SIMPL_VERSION']);

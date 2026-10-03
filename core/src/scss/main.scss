@@ -42,6 +42,7 @@
   @include meta.load-css("components/quote");
   @include meta.load-css("components/table");
   @include meta.load-css("components/table/column-toggle");
+  @include meta.load-css("components/toast");
 
   // PARTS
   @include meta.load-css("views/parts/layout/content");

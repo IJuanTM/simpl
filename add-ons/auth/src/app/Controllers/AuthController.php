@@ -330,7 +330,7 @@ class AuthController
 
         self::setIntendedUrl($uri, '#^/(user/settings|login|logout)(/|$)#i');
 
-        PageController::redirectWithAlert($route, match ($route) {
+        PageController::redirectWithToast($route, match ($route) {
             'user/settings/change-password' => 'Before you can continue, you must change your password!',
             default => 'Your account requires two-factor authentication. Please set it up to continue.',
         }, AlertType::WARNING, 4);
@@ -458,13 +458,13 @@ class AuthController
         $fresh = self::getUserWithRole((int)$user['id']);
         if (!$fresh || $fresh['status'] !== UserStatus::ACTIVE->value) {
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, 'Your session has been invalidated. Please log in again.', AlertType::ERROR, 4);
+            PageController::redirectWithToast(REDIRECT, 'Your session has been invalidated. Please log in again.', AlertType::INFO, 4);
             exit;
         }
 
         if (empty($fresh['role'])) {
             SessionController::remove('user');
-            PageController::redirectWithAlert(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            PageController::redirectWithToast(REDIRECT, self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             exit;
         }
 
@@ -472,7 +472,7 @@ class AuthController
         // Not just the remember-me token updatePassword() already revokes.
         if (($user['password_changed_at'] ?? null) !== ($fresh['password_changed_at'] ?? null)) {
             SessionController::remove('user');
-            PageController::redirectWithAlert('login', 'Your password was changed. Please log in again.', AlertType::INFO, 4);
+            PageController::redirectWithToast('login', 'Your password was changed. Please log in again.', AlertType::INFO, 4);
             exit;
         }
 
@@ -1008,7 +1008,7 @@ class AuthController
 
     /**
      * Finish an authenticated login: record the successful attempt, open the session, and honour remember-me.
-     * Queues a flash alert and returns the page to go to, so both the redirecting login pages and the
+     * Queues a toast and returns the page to go to, so both the redirecting login pages and the
      * JSON passkey endpoint can drive the navigation themselves.
      *
      * @param array $user     Verified user row
@@ -1022,7 +1022,7 @@ class AuthController
         self::updateLastLogin($user['email']);
 
         if (!self::setUserSession($user)) {
-            AlertController::globalAlert(self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
+            ToastController::add(self::ACCOUNT_ISSUE_MESSAGE, AlertType::ERROR, 4);
             return REDIRECT;
         }
 
@@ -1064,7 +1064,7 @@ class AuthController
 
         $destination = SessionController::get('intended_url') ?? 'profile';
         SessionController::remove('intended_url');
-        AlertController::globalAlert('Login successful! Welcome!', AlertType::SUCCESS, 4);
+        ToastController::add('Login successful! Welcome!', AlertType::SUCCESS, 4);
 
         return $destination;
     }
@@ -1141,12 +1141,12 @@ class AuthController
     /**
      * Redirect to the originally requested URL saved by requireAuth(), or to $fallback when none was stored.
      * Clears the stored URL after use so a second call can't replay it.
-     * Queues a flash alert shown after the redirect when $message is given.
+     * Queues a toast shown after the redirect when $message is given.
      *
      * @param string      $fallback Route to use when no intended URL is in session
-     * @param string|null $message  Optional flash alert message to show after redirecting
+     * @param string|null $message  Optional toast message to show after redirecting
      * @param AlertType   $type     Alert type, used only when $message is given
-     * @param int         $timeout  Alert timeout in seconds, used only when $message is given
+     * @param int         $timeout  Toast timeout in seconds, used only when $message is given
      *
      * @return void
      */
@@ -1155,7 +1155,7 @@ class AuthController
         $url = SessionController::get('intended_url') ?? $fallback;
         SessionController::remove('intended_url');
 
-        if ($message !== null) PageController::redirectWithAlert($url, $message, $type, $timeout);
+        if ($message !== null) PageController::redirectWithToast($url, $message, $type, $timeout);
         else PageController::redirect($url);
     }
 

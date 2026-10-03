@@ -177,7 +177,7 @@ class UserPage
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('user/settings/profile', 'Profile image updated successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/profile', 'Profile image updated successfully!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -189,7 +189,7 @@ class UserPage
      */
     private static function uploadFailed(string $message): void
     {
-        PageController::redirectWithAlert('user/settings/profile', $message, AlertType::ERROR, 4);
+        PageController::redirectWithToast('user/settings/profile', $message, AlertType::ERROR, 4);
     }
 
     /**
@@ -226,6 +226,6 @@ class UserPage
             WHERE: compact('id')
         );
 
-        PageController::redirectWithAlert('user/settings/profile', 'Profile image deleted successfully!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('user/settings/profile', 'Profile image deleted successfully!', AlertType::SUCCESS, 4);
     }
 }

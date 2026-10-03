@@ -1,3 +1,4 @@
+import {showToast} from '../helpers/toast.ts';
 import {openModal} from './modal.ts';
 
 export const twoFactorModule = {
@@ -43,8 +44,12 @@ export const twoFactorModule = {
     // A [data-autosave] form has no submit button; each field change POSTs it in the background.
     // form.action is unusable here: a control named "action" clobbers it, so read the attribute.
     document.querySelectorAll<HTMLFormElement>('form[data-autosave]').forEach(form =>
-      form.addEventListener('change', () => {
-        fetch(form.getAttribute('action') || window.location.href, {method: 'POST', body: new FormData(form)});
+      form.addEventListener('change', async () => {
+        // A failed save (expired session, stale CSRF token) also redirects to a page that loads fine, so only landing back on this page counts.
+        const saved = await fetch(form.getAttribute('action') || window.location.href, {method: 'POST', body: new FormData(form)})
+          .then(response => response.ok && new URL(response.url).pathname === window.location.pathname, () => false);
+        if (saved) showToast('Preference saved.', 'success', 3000);
+        else showToast('Your preference could not be saved. Please try again.', 'error');
       }));
 
     // requestSubmit() rather than submit(), since the form's hidden "submit" field shadows form.submit.

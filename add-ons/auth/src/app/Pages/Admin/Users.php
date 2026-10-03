@@ -325,8 +325,8 @@ class Users
 
         $result = AuthController::sendCreatedUserMail($_POST['email'], $this->generatedPassword);
 
-        if ($result) PageController::redirectWithAlert('admin/users', 'Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
-        else PageController::redirectWithAlert('admin/users', 'The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
+        if ($result) PageController::redirectWithToast('admin/users', 'Success! The user has been created and notified via email!', AlertType::SUCCESS, 4);
+        else PageController::redirectWithToast('admin/users', 'The user has been created! However, there was an issue sending the notification email.', AlertType::ERROR, 8);
     }
 
     /**
@@ -478,7 +478,7 @@ class Users
             );
         });
 
-        PageController::redirectWithAlert('admin/users', 'Success! The user has been updated!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users', 'Success! The user has been updated!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -500,7 +500,7 @@ class Users
             ],
             WHERE: compact('id')
         );
-        PageController::redirectWithAlert('admin/users', 'User successfully deleted!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users', 'User successfully deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -534,7 +534,7 @@ class Users
             FROM: 'users',
             WHERE: compact('id')
         );
-        PageController::redirectWithAlert('admin/users', 'User permanently deleted!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users', 'User permanently deleted!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -556,7 +556,7 @@ class Users
             ],
             WHERE: compact('id')
         );
-        PageController::redirectWithAlert('admin/users', 'User successfully restored!', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users', 'User successfully restored!', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -567,7 +567,7 @@ class Users
     private function resetTwoFactor(): void
     {
         TwoFactorController::disableAll((int)$this->user['id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users/two-factor?id=' . $this->user['public_id'], 'Two-factor authentication has been reset for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -593,7 +593,7 @@ class Users
     private function resetTwoFactorTotp(): void
     {
         TwoFactorController::disableTotp((int)$this->user['id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'The authenticator app has been reset for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users/two-factor?id=' . $this->user['public_id'], 'The authenticator app has been reset for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -604,7 +604,7 @@ class Users
     private function resetTwoFactorPasskey(): void
     {
         TwoFactorController::deletePasskey((int)$this->user['id'], (int)$_POST['passkey_id']);
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'The passkey has been removed for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users/two-factor?id=' . $this->user['public_id'], 'The passkey has been removed for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
@@ -619,7 +619,7 @@ class Users
             SET: ['required_2fa_methods' => TwoFactorController::sanitizeRequiredMethods($_POST['required_2fa_methods'] ?? null)],
             WHERE: ['id' => (int)$this->user['id']]
         );
-        PageController::redirectWithAlert('admin/users/two-factor?id=' . $this->user['public_id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
+        PageController::redirectWithToast('admin/users/two-factor?id=' . $this->user['public_id'], 'Required two-factor methods updated for this user.', AlertType::SUCCESS, 4);
     }
 
     /**
