@@ -1,0 +1,55 @@
+@use "../config" as *;
+
+div.code-block {
+  padding: 1rem;
+  text-decoration: none;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-section);
+
+  code {
+    > span.command-name {
+      font-weight: 700;
+      color: $simpl;
+    }
+
+    > span.command-argument {
+      color: $simpl;
+    }
+
+    > span.command-arguments {
+      color: var(--text-50);
+    }
+  }
+
+  > span.copy-code {
+    display: none;
+    cursor: pointer;
+
+    @include breakpoint-down(sm) {
+      display: inline-flex;
+    }
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+
+    > i {
+      pointer-events: none;
+
+      &.fa-check {
+        color: var(--green);
+
+        @include hover-focus {
+          color: var(--green-hover);
+        }
+      }
+    }
+  }
+
+  @include hover-focus {
+    > span.copy-code {
+      display: inline-flex;
+    }
+  }
+}

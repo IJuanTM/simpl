@@ -1,0 +1,83 @@
+<?php
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Models\Url;
+?>
+
+<section class="row register center-x">
+  <form class="col max-w-md g-row-1" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Register</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <?php $this->component('form/form-input', [
+          'id' => 'email',
+          'label' => 'Email',
+          'required' => true,
+          'icon' => 'at',
+          'type' => 'email',
+          'maxlength' => MAX_EMAIL_LENGTH,
+          'placeholder' => 'Enter email:',
+          'value' => RequestController::post('email') ?? '',
+          'autocomplete' => 'email',
+          'ariaLabel' => 'Email input field',
+          'error' => isset($_POST['submit']) && empty($_POST['email']),
+      ]) ?>
+    </div>
+
+    <div class="row">
+      <div class="col form-group f-col g-row-0.25">
+        <div class="row form-row g-1">
+          <?php $this->component('form/form-input', [
+              'id' => 'password',
+              'label' => 'Password',
+              'required' => true,
+              'icon' => 'key',
+              'type' => 'password',
+              'maxlength' => MAX_PASSWORD_LENGTH,
+              'placeholder' => 'Enter password:',
+              'autocomplete' => 'new-password',
+              'ariaLabel' => 'Password input field',
+              'error' => isset($_POST['submit']) && empty($_POST['password']),
+              'capsLockWarning' => true,
+              'inputClass' => 'input-password',
+              'appendIcon' => 'eye password-toggle input-icon-clickable',
+              'extraAttrs' => 'data-pattern="' . AuthController::getPasswordPatternSource() . '" data-pattern-message="' . AuthController::getPasswordRequirements() . '"',
+          ]) ?>
+
+          <?php $this->component('form/form-input', [
+              'id' => 'password-check',
+              'label' => 'Repeat password',
+              'required' => true,
+              'icon' => 'key',
+              'type' => 'password',
+              'maxlength' => MAX_PASSWORD_LENGTH,
+              'placeholder' => 'Repeat password:',
+              'autocomplete' => 'new-password',
+              'ariaLabel' => 'Repeat password input field',
+              'error' => isset($_POST['submit']) && empty($_POST['password-check']),
+              'extraAttrs' => 'data-match="password" data-match-message="The entered passwords do not match!"',
+          ]) ?>
+        </div>
+
+        <?php $this->component('form/password-hint') ?>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details">Already have an account? <a class="link underline" href="<?= Url::to('login') ?>" aria-label="Link to login page">Click here to login</a>.</p>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit register form"<?= $this->pageObj->cooldown > 0 ? ' data-timeout="' . $this->pageObj->cooldown . '" inert' : '' ?>><i class="fas fa-user-plus"></i>Register</button>
+    </div>
+  </form>
+</section>

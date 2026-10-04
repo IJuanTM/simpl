@@ -1,0 +1,82 @@
+<?php
+use app\Controllers\FormController;
+use app\Controllers\RequestController;
+use app\Controllers\SessionController;
+use app\Models\Url;
+
+$lockoutTimeout = SessionController::get('lockout-timeout');
+$lockoutTimeoutMs = $lockoutTimeout !== null ? ($lockoutTimeout - time()) * 1000 : 0;
+?>
+
+<section class="row login center-x">
+  <form class="col max-w-md g-row-1" method="POST" action="">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Login</h1>
+      </div>
+    </div>
+
+    <?= FormController::formAlerts() ?>
+
+    <div class="row">
+      <?php $this->component('form/form-input', [
+          'id' => 'identifier',
+          'label' => 'Username or Email',
+          'required' => true,
+          'icon' => 'user',
+          'maxlength' => MAX_EMAIL_LENGTH,
+          'placeholder' => 'Enter username or email:',
+          'value' => RequestController::post('identifier') ?? '',
+          'autocomplete' => 'username',
+          'ariaLabel' => 'Username or email input field',
+          'error' => isset($_POST['submit']) && empty($_POST['identifier']),
+          'groupAttrs' => 'data-timeout="' . $lockoutTimeoutMs . '"',
+          'inert' => true,
+      ]) ?>
+    </div>
+
+    <div class="row">
+      <?php $this->component('form/form-input', [
+          'id' => 'password',
+          'label' => 'Password',
+          'required' => true,
+          'icon' => 'key',
+          'type' => 'password',
+          'maxlength' => MAX_PASSWORD_LENGTH,
+          'placeholder' => 'Enter password:',
+          'autocomplete' => 'current-password',
+          'ariaLabel' => 'Password input field',
+          'error' => isset($_POST['submit']) && empty($_POST['password']),
+          'capsLockWarning' => true,
+          'inputClass' => 'input-password',
+          'appendIcon' => 'eye password-toggle input-icon-clickable',
+          'groupAttrs' => 'data-timeout="' . $lockoutTimeoutMs . '"',
+          'inert' => true,
+      ]) ?>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details"><a class="link underline" href="<?= Url::to('forgot-password') ?>" aria-label="Link to forgot password page">Forgot your password?</a></p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details">Don't have an account? <a class="link underline" href="<?= Url::to('register') ?>" aria-label="Link to register page">Click here to register</a>.</p>
+      </div>
+    </div>
+
+    <div class="row center-x" data-timeout="<?= $lockoutTimeoutMs ?>" inert>
+      <?php $this->component('form/checkbox', [
+          'id' => 'remember',
+          'fieldName' => 'remember',
+          'label' => 'Stay logged in',
+      ]) ?>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" aria-label="Button to submit the login form" data-timeout="<?= $lockoutTimeoutMs ?>" inert><i class="fas fa-right-to-bracket"></i>Login</button>
+    </div>
+  </form>
+</section>

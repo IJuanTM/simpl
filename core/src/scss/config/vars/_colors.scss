@@ -1,0 +1,27 @@
+// Simpl
+$simpl: #D01018;
+
+// RGB
+$red: #E03010;
+$green: #10A030;
+$blue: #1070E0;
+
+// CMY
+$cyan: #10A0A0;
+$magenta: #A010A0;
+$yellow: #A0A010;
+
+// Extra
+$orange: #E0A010;
+
+// ---------------------------------------------------------------- //
+
+$accent-colors: (
+  "red": $red,
+  "green": $green,
+  "blue": $blue,
+  "cyan": $cyan,
+  "magenta": $magenta,
+  "yellow": $yellow,
+  "orange": $orange,
+);

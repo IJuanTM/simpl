@@ -1,0 +1,58 @@
+@use "sass:map";
+@use "../config" as *;
+
+button.button,
+a.button,
+label.button {
+  line-height: 1;
+  position: relative;
+  overflow: hidden;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: background-color .15s ease-in-out;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--text);
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background-color: var(--button);
+
+  @include touch-device {
+    touch-action: manipulation;
+  }
+
+  @include shimmer(true);
+
+  @include hover-focus {
+    background-color: var(--button-hover);
+  }
+
+  &.button-sm {
+    font-size: .875rem;
+    padding: .75rem 1.125rem;
+  }
+
+  &.button-simpl {
+    @include action-button($simpl);
+  }
+
+  @each $name, $accent in $status {
+    &.#{$name} {
+      @include action-button(map.get($accent-colors, $accent), map.get($status-ink, $name));
+    }
+  }
+
+  &[inert] {
+    opacity: .5;
+  }
+}
+
+button.link {
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+
+  @include hover-focus {
+    color: var(--text-75);
+  }
+}

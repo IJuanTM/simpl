@@ -1,0 +1,185 @@
+@use "../config" as *;
+
+div.table-container {
+  overflow: hidden;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-sm);
+
+  > div.col {
+    overflow-x: auto;
+
+    table {
+      display: table;
+      width: max-content;
+      min-width: 100%;
+      border-spacing: 0;
+      border-collapse: separate;
+
+      tr {
+        display: table-row;
+
+        th, td {
+          line-height: 1;
+          display: table-cell;
+          overflow: hidden;
+          padding: .625rem .5rem;
+          vertical-align: middle;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+      }
+
+      thead {
+        display: table-header-group;
+
+        th {
+          font-weight: 700;
+          position: relative;
+          overflow: visible;
+          border-bottom: var(--border-width) solid var(--border-muted);
+          background-color: var(--table-header);
+
+          .table-header-label {
+            display: block;
+            overflow: hidden;
+            min-width: 0;
+            max-width: 100%;
+            margin: 0;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+
+          a.table-sort-link {
+            display: block;
+            overflow: hidden;
+            width: 100%;
+            padding: .625rem 1.5rem .625rem .5rem;
+            white-space: nowrap;
+            text-decoration: none;
+            text-overflow: ellipsis;
+            color: inherit;
+
+            @include hover-focus {
+              color: var(--text-75);
+            }
+          }
+
+          &:not(:last-child) {
+            border-right: var(--border-width-thin) solid var(--border-muted);
+          }
+
+          &.sortable {
+            padding: 0;
+            cursor: pointer;
+            user-select: none;
+
+            &::after {
+              @include fa-icon;
+
+              font-size: .625rem;
+              position: absolute;
+              top: 0;
+              right: 0;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 1.5rem;
+              height: 100%;
+              content: "\f0dc";
+              pointer-events: none;
+              color: var(--text-50);
+              background-color: var(--table-header);
+            }
+
+            &.sort-asc::after {
+              content: "\f0de";
+              color: var(--text);
+            }
+
+            &.sort-desc::after {
+              content: "\f0dd";
+              color: var(--text);
+            }
+          }
+
+          span.col-resize-handle {
+            position: absolute;
+            z-index: layer("content", 2);
+            top: 0;
+            right: -.125rem;
+            bottom: 0;
+            width: .1875rem;
+            cursor: col-resize;
+            touch-action: none;
+
+            &:hover, &:active {
+              background-color: var(--border-50);
+            }
+          }
+        }
+      }
+
+      tbody {
+        display: table-row-group;
+
+        &.loading {
+          opacity: .4;
+        }
+
+        tr {
+          background-color: var(--table-row-odd);
+
+          > td:not(:last-child) {
+            border-right: var(--border-width-thin) solid var(--border-muted);
+          }
+
+          &:nth-child(even) {
+            background-color: var(--table-row-even);
+          }
+
+          &[data-href], > td[data-href] {
+            cursor: pointer;
+
+            @include hover-focus {
+              background-color: var(--table-header);
+            }
+          }
+
+          &.table-empty-row td {
+            padding: 1.5rem .5rem;
+            white-space: normal;
+            color: var(--text-50);
+          }
+        }
+      }
+
+      th[data-hidden], td[data-hidden] {
+        display: none;
+      }
+    }
+  }
+}
+
+td.table-actions :is(a, button).table-action {
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  border: none;
+  background: none;
+
+  > i {
+    font-size: .875rem;
+  }
+
+  @include hover-focus {
+    color: var(--text-75);
+  }
+
+  &.delete {
+    color: var(--red);
+
+    @include hover-focus {
+      color: var(--red-hover);
+    }
+  }
+}

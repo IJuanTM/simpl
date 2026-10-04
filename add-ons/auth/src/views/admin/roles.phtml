@@ -1,0 +1,38 @@
+<?php
+use app\Models\Url;
+?>
+
+<section class="row roles">
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Roles</h1>
+      </div>
+    </div>
+
+    <div class="row center-x">
+      <div class="col roles-table max-w-md f-col g-row-1 w-100">
+
+        <div class="row g-1">
+          <div class="col end-x">
+            <?php $this->component('table/column-toggle', ['tableId' => 'roles', 'columns' => $this->pageObj->tableColumns]) ?>
+          </div>
+        </div>
+
+        <?php $this->component('table/table', [
+            'tableId' => 'roles',
+            'columns' => $this->pageObj->tableColumns,
+            'thead' => $this->pageObj->renderThead(),
+            'tbody' => $this->pageObj->renderTbody(),
+        ]) ?>
+
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <a class="col button g-col-0.5 center-y f-0" href="<?= Url::to('admin/roles/create') ?>"><i class="fas fa-plus"></i>Create new role</a>
+    </div>
+  </div>
+</section>
+
+<?php $this->component('modal/role-delete-modal') ?>

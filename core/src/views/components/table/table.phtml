@@ -1,0 +1,81 @@
+<?php
+use app\Controllers\AppController;
+
+/**
+ * A data table with resizable, hideable columns that remember their state per browser (table.ts).
+ * Pair it with the table/column-toggle component, given the same $tableId and $columns, for the show/hide and reset controls.
+ *
+ * @var string                                                                        $tableId   Unique per page; also the key the column state is stored under
+ * @var array<int, array{label: string, width?: int|null, visible?: bool}>            $columns
+ * @var array<int, array<int, string>|array{cells: array<int, string>, href: string}> $rows      Cell HTML per row, in column order, echoed as-is so escape it first; pass ['cells' => [...], 'href' => '...'] to make the whole row a link
+ * @var string                                                                        $emptyText Shown in place of the rows when there are none
+ * @var string|null                                                                   $thead     Prebuilt header row HTML, replacing the one built from $columns
+ * @var string|null                                                                   $tbody     Prebuilt body HTML, replacing the one built from $rows
+ * @var string                                                                        $attrs     Raw extra attributes for the <table>, e.g. data-api="..."
+ */
+
+$rows ??= [];
+$emptyText ??= 'Nothing to show.';
+$attrs ??= '';
+$tableId = AppController::sanitize($tableId);
+$hiddenCols = json_encode(array_keys(array_filter($columns, static fn(array $column): bool => !($column['visible'] ?? true))), JSON_THROW_ON_ERROR);
+?>
+
+<div class="row table-container">
+  <div class="col">
+    <table class="data-table" data-table-id="<?= $tableId ?>" data-hidden-cols="<?= $hiddenCols ?>"<?= $attrs ? " $attrs" : '' ?>>
+      <thead>
+
+      <?php if (isset($thead)) : ?>
+
+        <?= $thead ?>
+
+      <?php else : ?>
+
+        <tr>
+
+          <?php foreach ($columns as $column) : ?>
+
+            <th scope="col"<?= !empty($column['width']) ? ' data-width="' . (int)$column['width'] . '"' : '' ?>><p class="table-header-label"><?= AppController::sanitize($column['label']) ?></p></th>
+
+          <?php endforeach ?>
+
+        </tr>
+
+      <?php endif ?>
+
+      </thead>
+      <tbody>
+
+      <?php if (isset($tbody)) : ?>
+
+        <?= $tbody ?>
+
+      <?php elseif (!$rows) : ?>
+
+        <tr class="table-empty-row text-center">
+          <td colspan="<?= count($columns) ?>"><?= AppController::sanitize($emptyText) ?></td>
+        </tr>
+
+      <?php else : ?>
+
+        <?php foreach ($rows as $row) : ?>
+
+          <tr<?= isset($row['href']) ? ' data-href="' . AppController::sanitize($row['href']) . '" tabindex="0"' : '' ?>>
+
+            <?php foreach ($row['cells'] ?? $row as $cell) : ?>
+
+              <td><?= $cell ?></td>
+
+            <?php endforeach ?>
+
+          </tr>
+
+        <?php endforeach ?>
+
+      <?php endif ?>
+
+      </tbody>
+    </table>
+  </div>
+</div>

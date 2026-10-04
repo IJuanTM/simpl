@@ -1,0 +1,13 @@
+@use "../../config" as *;
+
+dialog.modal-overlay div.modal-user-info {
+  font-size: .875rem;
+  padding: .75rem 1rem;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-accent);
+
+  span.text-muted {
+    min-width: 6rem;
+  }
+}

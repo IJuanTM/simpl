@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+# queue: max keeps every waiting release; the default queue keeps only the newest.
+concurrency:
+  group: release
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  release:
+    name: Release to the CDN
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: cdn
+      url: https://cdn.simpl.iwanvanderwal.nl/framework/versions.json
+    env:
+      CDN_DIR: /var/www/cdn.simpl.iwanvanderwal.nl/framework
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      # The date check catches a merge between midnight and the nightly re-check, before anything is uploaded.
+      - name: Check the version and release date
+        run: node .github/scripts/release.mjs check
+
+      - name: Build the zips and versions.json
+        id: build
+        run: |
+          node .github/scripts/release.mjs build dist
+          node .github/scripts/release.mjs versions dist
+
+      - name: Set up SSH
+        env:
+          SSH_KEY: ${{ secrets.CDN_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.CDN_SSH_KNOWN_HOSTS }}
+          SSH_HOST: ${{ secrets.CDN_SSH_HOST }}
+          SSH_USER: ${{ secrets.CDN_SSH_USER }}
+          SSH_PORT: ${{ secrets.CDN_SSH_PORT }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/cdn
+          chmod 600 ~/.ssh/cdn
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf 'Host cdn\n  HostName %s\n  Port %s\n  User %s\n  IdentityFile ~/.ssh/cdn\n  IdentitiesOnly yes\n  LogLevel ERROR\n' "$SSH_HOST" "$SSH_PORT" "$SSH_USER" > ~/.ssh/config
+
+      # A .new folder swapped in and versions.json last, so the CDN only lists complete versions.
+      - name: Upload to the CDN
+        working-directory: dist
+        env:
+          VERSION: ${{ steps.build.outputs.version }}
+        run: |
+          ssh cdn "rm -rf '$CDN_DIR/$VERSION.new'"
+          scp -q -r "$VERSION" "cdn:$CDN_DIR/$VERSION.new"
+          ssh cdn "cd '$CDN_DIR' && rm -rf '$VERSION.old' && { [ ! -e '$VERSION' ] || mv '$VERSION' '$VERSION.old'; } && mv '$VERSION.new' '$VERSION' && rm -rf '$VERSION.old'"
+          scp -q versions.json "cdn:$CDN_DIR/versions.json.tmp"
+          ssh cdn "mv '$CDN_DIR/versions.json.tmp' '$CDN_DIR/versions.json'"
+
+      - name: Check the published release
+        env:
+          VERSION: ${{ steps.build.outputs.version }}
+        run: |
+          curl -fsS "https://cdn.simpl.iwanvanderwal.nl/framework/versions.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{if(!JSON.parse(s).versions['$VERSION'])process.exit(1)})"
+          curl -fsSI "https://cdn.simpl.iwanvanderwal.nl/framework/$VERSION/core.zip" > /dev/null
+          echo "Released $VERSION"

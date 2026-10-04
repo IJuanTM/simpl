@@ -1,0 +1,101 @@
+<?php
+use app\Models\Url;
+
+/**
+ * The site's contact form, opened from the floating contact button on every page.
+ * contact.ts sends it to /api/contact in the background.
+ */
+?>
+
+<dialog class="modal-overlay" id="contact-modal" tabindex="-1" aria-label="Contact">
+  <form id="contact-form" method="POST" action="<?= Url::to('api/contact') ?>" hidden></form>
+
+  <div class="col modal f-col g-row-2">
+    <div class="row center-y g-col-1">
+      <h3 class="col">Contact</h3>
+      <button class="col link close-modal lh-1 g-col-0.5 center f-0" type="button" command="close" commandfor="contact-modal" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="row modal-body">
+      <div class="col f-col g-row-1">
+        <div class="row" data-contact-intro>
+          <div class="col">
+            <p>Questions or need help? Send us a message and we'll get back to you as soon as we can.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'contact-name',
+              'fieldName' => 'name',
+              'label' => 'Name',
+              'required' => true,
+              'icon' => 'user',
+              'maxlength' => MAX_NAME_LENGTH,
+              'placeholder' => 'Enter name:',
+              'autocomplete' => 'name',
+              'ariaLabel' => 'Name input field',
+              'extraAttrs' => 'form="contact-form"',
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'contact-email',
+              'fieldName' => 'email',
+              'label' => 'Email',
+              'required' => true,
+              'icon' => 'at',
+              'type' => 'email',
+              'maxlength' => MAX_EMAIL_LENGTH,
+              'placeholder' => 'Enter email:',
+              'autocomplete' => 'email',
+              'ariaLabel' => 'Email input field',
+              'extraAttrs' => 'form="contact-form"',
+              'details' => "We'll reply to this address.",
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'contact-subject',
+              'fieldName' => 'subject',
+              'label' => 'Subject',
+              'required' => true,
+              'icon' => 'heading',
+              'maxlength' => MAX_CONTACT_SUBJECT_LENGTH,
+              'placeholder' => 'Enter subject:',
+              'autocomplete' => 'off',
+              'ariaLabel' => 'Subject input field',
+              'extraAttrs' => 'form="contact-form"',
+          ]) ?>
+        </div>
+
+        <div class="row">
+          <div class="col form-group f-col g-row-0.25">
+            <div class="row">
+              <label class="col" for="contact-message">Message: <span class="required">*</span></label>
+              <div class="col end-x end-y">
+                <p class="form-link clear-message" inert>Clear</p>
+              </div>
+            </div>
+            <div class="row input-group">
+              <div class="col input-prepend center f-0"><i class="fas fa-message"></i></div>
+              <textarea class="col message-field" id="contact-message" name="message" form="contact-form" maxlength="<?= MAX_CONTACT_MESSAGE_LENGTH ?>" placeholder="Enter message:" autocomplete="off" aria-label="Message input field" required></textarea>
+            </div>
+            <div class="row">
+              <div class="col end-x">
+                <p class="form-details message-warning"><span class="message-length">0</span>/<?= MAX_CONTACT_MESSAGE_LENGTH ?></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="contact-modal"><i class="fas fa-xmark"></i>Cancel</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit" form="contact-form" aria-label="Button to submit the contact form"><i class="fas fa-paper-plane"></i>Send</button>
+    </div>
+  </div>
+</dialog>

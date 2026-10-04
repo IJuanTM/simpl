@@ -1,0 +1,28 @@
+@use "../config" as *;
+
+span.badge {
+  font-size: .75rem;
+  line-height: normal;
+  display: inline-flex;
+  padding: .25rem .5rem;
+  white-space: nowrap;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+
+  @include status-modifiers(fill);
+
+  &.bordered {
+    border: var(--border-width) solid var(--border);
+    background-color: transparent;
+
+    @include status-modifiers(outline);
+
+    &.muted {
+      border-color: var(--text-50);
+    }
+  }
+
+  &.muted {
+    color: var(--text-50);
+  }
+}

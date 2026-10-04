@@ -1,0 +1,22 @@
+@use "../config" as *;
+
+div.alert {
+  overflow: hidden;
+  padding: 1rem;
+  transition: opacity .15s ease-in-out, max-height .3s ease-in-out, margin-bottom .3s ease-in-out;
+  color: #FFF;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+
+  @include shimmer(false, rgba(#FFF, .25));
+
+  &.collapsing {
+    max-height: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+  }
+
+  @include status-modifiers(fill);
+}

@@ -1,0 +1,73 @@
+name: Release readiness
+
+# A commit status, so the scheduled run can set it on every open pull request too.
+on:
+  pull_request:
+    branches: [ master ]
+  # Five past midnight, since GitHub delays or drops scheduled runs at the start of every hour.
+  schedule:
+    - cron: '5 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+jobs:
+  check:
+    name: Check release readiness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Check and report the status
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          check_and_report() {
+            local root="$1" sha="$2" output state description
+            if output=$(node .github/scripts/release.mjs check --root "$root" 2>&1); then
+              state=success
+              description="$output"
+            else
+              state=failure
+              description=$(grep -m1 '^::error::' <<< "$output" | sed 's/^::error:://')
+            fi
+            echo "$output"
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$sha" -f state="$state" -f context="Release readiness" \
+              -f description="${description:0:140}" -f target_url="$RUN_URL" > /dev/null
+            [ "$state" = success ]
+          }
+
+          if [ "$EVENT" = pull_request ]; then
+            check_and_report . "$HEAD_SHA"
+            exit
+          fi
+
+          # Master's copy of the script checks each pull request's files, so only trusted code gets the statuses: write token.
+          gh pr list --base master --state open --json number,headRefOid --jq '.[] | "\(.number) \(.headRefOid)"' |
+            while read -r number sha; do
+              echo "::group::Pull request #$number"
+              # GitHub only has a merge result for a pull request without conflicts.
+              if git fetch --quiet --depth=1 origin "refs/pull/$number/merge"; then
+                git worktree add --quiet --detach "$RUNNER_TEMP/pr-$number" FETCH_HEAD
+                check_and_report "$RUNNER_TEMP/pr-$number" "$sha" || true
+              else
+                gh api "repos/$GITHUB_REPOSITORY/statuses/$sha" -f state=failure -f context="Release readiness" \
+                  -f description="Has merge conflicts with master" -f target_url="$RUN_URL" > /dev/null
+              fi
+              echo "::endgroup::"
+            done

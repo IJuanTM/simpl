@@ -1,0 +1,87 @@
+@use "../config" as *;
+
+:is(input, textarea, select) {
+  line-height: 1.4;
+  width: 100%;
+  padding: .625rem .5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--input);
+
+  &::placeholder, &[readonly] {
+    color: var(--text-25);
+  }
+
+  &:not([readonly]):focus {
+    background-color: var(--input-focus);
+  }
+}
+
+textarea {
+  min-height: calc(4lh + 1.25rem);
+  max-height: calc(16lh + 1.25rem);
+  resize: vertical;
+  word-break: break-word;
+  field-sizing: content;
+}
+
+:has(> select:not([multiple])) {
+  position: relative;
+  min-width: 6rem;
+
+  &::after {
+    @include fa-icon;
+
+    position: absolute;
+    top: 50%;
+    right: .625rem;
+    width: 1.25em;
+    content: "\f0d7";
+    transform: translateY(-50%);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  &:has(> select:not([multiple]):focus)::after {
+    content: "\f0d8";
+  }
+}
+
+input[type="checkbox"] {
+  cursor: pointer;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-sm);
+  background-color: var(--input);
+  aspect-ratio: 1;
+
+  &:checked {
+    position: relative;
+
+    &::after {
+      @include fa-icon;
+
+      font-size: .75rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      content: "\f00d";
+      transform: translate(-50%, -50%);
+      color: var(--text);
+    }
+  }
+}
+
+label:has(> input[type="checkbox"]) {
+  &[inert] > input[type="checkbox"]:checked {
+    &::after {
+      color: var(--text-25);
+    }
+  }
+
+  @include hover-focus {
+    > input[type="checkbox"]:checked {
+      &::after {
+        color: var(--text-75);
+      }
+    }
+  }
+}

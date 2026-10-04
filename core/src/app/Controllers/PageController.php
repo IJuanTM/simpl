@@ -1,0 +1,305 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Controllers;
+
+use app\Enums\AlertType;
+use app\Enums\ErrorCode;
+use app\Models\Page;
+use app\Models\Url;
+use app\Utils\Log;
+use JsonException;
+use Random\RandomException;
+
+/**
+ * The framework's central request dispatcher, constructed once per request by AppController.
+ * Extends Page so pageObj/history/title stay available to the rest of the render pipeline.
+ */
+class PageController extends Page
+{
+    public function __construct()
+    {
+        $this->route();
+    }
+
+    /**
+     * Parses the request URI into page/subpage/params, validates CSRF on POST requests, and resolves aliases and registered routes.
+     * Then dispatches to the matching Page class, either its api() method or the normal render() pipeline.
+     *
+     * @return void
+     *
+     * @throws RandomException
+     * @throws JsonException
+     */
+    private function route(): void
+    {
+        $urlArr = array_values(array_filter(explode('/', self::requestPath()), static fn(string $segment) => $segment !== ''));
+
+        // Reject path-traversal segments so an unmapped $page can't require_once its way into another page's view via "..".
+        // A backslash-containing segment is rejected too, since splitting only on "/" would let one through untouched, and it's a path separator on Windows.
+        if (array_any($urlArr, static fn($segment) => $segment === '.' || $segment === '..' || str_contains($segment, '\\'))) {
+            self::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
+        $page = array_shift($urlArr);
+        $params = $_GET;
+
+        // Checked before the $ROUTES short-circuit too, so a registered route can't dodge CSRF validation on a POST request.
+        // A route that genuinely needs session-token-free POST (e.g. a signed webhook) must verify its own signature before this point instead.
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && !AppController::validateCsrf()) {
+            self::error(ErrorCode::FORBIDDEN);
+            exit;
+        }
+
+        global $ROUTES;
+        if (isset($ROUTES[$page])) {
+            $ROUTES[$page]();
+            return;
+        }
+
+        // Alias may override page, subpages and params.
+        if ($alias = AliasController::resolve($page, $params)) [$page, $urlArr, $params] = [$alias['page'], $alias['subpages'], array_merge($params, $alias['params'])];
+
+        $api = $page === 'api';
+        if ($api) $page = array_shift($urlArr) ?? '';
+
+        parent::__construct($page, $urlArr, $params, !$api);
+
+        $class = 'app\\Pages\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $page))) . 'Page';
+        if (class_exists($class)) $this->pageObj = new $class($this);
+
+        if ($api) {
+            if (!$this->pageObj || !method_exists($this->pageObj, 'api')) {
+                if (DEV) Log::error("Page \"$page\" was called as an API endpoint, but no page object or API method was found");
+                self::error(ErrorCode::NOT_FOUND);
+                return;
+            }
+
+            $this->pageObj->api($this);
+            return;
+        }
+
+        $this->render();
+    }
+
+    /**
+     * The lowercased request path without its query string or surrounding slashes, or REDIRECT for the root.
+     *
+     * @return string
+     */
+    private static function requestPath(): string
+    {
+        // The query string is cut before trimming, so "/?query" still falls back to REDIRECT.
+        return strtolower(trim(explode('?', $_SERVER['REQUEST_URI'] ?? '', 2)[0], '/')) ?: REDIRECT;
+    }
+
+    /**
+     * Handles errors: redirects to the matching error page for a normal request, or responds with a JSON error body for an API request.
+     * A redirect would otherwise send an API client's fetch() into an HTML page instead of the error it expected.
+     *
+     * @param ErrorCode   $code     The specific error code used to determine the error page.
+     * @param string|null $redirect An optional URL to redirect back to after handling the error.
+     *
+     * @return void
+     *
+     * @throws JsonException
+     */
+    public static function error(ErrorCode $code, ?string $redirect = null): void
+    {
+        if (self::isApiRequest()) {
+            http_response_code($code->value);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $code->message()], JSON_THROW_ON_ERROR);
+            return;
+        }
+
+        self::redirect("error/$code->value" . ($redirect ? '?redirect=' . urlencode($redirect) : ''));
+    }
+
+    /**
+     * Whether the current request's raw URL starts with the api/ segment.
+     * Reads $_SERVER directly (with the same normalization route() applies) instead of route()'s own $api flag.
+     * That also covers error() callers reached before $api is set, or with no PageController instance constructed at all (e.g. tests).
+     *
+     * @return bool
+     */
+    private static function isApiRequest(): bool
+    {
+        return explode('/', self::requestPath(), 2)[0] === 'api';
+    }
+
+    /**
+     * Redirects the user's browser to the given location, via an immediate 302 or a delayed refresh header.
+     *
+     * @param string   $location The target location URL for the redirect.
+     * @param int|null $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     *
+     * @return void
+     */
+    public static function redirect(string $location, ?int $refresh = 0): void
+    {
+        $url = Url::to($location);
+
+        // Immediate redirects use a real 302 so crawlers and API clients follow correctly.
+        // Delayed redirects keep a meta-style refresh so the current page (and its toasts) is shown first.
+        if ($refresh) {
+            header("refresh: $refresh; url=$url");
+            return;
+        }
+
+        http_response_code(302);
+        header("Location: $url");
+    }
+
+    /**
+     * Renders the current page: emits the top part, includes the most specific matching view file
+     * for the page/subpage chain (falling back to the page's own view), then the bottom part.
+     * Falls through to a "Not Found" error if no matching view file exists.
+     *
+     * @return void
+     *
+     * @throws JsonException
+     */
+    private function render(): void
+    {
+        // Components and parts are fragments that need component()/part() to supply their data, so they're never pages themselves.
+        if (in_array($this->page, ['components', 'parts'], true)) {
+            self::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
+        // Every page but the home page gets a breadcrumb trail.
+        // A page that built its own trail in its constructor (admin, settings) keeps it.
+        if ($this->page !== REDIRECT && BreadcrumbController::get() === []) {
+            BreadcrumbController::set([['label' => ucfirst(str_replace('-', ' ', $this->page)), 'url' => null]]);
+        }
+
+        $page = $this->page;
+        $subpage = $this->subpage();
+
+        $parts = [$page, ...$this->subpages];
+        $file = null;
+
+        while (count($parts) > 1) {
+            $candidate = BASEDIR . '/views/' . implode('/', $parts) . '.phtml';
+
+            if (is_file($candidate)) {
+                $file = $candidate;
+                break;
+            }
+
+            array_pop($parts);
+        }
+
+        $file ??= BASEDIR . "/views/$page.phtml";
+
+        if (!is_file($file)) {
+            if (DEV) Log::error("Could not find view \"$page" . ($subpage ? "/$subpage" : '') . "\"");
+            self::error(ErrorCode::NOT_FOUND);
+            return;
+        }
+
+        $this->part('top');
+        require_once $file;
+        $this->part('bottom');
+    }
+
+    /**
+     * Loads and includes a view part file based on the given name.
+     *
+     * Parts are the fixed page skeleton (header, footer, cookie, the index/ head fragments) that the render pipeline assembles itself.
+     * Never called from a view template, hence private. Each is included once per request and takes no data.
+     * For template-invoked, repeatable, prop-taking fragments use component() instead.
+     *
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
+     *
+     * @param string $name The name of the view part to load, relative to views/parts/.
+     *
+     * @return void
+     */
+    private function part(string $name): void
+    {
+        $file = BASEDIR . "/views/parts/$name.phtml";
+
+        if (is_file($file)) {
+            require_once $file;
+            return;
+        }
+
+        echo Log::missingAsset('Part', $name);
+    }
+
+    /**
+     * Redirects the user while queuing a session-persisted toast to show after navigation.
+     * Use this (not FormController::addAlert) whenever a message needs to survive a redirect.
+     *
+     * @param string    $location The target location URL for the redirect.
+     * @param string    $message  The toast message to show after redirecting.
+     * @param AlertType $type     Visual type/style for the toast.
+     * @param int       $timeout  Seconds the toast stays on screen. 0 keeps it open until the user closes it.
+     * @param int|null  $refresh  Optional delay in seconds before the redirection. Defaults to 0 for immediate redirect.
+     *
+     * @return void
+     */
+    public static function redirectWithToast(string $location, string $message, AlertType $type, int $timeout = 0, ?int $refresh = 0): void
+    {
+        ToastController::add($message, $type, $timeout);
+        self::redirect($location, $refresh);
+    }
+
+    /**
+     * URL of the second-to-last entry in the user's navigation history, or a default fallback if there isn't one.
+     *
+     * @return string
+     */
+    public static function prev(): string
+    {
+        $history = Page::history();
+        return Url::to($history[count($history) - 2] ?? REDIRECT);
+    }
+
+    /**
+     * Pops the last entry off the navigation history and redirects to what's now the last entry (or a default fallback if history is now empty).
+     *
+     * @return void
+     */
+    public static function back(): void
+    {
+        $updated = array_slice(Page::history(), 0, -1);
+        SessionController::set('history', $updated);
+        self::redirect(array_last($updated) ?: REDIRECT);
+    }
+
+    /**
+     * Loads and includes a view component file, extracting the given props into its scope.
+     *
+     * Components are reusable fragments (breadcrumbs, modals, column-toggle, ...) that a view template drops in via $this->component() wherever it wants them, hence public.
+     * Unlike a part, a component may be rendered more than once per request and receives per-call data through $props.
+     * For the fixed, framework-assembled page skeleton use part() instead.
+     *
+     * If the file is not found, a warning is logged and feedback is shown visibly in DEV, or inside an HTML comment otherwise.
+     *
+     * @param string $name  The name of the view component to load, relative to views/components/.
+     * @param array  $props Associative array of values extracted into the component's local scope.
+     *
+     * @return void
+     */
+    final public function component(string $name, array $props = []): void
+    {
+        $__componentFile = BASEDIR . "/views/components/$name.phtml";
+
+        if (!is_file($__componentFile)) {
+            echo Log::missingAsset('Component', $name);
+            return;
+        }
+
+        // $name/$props themselves must not survive into the require()'d scope, or a prop with
+        // one of those exact keys would be skipped by extract() as "already defined".
+        $__componentProps = $props;
+        unset($name, $props);
+        extract($__componentProps, EXTR_SKIP);
+        require $__componentFile;
+    }
+}

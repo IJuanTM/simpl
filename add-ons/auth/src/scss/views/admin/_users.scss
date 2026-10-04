@@ -1,0 +1,52 @@
+@use "../../config" as *;
+
+section.users {
+  div.users-table {
+    i.fa-check {
+      color: var(--green);
+    }
+
+    i.fa-times {
+      color: var(--red);
+    }
+
+    tr.deleted > td:not(.table-actions) {
+      color: var(--text-25);
+    }
+
+    td.table-actions .table-action {
+      &.restore {
+        color: var(--green);
+
+        @include hover-focus {
+          color: var(--green-hover);
+        }
+      }
+
+      &.purge {
+        color: var(--magenta);
+
+        @include hover-focus {
+          color: var(--magenta-hover);
+        }
+      }
+    }
+  }
+
+  div.two-fa-method-row {
+    height: 2rem;
+  }
+
+  label.two-fa-required {
+    font-size: .875rem;
+    color: var(--text-50);
+
+    @include hover-focus {
+      color: var(--text-75);
+    }
+  }
+}
+
+dialog.modal-overlay button.purge-user {
+  @include action-button($magenta);
+}

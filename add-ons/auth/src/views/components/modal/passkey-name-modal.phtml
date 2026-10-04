@@ -1,0 +1,46 @@
+<?php
+/**
+ * Asks for a passkey's name before passkey.ts starts the browser's registration ceremony.
+ * The form only collects the name; passkey.ts intercepts its submit, so it never navigates.
+ */
+?>
+
+<dialog class="modal-overlay" id="passkey-name-modal" tabindex="-1" data-passkey-name-modal aria-label="Add a passkey">
+  <form id="passkey-name-form" method="dialog" hidden></form>
+
+  <div class="col modal f-col g-row-2">
+    <div class="row center-y g-col-1">
+      <h3 class="col">Add a passkey</h3>
+      <button class="col link close-modal lh-1 g-col-0.5 center f-0" type="button" command="close" commandfor="passkey-name-modal" aria-label="Close modal"><i class="fas fa-xmark"></i></button>
+    </div>
+
+    <div class="row modal-body">
+      <div class="col f-col g-row-1">
+        <div class="row">
+          <div class="col">
+            <p>Name this passkey after the app or key that stores it, so you can tell your passkeys apart later.</p>
+          </div>
+        </div>
+
+        <div class="row">
+          <?php $this->component('form/form-input', [
+              'id' => 'passkey-name',
+              'label' => 'Name',
+              'required' => true,
+              'icon' => 'tag',
+              'maxlength' => 100,
+              'placeholder' => 'e.g. Proton Pass, iCloud Keychain, YubiKey',
+              'autocomplete' => 'off',
+              'ariaLabel' => 'Passkey name',
+              'extraAttrs' => 'form="passkey-name-form"',
+          ]) ?>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-2 center-x">
+      <button class="col link lh-1 g-col-0.5 center-y f-0" type="button" command="close" commandfor="passkey-name-modal"><i class="fas fa-xmark"></i>Cancel</button>
+      <button class="col button g-col-0.5 center-y f-0" type="submit" form="passkey-name-form"><i class="fas fa-fingerprint"></i>Continue</button>
+    </div>
+  </div>
+</dialog>

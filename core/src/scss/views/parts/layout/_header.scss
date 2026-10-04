@@ -1,0 +1,278 @@
+@use "../../../config" as *;
+
+header {
+  position: relative;
+  z-index: layer("layout");
+
+  > div.navbar {
+    position: relative;
+    z-index: layer("layout");
+    height: $header-height;
+    padding: 2rem 3rem 1rem;
+    border-bottom: var(--border-width) solid var(--border-muted);
+    background-color: var(--bg-section);
+
+    @include breakpoint-down(md) {
+      height: calc($header-height - 1rem);
+      padding: 1rem;
+    }
+
+    @include breakpoint-down(lg) {
+      &::after {
+        position: absolute;
+        z-index: 1;
+        content: "";
+        background-color: var(--bg-section);
+        inset: 0;
+      }
+    }
+
+    > div.nav-brand {
+      z-index: layer("layout", 10);
+      padding: 0 1rem;
+
+      a.nav-logo {
+        text-decoration: none;
+
+        > svg {
+          width: 3.5rem;
+          max-height: 100%;
+        }
+      }
+    }
+
+    > nav.menu {
+      @include breakpoint-down(lg) {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        visibility: hidden;
+        overflow-y: auto;
+        flex-direction: column;
+        width: 100%;
+        max-height: calc(100dvh - $header-height);
+        padding: 0;
+        transition: transform .15s ease-in-out, visibility .15s ease-in-out;
+        transform: translateY(-100%);
+        background-color: var(--bg-section);
+
+        &.extended {
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        > div.nav-list {
+          flex-direction: column;
+        }
+      }
+
+      > div.nav-list > .nav-item {
+        padding: 0 1rem;
+        white-space: pre-wrap;
+        border-radius: var(--radius-md);
+
+        @include breakpoint-down(lg) {
+          justify-content: flex-start;
+          height: 4rem;
+          padding: 0 4rem;
+        }
+
+        @include breakpoint-down(md) {
+          padding: 0 2rem;
+        }
+
+        &.link {
+          font-weight: 700;
+
+          > i {
+            @include breakpoint-up(lg) {
+              display: none;
+            }
+          }
+        }
+
+        &.button {
+          background-color: var(--nav-button);
+
+          @include breakpoint-down(lg) {
+            border: 0;
+            border-radius: unset;
+          }
+
+          @include hover-focus {
+            background-color: var(--button-hover);
+          }
+        }
+
+        &.icon {
+          > i {
+            font-size: 2rem;
+          }
+
+          @include hover-focus {
+            > i {
+              color: var(--text-75);
+            }
+          }
+        }
+
+        &.active {
+          @include breakpoint-down(lg) {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              left: 3rem;
+              width: .375rem;
+              height: calc(100% - 2rem);
+              content: "";
+              transition: height .15s ease-in-out;
+              border-radius: var(--radius-sm);
+              background-color: var(--text-50);
+
+              @include breakpoint-down(md) {
+                left: 1rem;
+              }
+            }
+
+            @include hover-focus {
+              &::after {
+                height: calc(100% - 2.25rem);
+                background-color: var(--text-25);
+              }
+            }
+
+            > span::after {
+              display: none;
+            }
+          }
+
+          > span {
+            position: relative;
+
+            &::after {
+              position: absolute;
+              bottom: .625rem;
+              width: calc(100% - .5rem);
+              height: .25rem;
+              content: "";
+              transition: width .15s ease-in-out;
+              border-radius: .125rem;
+              background-color: var(--text-50);
+            }
+          }
+
+          @include hover-focus {
+            > span::after {
+              width: calc(100% - .75rem);
+              background-color: var(--text-25);
+            }
+          }
+        }
+      }
+    }
+
+    > div.nav-options {
+      z-index: layer("content", 10);
+
+      @include breakpoint-up(lg) {
+        flex: 0 0 auto;
+      }
+
+      div.theme-switch {
+        anchor-scope: --theme-switch;
+
+        button.theme-switch-btn {
+          padding: 0 1rem;
+          cursor: pointer;
+          anchor-name: --theme-switch;
+
+          > i {
+            font-size: 1.5rem;
+
+            &.theme-switch-chevron {
+              font-size: .75rem;
+              transition: rotate .15s ease-in-out;
+            }
+          }
+
+          &[aria-expanded="true"] > i.theme-switch-chevron {
+            rotate: 180deg;
+          }
+
+          @include hover-focus {
+            > i {
+              color: var(--text-75);
+            }
+          }
+        }
+
+        div.theme-menu {
+          min-width: 10rem;
+          margin: .5rem 0 0;
+          padding: .5rem;
+          border: var(--border-width) solid var(--border-muted);
+          border-radius: var(--radius-sm);
+          background-color: var(--bg-section);
+          inset: anchor(bottom) anchor(right) auto auto;
+          position-anchor: --theme-switch;
+
+          &:popover-open {
+            display: flex;
+            flex-direction: column;
+            row-gap: .25rem;
+          }
+
+          button.theme-option {
+            padding: .5rem;
+            cursor: pointer;
+            transition: background-color .15s ease-in-out;
+            white-space: nowrap;
+            color: var(--text-50);
+            border-radius: var(--radius-sm);
+
+            &[aria-pressed="true"] {
+              font-weight: 700;
+              color: var(--text-75);
+              background-color: var(--button);
+            }
+
+            @include hover-focus {
+              color: var(--text-75);
+              background-color: var(--button-hover);
+            }
+          }
+        }
+      }
+
+      button.hamburger {
+        display: none;
+        padding: 0;
+
+        @include breakpoint-down(lg) {
+          display: flex;
+        }
+
+        > span {
+          width: 4rem;
+          height: 4rem;
+
+          > span, > span::before, > span::after {
+            width: 2rem;
+            background-color: var(--text);
+          }
+        }
+
+        @include hover-focus {
+          opacity: 1;
+
+          > span {
+            > span, > span::before, > span::after {
+              background-color: var(--text-75);
+            }
+          }
+        }
+      }
+    }
+  }
+}

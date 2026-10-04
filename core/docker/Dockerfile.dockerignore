@@ -1,0 +1,8 @@
+.git
+.idea
+.vscode
+node_modules
+src/vendor
+src/logs
+.phpunit.cache
+*.log

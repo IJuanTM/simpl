@@ -1,0 +1,27 @@
+@use "../../../config" as *;
+
+section.cookie {
+  position: fixed;
+  z-index: layer("overlay", 10);
+  display: flex;
+  width: min(32rem, 100% - 2rem);
+  max-width: 32rem;
+  padding: 2rem;
+  transition: visibility .15s ease-in-out, opacity .15s ease-in-out;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-accent);
+  box-shadow: 0 0 4rem 0 var(--shadow-50);
+  inset: auto 1rem 1rem;
+  margin-inline: auto;
+
+  > div.row {
+    @include breakpoint-down(sm) {
+      font-size: .875rem;
+    }
+
+    button {
+      padding: 1rem;
+    }
+  }
+}

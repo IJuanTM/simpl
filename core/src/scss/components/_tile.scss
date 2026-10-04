@@ -1,0 +1,42 @@
+@use "sass:map";
+
+@use "../config" as *;
+
+.row:has(> .tile) {
+  container: tile-row / inline-size;
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  min-width: 100%;
+  max-width: 32rem;
+  padding: 2rem;
+  transition: background-color .15s ease-in-out;
+  text-decoration: none;
+  border: var(--border-width) solid var(--border-muted);
+  border-radius: var(--radius-lg);
+  background-color: var(--bg-section);
+
+  @container tile-row (min-width: #{map.get($breakpoints, sm)}) {
+    min-width: $width-xs;
+  }
+
+  @include shimmer(true);
+
+  @include hover-focus {
+    background-color: var(--bg-accent);
+  }
+
+  div.tile-icon {
+    width: 4rem;
+
+    > i {
+      font-size: 3rem;
+    }
+  }
+
+  .tile-title {
+    color: $simpl;
+  }
+}

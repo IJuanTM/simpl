@@ -1,0 +1,45 @@
+@addon-insert:before('# @addon-placeholder:environment')
+      DB_SERVER: db
+@addon-end
+
+@addon-insert:before('# @addon-placeholder:depends_on')
+    depends_on:
+      db:
+        condition: service_healthy
+@addon-end
+
+@addon-insert:before('# @addon-placeholder:volumes')
+  simpl_db_data:
+@addon-end
+
+@addon-insert:before('# @addon-placeholder:services')
+  db:
+    image: mariadb:${MARIADB_VERSION:-12.3}
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-}
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: "yes"
+      MARIADB_AUTO_UPGRADE: "1"
+    ports:
+      - "127.0.0.1:${DB_PORT:-3307}:3306"
+    volumes:
+      - simpl_db_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+@addon-end
+
+@addon-insert:before('# @addon-placeholder:services')
+  phpmyadmin:
+    image: phpmyadmin:${PHPMYADMIN_VERSION:-5.2.3}
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${PHPMYADMIN_PORT:-8080}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+@addon-end

@@ -1,0 +1,13 @@
+@addon-insert:after('"require": {')
+"ext-fileinfo": "*",
+"ext-sodium": "*",
+"phpmailer/phpmailer": "^7.1.1",
+"spomky-labs/otphp": "^11.5.0",
+"bacon/bacon-qr-code": "^3.1.1",
+"web-auth/webauthn-lib": "^5.3.9",
+@addon-end
+
+@addon-insert:after('"scripts": {')
+"post-autoload-dump": "@php src/app/Scripts/app-key.php",
+"key:regenerate": "@php src/app/Scripts/app-key.php --fresh",
+@addon-end

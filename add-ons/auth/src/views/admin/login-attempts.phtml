@@ -1,0 +1,87 @@
+<section class="row login-attempts">
+  <div class="col f-col g-row-2">
+    <div class="row">
+      <div class="col center-x">
+        <h1 data-typo="h2">Login attempts</h1>
+      </div>
+    </div>
+
+    <div class="row center-x">
+      <div class="col login-attempts-table max-w-xxl f-col g-row-1 w-100">
+
+        <search class="row table-tools">
+          <form class="col table-tools-form" novalidate>
+            <div class="row">
+              <div class="col form-group f-col g-row-0.25">
+                <div class="row">
+                  <label class="col" for="la-search">Search:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-magnifying-glass"></i></div>
+                  <input class="col table-search" id="la-search" type="search" enterkeyhint="search" value="<?= $this->pageObj->searchDisplay ?>" placeholder="Search by: IP address, Username or Email" autocomplete="off">
+                  <div class="col input-append center f-0"><i class="fas fa-xmark table-search-clear input-icon-clickable" aria-label="Clear search" role="button" tabindex="0"></i></div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </search>
+
+        <div class="row table-tools">
+          <form class="col center-y table-tools-form" novalidate>
+            <div class="row g-col-1 w-100">
+              <div class="col form-group f-col g-row-0.25">
+                <div class="row">
+                  <label class="col" for="la-status">Status:</label>
+                </div>
+                <div class="row input-group">
+                  <div class="col input-prepend center f-0"><i class="fas fa-flag"></i></div>
+                  <select class="col table-filter" id="la-status" data-filter="status">
+                    <option value="">All statuses</option>
+                    <option value="success" <?= $this->pageObj->filters['status'] === 'success' ? 'selected' : '' ?>>Success</option>
+                    <option value="failed" <?= $this->pageObj->filters['status'] === 'failed' ? 'selected' : '' ?>>Failed</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="row g-1">
+          <div class="col center-y">
+            <div class="row">
+              <button class="col link lh-1 filters-reset-btn g-col-0.5 center f-0" type="button" inert><i class="fas fa-xmark"></i>Clear filters</button>
+            </div>
+          </div>
+          <div class="col end-x">
+            <?php $this->component('table/column-toggle', ['tableId' => 'login-attempts', 'columns' => $this->pageObj->tableColumns]) ?>
+          </div>
+        </div>
+
+        <?php $this->component('table/table', [
+            'tableId' => 'login-attempts',
+            'columns' => $this->pageObj->tableColumns,
+            'thead' => $this->pageObj->renderThead(),
+            'tbody' => $this->pageObj->renderTbody(),
+            'attrs' => 'data-api="/api/admin/login-attempts"',
+        ]) ?>
+
+        <div class="row pagination-row g-1">
+          <div class="col f-0">
+            <div class="row g-col-4">
+              <div class="col center-y g-col-1">
+                <p class="no-wrap"><?= $this->pageObj->renderPaginationInfo() ?></p>
+              </div>
+              <?php $this->component('table/per-page-select', ['id' => 'la-per-page']) ?>
+            </div>
+          </div>
+          <div class="col center-y end-x">
+            <div class="row table-pagination f-nowrap g-col-1">
+              <?= $this->pageObj->renderPagination() ?>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>

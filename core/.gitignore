@@ -1,0 +1,30 @@
+# IDE files
+.idea/
+.vscode/
+
+# AI tools
+.claude/
+
+# Package manager files
+vendor/
+node_modules/
+
+# Environment variables
+.env
+
+# Locally-trusted HTTPS certs (e.g. mkcert output) - private key material, never shipped
+docker/certs/
+
+# Generated build output
+src/public/assets/
+src/public/css/
+src/public/js/
+
+# Logs
+src/logs/
+
+# PHPUnit
+.phpunit.cache/
+
+# PHPStan
+.phpstan.cache/

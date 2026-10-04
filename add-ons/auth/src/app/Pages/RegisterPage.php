@@ -1,0 +1,112 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Pages;
+
+use app\Controllers\AuthController;
+use app\Controllers\FormController;
+use app\Controllers\PageController;
+use app\Database\DB;
+use app\Enums\AlertType;
+use app\Enums\Role;
+use app\Pages\Traits\RateLimitedForm;
+use app\Utils\Log;
+use app\Utils\Timebox;
+use SensitiveParameter;
+
+/**
+ * Handles new account creation and optional email verification flow.
+ */
+class RegisterPage
+{
+    use RateLimitedForm;
+
+    public function __construct()
+    {
+        if ($this->initRateLimitedForm('register')) $this->post();
+    }
+
+    /**
+     * Processes registration form submission.
+     *
+     * @return void
+     */
+    private function post(): void
+    {
+        if (
+            !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
+            !FormController::validate('password', ['required', 'maxLength' => MAX_PASSWORD_LENGTH]) ||
+            !FormController::validate('password-check', ['required', 'maxLength' => MAX_PASSWORD_LENGTH])
+        ) return;
+
+        // Runs before the rate limiter: a policy or mismatch failure touches no account data, and it must not spend the single registration attempt or sit inside the enumeration timebox.
+        if (!FormController::validatePasswords('password', 'password-check')) return;
+
+        // Rate limit before the email-existence check to prevent enumeration.
+        if (!$this->attemptRateLimit(RESEND_TIMEOUTS['register'])) return;
+
+        // Timeboxed so the response takes the same time whether or not the email is already registered.
+        new Timebox()->call(function () {
+            if (AuthController::checkEmail($_POST['email'])) {
+                // Mirrors the genuine no-verification-required success response verbatim, so the alert text carries no enumeration tell either; the Location can still differ when verification is required, a separate, harder gap to close.
+                PageController::redirectWithToast('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
+                return;
+            }
+
+            $this->register($_POST['email'], $_POST['password']);
+        }, TIMING_FLOOR_MS['register'] * 1000);
+    }
+
+    /**
+     * Creates new user account and sends verification email if required.
+     *
+     * @param string $email    User email
+     * @param string $password User password (will be hashed)
+     *
+     * @return void
+     */
+    private function register(string $email, #[SensitiveParameter] string $password): void
+    {
+        $roleId = DB::single(
+            SELECT: 'id',
+            FROM: 'roles',
+            WHERE: ['name' => Role::USER->value]
+        )['id'] ?? null;
+
+        if ($roleId === null) {
+            Log::error('Default user role "' . Role::USER->value . '" is missing. Did you run the database seeder?');
+            FormController::addAlert('An error occurred while creating your account. Please contact support.', AlertType::ERROR);
+            return;
+        }
+
+        $publicId = AuthController::generatePublicId();
+
+        DB::insert(
+            'users',
+            [
+                'public_id' => $publicId,
+                'email' => $email,
+                'password' => password_hash($password, PASSWORD_CONFIG['hash_algo'], PASSWORD_CONFIG['hash_options'])
+            ]
+        );
+
+        $id = (int)DB::lastInsertId();
+
+        DB::insert(
+            'user_roles',
+            [
+                'user_id' => $id,
+                'role_id' => $roleId
+            ]
+        );
+
+        if (VERIFICATION_CONFIG['required']) {
+            $result = AuthController::issueVerificationToken((int)$id, $email);
+            if ($result) PageController::redirectWithToast("verify-account/$publicId", 'Success! Your account has been created! A verification email has been sent!', AlertType::SUCCESS, 4);
+            else PageController::redirectWithToast("verify-account/$publicId", 'Your account has been created! However, there was an issue sending the verification email. Please contact support.', AlertType::ERROR, 8);
+        } else {
+            PageController::redirectWithToast('login', 'Success! Your account has been created!', AlertType::SUCCESS, 4);
+        }
+    }
+}

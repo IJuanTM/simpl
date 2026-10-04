@@ -1,0 +1,11 @@
+@use "../themes/light";
+@use "../themes/dark";
+
+// Used when the page has no data-theme, e.g. with JavaScript disabled.
+$default-theme: dark;
+
+// name: theme module's $theme; each name also needs an entry in THEMES in app/Config/app.php
+$themes: (
+  light: light.$theme,
+  dark: dark.$theme,
+);

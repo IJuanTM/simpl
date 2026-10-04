@@ -1,0 +1,111 @@
+name: Install and test
+description: Builds the release zips from this checkout, installs them with the published simpl CLI the way a user would, then tests, analyses, builds and type-checks the result.
+
+inputs:
+  add:
+    description: Space-separated add-ons to simpl add, empty for core only
+    default: ''
+  db:
+    description: Whether the install has the db add-on, so the database steps run against the job's MariaDB service (Linux only)
+    default: 'false'
+  php:
+    description: PHP version to install
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+      with:
+        php-version: ${{ inputs.php }}
+        extensions: pdo_mysql, fileinfo, mbstring, sodium
+        tools: composer
+
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24
+
+    - name: Install the simpl CLI
+      shell: bash
+      run: |
+        npm install --global --no-audit --no-fund @ijuantm/simpl
+        simpl --version
+
+    - name: Build the release zips
+      id: build
+      shell: bash
+      env:
+        RELEASES: ${{ runner.temp }}/releases
+      run: node .github/scripts/release.mjs build "$RELEASES"
+
+    - name: Create a project (simpl new)
+      shell: bash
+      working-directory: ${{ runner.temp }}
+      env:
+        SIMPL_LOCAL_RELEASES: ${{ runner.temp }}/releases
+        VERSION: ${{ steps.build.outputs.version }}
+      run: simpl new --local --version="$VERSION" --name=simpl-check --url=http://localhost
+
+    - name: Add the add-ons (simpl add)
+      if: inputs.add != ''
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      env:
+        SIMPL_LOCAL_RELEASES: ${{ runner.temp }}/releases
+        ADDONS: ${{ inputs.add }}
+      run: for addon in $ADDONS; do simpl add "$addon" --local; done
+
+    # hashFiles() only reads the workspace, and the project lives in the runner's temp folder.
+    - name: Find the package caches
+      id: cache
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: |
+        echo "hash=$(node -p "require('crypto').createHash('sha256').update(require('fs').readFileSync('composer.json') + require('fs').readFileSync('package.json')).digest('hex').slice(0, 16)")" >> "$GITHUB_OUTPUT"
+        echo "composer=$(composer config --global cache-files-dir)" >> "$GITHUB_OUTPUT"
+        echo "npm=$(npm config get cache)" >> "$GITHUB_OUTPUT"
+
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: |
+          ${{ steps.cache.outputs.composer }}
+          ${{ steps.cache.outputs.npm }}
+        key: packages-${{ runner.os }}-${{ steps.cache.outputs.hash }}
+        restore-keys: packages-${{ runner.os }}-
+
+    - name: Install dependencies (simpl composer install)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: simpl composer install --no-interaction --no-progress
+
+    - name: Tests (simpl test)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: simpl test
+
+    - name: Static analysis (simpl stan)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: simpl stan
+
+    # 127.0.0.1 because PDO treats localhost as a Unix socket, and the service listens on TCP.
+    - name: Database tests (simpl test:integration, migrate:fresh, seed:fresh)
+      if: inputs.db == 'true' && runner.os == 'Linux'
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: |
+        sed -i -e 's/^DB_SERVER=.*/DB_SERVER=127.0.0.1/' -e 's/^DB_NAME=.*/DB_NAME=simpl_check/' src/.env
+        simpl test:integration
+        simpl migrate:fresh
+        simpl seed:fresh
+
+    - name: Build the assets (npm install)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: npm install --no-audit --no-fund
+
+    # npm install's build skips the type check, so a type error in shipped TypeScript would otherwise reach a release.
+    - name: Type check (npm run typecheck)
+      shell: bash
+      working-directory: ${{ runner.temp }}/simpl-check
+      run: npm run typecheck

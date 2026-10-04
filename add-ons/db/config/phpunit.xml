@@ -1,0 +1,4 @@
+@addon-insert:before('<!-- @addon-placeholder:env -->')
+    <!-- The tests assert on escape codes, which Ansi::wrap() drops when stdout isn't a terminal. -->
+<env name="FORCE_COLOR" value="1"/>
+    @addon-end

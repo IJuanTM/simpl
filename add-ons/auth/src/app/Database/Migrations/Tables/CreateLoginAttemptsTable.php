@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Database\Migrations\Tables;
+
+use app\Database\Migrations\Blueprint;
+use app\Database\Migrations\Schema;
+
+class CreateLoginAttemptsTable
+{
+    /**
+     * Creates the login_attempts table, recording every login attempt for lockout tracking and the admin audit log.
+     */
+    public static function up(): void
+    {
+        Schema::create('login_attempts', static function (Blueprint $t) {
+            $t->bigintUnsigned('id', notNull: true)->autoIncrement();
+            $t->bigintUnsigned('user_id');
+            $t->varchar('identifier_hash', 64, notNull: true, charset: 'ascii');
+            $t->varchar('ip_address', 45, notNull: true);
+            $t->varchar('user_agent', notNull: true);
+            $t->timestamp('attempt_time', notNull: true, default: 'CURRENT_TIMESTAMP');
+            $t->tinyint('success', notNull: true, default: 0);
+            $t->varchar('failed_reason', 50);
+            $t->primary('id');
+            // Keep the attempt history when a user is deleted: it is the admin audit log, not user-owned data.
+            $t->foreign('user_id', 'users', 'id', 'SET NULL');
+            $t->index('idx_user_success_time', ['user_id', 'success', 'attempt_time']);
+            $t->index('idx_identifier_success_time', ['identifier_hash', 'success', 'attempt_time']);
+            $t->index('idx_ip_success_time', ['ip_address', 'success', 'attempt_time']);
+        });
+    }
+
+    /**
+     * Drops the login_attempts table.
+     */
+    public static function down(): void
+    {
+        Schema::drop('login_attempts');
+    }
+}

@@ -1,0 +1,263 @@
+<?php
+
+declare(strict_types=1);
+
+namespace app\Utils;
+
+use JsonException;
+use NoDiscard;
+use RuntimeException;
+
+/**
+ * File-based sliding window rate limiter.
+ *
+ * Attempt timestamps are stored on disk keyed by a hash of the caller's key, so limits survive across requests and cannot be reset by clearing the session cookie.
+ * A caller that needs per-client scoping should include the client IP (or user id) in the key.
+ */
+class RateLimiter
+{
+    use EnsuresDirectory;
+
+    /**
+     * Builds a rate-limit key scoped to the client's IP address (falls back to 'unknown').
+     *
+     * @param string $prefix
+     *
+     * @return string
+     */
+    public static function ipKey(string $prefix): string
+    {
+        return $prefix . '-' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown');
+    }
+
+    /**
+     * Record an attempt and return whether it is within the allowed limit.
+     * Read-check-write runs under one exclusive lock to avoid a race between concurrent calls.
+     *
+     * @param string $key           Unique identifier for the action being limited
+     * @param int    $max           Maximum number of attempts allowed in the window
+     * @param int    $windowSeconds Rolling time window in seconds
+     *
+     * @return bool True if the attempt is allowed, false if the limit is exceeded
+     *
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
+     *
+     * @phpstan-impure
+     */
+    #[NoDiscard]
+    public static function attempt(string $key, int $max, int $windowSeconds): bool
+    {
+        $now = time();
+
+        return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $max, $windowSeconds) {
+            $attempts = array_filter($data['attempts'] ?? [], static fn(int $ts) => $now - $ts < $windowSeconds) |> array_values(...);
+
+            $allowed = count($attempts) < $max;
+            if ($allowed) $attempts[] = $now;
+
+            // Report the next-allowed time whenever the window is now at capacity, even on an allowed call.
+            // That way the view can render an accurate data-timeout right away, not only after the following (rejected) attempt.
+            self::writeLocked($handle, ['attempts' => $attempts, 'retry' => count($attempts) >= $max ? $attempts[count($attempts) - $max] + $windowSeconds : 0]);
+
+            return $allowed;
+        });
+    }
+
+    /**
+     * Opens a key's storage file, takes the given lock, decodes its JSON record, and hands both the
+     * handle and decoded data (normalized to an array) to $fn, unlocking and closing afterward regardless of outcome.
+     *
+     * @param string   $key
+     * @param string   $mode     Fopen mode
+     * @param int      $lockType LOCK_EX or LOCK_SH
+     * @param callable $fn       ($handle, array $data): mixed
+     *
+     * @return mixed Whatever $fn returns
+     *
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
+     */
+    private static function withLock(string $key, string $mode, int $lockType, callable $fn): mixed
+    {
+        $file = self::path($key);
+        $handle = fopen($file, $mode);
+        if ($handle === false) throw new RuntimeException(sprintf('Could not open rate limit file "%s"', $file));
+
+        try {
+            flock($handle, $lockType);
+
+            $raw = stream_get_contents($handle);
+            $data = $raw ? json_decode($raw, true, 512, JSON_THROW_ON_ERROR) : null;
+
+            return $fn($handle, is_array($data) ? $data : []);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
+    /**
+     * Resolve the on-disk path for a key, creating the storage directory if needed.
+     *
+     * @param string $key
+     *
+     * @return string
+     */
+    private static function path(string $key): string
+    {
+        $dir = BASEDIR . '/cache/ratelimit';
+        self::ensureDirectory($dir);
+
+        return $dir . '/' . hash('sha256', $key) . '.json';
+    }
+
+    /**
+     * Overwrites the record in an already-open, already-locked file handle.
+     *
+     * @param resource $handle
+     * @param array    $data
+     *
+     * @return void
+     *
+     * @throws JsonException
+     */
+    private static function writeLocked($handle, array $data): void
+    {
+        rewind($handle);
+        ftruncate($handle, 0);
+        fwrite($handle, json_encode($data, JSON_THROW_ON_ERROR));
+        fflush($handle);
+    }
+
+    /**
+     * Record an attempt using capped exponential backoff instead of attempt()'s flat window.
+     * A flat window can be kept permanently full by a party with no proof of identity, e.g. anyone holding the user id from a verification or reset link.
+     * Each filled burst doubles the lockout (capped at $maxDurationSeconds); a lockout lifts on its own once its duration elapses.
+     * The escalation tier carries across bursts on purpose: serving a lockout doesn't reset it, so a fresh over-limit burst hours later still escalates.
+     * It only clears when the whole record ages out of RATE_LIMIT_CACHE_RETENTION.
+     * Same escalating-lockout shape as LoginPage::calculateLockout(), on the file-based storage attempt() already uses instead of a dedicated DB table.
+     *
+     * @param string $key                Unique identifier for the action being limited
+     * @param int    $maxAttempts        Attempts allowed in one burst before a lockout starts
+     * @param int    $windowSeconds      Burst window: only attempts this recent count toward a lockout
+     * @param int    $minDurationSeconds First lockout duration
+     * @param int    $maxDurationSeconds Lockout duration ceiling
+     *
+     * @return bool True if the attempt is allowed, false if currently within a backoff lockout
+     *
+     * @throws RuntimeException When the storage file can't be opened.
+     * @throws JsonException When the stored record isn't valid JSON.
+     *
+     * @phpstan-impure
+     */
+    #[NoDiscard]
+    public static function attemptWithBackoff(string $key, int $maxAttempts, int $windowSeconds, int $minDurationSeconds, int $maxDurationSeconds): bool
+    {
+        $now = time();
+
+        return self::withLock($key, 'cb+', LOCK_EX, static function ($handle, array $data) use ($now, $maxAttempts, $windowSeconds, $minDurationSeconds, $maxDurationSeconds) {
+            $attempts = array_filter($data['attempts'] ?? [], static fn(int $ts) => $now - $ts < RATE_LIMIT_CACHE_RETENTION) |> array_values(...);
+            $tier = (int)($data['tier'] ?? 0);
+            $retry = (int)($data['retry'] ?? 0);
+
+            // Inside an active lockout: reject without recording, so a rejected attempt can't extend or escalate it.
+            if ($retry > $now) {
+                self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+                return false;
+            }
+
+            // A served lockout resets the burst, so only attempts since $retry (the last lockout's end) count toward the next one.
+            if ((array_filter($attempts, static fn(int $ts) => $ts >= $retry && $now - $ts <= $windowSeconds) |> count(...)) >= $maxAttempts) {
+                // Next tier: the exponent is capped so the doubling can't overflow before min() clamps it to $maxDurationSeconds.
+                $retry = $now + min($minDurationSeconds * (2 ** min($tier, 30)), $maxDurationSeconds);
+                $tier++;
+                self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+                return false;
+            }
+
+            $attempts[] = $now;
+
+            // Bound file growth while keeping far more history than the backoff math ever needs.
+            $cap = $maxAttempts * 20;
+            if (count($attempts) > $cap) $attempts = array_slice($attempts, -$cap);
+
+            self::writeLocked($handle, ['attempts' => $attempts, 'tier' => $tier, 'retry' => $retry]);
+            return true;
+        });
+    }
+
+    /**
+     * Remaining milliseconds until another attempt is allowed.
+     * Returns 0 when not rate limited. Intended for rendering data-timeout on submit buttons.
+     *
+     * @param string $key
+     *
+     * @return int
+     *
+     * @throws JsonException
+     */
+    public static function retryAfterMs(string $key): int
+    {
+        $retryAt = self::read($key)['retry'] ?? 0;
+        return $retryAt ? max(0, ($retryAt - time()) * 1000) : 0;
+    }
+
+    /**
+     * Read the stored record for a key, or an empty array when none exists.
+     * Takes a shared lock so it can't observe attempt()'s write mid-truncate.
+     *
+     * @param string $key
+     *
+     * @return array
+     *
+     * @throws JsonException
+     */
+    private static function read(string $key): array
+    {
+        if (!is_file(self::path($key))) return [];
+
+        try {
+            return self::withLock($key, 'rb', LOCK_SH, static fn($handle, array $data) => $data);
+        } catch (RuntimeException) {
+            // A concurrent clear() can unlink the file between the is_file() check above and the fopen() in withLock(); treat that race the same as "never existed".
+            return [];
+        }
+    }
+
+    /**
+     * Clear the attempt history for a key.
+     *
+     * @param string $key
+     *
+     * @return void
+     */
+    public static function clear(string $key): void
+    {
+        $file = self::path($key);
+        if (is_file($file)) unlink($file);
+    }
+
+    /**
+     * Deletes cache files whose mtime is older than $olderThanSeconds. Call from a scheduled task.
+     *
+     * @param int $olderThanSeconds Age threshold; defaults to RATE_LIMIT_CACHE_RETENTION
+     *
+     * @return int Number of files deleted
+     */
+    public static function prune(int $olderThanSeconds = RATE_LIMIT_CACHE_RETENTION): int
+    {
+        $dir = BASEDIR . '/cache/ratelimit';
+        if (!is_dir($dir)) return 0;
+
+        $cutoff = time() - $olderThanSeconds;
+        $deleted = 0;
+
+        foreach (glob("$dir/*.json") ?: [] as $file) {
+            $mtime = filemtime($file);
+            if ($mtime !== false && $mtime < $cutoff && unlink($file)) $deleted++;
+        }
+
+        return $deleted;
+    }
+}
