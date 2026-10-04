@@ -1,0 +1,14 @@
+@use "../../../config" as *;
+
+button.contact-button {
+  font-size: 1.25rem;
+  position: fixed;
+  z-index: layer("layout", 20);
+  right: 1rem;
+  bottom: calc($footer-height + 1rem);
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 2rem 0 var(--shadow-25);
+}

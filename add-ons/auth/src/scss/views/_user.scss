@@ -26,9 +26,6 @@ section.user {
 
       .profile-image {
         position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         width: 12rem;
         height: 12rem;
 
@@ -56,7 +53,7 @@ section.user {
 
       div.user-details-label {
         width: 6rem;
-        color: var(--text-muted);
+        color: var(--text-50);
       }
 
       div.user-details-value {
@@ -74,7 +71,7 @@ section.user {
 
       div.user-details-admin {
         font-size: .75rem;
-        color: var(--text-muted);
+        color: var(--text-50);
       }
     }
 

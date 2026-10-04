@@ -53,6 +53,7 @@ $s = $this->pageObj->settings;
               'value' => RequestController::post('username') ?? $s->user['username'] ?? '',
               'initialValue' => $s->user['username'] ?? '',
               'extraAttrs' => AuthController::usernameInputAttrs(),
+              'details' => "Pick one nobody else has. It's shown instead of your email, and you can log in with it too.",
           ]) ?>
         </div>
 
@@ -92,13 +93,8 @@ $s = $this->pageObj->settings;
               'value' => RequestController::post('email') ?? $s->user['email'] ?? '',
               'initialValue' => $s->user['email'] ?? '',
               'error' => isset($_POST['submit']) && empty($_POST['email']),
+              'details' => 'Changing it asks for your current password' . (VERIFICATION_CONFIG['required'] ? ", and you'll have to verify the new address." : '.'),
           ]) ?>
-        </div>
-
-        <div class="row">
-          <div class="col">
-            <p class="form-details">Changing your email address asks for your current password when you save.</p>
-          </div>
         </div>
 
         <div class="row g-2 center-x">

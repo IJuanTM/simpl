@@ -29,3 +29,17 @@
       timeout: 5s
       retries: 10
 @addon-end
+
+@addon-insert:before('# @addon-placeholder:services')
+  phpmyadmin:
+    image: phpmyadmin:${PHPMYADMIN_VERSION:-5.2.3}
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${PHPMYADMIN_PORT:-8080}:80"
+    depends_on:
+      db:
+        condition: service_healthy
+@addon-end

@@ -12,3 +12,7 @@
 @include meta.load-css("components/modal/user-action-modal");
 @include meta.load-css("components/two-fa-card");
 // @addon-end
+
+// @addon-insert:after('// PARTS')
+@include meta.load-css("views/parts/layout/contact");
+// @addon-end

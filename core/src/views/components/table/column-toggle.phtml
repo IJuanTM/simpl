@@ -19,9 +19,11 @@ $tableId = AppController::sanitize($tableId);
     <?php foreach ($columns as $index => $column) : ?>
 
       <div class="row">
-        <label class="col center-y g-col-0.5 f-0">
-          <input type="checkbox" data-col="<?= $index ?>" <?= ($column['visible'] ?? true) ? 'checked' : '' ?>><?= AppController::sanitize($column['label']) ?>
-        </label>
+        <?php $this->component('form/checkbox', [
+          'label' => $column['label'],
+          'checked' => $column['visible'] ?? true,
+          'attrs' => 'data-col="' . $index . '"',
+        ]) ?>
       </div>
 
     <?php endforeach ?>

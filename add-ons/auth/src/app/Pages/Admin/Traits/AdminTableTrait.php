@@ -146,7 +146,13 @@ trait AdminTableTrait
             $html .= '<tr' . ($class ? ' class="' . $class . '"' : '') . ($href !== null ? ' data-href="' . $href . '" tabindex="0"' : '') . '>';
 
             foreach ($this->tableColumns as $column) {
-                $html .= $column['key'] === 'actions' ? $this->renderActionsCell($row) : '<td>' . $this->renderCell($column, $row) . '</td>';
+                if ($column['key'] === 'actions') {
+                    $html .= $this->renderActionsCell($row);
+                    continue;
+                }
+
+                $cellHref = $this->cellHref($column, $row);
+                $html .= '<td' . ($cellHref !== null ? ' data-href="' . $cellHref . '" tabindex="0"' : '') . '>' . $this->renderCell($column, $row) . '</td>';
             }
 
             $html .= '</tr>';
@@ -211,6 +217,17 @@ trait AdminTableTrait
      * @param array<string, mixed> $row
      */
     abstract public function renderCell(array $column, array $row): string;
+
+    /**
+     * URL a single cell links to (table.ts handles the click), or null for a plain cell. Override to link one column instead of the whole row.
+     *
+     * @param array<string, mixed> $column
+     * @param array<string, mixed> $row
+     */
+    private function cellHref(array $column, array $row): ?string
+    {
+        return null;
+    }
 
     /**
      * Renders previous/next pagination links with active query params preserved.

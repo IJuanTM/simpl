@@ -303,7 +303,7 @@ class AuthController
 
     /**
      * The single enforcement point for forced actions: pins a user with one pending to that page,
-     * before the request is even dispatched. Every other route (bar logout and the /api/ calls the
+     * before the request is even dispatched. Every other route (bar logout, the contact form and the /api/ calls the
      * page needs) redirects there, stashing the attempted URL to return to afterwards. On the pinned
      * page the breadcrumb trail is locked (shown but not clickable).
      *
@@ -316,7 +316,8 @@ class AuthController
 
         $uri = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '/';
 
-        if (preg_match('#^/(api/)?logout(/|$)#i', $uri)) return;
+        // The contact modal stays usable, since a user stuck on a forced action is the one most likely to need support.
+        if (preg_match('#^/(api/)?logout(/|$)#i', $uri) || preg_match('#^/api/contact(/|$)#i', $uri)) return;
 
         if (preg_match('#^/(api/)?' . preg_quote($route, '#') . '(/|$)#i', $uri)) {
             if (!str_starts_with($uri, '/api/')) BreadcrumbController::lock();

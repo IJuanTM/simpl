@@ -6,39 +6,46 @@ namespace app\Pages;
 
 use app\Controllers\FormController;
 use app\Controllers\MailController;
-use app\Controllers\PageController;
 use app\Controllers\RequestController;
 use app\Enums\AlertType;
 use app\Pages\Traits\RateLimitedForm;
+use app\Utils\RateLimiter;
 
 /**
- * Processes submissions from the site's contact form and forwards messages to the configured site mail address.
+ * Processes submissions from the contact modal and forwards messages to the configured site mail address.
  */
 class ContactPage
 {
     use RateLimitedForm;
 
-    public function __construct()
-    {
-        if ($this->initRateLimitedForm('contact')) $this->post();
-    }
-
     /**
-     * Processes contact form submission.
+     * Only ever reached via /api/contact, which contact.ts calls in the background.
+     * Answers JSON so the modal can show the result and keep what was typed.
      *
      * @return void
      */
-    private function post(): void
+    public function api(): void
     {
+        if (!$this->initRateLimitedForm('contact')) {
+            self::respond(400, ['alerts' => '']);
+            return;
+        }
+
         if (
             !FormController::validate('name', ['required', 'singleLine', 'maxLength' => MAX_NAME_LENGTH]) ||
             !FormController::validate('email', ['required', 'maxLength' => MAX_EMAIL_LENGTH, 'type' => 'email']) ||
             !FormController::validate('subject', ['required', 'singleLine', 'maxLength' => MAX_CONTACT_SUBJECT_LENGTH]) ||
             !FormController::validate('message', ['required', 'maxLength' => MAX_CONTACT_MESSAGE_LENGTH])
-        ) return;
+        ) {
+            $this->fail(422);
+            return;
+        }
 
         // Rate limit after validation to avoid consuming slots on invalid input
-        if (!$this->attemptRateLimit(RESEND_TIMEOUTS['contact'])) return;
+        if (!$this->attemptRateLimit(RESEND_TIMEOUTS['contact'])) {
+            $this->fail(429);
+            return;
+        }
 
         $this->contactMail(
             RequestController::rawPost('name'),
@@ -46,6 +53,43 @@ class ContactPage
             RequestController::rawPost('subject'),
             RequestController::rawPost('message')
         );
+    }
+
+    /**
+     * Emits $data as a JSON response body with the given status.
+     *
+     * @param int                  $status
+     * @param array<string, mixed> $data
+     *
+     * @return void
+     */
+    private static function respond(int $status, array $data): void
+    {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        echo json_encode($data, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Answers a failed submission with the queued form alerts, shown inside the modal.
+     *
+     * @param int $status HTTP status for the response
+     *
+     * @return void
+     */
+    private function fail(int $status): void
+    {
+        self::respond($status, ['alerts' => FormController::formAlerts() ?? '', 'cooldown' => $this->remainingCooldown()]);
+    }
+
+    /**
+     * Milliseconds until this IP may send another message.
+     *
+     * @return int
+     */
+    private function remainingCooldown(): int
+    {
+        return $this->cooldown ?: RateLimiter::retryAfterMs($this->rlKey);
     }
 
     /**
@@ -69,12 +113,12 @@ class ContactPage
             'contents' => $message
         ]);
 
-        if ($contents === false) {
-            FormController::addAlert('An error occurred while sending your message! Please contact support.', AlertType::ERROR);
+        if ($contents === false || !MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender)) {
+            FormController::addAlert('There was a problem sending your message. Please try again later.', AlertType::ERROR);
+            $this->fail(500);
             return;
         }
 
-        if (MailController::send($from, MAIL_CONFIG['site_address'], MAIL_CONFIG['no_reply_address'], $subject, $contents, $sender)) PageController::redirectWithToast(REDIRECT, 'Your message has been sent!', AlertType::SUCCESS, 4);
-        else PageController::redirectWithToast(REDIRECT, 'There was a problem sending your message. Please try again later.', AlertType::ERROR, 4);
+        self::respond(200, ['message' => 'Your message has been sent!', 'cooldown' => $this->remainingCooldown()]);
     }
 }

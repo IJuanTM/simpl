@@ -279,7 +279,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                       <?php $areYouSureModal('confirm-totp-remove', 'totp-remove-form', 'This removes the authenticator app as a sign-in method. Email codes will still work.', 'Remove authenticator app') ?>
 
                       <div class="row g-2 center-x">
-                        <button class="col button button-sm error g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="confirm-totp-remove"><i class="fas fa-trash"></i>Remove authenticator app</button>
+                        <button class="col button error g-col-0.5 center-y f-0" type="button" command="show-modal" commandfor="confirm-totp-remove"><i class="fas fa-trash"></i>Remove authenticator app</button>
                       </div>
 
                     <?php endif ?>
@@ -426,11 +426,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
 
                       <?php $this->component('modal/passkey-name-modal') ?>
 
-                      <div class="row">
-                        <div class="col">
-                          <p class="form-details" data-passkey-unsupported hidden></p>
-                        </div>
-                      </div>
+                      <p class="row form-details" data-passkey-unsupported hidden></p>
 
                     <?php endif ?>
 
@@ -565,7 +561,7 @@ $areYouSureModal = function (string $id, string $formId, string $question, strin
                         <form class="col" method="POST" action="">
                           <input type="hidden" name="action" value="trusted-devices">
                           <div class="row g-2 center-x">
-                            <button class="col button button-sm g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-trash"></i>Forget all remembered devices</button>
+                            <button class="col button g-col-0.5 center-y f-0" type="submit" name="submit"><i class="fas fa-trash"></i>Forget all remembered devices</button>
                           </div>
                         </form>
                       </div>

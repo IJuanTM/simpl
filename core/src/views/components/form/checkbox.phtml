@@ -6,16 +6,18 @@ use app\Controllers\AppController;
  *
  * @var string      $label
  * @var string|null $id
- * @var string|null $fieldName HTML "name" attribute; not called "name", since that collides with component()'s own parameter
+ * @var string|null $fieldName  HTML "name" attribute; not called "name", since that collides with component()'s own parameter
  * @var bool        $checked
- * @var string      $attrs     Raw extra attributes for the input, e.g. data-track-checkbox
+ * @var string      $attrs      Raw extra attributes for the input, e.g. data-track-checkbox
+ * @var string      $labelClass Extra classes for the <label>, e.g. "two-fa-required"
  */
 
 $checked ??= false;
 $attrs ??= '';
+$labelClass ??= '';
 ?>
 
-<label class="col checkbox g-col-1 center-y f-0">
+<label class="col checkbox g-col-0.5 center-y f-0<?= $labelClass ? " $labelClass" : '' ?>">
   <input type="checkbox"<?= isset($id) ? ' id="' . AppController::sanitize($id) . '"' : '' ?><?= isset($fieldName) ? ' name="' . AppController::sanitize($fieldName) . '"' : '' ?> autocomplete="off"<?= $checked ? ' checked' : '' ?><?= $attrs ? " $attrs" : '' ?>>
   <span><?= AppController::sanitize($label) ?></span>
 </label>

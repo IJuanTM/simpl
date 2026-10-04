@@ -24,6 +24,7 @@ use app\Enums\TwoFactorMethod;
           'placeholder' => 'Enter username:',
           'value' => RequestController::post('username') ?? '',
           'extraAttrs' => AuthController::usernameInputAttrs(allowReserved: true),
+          'details' => 'Optional. Without one, their email is shown instead.',
       ]) ?>
 
       <?php $this->component('form/select', [
@@ -68,13 +69,8 @@ use app\Enums\TwoFactorMethod;
           'placeholder' => 'Enter email:',
           'value' => RequestController::post('email') ?? '',
           'error' => isset($_POST['submit']) && empty($_POST['email']),
+          'details' => 'The account details and the password below are sent to this address.',
       ]) ?>
-    </div>
-
-    <div class="row">
-      <div class="col">
-        <p class="form-details">The user is emailed their account details and the generated password, which they must change on first login.</p>
-      </div>
     </div>
 
     <div class="row">
@@ -88,6 +84,7 @@ use app\Enums\TwoFactorMethod;
           'placeholder' => 'Enter password:',
           'value' => $this->pageObj->generatedPassword,
           'readonly' => true,
+          'details' => 'Generated for you. The user has to change it the first time they log in.',
       ]) ?>
     </div>
 

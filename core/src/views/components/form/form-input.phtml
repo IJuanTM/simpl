@@ -24,11 +24,12 @@ use app\Controllers\AppController;
  * @var string|null $appendIcon      Font Awesome icon suffix (with any extra classes) for an append icon, e.g. "eye password-toggle input-icon-clickable".
  * @var string      $extraAttrs      Raw extra attributes for the input, e.g. data-match="...".
  * @var string      $inputClass      Extra classes for the input itself, e.g. "input-password".
+ * @var string|null $details         Help text shown under the input.
  *
  * $fieldName is not called "name": that would collide with component()'s own $name parameter, since require() shares its scope.
  *
  * $value and $initialValue are echoed as-is; every caller passes them already escaped (RequestController::post() output, or a field sanitized on the page).
- * $label, $placeholder and $ariaLabel are escaped below so a future caller passing a dynamic one can't inject markup.
+ * $label, $placeholder, $ariaLabel and $details are escaped below so a future caller passing a dynamic one can't inject markup.
  */
 
 $fieldName ??= $id;
@@ -42,9 +43,10 @@ $label = AppController::sanitize($label);
 
 if (isset($placeholder)) $placeholder = AppController::sanitize((string)$placeholder);
 if (isset($ariaLabel)) $ariaLabel = AppController::sanitize((string)$ariaLabel);
+if (isset($details)) $details = AppController::sanitize((string)$details);
 ?>
 
-<div class="col form-group g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>
+<div class="col form-group f-col g-row-0.25<?= $groupClass ? " $groupClass" : '' ?>"<?= $groupAttrs ? " $groupAttrs" : '' ?><?= !empty($inert) ? ' inert' : '' ?>>
   <div class="row">
     <label class="col" for="<?= $id ?>"><?= $label ?>:<?= !empty($required) && ($requiredMark ?? true) ? ' <span class="required">*</span>' : '' ?></label>
 
@@ -66,4 +68,15 @@ if (isset($ariaLabel)) $ariaLabel = AppController::sanitize((string)$ariaLabel);
     <?php endif ?>
 
   </div>
+
+  <?php if (isset($details)) : ?>
+
+    <div class="row">
+      <div class="col">
+        <p class="form-details"><?= $details ?></p>
+      </div>
+    </div>
+
+  <?php endif ?>
+
 </div>

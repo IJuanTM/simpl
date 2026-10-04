@@ -27,15 +27,17 @@ $methods = $this->pageObj->enrolledMethods;
       </div>
 
       <div class="row">
-        <div class="col form-group g-row-0.25">
-          <div class="row">
-            <label class="col" for="code">Recovery code: <span class="required">*</span></label>
-          </div>
-          <div class="row input-group">
-            <div class="col input-prepend center f-0"><i class="fas fa-key"></i></div>
-            <input class="col" id="code" type="text" name="code" maxlength="32" autocomplete="one-time-code" autocapitalize="characters" placeholder="Enter a recovery code" value="<?= RequestController::post('code') ?? '' ?>">
-          </div>
-        </div>
+        <?php $this->component('form/form-input', [
+            'id' => 'code',
+            'label' => 'Recovery code',
+            'required' => true,
+            'icon' => 'key',
+            'maxlength' => 32,
+            'placeholder' => 'Enter a recovery code:',
+            'value' => RequestController::post('code') ?? '',
+            'autocomplete' => 'one-time-code',
+            'extraAttrs' => 'autocapitalize="characters"',
+        ]) ?>
       </div>
 
     <?php elseif ($mode === 'passkey'): ?>
@@ -47,7 +49,7 @@ $methods = $this->pageObj->enrolledMethods;
         </div>
       </div>
 
-      <div class="row center-x">
+      <div class="row g-2 center-x">
         <button class="col button g-col-0.5 center-y f-0" type="button"
                 data-passkey-login data-passkey-auto
                 data-options-url="<?= AppController::sanitize(Url::to('api/two-factor/passkey/options')) ?>"
@@ -69,12 +71,12 @@ $methods = $this->pageObj->enrolledMethods;
       </div>
 
       <div class="row">
-        <div class="col form-group g-row-0.25">
+        <div class="col form-group f-col g-row-0.25">
           <div class="row">
             <label class="col" for="code">Code: <span class="required">*</span></label>
           </div>
-          <input class="col hidden" id="code" type="text" name="code" inputmode="numeric" maxlength="<?= TWO_FACTOR_CONFIG['code_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
-          <div class="col center-x g-col-1">
+          <input id="code" type="text" name="code" inputmode="numeric" maxlength="<?= TWO_FACTOR_CONFIG['code_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
+          <div class="row center-x g-col-1">
             <?php for ($i = 0; $i < TWO_FACTOR_CONFIG['code_length']; $i++): ?>
               <input type="text" class="digit" maxlength="1" inputmode="numeric" autocomplete="one-time-code" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
             <?php endfor ?>

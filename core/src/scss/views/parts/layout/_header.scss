@@ -228,17 +228,17 @@ header {
             cursor: pointer;
             transition: background-color .15s ease-in-out;
             white-space: nowrap;
-            color: var(--text-75);
+            color: var(--text-50);
             border-radius: var(--radius-sm);
 
             &[aria-pressed="true"] {
               font-weight: 700;
-              color: var(--text);
+              color: var(--text-75);
               background-color: var(--button);
             }
 
             @include hover-focus {
-              color: var(--text);
+              color: var(--text-75);
               background-color: var(--button-hover);
             }
           }

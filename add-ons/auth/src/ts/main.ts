@@ -8,6 +8,7 @@ import {logoutModule} from './features/logout.ts';
 import {reservedUsernameModule} from './features/reserved-username.ts';
 import {passkeyModule} from './features/passkey.ts';
 import {twoFactorModule} from './features/two-factor.ts';
+import {contactModule} from './features/contact.ts';
 // @addon-end
 
 // @addon-insert:after('// Initialize modules')
@@ -20,4 +21,5 @@ logoutModule.init();
 reservedUsernameModule.init();
 passkeyModule.init();
 twoFactorModule.init();
+contactModule.init();
 // @addon-end

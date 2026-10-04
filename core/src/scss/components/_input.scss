@@ -71,8 +71,6 @@ input[type="checkbox"] {
 }
 
 label:has(> input[type="checkbox"]) {
-  display: flex;
-
   &[inert] > input[type="checkbox"]:checked {
     &::after {
       color: var(--text-25);

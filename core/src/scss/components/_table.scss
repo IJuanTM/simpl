@@ -87,7 +87,7 @@ div.table-container {
               height: 100%;
               content: "\f0dc";
               pointer-events: none;
-              color: var(--text-muted);
+              color: var(--text-50);
               background-color: var(--table-header);
             }
 
@@ -137,7 +137,7 @@ div.table-container {
             background-color: var(--table-row-even);
           }
 
-          &[data-href] {
+          &[data-href], > td[data-href] {
             cursor: pointer;
 
             @include hover-focus {

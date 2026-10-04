@@ -127,7 +127,7 @@ export const passkeyModule = {
         el.textContent = message;
         el.hidden = false;
       });
-      document.querySelectorAll<HTMLElement>('[data-passkey-register], [data-passkey-login]').forEach(el => el.hidden = true);
+      document.querySelectorAll<HTMLElement>('[data-passkey-register], [data-passkey-login]').forEach(el => (el.closest<HTMLElement>('.row') ?? el).hidden = true);
       return;
     }
 

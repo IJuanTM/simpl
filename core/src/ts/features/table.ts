@@ -252,31 +252,31 @@ function initReset(table: HTMLTableElement, controls: Element, resetBtn: HTMLBut
 
 // Delegated on the table rather than the rows, so rows swapped in by an AJAX reload link too.
 function initRowLinks(table: HTMLTableElement): void {
-  const rowFor = (event: Event): HTMLTableRowElement | null => {
+  const linkFor = (event: Event): HTMLElement | null => {
     const target = event.target as HTMLElement;
     if (target.closest('a, button, input, select, textarea, label, [role="button"]')) return null;
-    return target.closest<HTMLTableRowElement>('tbody tr[data-href]');
+    return target.closest<HTMLElement>('tbody td[data-href], tbody tr[data-href]');
   };
 
-  const open = (row: HTMLTableRowElement, newTab: boolean): void => {
-    const href = row.dataset.href ?? '';
+  const open = (link: HTMLElement, newTab: boolean): void => {
+    const href = link.dataset.href ?? '';
     if (newTab) window.open(href, '_blank', 'noopener');
     else window.location.assign(href);
   };
 
   table.addEventListener('click', e => {
-    const row = rowFor(e);
-    if (row && !window.getSelection()?.toString()) open(row, e.ctrlKey || e.metaKey);
+    const link = linkFor(e);
+    if (link && !window.getSelection()?.toString()) open(link, e.ctrlKey || e.metaKey);
   });
 
   table.addEventListener('auxclick', e => {
-    const row = rowFor(e);
-    if (row && e.button === 1) open(row, true);
+    const link = linkFor(e);
+    if (link && e.button === 1) open(link, true);
   });
 
   table.addEventListener('keydown', e => {
-    const row = rowFor(e);
-    if (row && e.key === 'Enter' && e.target === row) open(row, e.ctrlKey || e.metaKey);
+    const link = linkFor(e);
+    if (link && e.key === 'Enter' && e.target === link) open(link, e.ctrlKey || e.metaKey);
   });
 }
 

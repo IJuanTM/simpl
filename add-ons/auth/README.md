@@ -14,7 +14,7 @@ Complete authentication system for Simpl projects with user management, email ve
 - **Password Reset** - Forgot password flow with secure token-based reset
 - **Profile Management** - Users can edit username, email, and password; changing the email asks for the current password in a modal
 - **Username Rules** - Usernames are limited to letters, numbers, dots, dashes and underscores, and regular users can't pick a name that imitates a role, the site name or an entry in `RESERVED_USERNAMES` (matched case-insensitively, ignoring separators and digit look-alikes like `4dm1n`); admins creating or editing a user are exempt from the reserved-name check
-- **Contact Form** - Built-in contact functionality
+- **Contact Form** - A contact form in a modal, opened from a floating button in the bottom-right corner of every page
 
 ### Admin System
 
@@ -40,7 +40,7 @@ Complete authentication system for Simpl projects with user management, email ve
 - **CSRF Protection** - Form validation and sanitization
 - **Session Security** - Secure session handling with timezone support; changing a password invalidates every session for that account, on any device
 - **SQL Injection Prevention** - Parameterized queries with operator support
-- **Non-Enumerable User URLs** - Every user-facing URL (profiles, verification and password reset links, admin user pages) names the user by a random 16-character public id instead of the sequential database id, so users can't be listed by counting up; the admin users table and edit page show both ids
+- **Non-Enumerable User URLs** - Every user-facing URL (profiles, verification and password reset links, admin user pages) names the user by a random 16-character public id instead of the sequential database id, so users can't be listed by counting up; the admin users table, edit page and (for admins) profile pages show both ids
 
 ## Database
 
@@ -164,10 +164,10 @@ All templates use tables and inline styles for maximum compatibility.
 Builds on core's form, modal and table components:
 
 - Reserved-username check added to core's live form validation
-- Contact form character counter
+- Contact modal that sends in the background, showing any errors inside the modal and keeping what was typed, with a character counter
 - Admin tables extend core's `table/table` component with server-side search, filters, sorting and pagination, reloaded via AJAX
 - Confirmation modals for admin user and role actions
-- Admin users table rows open that user's profile
+- Admin users table rows open that user's profile, and the user cell of a login attempt opens the profile of the account it was for
 
 ## Security Notes
 

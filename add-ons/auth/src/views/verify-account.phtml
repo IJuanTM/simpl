@@ -22,12 +22,12 @@ use app\Models\Url;
     </div>
 
     <div class="row">
-      <div class="col form-group g-row-0.25">
+      <div class="col form-group f-col g-row-0.25">
         <div class="row">
           <label class="col" for="code">Code: <span class="required">*</span></label>
         </div>
-        <input class="col hidden" id="code" type="text" name="code" maxlength="<?= VERIFICATION_CONFIG['token_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
-        <div class="col center-x g-col-1">
+        <input id="code" type="text" name="code" maxlength="<?= VERIFICATION_CONFIG['token_length'] ?>" value="<?= RequestController::post('code') ?? '' ?>" hidden aria-hidden="true">
+        <div class="row center-x g-col-1">
           <?php for ($i = 0; $i < VERIFICATION_CONFIG['token_length']; $i++): ?>
             <input type="text" class="digit" maxlength="1" autocomplete="one-time-code" autocapitalize="characters" data-index="<?= $i ?>" aria-label="Verification code digit <?= $i + 1 ?>">
           <?php endfor ?>

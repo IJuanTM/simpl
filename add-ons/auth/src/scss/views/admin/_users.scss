@@ -39,9 +39,7 @@ section.users {
 
   label.two-fa-required {
     font-size: .875rem;
-    cursor: pointer;
     color: var(--text-50);
-    gap: .375rem;
 
     @include hover-focus {
       color: var(--text-75);

@@ -1,7 +1,7 @@
 <?php
 /**
  * A native multi-select: picked options show as removable pills above a 3-row
- * `<select multiple>` listbox. Degrades to a plain multi-select without JS.
+ * `<select multiple>` listbox.
  *
  * @var string                                          $name     Name for the select, submitted as "$name[]"
  * @var string                                          $label
@@ -14,7 +14,7 @@ use app\Controllers\AppController;
 $selected ??= [];
 ?>
 
-<div class="col form-group multi-select g-row-0.5" data-multi-select>
+<div class="col form-group multi-select f-col g-row-0.5" data-multi-select>
   <div class="row">
     <label class="col" for="<?= AppController::sanitize($name) ?>"><?= AppController::sanitize($label) ?></label>
   </div>

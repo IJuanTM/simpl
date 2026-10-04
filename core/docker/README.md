@@ -57,21 +57,27 @@ Generating the mkcert certificate matters more than just removing a warning once
 
 Once the `auth` add-on is installed, a [Mailpit](https://mailpit.axllent.org/) container catches every email the app sends in development (`DEV=true`) - verification links, password resets, 2FA codes - and shows them at `http://127.0.0.1:8025/` instead of delivering them anywhere. Compose points the app at it through `SMTP_DEV_HOST`/`SMTP_DEV_PORT`, so `src/.env` needs no edits. Production mail (`DEV=false`) still uses `src/.env`'s `SMTP_*` settings.
 
+## Database (phpMyAdmin)
+
+Once the `db` add-on is installed, [phpMyAdmin](https://www.phpmyadmin.net/) runs next to MariaDB at `http://127.0.0.1:8080/`, already logged in as `root`, for browsing tables and running queries during development.
+
 ## Configuration
 
 Copy `docker/.env.example` to `.env` in the project root (separate from `src/.env`) to override any of these:
 
-| Variable          | Default | Purpose                                                  |
-|-------------------|---------|----------------------------------------------------------|
-| `PHP_VERSION`     | `8.5`   | PHP version used to build the `app` image                |
-| `UID` / `GID`     | `1000`  | User/group ID Apache runs as (Linux hosts, see below)    |
-| `APP_PORT`        | `80`    | Host port that redirects to `APP_SSL_PORT`               |
-| `APP_SSL_PORT`    | `443`   | Host port mapped to the container's Apache (HTTPS)       |
-| `MARIADB_VERSION` | `12.3`  | MariaDB image tag (only used once `db` is installed)     |
-| `DB_PORT`         | `3307`  | Host port mapped to the container's MariaDB              |
-| `MAILPIT_VERSION` | `v1.31` | Mailpit image tag (only used once `auth` is installed)   |
-| `MAILPIT_PORT`    | `8025`  | Host port for Mailpit's web UI                           |
-| `DEV`             | `true`  | Overrides `src/.env`'s `DEV` flag as a container env var |
+| Variable             | Default | Purpose                                                  |
+|----------------------|---------|----------------------------------------------------------|
+| `PHP_VERSION`        | `8.5`   | PHP version used to build the `app` image                |
+| `UID` / `GID`        | `1000`  | User/group ID Apache runs as (Linux hosts, see below)    |
+| `APP_PORT`           | `80`    | Host port that redirects to `APP_SSL_PORT`               |
+| `APP_SSL_PORT`       | `443`   | Host port mapped to the container's Apache (HTTPS)       |
+| `MARIADB_VERSION`    | `12.3`  | MariaDB image tag (only used once `db` is installed)     |
+| `DB_PORT`            | `3307`  | Host port mapped to the container's MariaDB              |
+| `PHPMYADMIN_VERSION` | `5.2.3` | phpMyAdmin image tag (only used once `db` is installed)  |
+| `PHPMYADMIN_PORT`    | `8080`  | Host port for phpMyAdmin                                 |
+| `MAILPIT_VERSION`    | `v1.31` | Mailpit image tag (only used once `auth` is installed)   |
+| `MAILPIT_PORT`       | `8025`  | Host port for Mailpit's web UI                           |
+| `DEV`                | `true`  | Overrides `src/.env`'s `DEV` flag as a container env var |
 
 `DB_PORT` defaults away from a typical local MySQL/MariaDB install's `3306`. Only override `APP_PORT`/`APP_SSL_PORT` if something else on your machine already owns port 80/443. Changing `MARIADB_VERSION` on an existing database is safe - the container upgrades its data files automatically on the next start.
 

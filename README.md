@@ -173,14 +173,14 @@ Generated runtime data lives outside `app`: log files in `src/logs`, which is cr
 The HTML lives in the `src/views` folder. Each page has its own `.phtml` file at the root (`home.phtml`, `error.phtml`, ...). The `parts` folder holds the pieces the framework assembles around every page and loads with `$this->part()` - `parts/layout` for the header, footer and cookie bar, `parts/index` for the `<head>` includes. The `components` folder holds reusable fragments a template drops in itself with `$this->component()`:
 
 * `nav/breadcrumbs` - the breadcrumb trail
-* `form/form-input`, `form/select` and `form/multi-select` - labelled form fields with an icon, error state and optional caps-lock warning or password toggle
+* `form/form-input`, `form/select` and `form/multi-select` - labelled form fields with an icon, error state and optional help text, caps-lock warning or password toggle
 * `form/checkbox` - a checkbox whose text is part of its label, so clicking the text toggles it
 * `modal/confirm-modal` - an "are you sure?" `<dialog>` that submits a form elsewhere on the page
-* `table/table` and `table/column-toggle` - a data table with resizable columns that can be shown and hidden, remembered per browser; a row given an `href` links as a whole
+* `table/table` and `table/column-toggle` - a data table with resizable columns that can be shown and hidden, remembered per browser; a row or a single cell given a `data-href` becomes a link
 
 #### Styling and TypeScript
 
-The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, cards, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
+The styling is in the `src/scss` folder, organised into `config` (Sass variables, functions and mixins, re-exported through `config/_index.scss`), `base` (element defaults), `utilities` (single-purpose classes like `.g-1` or `.center`), `components` (buttons, tiles, inputs, ...) and `views` (per-page and per-part styles, mirroring the `views` tree). `main.scss` pulls them together into CSS cascade layers, so utilities always win over components without needing `!important`.
 
 Each theme is a file in `src/scss/config/themes/` that sets its `color-scheme` (light or dark) and a value for every theme color; Sass stops with an error when a theme is missing a color the default theme sets. To add a theme, copy one of these files, add it to the `$themes` map in `config/vars/_themes.scss`, and add its name and Font Awesome icon to `THEMES` in `src/app/Config/app.php`, which fills the theme menu in the header. The menu's System option follows the device's setting by picking the `light` or `dark` theme, and the choice is remembered per browser.
 
@@ -336,7 +336,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Restructured the repository into a `core` and an `add-ons` folder, each with its own `src` and `tests` folders
 * Moved the database classes and the scheduler out of the auth add-on into a new `db` add-on; add-ons can now depend on other add-ons, which get installed automatically
 * Replaced the npx tools with the `simpl` CLI, used to create projects, install add-ons and run the Docker setup
-* Added a Docker setup as the recommended way to run a project locally, served over HTTPS (optionally with a locally trusted certificate, e.g. from mkcert), with MariaDB when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
+* Added a Docker setup as the recommended way to run a project locally, served over HTTPS (optionally with a locally trusted certificate, e.g. from mkcert), with MariaDB and phpMyAdmin when the `db` add-on is installed and Mailpit for development emails when the `auth` add-on is installed
 * The `live` npm script now uses the project's `APP_URL` and matches its HTTP or HTTPS scheme, configured in a new `bs-config.cjs` file
 * Added migration and seeder classes replacing the example `.sql` file, a scheduler for running cron jobs, and `IN` and `NOT IN` support in the query builder
 * Added an admin panel to the auth add-on for managing users and roles and viewing login attempts, with sortable, searchable and paginated tables
@@ -345,6 +345,7 @@ Follow the steps in the [Getting Started](#getting-started) section to set up yo
 * Added live form validation that mirrors the server-side rules, including new username rules and password requirements
 * Added login lockouts and rate limiting to the login, contact, forgot password and verification forms, with longer lockouts after repeated failed attempts
 * Changing a password now logs the account out on every device, and "Remember me" now works on several devices at once
+* The contact form now opens in a modal from a floating button on every page, instead of having its own page
 * Replaced the global alert with stacking toast notifications that can be closed and show a countdown until they close themselves
 * Added a theme menu with a "System" option that follows the device's light or dark mode, and made each theme its own Sass file so more can be added
 * Added breadcrumb navigation and shared form, select, checkbox, multi-select, modal and table components

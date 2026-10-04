@@ -1,6 +1,15 @@
 @use "../../config" as *;
 
-div.form-group div.password-warning {
-  font-size: .875rem;
-  color: var(--red);
+div.form-group {
+  div.password-warning, p.field-error {
+    font-size: .875rem;
+    color: var(--red);
+  }
+
+  p.field-error::before {
+    @include fa-icon;
+
+    line-height: inherit;
+    content: "\f06a";
+  }
 }

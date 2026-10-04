@@ -11,7 +11,7 @@ $adminView = $this->pageObj->isAdmin && !$this->pageObj->isOwner;
 
     <div class="row profile-image-row">
       <div class="col center-x f-0">
-        <div class="profile-image h-100">
+        <div class="profile-image h-100 center">
           <?php if ($this->pageObj->profileImage) : ?>
             <img src="<?= $this->pageObj->profileImage ?>" alt="Profile image">
           <?php else : ?>
@@ -29,6 +29,24 @@ $adminView = $this->pageObj->isAdmin && !$this->pageObj->isOwner;
 
     <div class="row">
       <div class="col">
+        <?php if ($this->pageObj->isAdmin) : ?>
+
+          <div class="row user-details g-col-0.5 f-nowrap">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-hashtag"></i></div>
+            <div class="col user-details-label center-y f-0">Id:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['id'] ?></div>
+            <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+          </div>
+
+          <div class="row user-details g-col-0.5 f-nowrap">
+            <div class="col user-details-icon center-y f-0"><i class="fas fa-fingerprint"></i></div>
+            <div class="col user-details-label center-y f-0">Public id:</div>
+            <div class="col user-details-value scrollbar-thin center-y"><?= $u['public_id'] ?></div>
+            <div class="col user-details-admin center-y f-0" title="Only visible to admins"><i class="fas fa-shield-halved"></i></div>
+          </div>
+
+        <?php endif ?>
+
         <div class="row user-details g-col-0.5 f-nowrap">
           <div class="col user-details-icon center-y f-0"><i class="fas fa-address-card"></i></div>
           <div class="col user-details-label center-y f-0">Name:</div>

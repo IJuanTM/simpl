@@ -52,7 +52,8 @@ export const timeoutModule = {
 
     document.querySelectorAll<HTMLFormElement>('form').forEach(form =>
       form.addEventListener('submit', event => {
-        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        // The submitter covers a button outside the form that targets it with form="...".
+        const button = (event.submitter as HTMLButtonElement | null) ?? form.querySelector<HTMLButtonElement>('button[type="submit"]');
         if (!button) return;
         button.setAttribute('inert', '');
         // A cancelled submit (a script-driven form that never navigates) would otherwise leave the button dead.

@@ -2,11 +2,11 @@
 
 @use "../config" as *;
 
-.row:has(> .card) {
-  container: card-row / inline-size;
+.row:has(> .tile) {
+  container: tile-row / inline-size;
 }
 
-.card {
+.tile {
   position: relative;
   overflow: hidden;
   min-width: 100%;
@@ -18,7 +18,7 @@
   border-radius: var(--radius-lg);
   background-color: var(--bg-section);
 
-  @container card-row (min-width: #{map.get($breakpoints, sm)}) {
+  @container tile-row (min-width: #{map.get($breakpoints, sm)}) {
     min-width: $width-xs;
   }
 
@@ -28,7 +28,7 @@
     background-color: var(--bg-accent);
   }
 
-  div.card-icon {
+  div.tile-icon {
     width: 4rem;
 
     > i {
@@ -36,7 +36,7 @@
     }
   }
 
-  .card-title {
+  .tile-title {
     color: $simpl;
   }
 }

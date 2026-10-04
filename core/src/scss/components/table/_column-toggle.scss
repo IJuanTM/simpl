@@ -29,13 +29,8 @@ div.col-toggle-wrapper {
 
     label {
       font-size: .875rem;
-      cursor: pointer;
       white-space: nowrap;
       border-radius: var(--radius-sm);
-
-      > span {
-        display: flex;
-      }
 
       &:not(:has(input:checked)) {
         color: var(--text-50);

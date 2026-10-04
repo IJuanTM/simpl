@@ -1,7 +1,6 @@
 @use "../config" as *;
 
 div.alert {
-  display: flex;
   overflow: hidden;
   padding: 1rem;
   transition: opacity .15s ease-in-out, max-height .3s ease-in-out, margin-bottom .3s ease-in-out;

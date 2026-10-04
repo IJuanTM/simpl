@@ -57,10 +57,13 @@ $dotClass = static function (bool $on, bool $required): string {
                 <div class="col f-0"><span class="two-fa-dot<?= $dotClass($emailOn, $isRequired(TwoFactorMethod::EMAIL)) ?>" aria-hidden="true"></span></div>
                 <div class="col f-0">Email</div>
                 <div class="col end-x"></div>
-                <label class="col f-0 center-y two-fa-required">
-                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::EMAIL->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::EMAIL) ? ' checked' : '' ?>>
-                  Required
-                </label>
+                <?php $this->component('form/checkbox', [
+                    'fieldName' => 'required_2fa_methods[]',
+                    'label' => 'Required',
+                    'checked' => $isRequired(TwoFactorMethod::EMAIL),
+                    'attrs' => 'value="' . TwoFactorMethod::EMAIL->value . '" form="required-methods-form"',
+                    'labelClass' => 'two-fa-required',
+                ]) ?>
               </div>
 
               <div class="row g-col-0.5 center-y two-fa-method-row">
@@ -71,10 +74,13 @@ $dotClass = static function (bool $on, bool $required): string {
                     <span class="text-muted">Confirmed <?= AppController::sanitize((string)$settings['totp_confirmed_at']) ?></span>
                   <?php endif ?>
                 </div>
-                <label class="col f-0 center-y two-fa-required">
-                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::TOTP->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::TOTP) ? ' checked' : '' ?>>
-                  Required
-                </label>
+                <?php $this->component('form/checkbox', [
+                    'fieldName' => 'required_2fa_methods[]',
+                    'label' => 'Required',
+                    'checked' => $isRequired(TwoFactorMethod::TOTP),
+                    'attrs' => 'value="' . TwoFactorMethod::TOTP->value . '" form="required-methods-form"',
+                    'labelClass' => 'two-fa-required',
+                ]) ?>
                 <?php if ($totpOn) : ?>
                   <form id="totp-reset-form" class="col f-0" method="POST" action="" hidden>
                     <input type="hidden" name="action" value="reset-2fa-totp">
@@ -91,10 +97,13 @@ $dotClass = static function (bool $on, bool $required): string {
                     <span class="text-muted"><?= count($passkeys) ?> registered</span>
                   <?php endif ?>
                 </div>
-                <label class="col f-0 center-y two-fa-required">
-                  <input type="checkbox" name="required_2fa_methods[]" value="<?= TwoFactorMethod::PASSKEY->value ?>" form="required-methods-form"<?= $isRequired(TwoFactorMethod::PASSKEY) ? ' checked' : '' ?>>
-                  Required
-                </label>
+                <?php $this->component('form/checkbox', [
+                    'fieldName' => 'required_2fa_methods[]',
+                    'label' => 'Required',
+                    'checked' => $isRequired(TwoFactorMethod::PASSKEY),
+                    'attrs' => 'value="' . TwoFactorMethod::PASSKEY->value . '" form="required-methods-form"',
+                    'labelClass' => 'two-fa-required',
+                ]) ?>
               </div>
 
               <?php if ($passkeys) : ?>

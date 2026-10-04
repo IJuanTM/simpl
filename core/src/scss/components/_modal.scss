@@ -42,9 +42,9 @@ dialog.modal-overlay {
       height: 2rem;
     }
 
-    div.modal-body p:not(.quote) {
+    div.modal-body p:not(.quote, .field-error) {
       font-size: .875rem;
-      color: var(--text-muted);
+      color: var(--text-50);
     }
   }
 }

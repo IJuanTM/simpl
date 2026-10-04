@@ -59,29 +59,28 @@ function message(field: FormField): string {
   return field.validationMessage;
 }
 
-function quoteFor(field: FormField): HTMLElement | null {
+function errorFor(field: FormField): HTMLElement | null {
   const group = field.closest('.input-group');
   if (!group) return null;
 
-  if (group.nextElementSibling instanceof HTMLElement && group.nextElementSibling.matches('p.quote[data-field-quote]')) return group.nextElementSibling;
+  if (group.nextElementSibling instanceof HTMLElement && group.nextElementSibling.matches('p.field-error')) return group.nextElementSibling;
 
-  const quote = document.createElement('p');
-  quote.className = 'quote warning hidden';
-  quote.dataset.fieldQuote = '';
-  quote.setAttribute('role', 'alert');
-  group.after(quote);
-  return quote;
+  const error = document.createElement('p');
+  error.className = 'row field-error f-nowrap g-col-0.5 hidden';
+  error.setAttribute('role', 'alert');
+  group.after(error);
+  return error;
 }
 
 function report(field: FormField): void {
   const text = message(field);
   if (text === '' && !shown.has(field)) return;
 
-  const quote = quoteFor(field);
-  if (!quote) return;
+  const error = errorFor(field);
+  if (!error) return;
 
-  quote.textContent = text;
-  quote.classList.toggle('hidden', text === '');
+  error.textContent = text;
+  error.classList.toggle('hidden', text === '');
   field.closest('.input-group')?.classList.toggle('error', text !== '');
 
   if (text === '') {
@@ -110,7 +109,7 @@ function initForm(form: HTMLFormElement): void {
       if (field.value !== '' || (!(field instanceof HTMLSelectElement) && initialValue(field) !== '')) report(field);
     });
 
-    // Cancelling the event swaps the browser's native bubble for the field's own quote; the browser then skips focusing it, so focus the first invalid field here.
+    // Cancelling the event swaps the browser's native bubble for the field's own error message; the browser then skips focusing it, so focus the first invalid field here.
     field.addEventListener('invalid', event => {
       event.preventDefault();
       const first = fields.find(other => !other.validity.valid) === field;

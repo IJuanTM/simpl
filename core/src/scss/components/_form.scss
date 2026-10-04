@@ -1,9 +1,5 @@
 @use "../config" as *;
 
-form[hidden] {
-  display: none;
-}
-
 form {
   display: flex;
   flex-direction: column;
@@ -62,9 +58,6 @@ form {
 }
 
 div.form-group {
-  display: flex;
-  flex-direction: column;
-
   label {
     white-space: nowrap;
   }

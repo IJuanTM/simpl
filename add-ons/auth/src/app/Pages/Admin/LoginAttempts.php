@@ -7,6 +7,7 @@ namespace app\Pages\Admin;
 use app\Controllers\AppController;
 use app\Database\DB;
 use app\Models\Page;
+use app\Models\Url;
 use app\Pages\Admin\Traits\AdminTableTrait;
 
 /**
@@ -85,6 +86,7 @@ class LoginAttempts
                 'login_attempts.attempt_time',
                 'login_attempts.success',
                 'login_attempts.failed_reason',
+                'users.public_id',
                 'users.username',
                 'users.email',
             ],
@@ -138,6 +140,14 @@ class LoginAttempts
         $secondary = $username !== '' && $email !== '' ? '<br><small>' . $email . '</small>' : '';
 
         return '<span>' . $primary . '</span>' . $secondary;
+    }
+
+    /**
+     * Overrides the trait default: the user cell opens that user's profile, attempts without an account stay plain.
+     */
+    private function cellHref(array $column, array $row): ?string
+    {
+        return $column['key'] === 'user' && $row['public_id'] !== null ? Url::to('user/' . $row['public_id']) : null;
     }
 
     /**
